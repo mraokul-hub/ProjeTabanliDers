@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ders Sonrası Otantik Üretim Formu (D-E Bölümleri) | Yabgu Sistemi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { 
+            --primary-color: #8b5cf6;
+            --secondary: #3b82f6;
+            --accent: #10b981;
+            --radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        [data-theme='light'] {
+            --primary: #1e293b;
+            --bg: #f5f3ff; 
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            --input-bg: #f8fafc;
+        }
+        [data-theme='dark'] {
+            --primary: #f1f5f9;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            --input-bg: #0f172a;
+        }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            padding: 20px 10px; 
+            margin: 0; 
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            transition: background 0.3s ease;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            border-top: 8px solid var(--primary-color);
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header {
+            padding: 30px 25px 20px 25px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .form-body { padding: 25px; }
+        .student-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: rgba(139, 92, 246, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--primary-color);
+        }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group.full-width { grid-column: 1 / -1; }
+        label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="text"], input[type="number"], input[type="date"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-family: inherit;
+            transition: var(--transition);
+        }
+        input:focus, textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+        .section-card {
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card-bg);
+        }
+        .section-header {
+            padding: 12px 15px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-color);
+            color: white;
+        }
+        .section-body { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .success-message i { color: var(--accent); font-size: 60px; margin-bottom: 15px; }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+        }
+        @media (max-width: 600px) {
+            .student-info-grid { grid-template-columns: 1fr; }
+            .form-container { border-radius: 0; border: none; border-top: 6px solid var(--primary-color); min-height: 100vh; }
+            body { padding: 0; }
+        }
+    </style>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div class="form-container" id="main-form-container">
+        <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+        <div class="header">
+            <h1><i class="fas fa-graduation-cap"></i> 3. Aşama: Dersten Sonra (Otantik Üretim)</h1>
+            <p>Ders bittikten sonra evde yapacağınız derinlemesine araştırmaları ve çıktı planlamalarını bu form ile iletiniz.</p>
+        </div>
+        <div class="form-body">
+            <form id="evaluationForm" onsubmit="submitForm(event)">
+                <div class="student-info-grid">
+                    <div class="input-group">
+                        <label>Öğrenci Numarası *</label>
+                        <input type="number" id="ogrenciNo" required placeholder="Örn: 1071">
+                    </div>
+                    <div class="input-group">
+                        <label>Sınıfı *</label>
+                        <input type="text" id="sinif" required placeholder="Örn: 9-A">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Adı ve Soyadı *</label>
+                        <input type="text" id="adSoyad" required placeholder="Adınızı ve soyadınızı giriniz">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Form Tarihi *</label>
+                        <input type="date" id="tarih" required>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="section-header"><i class="fas fa-lightbulb"></i> D) ÖĞRENDİKLERİMLE NELER YAPABİLİRİM?</div>
+                    <div class="section-body">
+                        <div class="input-group">
+                            <textarea id="sectionD" rows="3" required placeholder="Bu bilgileri gerçek hayatta, projelerinizde veya otomasyon sistemlerinizde nasıl katma değere dönüştürebilirsiniz?"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="section-header"><i class="fas fa-search"></i> E) DERSTEN SONRAKİ İNCELEMELERİM</div>
+                    <div class="section-body">
+                        <div class="input-group">
+                            <textarea id="sectionE" rows="3" required placeholder="Evde yaptığınız derinlemesine araştırmalar, ek kaynak taramaları..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card" style="border-left: 4px solid var(--red);">
+                    <div class="section-header" style="background: rgba(239, 68, 68, 0.1); color: var(--red);">
+                        <i class="fas fa-clipboard-list"></i> II) A5 KAZANIM KONTROLÜ VE EV ÖDEVİM
+                    </div>
+                    <div class="section-body">
+                        <p style="font-size:12px; color:var(--text-muted); margin-top:0;">Derste masanızda bulunan A5 Kazanım Listesinde <strong>tik atamadığınız</strong> (tamamlayamadığınız) maddeleri aşağıya yazınız. Bunlar bugünkü kişisel ev ödevinizdir.</p>
+                        <div class="input-group">
+                            <textarea id="sectionF" rows="3" required placeholder="Örn: 3. Madde olan 'Fotosentez denklemini yazabiliyorum' maddesine tik atamadım, evde bunu araştırıp öğreneceğim."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Dersten Sonraki Aşama Verilerini Gönder</button>
+            </form>
+        </div>
+    </div>
+    <div class="form-container success-message" id="success-container">
+        <i class="fas fa-check-circle"></i>
+        <h2>Veriler İletildi!</h2>
+        <p>Ders sonrası otantik üretim ve inceleme formun başarıyla sisteme kaydedildi.</p>
+    </div>
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.getAttribute('data-theme') === 'light') {
+                html.setAttribute('data-theme', 'dark');
+                icon.className = 'fas fa-sun';
+            } else {
+                html.setAttribute('data-theme', 'light');
+                icon.className = 'fas fa-moon';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tarih').valueAsDate = new Date();
+            const urlParams = new URLSearchParams(window.location.search);
+            const sinifParam = urlParams.get('sinif');
+            const noParam = urlParams.get('no');
+            const adParam = urlParams.get('ad');
+            if (sinifParam) { document.getElementById('sinif').value = decodeURIComponent(sinifParam); document.getElementById('sinif').readOnly = true; document.getElementById('sinif').style.backgroundColor = "var(--border)"; }
+            if (noParam) { document.getElementById('ogrenciNo').value = decodeURIComponent(noParam); document.getElementById('ogrenciNo').readOnly = true; document.getElementById('ogrenciNo').style.backgroundColor = "var(--border)"; }
+            if (adParam) { document.getElementById('adSoyad').value = decodeURIComponent(adParam); document.getElementById('adSoyad').readOnly = true; document.getElementById('adSoyad').style.backgroundColor = "var(--border)"; }
+        });
+        async function submitForm(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+            const formData = {
+                ogrenciNo: document.getElementById('ogrenciNo').value,
+                sinif: document.getElementById('sinif').value,
+                adSoyad: document.getElementById('adSoyad').value,
+                tarih: document.getElementById('tarih').value,
+                type: 'AFTER',
+                formResponse: { 
+                    D: document.getElementById('sectionD').value,
+                    E: document.getElementById('sectionE').value,
+                    "Eksik Kazanım (Ödev)": document.getElementById('sectionF').value
+                },
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            try {
+                await db.ref("student_forms").push(formData);
+                document.getElementById('main-form-container').style.display = 'none';
+                document.getElementById('success-container').style.display = 'block';
+            } catch (error) {
+                console.error("Firebase kayıt hatası:", error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Tekrar Dene';
+                alert("Bağlantı hatası! Lütfen internetinizi kontrol edip tekrar deneyin.");
+            }
+        }
+    </script>
+</body>
+</html>

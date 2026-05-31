@@ -1,0 +1,774 @@
+{
+  "students": [
+    {
+      "sira": 1,
+      "no": 132,
+      "adSoyad": "CELALETTİN ADEM SAYGILI",
+      "sinif": "8A",
+      "xp": 5
+    },
+    {
+      "sira": 2,
+      "no": 134,
+      "adSoyad": "USAME AVKIRAN",
+      "sinif": "8A"
+    },
+    {
+      "sira": 3,
+      "no": 137,
+      "adSoyad": "YAVUZ EYMEN EREN",
+      "sinif": "8A"
+    },
+    {
+      "sira": 4,
+      "no": 145,
+      "adSoyad": "BURAK MERMER",
+      "sinif": "8A"
+    },
+    {
+      "sira": 5,
+      "no": 155,
+      "adSoyad": "MEHMET KARAÇAM",
+      "sinif": "8A"
+    },
+    {
+      "sira": 6,
+      "no": 156,
+      "adSoyad": "FIRAT TÜRKMEN",
+      "sinif": "8A"
+    },
+    {
+      "sira": 7,
+      "no": 157,
+      "adSoyad": "FURKAN ESAT SÖNMEZ",
+      "sinif": "8A"
+    },
+    {
+      "sira": 8,
+      "no": 175,
+      "adSoyad": "MEHMET YUSUF ERGÜL",
+      "sinif": "8A"
+    },
+    {
+      "sira": 9,
+      "no": 191,
+      "adSoyad": "FERİT İBİLİ",
+      "sinif": "8A"
+    },
+    {
+      "sira": 10,
+      "no": 193,
+      "adSoyad": "HÜSEYİN ENSAR DİNÇ",
+      "sinif": "8A"
+    },
+    {
+      "sira": 11,
+      "no": 271,
+      "adSoyad": "AHMET EFE TEMİZ",
+      "sinif": "8A"
+    },
+    {
+      "sira": 12,
+      "no": 272,
+      "adSoyad": "GÖKHAN AKTAŞ",
+      "sinif": "8A"
+    },
+    {
+      "sira": 13,
+      "no": 296,
+      "adSoyad": "ONUR BERAT DİKMEN",
+      "sinif": "8A"
+    },
+    {
+      "sira": 14,
+      "no": 343,
+      "adSoyad": "EFE YILDIRIM",
+      "sinif": "8A"
+    },
+    {
+      "sira": 15,
+      "no": 426,
+      "adSoyad": "FURKAN YILDIRIM",
+      "sinif": "8A"
+    },
+    {
+      "sira": 16,
+      "no": 489,
+      "adSoyad": "SIDDIK YILDIRIM",
+      "sinif": "8A"
+    },
+    {
+      "sira": 17,
+      "no": 506,
+      "adSoyad": "MUHAMMED EMİN SARISAMAN",
+      "sinif": "8A"
+    },
+    {
+      "sira": 18,
+      "no": 514,
+      "adSoyad": "AHMED ZAHİD SOYDAL",
+      "sinif": "8A"
+    },
+    {
+      "sira": 19,
+      "no": 518,
+      "adSoyad": "MEHMET SAEDİYAH",
+      "sinif": "8A"
+    },
+    {
+      "sira": 20,
+      "no": 542,
+      "adSoyad": "MUSTAFA BAYRAM",
+      "sinif": "8A"
+    },
+    {
+      "sira": 21,
+      "no": 598,
+      "adSoyad": "ALPEREN GÖK",
+      "sinif": "8A"
+    },
+    {
+      "sira": 22,
+      "no": 609,
+      "adSoyad": "MUHAMMED NECİP MUTLU",
+      "sinif": "8A"
+    },
+    {
+      "sira": 23,
+      "no": 647,
+      "adSoyad": "HÜSEYİN ALİ TAŞCI",
+      "sinif": "8A"
+    },
+    {
+      "sira": 24,
+      "no": 690,
+      "adSoyad": "MOAMIN MOHAMMED YOUNUS YOUNUS",
+      "sinif": "8A"
+    },
+    {
+      "sira": 25,
+      "no": 708,
+      "adSoyad": "MUHAMMED EMİR KACIR",
+      "sinif": "8A"
+    },
+    {
+      "sira": 26,
+      "no": 749,
+      "adSoyad": "BERAT MORANER",
+      "sinif": "8A"
+    },
+    {
+      "sira": 27,
+      "no": 22,
+      "adSoyad": "ENES ÖZ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 28,
+      "no": 55,
+      "adSoyad": "HALİL İBRAHİM LİMON",
+      "sinif": "6C"
+    },
+    {
+      "sira": 29,
+      "no": 61,
+      "adSoyad": "MUSTAFA GÜL",
+      "sinif": "6C"
+    },
+    {
+      "sira": 30,
+      "no": 63,
+      "adSoyad": "AHMET LATİF ALP",
+      "sinif": "6C"
+    },
+    {
+      "sira": 31,
+      "no": 142,
+      "adSoyad": "MEHMET EYMEN YALÇIN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 32,
+      "no": 147,
+      "adSoyad": "ALİ ÇEC",
+      "sinif": "6C"
+    },
+    {
+      "sira": 33,
+      "no": 159,
+      "adSoyad": "AHMET YASİR AKTAŞ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 34,
+      "no": 195,
+      "adSoyad": "ALPER ERGÜN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 35,
+      "no": 295,
+      "adSoyad": "MUHAMMED MUSAB CERAN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 36,
+      "no": 305,
+      "adSoyad": "ENSAR BULDUK",
+      "sinif": "6C"
+    },
+    {
+      "sira": 37,
+      "no": 307,
+      "adSoyad": "MUHAMMED RECEB BÜYÜKDERE",
+      "sinif": "6C"
+    },
+    {
+      "sira": 38,
+      "no": 356,
+      "adSoyad": "RIDVAN TELLİOĞLU",
+      "sinif": "6C"
+    },
+    {
+      "sira": 39,
+      "no": 407,
+      "adSoyad": "ENES HAMZA ERDEĞER",
+      "sinif": "6C"
+    },
+    {
+      "sira": 40,
+      "no": 439,
+      "adSoyad": "AHMET SAMİ YÜKSEL MAVİ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 41,
+      "no": 443,
+      "adSoyad": "ENES NURULLAH SOYLU",
+      "sinif": "6C"
+    },
+    {
+      "sira": 42,
+      "no": 446,
+      "adSoyad": "SELÇUK MUTLU",
+      "sinif": "6C",
+      "xp": 2
+    },
+    {
+      "sira": 43,
+      "no": 459,
+      "adSoyad": "UMUT UZUN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 44,
+      "no": 469,
+      "adSoyad": "AHMET TALHA IŞIK",
+      "sinif": "6C"
+    },
+    {
+      "sira": 45,
+      "no": 480,
+      "adSoyad": "AHMET DÜNER",
+      "sinif": "6C"
+    },
+    {
+      "sira": 46,
+      "no": 508,
+      "adSoyad": "MUHAMMED ENSAR KÖLEMEN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 47,
+      "no": 547,
+      "adSoyad": "HASAN KÜÇÜKTOSUN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 48,
+      "no": 560,
+      "adSoyad": "SEYİT EMİR AKSEKİ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 49,
+      "no": 570,
+      "adSoyad": "MEHMET BUĞRA IŞIK",
+      "sinif": "6C"
+    },
+    {
+      "sira": 50,
+      "no": 574,
+      "adSoyad": "MUHAMMED YASİR CERİ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 51,
+      "no": 587,
+      "adSoyad": "MUHAMMED KAYRA BAYAM",
+      "sinif": "6C"
+    },
+    {
+      "sira": 52,
+      "no": 595,
+      "adSoyad": "ALAEDDİN BARAZİ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 53,
+      "no": 604,
+      "adSoyad": "YUSUF YILDIZ",
+      "sinif": "6C"
+    },
+    {
+      "sira": 54,
+      "no": 713,
+      "adSoyad": "KERİM ESEN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 55,
+      "no": 720,
+      "adSoyad": "AHMET EFE ÇİMEN",
+      "sinif": "6C"
+    },
+    {
+      "sira": 56,
+      "no": 728,
+      "adSoyad": "MUHAMMED ERKAM GÖZE",
+      "sinif": "6C"
+    },
+    {
+      "sira": 57,
+      "no": 16,
+      "adSoyad": "ISAM OSMAN",
+      "sinif": "6D"
+    },
+    {
+      "sira": 58,
+      "no": 109,
+      "adSoyad": "İBRAHİM HAMZA ATEŞ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 59,
+      "no": 150,
+      "adSoyad": "AHMET BİLECİK",
+      "sinif": "6D"
+    },
+    {
+      "sira": 60,
+      "no": 200,
+      "adSoyad": "BAHADIR MEHMETALİ KAYA",
+      "sinif": "6D"
+    },
+    {
+      "sira": 61,
+      "no": 204,
+      "adSoyad": "EMİR KILIÇ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 62,
+      "no": 215,
+      "adSoyad": "EYMEN SEFA YAMAN",
+      "sinif": "6D"
+    },
+    {
+      "sira": 63,
+      "no": 221,
+      "adSoyad": "HÜSEYİN TOPCU",
+      "sinif": "6D"
+    },
+    {
+      "sira": 64,
+      "no": 225,
+      "adSoyad": "İSMAİL HASBİ ÖZCAN",
+      "sinif": "6D"
+    },
+    {
+      "sira": 65,
+      "no": 232,
+      "adSoyad": "MEHMET CAFER SARI",
+      "sinif": "6D"
+    },
+    {
+      "sira": 66,
+      "no": 238,
+      "adSoyad": "MEHMET TALHA UYMAZ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 67,
+      "no": 255,
+      "adSoyad": "MUHAMMED EMİN ÜLKER",
+      "sinif": "6D"
+    },
+    {
+      "sira": 68,
+      "no": 287,
+      "adSoyad": "MUHAMMED KAMİL KAYA",
+      "sinif": "6D"
+    },
+    {
+      "sira": 69,
+      "no": 300,
+      "adSoyad": "MUSTAFA EREN İNCE",
+      "sinif": "6D"
+    },
+    {
+      "sira": 70,
+      "no": 301,
+      "adSoyad": "MUSTAFA TEKELİ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 71,
+      "no": 302,
+      "adSoyad": "NAİL ERDEM GÖK",
+      "sinif": "6D"
+    },
+    {
+      "sira": 72,
+      "no": 303,
+      "adSoyad": "ÖMER BERAT KAYDU",
+      "sinif": "6D"
+    },
+    {
+      "sira": 73,
+      "no": 314,
+      "adSoyad": "SAİD AKDAĞ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 74,
+      "no": 325,
+      "adSoyad": "TAHİR BURAK ATMACA",
+      "sinif": "6D"
+    },
+    {
+      "sira": 75,
+      "no": 370,
+      "adSoyad": "BERAT EFE GÖKMEN",
+      "sinif": "6D"
+    },
+    {
+      "sira": 76,
+      "no": 376,
+      "adSoyad": "EYMEN EDİB ERDOĞAN",
+      "sinif": "6D"
+    },
+    {
+      "sira": 77,
+      "no": 429,
+      "adSoyad": "ALİ SAİD KIR",
+      "sinif": "6D"
+    },
+    {
+      "sira": 78,
+      "no": 431,
+      "adSoyad": "MUHAMMED BERAT GÖKTEKE",
+      "sinif": "6D"
+    },
+    {
+      "sira": 79,
+      "no": 435,
+      "adSoyad": "RECEP ZAHİT AKKUŞ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 80,
+      "no": 513,
+      "adSoyad": "SELİM ÇETİNKAYA",
+      "sinif": "6D"
+    },
+    {
+      "sira": 81,
+      "no": 573,
+      "adSoyad": "MUSTAFA KEREM KARAKAYA",
+      "sinif": "6D"
+    },
+    {
+      "sira": 82,
+      "no": 578,
+      "adSoyad": "MUHAMMET SAİD YAZAR",
+      "sinif": "6D"
+    },
+    {
+      "sira": 83,
+      "no": 584,
+      "adSoyad": "HİDAYET BAYSAL",
+      "sinif": "6D"
+    },
+    {
+      "sira": 84,
+      "no": 700,
+      "adSoyad": "YAVUZ SELİM SEVİNÇ",
+      "sinif": "6D"
+    },
+    {
+      "sira": 85,
+      "no": 734,
+      "adSoyad": "GÖRKEM MERT",
+      "sinif": "6D"
+    },
+    {
+      "sira": 86,
+      "no": 59,
+      "adSoyad": "MUHAMMED ENES TÜREM",
+      "sinif": "6E"
+    },
+    {
+      "sira": 87,
+      "no": 64,
+      "adSoyad": "TAHA HALİL ÖZKAYA",
+      "sinif": "6E"
+    },
+    {
+      "sira": 88,
+      "no": 117,
+      "adSoyad": "KEREM YAVUZ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 89,
+      "no": 186,
+      "adSoyad": "ALİ İHSAN ASLANKAYA",
+      "sinif": "6E"
+    },
+    {
+      "sira": 90,
+      "no": 208,
+      "adSoyad": "ADNAN MİRZA SAĞLAM",
+      "sinif": "6E"
+    },
+    {
+      "sira": 91,
+      "no": 222,
+      "adSoyad": "İHSAN BEDİR ÇETİNKAYA",
+      "sinif": "6E"
+    },
+    {
+      "sira": 92,
+      "no": 234,
+      "adSoyad": "MEHMET EMİN AYDOĞDU",
+      "sinif": "6E"
+    },
+    {
+      "sira": 93,
+      "no": 239,
+      "adSoyad": "MELİH EREN ÇAMLIBOĞAZ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 94,
+      "no": 246,
+      "adSoyad": "MUAMMER EREN ÇALMAZ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 95,
+      "no": 249,
+      "adSoyad": "MUAMMER ORAL",
+      "sinif": "6E"
+    },
+    {
+      "sira": 96,
+      "no": 270,
+      "adSoyad": "MUHAMMED BUĞRA ÇOBAN",
+      "sinif": "6E"
+    },
+    {
+      "sira": 97,
+      "no": 280,
+      "adSoyad": "MUHAMMED FURKAN YILMAZ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 98,
+      "no": 284,
+      "adSoyad": "MUHAMMED HÜSEYİN ÖRDEK",
+      "sinif": "6E"
+    },
+    {
+      "sira": 99,
+      "no": 304,
+      "adSoyad": "ÖMER FARUK ÇELİK",
+      "sinif": "6E"
+    },
+    {
+      "sira": 100,
+      "no": 329,
+      "adSoyad": "ÜVEYS BAKİ NASIR",
+      "sinif": "6E"
+    },
+    {
+      "sira": 101,
+      "no": 362,
+      "adSoyad": "VELİ BARAN ÖZKAN",
+      "sinif": "6E"
+    },
+    {
+      "sira": 102,
+      "no": 364,
+      "adSoyad": "YAHYA HASAN MERTEK",
+      "sinif": "6E"
+    },
+    {
+      "sira": 103,
+      "no": 377,
+      "adSoyad": "ÖMER TALHA YUMAK",
+      "sinif": "6E"
+    },
+    {
+      "sira": 104,
+      "no": 395,
+      "adSoyad": "MUZAFFER ÖMER ERGÜN",
+      "sinif": "6E"
+    },
+    {
+      "sira": 105,
+      "no": 422,
+      "adSoyad": "TAHA DURMAZ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 106,
+      "no": 425,
+      "adSoyad": "YAHYA YILDIRIM",
+      "sinif": "6E"
+    },
+    {
+      "sira": 107,
+      "no": 436,
+      "adSoyad": "ABDULKARIM AL AJJAJ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 108,
+      "no": 440,
+      "adSoyad": "BURAK KÖROĞLU",
+      "sinif": "6E"
+    },
+    {
+      "sira": 109,
+      "no": 493,
+      "adSoyad": "AHMED UYSAL",
+      "sinif": "6E"
+    },
+    {
+      "sira": 110,
+      "no": 540,
+      "adSoyad": "MUHAMMED KAMİL KOÇYİĞİT",
+      "sinif": "6E"
+    },
+    {
+      "sira": 111,
+      "no": 553,
+      "adSoyad": "YUSUF EREN DEMİRCİ",
+      "sinif": "6E"
+    },
+    {
+      "sira": 112,
+      "no": 559,
+      "adSoyad": "OĞUZHAN KÜÇÜKKALAY",
+      "sinif": "6E"
+    },
+    {
+      "sira": 113,
+      "no": 623,
+      "adSoyad": "MUHAMMED SELİM BİRER",
+      "sinif": "6E"
+    },
+    {
+      "sira": 114,
+      "no": 696,
+      "adSoyad": "EFE ERASLAN",
+      "sinif": "6E"
+    },
+    {
+      "sira": 115,
+      "no": 711,
+      "adSoyad": "FURKAN ÖZDEMİR",
+      "sinif": "6E"
+    },
+    {
+      "sira": 116,
+      "no": 733,
+      "adSoyad": "GÖKTÜRK GEZEROĞLU",
+      "sinif": "6E"
+    },
+    {
+      "sira": 117,
+      "no": 744,
+      "adSoyad": "ERTUĞRUL ERTAVUKCU",
+      "sinif": "6E"
+    }
+  ],
+  "groups": "\n            <div class=\"group-card\">\n                <h3>\n                    <input type=\"text\" class=\"group-title-input\" value=\"Küme 1\" oninput=\"saveData()\"> \n                    <button class=\"action-btn btn-delete\" onclick=\"if(confirm('Bu kümeyi silmek istediğinize emin misiniz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}\" title=\"Küme Sil\"><i class=\"fas fa-times\"></i></button>\n                </h3>\n                <ul style=\"padding:0;list-style:none;\">\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"SELÇUK MUTLU\">446 - SELÇUK MUTLU</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">2 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('SELÇUK MUTLU', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('SELÇUK MUTLU', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('SELÇUK MUTLU', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(231, 76, 60);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\" selected=\"selected\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"YUSUF YILDIZ\">604 - YUSUF YILDIZ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('YUSUF YILDIZ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('YUSUF YILDIZ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('YUSUF YILDIZ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(52, 152, 219);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\" selected=\"selected\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MEHMET EYMEN YALÇIN\">142 - MEHMET EYMEN YALÇIN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MEHMET EYMEN YALÇIN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MEHMET EYMEN YALÇIN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MEHMET EYMEN YALÇIN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: black; background-color: rgb(241, 196, 15);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\" selected=\"selected\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"AHMET LATİF ALP\">63 - AHMET LATİF ALP</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('AHMET LATİF ALP', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('AHMET LATİF ALP', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('AHMET LATİF ALP', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(155, 89, 182);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\" selected=\"selected\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"UMUT UZUN\">459 - UMUT UZUN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('UMUT UZUN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('UMUT UZUN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('UMUT UZUN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: var(--text-main); background-color: var(--input-bg);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\" selected=\"selected\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li></ul>\n            <div class=\"group-footer\">\n                <button class=\"btn btn-purple\" style=\"font-size:11px; padding:8px;\" onclick=\"addXPToGroup(this)\">\n                    <i class=\"fas fa-users-cog me-1\"></i> Kümeye Toplu Puan Ver\n                </button>\n                <div style=\"display:flex; gap:5px;\">\n                    <select class=\"student-picker\" style=\"flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);\"><option value=\"\">Öğrenci Seç...</option></select>\n                    <button class=\"btn\" onclick=\"addStudentToGroupUI(this)\" style=\"padding:8px 15px; font-size:12px;\">Ekle</button>\n                </div>\n            </div>\n            </div>\n            <div class=\"group-card\">\n                <h3>\n                    <input type=\"text\" class=\"group-title-input\" value=\"Küme 2\" oninput=\"saveData()\"> \n                    <button class=\"action-btn btn-delete\" onclick=\"if(confirm('Bu kümeyi silmek istediğinize emin misiniz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}\" title=\"Küme Sil\"><i class=\"fas fa-times\"></i></button>\n                </h3>\n                <ul style=\"padding:0;list-style:none;\">\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUHAMMED KAYRA BAYAM\">587 - MUHAMMED KAYRA BAYAM</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUHAMMED KAYRA BAYAM', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUHAMMED KAYRA BAYAM', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUHAMMED KAYRA BAYAM', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(231, 76, 60);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\" selected=\"selected\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUSTAFA GÜL\">61 - MUSTAFA GÜL</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUSTAFA GÜL', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUSTAFA GÜL', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUSTAFA GÜL', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(52, 152, 219);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\" selected=\"selected\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"SEYİT EMİR AKSEKİ\">560 - SEYİT EMİR AKSEKİ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('SEYİT EMİR AKSEKİ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('SEYİT EMİR AKSEKİ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('SEYİT EMİR AKSEKİ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: black; background-color: rgb(241, 196, 15);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\" selected=\"selected\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ALAEDDİN BARAZİ\">595 - ALAEDDİN BARAZİ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ALAEDDİN BARAZİ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ALAEDDİN BARAZİ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ALAEDDİN BARAZİ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(155, 89, 182);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\" selected=\"selected\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ALPER ERGÜN\">195 - ALPER ERGÜN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ALPER ERGÜN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ALPER ERGÜN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ALPER ERGÜN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: var(--text-main); background-color: var(--input-bg);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\" selected=\"selected\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li></ul>\n            <div class=\"group-footer\">\n                <button class=\"btn btn-purple\" style=\"font-size:11px; padding:8px;\" onclick=\"addXPToGroup(this)\">\n                    <i class=\"fas fa-users-cog me-1\"></i> Kümeye Toplu Puan Ver\n                </button>\n                <div style=\"display:flex; gap:5px;\">\n                    <select class=\"student-picker\" style=\"flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);\"><option value=\"\">Öğrenci Seç...</option></select>\n                    <button class=\"btn\" onclick=\"addStudentToGroupUI(this)\" style=\"padding:8px 15px; font-size:12px;\">Ekle</button>\n                </div>\n            </div>\n            </div>\n            <div class=\"group-card\">\n                <h3>\n                    <input type=\"text\" class=\"group-title-input\" value=\"Küme 3\" oninput=\"saveData()\"> \n                    <button class=\"action-btn btn-delete\" onclick=\"if(confirm('Bu kümeyi silmek istediğinize emin misiniz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}\" title=\"Küme Sil\"><i class=\"fas fa-times\"></i></button>\n                </h3>\n                <ul style=\"padding:0;list-style:none;\">\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"AHMET EFE ÇİMEN\">720 - AHMET EFE ÇİMEN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('AHMET EFE ÇİMEN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('AHMET EFE ÇİMEN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('AHMET EFE ÇİMEN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(231, 76, 60);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\" selected=\"selected\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ENES HAMZA ERDEĞER\">407 - ENES HAMZA ERDEĞER</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ENES HAMZA ERDEĞER', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ENES HAMZA ERDEĞER', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ENES HAMZA ERDEĞER', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(52, 152, 219);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\" selected=\"selected\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"AHMET DÜNER\">480 - AHMET DÜNER</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('AHMET DÜNER', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('AHMET DÜNER', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('AHMET DÜNER', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: black; background-color: rgb(241, 196, 15);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\" selected=\"selected\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"HALİL İBRAHİM LİMON\">55 - HALİL İBRAHİM LİMON</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('HALİL İBRAHİM LİMON', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('HALİL İBRAHİM LİMON', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('HALİL İBRAHİM LİMON', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(155, 89, 182);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\" selected=\"selected\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"AHMET TALHA IŞIK\">469 - AHMET TALHA IŞIK</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('AHMET TALHA IŞIK', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('AHMET TALHA IŞIK', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('AHMET TALHA IŞIK', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: var(--text-main); background-color: var(--input-bg);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\" selected=\"selected\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li></ul>\n            <div class=\"group-footer\">\n                <button class=\"btn btn-purple\" style=\"font-size:11px; padding:8px;\" onclick=\"addXPToGroup(this)\">\n                    <i class=\"fas fa-users-cog me-1\"></i> Kümeye Toplu Puan Ver\n                </button>\n                <div style=\"display:flex; gap:5px;\">\n                    <select class=\"student-picker\" style=\"flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);\"><option value=\"\">Öğrenci Seç...</option></select>\n                    <button class=\"btn\" onclick=\"addStudentToGroupUI(this)\" style=\"padding:8px 15px; font-size:12px;\">Ekle</button>\n                </div>\n            </div>\n            </div>\n            <div class=\"group-card\">\n                <h3>\n                    <input type=\"text\" class=\"group-title-input\" value=\"Küme 4\" oninput=\"saveData()\"> \n                    <button class=\"action-btn btn-delete\" onclick=\"if(confirm('Bu kümeyi silmek istediğinize emin misiniz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}\" title=\"Küme Sil\"><i class=\"fas fa-times\"></i></button>\n                </h3>\n                <ul style=\"padding:0;list-style:none;\">\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ENES ÖZ\">22 - ENES ÖZ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ENES ÖZ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ENES ÖZ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ENES ÖZ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(231, 76, 60);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\" selected=\"selected\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MEHMET BUĞRA IŞIK\">570 - MEHMET BUĞRA IŞIK</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MEHMET BUĞRA IŞIK', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MEHMET BUĞRA IŞIK', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MEHMET BUĞRA IŞIK', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(52, 152, 219);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\" selected=\"selected\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"KERİM ESEN\">713 - KERİM ESEN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('KERİM ESEN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('KERİM ESEN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('KERİM ESEN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: black; background-color: rgb(241, 196, 15);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\" selected=\"selected\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ALİ ÇEC\">147 - ALİ ÇEC</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ALİ ÇEC', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ALİ ÇEC', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ALİ ÇEC', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(155, 89, 182);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\" selected=\"selected\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"RIDVAN TELLİOĞLU\">356 - RIDVAN TELLİOĞLU</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('RIDVAN TELLİOĞLU', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('RIDVAN TELLİOĞLU', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('RIDVAN TELLİOĞLU', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: var(--text-main); background-color: var(--input-bg);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\" selected=\"selected\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li></ul>\n            <div class=\"group-footer\">\n                <button class=\"btn btn-purple\" style=\"font-size:11px; padding:8px;\" onclick=\"addXPToGroup(this)\">\n                    <i class=\"fas fa-users-cog me-1\"></i> Kümeye Toplu Puan Ver\n                </button>\n                <div style=\"display:flex; gap:5px;\">\n                    <select class=\"student-picker\" style=\"flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);\"><option value=\"\">Öğrenci Seç...</option></select>\n                    <button class=\"btn\" onclick=\"addStudentToGroupUI(this)\" style=\"padding:8px 15px; font-size:12px;\">Ekle</button>\n                </div>\n            </div>\n            </div>\n            <div class=\"group-card\">\n                <h3>\n                    <input type=\"text\" class=\"group-title-input\" value=\"Küme 5\" oninput=\"saveData()\"> \n                    <button class=\"action-btn btn-delete\" onclick=\"if(confirm('Bu kümeyi silmek istediğinize emin misiniz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}\" title=\"Küme Sil\"><i class=\"fas fa-times\"></i></button>\n                </h3>\n                <ul style=\"padding:0;list-style:none;\">\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ENSAR BULDUK\">305 - ENSAR BULDUK</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ENSAR BULDUK', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ENSAR BULDUK', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ENSAR BULDUK', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(231, 76, 60);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\" selected=\"selected\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"AHMET SAMİ YÜKSEL MAVİ\">439 - AHMET SAMİ YÜKSEL MAVİ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('AHMET SAMİ YÜKSEL MAVİ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('AHMET SAMİ YÜKSEL MAVİ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('AHMET SAMİ YÜKSEL MAVİ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(52, 152, 219);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\" selected=\"selected\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"AHMET YASİR AKTAŞ\">159 - AHMET YASİR AKTAŞ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('AHMET YASİR AKTAŞ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('AHMET YASİR AKTAŞ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('AHMET YASİR AKTAŞ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: black; background-color: rgb(241, 196, 15);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\" selected=\"selected\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUHAMMED ERKAM GÖZE\">728 - MUHAMMED ERKAM GÖZE</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUHAMMED ERKAM GÖZE', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUHAMMED ERKAM GÖZE', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUHAMMED ERKAM GÖZE', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(155, 89, 182);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\" selected=\"selected\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"HASAN KÜÇÜKTOSUN\">547 - HASAN KÜÇÜKTOSUN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('HASAN KÜÇÜKTOSUN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('HASAN KÜÇÜKTOSUN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('HASAN KÜÇÜKTOSUN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: var(--text-main); background-color: var(--input-bg);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\" selected=\"selected\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li></ul>\n            <div class=\"group-footer\">\n                <button class=\"btn btn-purple\" style=\"font-size:11px; padding:8px;\" onclick=\"addXPToGroup(this)\">\n                    <i class=\"fas fa-users-cog me-1\"></i> Kümeye Toplu Puan Ver\n                </button>\n                <div style=\"display:flex; gap:5px;\">\n                    <select class=\"student-picker\" style=\"flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);\"><option value=\"\">Öğrenci Seç...</option></select>\n                    <button class=\"btn\" onclick=\"addStudentToGroupUI(this)\" style=\"padding:8px 15px; font-size:12px;\">Ekle</button>\n                </div>\n            </div>\n            </div>\n            <div class=\"group-card\">\n                <h3>\n                    <input type=\"text\" class=\"group-title-input\" value=\"Küme 6\" oninput=\"saveData()\"> \n                    <button class=\"action-btn btn-delete\" onclick=\"if(confirm('Bu kümeyi silmek istediğinize emin misiniz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}\" title=\"Küme Sil\"><i class=\"fas fa-times\"></i></button>\n                </h3>\n                <ul style=\"padding:0;list-style:none;\">\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUHAMMED RECEB BÜYÜKDERE\">307 - MUHAMMED RECEB BÜYÜKDERE</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUHAMMED RECEB BÜYÜKDERE', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUHAMMED RECEB BÜYÜKDERE', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUHAMMED RECEB BÜYÜKDERE', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(231, 76, 60);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\" selected=\"selected\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUHAMMED MUSAB CERAN\">295 - MUHAMMED MUSAB CERAN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUHAMMED MUSAB CERAN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUHAMMED MUSAB CERAN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUHAMMED MUSAB CERAN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(52, 152, 219);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\" selected=\"selected\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"ENES NURULLAH SOYLU\">443 - ENES NURULLAH SOYLU</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('ENES NURULLAH SOYLU', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('ENES NURULLAH SOYLU', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('ENES NURULLAH SOYLU', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: black; background-color: rgb(241, 196, 15);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\" selected=\"selected\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUHAMMED ENSAR KÖLEMEN\">508 - MUHAMMED ENSAR KÖLEMEN</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUHAMMED ENSAR KÖLEMEN', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUHAMMED ENSAR KÖLEMEN', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUHAMMED ENSAR KÖLEMEN', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: white; background-color: rgb(155, 89, 182);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\" selected=\"selected\">Sözcü</option>\n                            <option value=\"2. Malzemeci\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li>\n                <li style=\"margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;\">\n                    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n                        <span class=\"student-name-text\" style=\"font-weight: 600; font-size: 14px;\" data-name=\"MUHAMMED YASİR CERİ\">574 - MUHAMMED YASİR CERİ</span>\n                        <div style=\"display:flex; align-items:center; gap:5px;\">\n                            <span class=\"xp-badge\" style=\"font-size:10px; padding:1px 5px;\">0 XP</span>\n                            <button class=\"btn-mini-xp btn-mini-plus\" onclick=\"addXPByName('MUHAMMED YASİR CERİ', 1)\" title=\"+1 Puan\">+</button>\n                            <button class=\"btn-mini-xp btn-mini-minus\" onclick=\"addXPByName('MUHAMMED YASİR CERİ', -1)\" title=\"-1 Puan\">-</button>\n                            <button class=\"btn-mini-xp btn-mini-question\" onclick=\"addXPByName('MUHAMMED YASİR CERİ', 5)\" title=\"Günün Sorusu (+5 XP)\"><i class=\"fas fa-question\"></i></button>\n                        </div>\n                    </div>\n                    <div style=\"display:flex; gap:8px; align-items:center;\">\n                        <select class=\"role-select\" onchange=\"updateRoleColor(this)\" style=\"color: var(--text-main); background-color: var(--input-bg);\">\n                            <option value=\"\">Görev...</option>\n                            <option value=\"Yönetici\">Yönetici</option>\n                            <option value=\"Yazıcı\">Yazıcı</option>\n                            <option value=\"Malzemeci\">Malzemeci</option>\n                            <option value=\"Sözcü\">Sözcü</option>\n                            <option value=\"2. Malzemeci\" selected=\"selected\">2. Malzemeci</option>\n                            <option value=\"2. Yazıcı\">2. Yazıcı</option>\n                            <option value=\"Üye\">Üye</option>\n                        </select>\n                        <button class=\"btn-remove-student\" onclick=\"this.closest('li').remove(); updateStudentPickers(); saveData();\" title=\"Öğrenciyi Çıkar\"><i class=\"fas fa-user-minus\"></i></button>\n                    </div>\n                </li></ul>\n            <div class=\"group-footer\">\n                <button class=\"btn btn-purple\" style=\"font-size:11px; padding:8px;\" onclick=\"addXPToGroup(this)\">\n                    <i class=\"fas fa-users-cog me-1\"></i> Kümeye Toplu Puan Ver\n                </button>\n                <div style=\"display:flex; gap:5px;\">\n                    <select class=\"student-picker\" style=\"flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);\"><option value=\"\">Öğrenci Seç...</option></select>\n                    <button class=\"btn\" onclick=\"addStudentToGroupUI(this)\" style=\"padding:8px 15px; font-size:12px;\">Ekle</button>\n                </div>\n            </div>\n            </div>",
+  "schedule": [
+    {
+      "day": "Pazartesi",
+      "time": "09:00",
+      "lesson": "10-A Robotik"
+    },
+    {
+      "day": "Salı",
+      "time": "10:30",
+      "lesson": "11-B Kodlama"
+    },
+    {
+      "day": "Çarşamba",
+      "time": "13:00",
+      "lesson": "9-C Tasarım"
+    }
+  ],
+  "tracking": [
+    {
+      "id": 1778856299341.2803,
+      "type": "Ödev",
+      "title": "vffbadfha",
+      "sinif": "6C",
+      "date": "2026-05-15T17:47",
+      "xp": 10,
+      "penaltyXp": 5,
+      "targetStudents": null,
+      "submissions": {},
+      "isNotified": true
+    },
+    {
+      "id": 1778856299341.7188,
+      "type": "Ödev",
+      "title": "vffbadfha",
+      "sinif": "6D",
+      "date": "2026-05-15T17:47",
+      "xp": 10,
+      "penaltyXp": 5,
+      "targetStudents": null,
+      "submissions": {},
+      "isNotified": true
+    },
+    {
+      "id": 1778856299341.7266,
+      "type": "Ödev",
+      "title": "vffbadfha",
+      "sinif": "6E",
+      "date": "2026-05-15T17:47",
+      "xp": 10,
+      "penaltyXp": 5,
+      "targetStudents": null,
+      "submissions": {},
+      "isNotified": true
+    }
+  ],
+  "exams": [
+    {
+      "id": 1779006556160,
+      "title": "ddgdf",
+      "date": "2026-05-17",
+      "sinif": "6C",
+      "results": {}
+    }
+  ],
+  "lastUpdate": "2026-05-17T09:15:59.728Z"
+}
