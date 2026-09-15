@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol - Proje Tabanlı Ders İşleme Sistemi</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease;
+            margin: 0;
+        }
+
+        .auth-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            overflow: visible;
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .logo-container {
+            width: 110px;
+            height: 110px;
+            background: #1e293b;
+            border-radius: 50%;
+            position: absolute;
+            top: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0;
+            overflow: hidden;
+            border: 4px solid #10b981;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            font-size: 45px;
+            color: #10b981;
+        }
+
+        @keyframes popIn {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+
+        .card-body {
+            padding-top: 70px;
+            padding-bottom: 30px;
+            padding-left: 30px;
+            padding-right: 30px;
+            text-align: center;
+        }
+
+        .form-control {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        
+        .input-group-text {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #94a3b8 !important;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+            border-color: #10b981 !important;
+        }
+        
+        .form-control::placeholder {
+            color: #64748b;
+        }
+
+        .btn-register {
+            background-color: #10b981;
+            border: none;
+            padding: 12px;
+            font-size: 1.1rem;
+            transition: 0.3s;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .btn-register:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .footer-link a {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-signature {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            background: rgba(15, 23, 42, 0.8);
+            border-top: 1px solid #334155;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container d-flex justify-content-center">
+        <div class="card auth-card">
+            <div class="logo-container">
+                <i class="fas fa-user-plus"></i>
+            </div>
+
+            <div class="card-body">
+                <h3 class="fw-bold mb-1" style="color: #f8fafc;">Hesap Oluştur</h3>
+                <p class="small mb-4" style="color: #94a3b8;">Proje Tabanlı Ders İşleme Sistemine Kayıt Olun</p>
+
+                <div id="alertBox" class="alert alert-danger d-none text-center p-2 small"></div>
+
+                <form id="registerForm" class="text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small" style="color: #94a3b8;">Ad Soyad</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="fa-solid fa-user"></i></span>
+                            <input type="text" id="name" class="form-control border-start-0" placeholder="Adınız Soyadınız" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small" style="color: #94a3b8;">E-posta</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="fa-solid fa-envelope"></i></span>
+                            <input type="email" id="email" class="form-control border-start-0" placeholder="ornek@mail.com" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small" style="color: #94a3b8;">Şifre (En az 6 karakter)</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="fa-solid fa-lock"></i></span>
+                            <input type="password" id="password" class="form-control border-start-0" placeholder="******" minlength="6" required>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" id="registerBtn" class="btn btn-success btn-register fw-bold text-white">
+                            Kayıt Ol
+                        </button>
+                    </div>
+                </form>
+
+                <div class="footer-link mt-4 small" style="color: #64748b;">
+                    Zaten hesabınız var mı? <a href="login.html">Giriş Yapın</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer-signature">
+        <p class="mb-1 fw-bold">© 2026 Yabgu Eğitim Sistemi</p>
+    </footer>
+
+    <script>
+        const auth = firebase.auth();
+        const db = firebase.database();
+        const alertBox = document.getElementById('alertBox');
+        const registerBtn = document.getElementById('registerBtn');
+
+        function showAlert(msg, type = 'danger') {
+            alertBox.textContent = msg;
+            alertBox.className = `alert alert-${type} text-center p-2 small`;
+            alertBox.classList.remove('d-none');
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kaydediliyor...';
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    // Realtime Database'e kaydet, onayli = false
+                    return db.ref("kullanicilar/" + user.uid).set({
+                        adSoyad: name,
+                        email: email,
+                        onayli: false,
+                        kayitTarihi: firebase.database.ServerValue.TIMESTAMP
+                    });
+                })
+                .then(() => {
+                    // İşlem bittikten sonra oturumu kapat
+                    auth.signOut();
+                    showAlert("Kayıt başarılı! Yönetici onayından sonra giriş yapabilirsiniz.", "success");
+                    document.getElementById('registerForm').reset();
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = 'Kayıt Ol';
+                })
+                .catch((error) => {
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = 'Kayıt Ol';
+                    let msg = "Kayıt hatası: " + error.message;
+                    if (error.code === 'auth/email-already-in-use') msg = "Bu e-posta adresi zaten kullanılıyor.";
+                    if (error.code === 'auth/weak-password') msg = "Şifreniz çok zayıf (en az 6 karakter olmalı).";
+                    showAlert(msg);
+                });
+        });
+    </script>
+</body>
+</html>

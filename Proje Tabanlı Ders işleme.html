@@ -12,9 +12,46 @@
     
     <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics-compat.js"></script>
     <script src="firebase-config.js"></script>
+    
+    <script>
+        // Her öğretmene özel veritabanı yolu
+        window.userDBPath = "app_data/main_data";
+
+        // Yetkisiz erişimi engelle ve kullanıcı bazlı veritabanı rotasını ayarla
+        firebase.auth().onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // İsmi Göster
+                const db = firebase.database();
+                db.ref("kullanicilar/" + user.uid).once("value").then(snapshot => {
+                    const nameSpan = document.getElementById('user-display-name');
+                    if(nameSpan) {
+                        if(snapshot.exists() && snapshot.val().adSoyad) {
+                            nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${snapshot.val().adSoyad}`;
+                        } else {
+                            nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${user.email}`;
+                        }
+                    }
+                });
+
+                // İstisnasız herkesin veritabanı kendi UID'si altında oluşturulur
+                window.userDBPath = "app_data/" + user.uid;
+                
+                // Kullanıcı kimliği belli olduktan sonra verileri yükle
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => loadFromLocalStorage());
+                } else {
+                    loadFromLocalStorage();
+                }
+            }
+        });
+    </script>
     
     <style>
         :root { 
@@ -540,9 +577,11 @@
 
 <div class="container">
     <div class="theme-switcher">
+        <span id="user-display-name" style="margin-right: 15px; font-weight: 500; font-size: 14px; color: var(--text-main); display: inline-flex; align-items: center; gap: 6px;"></span>
         <button class="theme-btn" onclick="setTheme('light')" title="Gündüz Modu"><i class="fas fa-sun"></i></button>
         <button class="theme-btn" onclick="setTheme('dark')" title="Gece Modu"><i class="fas fa-moon"></i></button>
         <button class="theme-btn" onclick="setTheme('auto')" title="Sistem Rengi"><i class="fas fa-desktop"></i></button>
+        <button class="theme-btn" onclick="logoutUser()" title="Çıkış Yap" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i></button>
     </div>
     <h1>
         Proje Tabanlı Ders İşleme Yönetim Paneli
@@ -619,6 +658,7 @@
                     <select id="class-view-filter" onchange="searchStudents()" class="search-bar" style="flex: 1; cursor: pointer;">
                         <option value="">Tüm Sınıflar</option>
                     </select>
+                    <button class="btn" style="background: #ef4444; padding: 10px 15px;" onclick="deleteSelectedStudents()" title="Seçilenleri Sil"><i class="fas fa-trash-alt"></i> Seçilenleri Sil</button>
                 </div>
                 
                 <div class="table-container">
@@ -1129,7 +1169,8 @@
                             <button id="chart-mode-class" class="btn" style="font-size:11px; padding:5px 10px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border);" onclick="setChartMode('class')"><i class="fas fa-users"></i> Sınıf Genel</button>
                             <button id="chart-mode-radar" class="btn" style="font-size:11px; padding:5px 10px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border);" onclick="setChartMode('radar')"><i class="fas fa-spider"></i> Radar</button>
                             <button id="chart-mode-compare" class="btn" style="font-size:11px; padding:5px 10px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border);" onclick="setChartMode('compare')"><i class="fas fa-layer-group"></i> Şubeleri Kıyasla</button>
-                            <button class="btn" style="font-size:11px; padding:5px 10px; background:#25D366; color:white; border:none;" onclick="sendExamResultToWhatsApp()"><i class="fab fa-whatsapp"></i> Veliye Gönder</button>
+                            <button class="btn" style="font-size:11px; padding:5px 10px; background:#25D366; color:white; border:none;" onclick="sendExamResultToWhatsApp()"><i class="fab fa-whatsapp"></i> Veliye WA</button>
+                            <button class="btn" style="font-size:11px; padding:5px 10px; background:#00B2FF; color:white; border:none;" onclick="sendExamResultToBip()"><i class="fas fa-comment-dots"></i> Veliye BiP</button>
                             <button class="action-btn btn-delete" onclick="document.getElementById('chart-modal').style.display='none'; if(myChart){myChart.destroy();myChart=null;}"><i class="fas fa-times"></i></button>
                         </div>
                     </div>
@@ -1470,7 +1511,8 @@
             <div style="display:flex;gap:8px;">
                 <input type="text" id="pg-msg-input" placeholder="Düzeltme veya mesajınızı yazın..." style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-main);font-size:13px;" onkeydown="if(event.key==='Enter')pgSendMessage()">
                 <button class="btn" onclick="pgSendMessage()" style="padding:10px 16px;font-size:13px;background:var(--secondary);">Gönder</button>
-                <button class="btn" onclick="pgShareMsgWhatsapp()" style="padding:10px 16px;font-size:13px;background:#25D366;"><i class="fab fa-whatsapp"></i></button>
+                <button class="btn" onclick="pgShareMsgWhatsapp()" style="padding:10px 16px;font-size:13px;background:#25D366;" title="WhatsApp'ta Paylaş"><i class="fab fa-whatsapp"></i></button>
+                <button class="btn" onclick="pgShareMsgBip()" style="padding:10px 16px;font-size:13px;background:#00B2FF;" title="BiP'te Paylaş"><i class="fas fa-comment-dots"></i></button>
             </div>
         </div>
 
@@ -1826,12 +1868,30 @@
             saveData(); // İnternet geldiğinde yerelde biriken verileri senkronize et
         });
         window.addEventListener('offline', updateDbStatusIcon);
-
-        await loadFromLocalStorage();
     });
 
+    // KULLANICI ÇIKIŞ FONKSİYONU
+    function logoutUser() {
+        if(confirm('Hesabınızdan çıkış yapmak istediğinize emin misiniz?')) {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'login.html';
+            }).catch(error => {
+                console.error("Çıkış yapılırken hata oluştu:", error);
+                alert("Çıkış yapılırken bir hata oluştu.");
+            });
+        }
+    }
+
     // VERİ KAYDETME VE YÜKLEME SİSTEMLERİ
-    async function saveData() {
+    let saveTimeout = null;
+    function saveData() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            _executeSaveData();
+        }, 1500); // 1.5 saniyelik debounce süresi
+    }
+
+    async function _executeSaveData() {
         document.querySelectorAll('.group-title-input').forEach(input => input.setAttribute('value', input.value));
         document.querySelectorAll('.role-select').forEach(sel => {
             Array.from(sel.options).forEach(opt => {
@@ -1842,8 +1902,9 @@
 
         const selectedClass = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
         if (selectedClass) {
+            const safeClass = selectedClass.replace(/\//g, '_');
             if (typeof groupData !== 'object' || groupData === null) groupData = {};
-            groupData[selectedClass] = document.getElementById('groups-container').innerHTML;
+            groupData[safeClass] = document.getElementById('groups-container').innerHTML;
         }
 
         const dataToSave = {
@@ -1863,7 +1924,7 @@
 
         try {
             // Firestore yerine Realtime Database update metodu kullanıyoruz
-            await db.ref("app_data/main_data").update(dataToSave);
+            await db.ref(window.userDBPath).update(dataToSave);
             
             document.getElementById('db-status').style.color = 'var(--accent)';
             document.getElementById('db-status').title = 'Realtime Database Bağlantısı Aktif';
@@ -1876,14 +1937,31 @@
 
     async function loadFromLocalStorage() {
         try {
+            // GÖÇ (MIGRATION) MANTIĞI: Eğer yönetici ise ve kendi klasörü boşsa eski main_data'dan kopyala
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser && currentUser.email === 'mremzi@gmail.com') {
+                const snapshot = await db.ref(window.userDBPath).once('value');
+                if (!snapshot.exists()) {
+                    console.log("Yönetici verileri yeni özel klasöre taşınıyor...");
+                    const oldDataSnapshot = await db.ref("app_data/main_data").once('value');
+                    if (oldDataSnapshot.exists()) {
+                        await db.ref(window.userDBPath).set(oldDataSnapshot.val());
+                        console.log("Eski veriler başarıyla yeni kişisel klasöre aktarıldı!");
+                    }
+                }
+            }
+
             // Realtime Database üzerinden canlı (realtime) dinleme
-            db.ref("app_data/main_data").on('value', (snapshot) => {
+            db.ref(window.userDBPath).on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     applyParsedData(data);
                     document.getElementById('db-status').style.color = 'var(--accent)';
                     document.getElementById('db-status').title = 'Realtime Database (Canlı Senkronizasyon)';
                     console.log("Veriler Realtime Database'den canlı yüklendi/güncellendi.");
+                } else {
+                    // Veritabanı boşsa arayüzü sıfırla
+                    applyParsedData({});
                 }
             }, (error) => {
                 console.error("Realtime DB canlı çekme hatası:", error);
@@ -1937,6 +2015,15 @@
                 ...formsObj[key]
             })).reverse(); 
 
+            function escapeHTML(str) {
+                return (str || '').toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
             formsArray.forEach(data => {
                 const typeText = data.type === 'BEFORE' ? '<span style="color:var(--yellow); font-weight:bold;"><i class="fas fa-home"></i> Dersten Önce</span>' : '<span style="color:#8b5cf6; font-weight:bold;"><i class="fas fa-graduation-cap"></i> Dersten Sonra</span>';
                 
@@ -1974,20 +2061,25 @@
                 let answersHTML = '';
                 if(data.formResponse) {
                     for(const [key, val] of Object.entries(data.formResponse)) {
+                        const safeKey = escapeHTML(key);
+                        const safeVal = escapeHTML(val);
                         if(key === "Eksik Kazanım (Ödev)") {
                             answersHTML += `<div style="margin-top: 8px; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 6px; border-left: 4px solid var(--red); font-size: 13px; color: var(--text-main);">
-                                <strong style="color: var(--red);"><i class="fas fa-exclamation-circle"></i> Öğrencinin Kişisel Ev Ödevi (Tik Atılamayanlar):</strong> <br> ${val}
+                                <strong style="color: var(--red);"><i class="fas fa-exclamation-circle"></i> Öğrencinin Kişisel Ev Ödevi (Tik Atılamayanlar):</strong> <br> ${safeVal}
                             </div>`;
                         } else {
                             answersHTML += `<div style="margin-top: 8px; background: var(--bg); padding: 8px; border-radius: 4px; font-size: 13px;">
-                                <strong>Soru:</strong> ${key} <br> <strong>Cevap:</strong> ${val}
+                                <strong>Soru:</strong> ${safeKey} <br> <strong>Cevap:</strong> ${safeVal}
                             </div>`;
                         }
                     }
                 }
                 
                 // Realtime DB timestamp ms cinsindendir
-                const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleString('tr-TR') : (data.tarih || '');
+                const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleString('tr-TR') : escapeHTML(data.tarih || '');
+                const safeName = escapeHTML(data.adSoyad);
+                const safeClass = escapeHTML(data.sinif);
+                const safeNo = escapeHTML(data.ogrenciNo);
                 
                 const div = document.createElement('div');
                 div.className = 'group-card';
@@ -1995,7 +2087,7 @@
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                         <div>
-                            <h4 style="margin:0 0 5px 0;">${data.adSoyad} <span style="font-size:12px; color:var(--text-muted);">(${data.sinif} - No: ${data.ogrenciNo})</span></h4>
+                            <h4 style="margin:0 0 5px 0;">${safeName} <span style="font-size:12px; color:var(--text-muted);">(${safeClass} - No: ${safeNo})</span></h4>
                             <div style="font-size:12px; color:var(--text-muted);"><i class="fas fa-clock"></i> ${dateStr}</div>
                         </div>
                         <div style="font-size: 13px;">${typeText}</div>
@@ -2010,13 +2102,59 @@
         });
     }
 
+    let pendingSyncData = null;
+    function isUIActive() {
+        const activeModals = ['chart-modal', 'pg-create-modal', 'pg-detail-modal', 'evaluation-modal', 'xp-modal']
+            .some(id => {
+                const el = document.getElementById(id);
+                return el && (el.style.display === 'block' || el.style.display === 'flex');
+            });
+        const activeInput = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+        return activeModals || activeInput;
+    }
+
+    function checkPendingSync() {
+        if (pendingSyncData && !isUIActive()) {
+            console.log("Kilit açıldı, bekleyen güncellemeler uygulanıyor...");
+            const dataToApply = pendingSyncData;
+            pendingSyncData = null;
+            applyParsedData(dataToApply);
+        }
+    }
+
+    // Modal kapanma ve blur olaylarında pending data var mı kontrol et
+    document.addEventListener('focusout', () => setTimeout(checkPendingSync, 100));
+    document.addEventListener('click', () => setTimeout(checkPendingSync, 100));
+
     function applyParsedData(parsed) {
+        if (isUIActive()) {
+            console.log("Kullanıcı aktif, senkronizasyon beklemeye alındı.");
+            pendingSyncData = parsed;
+            return;
+        }
+        
         studentData = parsed.students || [];
         let rawGroups = parsed.groups || {};
+        
+        // Eski verileri (slash nedeniyle iç içe geçmiş objeleri) düzleştirip kurtarma fonksiyonu
+        function flattenGroups(obj, prefix = '') {
+            let result = {};
+            for (let key in obj) {
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    let sub = flattenGroups(obj[key], prefix + key + '/');
+                    Object.assign(result, sub);
+                } else if (typeof obj[key] === 'string') {
+                    let safeKey = (prefix + key).replace(/\//g, '_');
+                    result[safeKey] = obj[key];
+                }
+            }
+            return result;
+        }
+
         if (typeof rawGroups === 'string') {
             groupData = { "Genel": rawGroups }; // Eski string versiyonundan Object'e göç
         } else {
-            groupData = rawGroups;
+            groupData = flattenGroups(rawGroups);
         }
         scheduleData = parsed.schedule || [];
         trackingData = parsed.tracking || [];
@@ -2143,7 +2281,7 @@
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><input type="checkbox" class="row-checkbox"></td>
+                <td><input type="checkbox" class="row-checkbox" data-index="${realIndex}"></td>
                 <td>${student.sira || '-'}</td>
                 <td>${student.no || '-'}</td>
                 <td><span style="font-weight: 600;">${student.adSoyad || '-'}</span>${vakIcon}</td>
@@ -4028,6 +4166,17 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
     
     function toggleSelectAll(source) { document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = source.checked); }
 
+    function deleteSelectedStudents() {
+        const checked = Array.from(document.querySelectorAll('.row-checkbox:checked'));
+        if (checked.length === 0) return alert('Lütfen silmek istediğiniz öğrencileri seçin.');
+        if (!confirm(`Seçili ${checked.length} öğrenci silinecek. Emin misiniz?`)) return;
+        const indicesToDelete = new Set(checked.map(cb => parseInt(cb.dataset.index)));
+        studentData = studentData.filter((_, i) => !indicesToDelete.has(i));
+        document.getElementById('select-all').checked = false;
+        renderStudentTable();
+        saveData();
+    }
+
     function sortTable(column) {
         if (currentSort.column === column) currentSort.asc = !currentSort.asc; else { currentSort.column = column; currentSort.asc = true; }
         studentData.sort((a, b) => {
@@ -4277,7 +4426,8 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         const container = document.getElementById('groups-container'); container.innerHTML = '';
         
         // Önceki sınıftan kalan rastgele grupları database'den siliyoruz ki yenisi yazılsın
-        if (typeof groupData === 'object') groupData[selectedClass] = '';
+        const safeClass = selectedClass.replace(/\//g, '_');
+        if (typeof groupData === 'object') groupData[safeClass] = '';
         
         groups.forEach((group, index) => {
             let html = `<div class="group-card"><h3><input type="text" class="group-title-input" value="Küme ${index + 1}" oninput="saveData()"><button class="action-btn btn-delete" onclick="if(confirm('Kümeyi silmek istiyor musunuz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}" title="Küme Sil"><i class="fas fa-times"></i></button></h3><ul style="padding:0;list-style:none;">`;
@@ -4334,7 +4484,10 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
     function clearAllGroups() { 
         if (confirm('Tüm grupları silmek istediğinize emin misiniz?')) { 
             const selectedClass = document.getElementById('class-filter').value;
-            if (selectedClass && typeof groupData === 'object') groupData[selectedClass] = '';
+            if (selectedClass && typeof groupData === 'object') {
+                const safeClass = selectedClass.replace(/\//g, '_');
+                groupData[safeClass] = '';
+            }
             document.getElementById('groups-container').innerHTML = ''; 
             saveData(); 
         } 
@@ -4351,7 +4504,8 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
 
         // 1. İlgili sınıfın Kümelerini Yükle
         if (container) {
-            container.innerHTML = (typeof groupData === 'object' ? groupData[className] : '') || '';
+            const safeClass = className.replace(/\//g, '_');
+            container.innerHTML = (typeof groupData === 'object' ? groupData[safeClass] : '') || '';
             if (typeof migrateGroupsUI === 'function') migrateGroupsUI();
             document.querySelectorAll('.role-select').forEach(sel => {
                 if (typeof updateRoleColor === 'function') updateRoleColor(sel);
@@ -4462,19 +4616,29 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         times.forEach(time => {
             const tr = document.createElement('tr'); tr.innerHTML = `<td style="font-weight:700; color:var(--secondary);">${time}</td>`;
             days.forEach(day => {
-                const entries = scheduleData.filter(s => s.day === day && s.time === time); let content = '';
+                const td = document.createElement('td');
+                const entries = scheduleData
+                    .map((s, idx) => ({ ...s, _idx: idx }))
+                    .filter(s => s.day === day && s.time === time);
                 entries.forEach(e => {
-                    content += `<div style="background:var(--secondary); color:white; padding:5px 8px; border-radius:8px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>${e.lesson}</span><button onclick="removeFromSchedule('${day}', '${time}', '${e.lesson}')" style="background:none; border:none; color:white; cursor:pointer;"><i class="fas fa-times"></i></button></div>`;
+                    const div = document.createElement('div');
+                    div.style.cssText = 'background:var(--secondary); color:white; padding:5px 8px; border-radius:8px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between; align-items:center;';
+                    div.innerHTML = `<span>${e.lesson}</span>`;
+                    const btn = document.createElement('button');
+                    btn.style.cssText = 'background:none; border:none; color:white; cursor:pointer;';
+                    btn.innerHTML = '<i class="fas fa-times"></i>';
+                    btn.addEventListener('click', () => removeFromSchedule(e._idx));
+                    div.appendChild(btn);
+                    td.appendChild(div);
                 });
-                tr.innerHTML += `<td>${content}</td>`;
+                tr.appendChild(td);
             });
             body.appendChild(tr);
         });
         if (times.length === 0) body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Henüz ders eklenmemiş.</td></tr>';
     }
 
-    function removeFromSchedule(day, time, lesson) { if (confirm('Dersi silmek istediğinize emin misiniz?')) { scheduleData = scheduleData.filter(s => !(s.day === day && s.time === time && s.lesson === lesson)); renderSchedule(); saveData(); } }
+    function removeFromSchedule(idx) { if (confirm('Dersi silmek istediğinize emin misiniz?')) { scheduleData.splice(idx, 1); renderSchedule(); saveData(); } }
     function loadScheduleExcel() {
         const fileInput = document.getElementById('schedule-excel-file'); const file = fileInput.files[0]; if (!file) return alert("Dosya seçiniz!");
         const reader = new FileReader(); reader.onload = function(e) {
@@ -4484,7 +4648,14 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             if (confirm("Mevcut program silinerek aktarılacak?")) {
                 scheduleData = [];
                 rows.forEach(row => {
-                    const day = row.Gün || row.Gun || ""; const time = row.Saat || ""; const lesson = row.Ders || row.Sınıf || row.Sinif || "";
+                    const day = row.Gün || row.Gun || ""; let time = row.Saat || ""; const lesson = row.Ders || row.Sınıf || row.Sinif || "";
+                    // Excel ondalık zaman değerini HH:MM formatına çevir (örn: 0.38194 → 09:10)
+                    if (typeof time === 'number') {
+                        const totalMinutes = Math.round(time * 24 * 60);
+                        const hh = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+                        const mm = String(totalMinutes % 60).padStart(2, '0');
+                        time = hh + ':' + mm;
+                    }
                     if (day && time && lesson) { const valid = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"]; const clean = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase(); if (valid.includes(clean)) scheduleData.push({ day: clean, time, lesson }); }
                 });
                 scheduleData.sort((a, b) => a.time.localeCompare(b.time)); renderSchedule(); saveData(); alert("Program yüklendi."); fileInput.value = '';
@@ -4499,7 +4670,11 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
     function addTrackingItem() {
         const type = document.getElementById('track-type').value; const title = document.getElementById('track-title').value; const date = document.getElementById('track-date').value;
         const xp = parseInt(document.getElementById('track-xp').value) || 0; const penaltyXp = parseInt(document.getElementById('track-penalty').value) || 0;
-        const selectedClasses = Array.from(document.querySelectorAll('.track-class-checkbox:checked')).map(cb => cb.value);
+        let classSet = new Set();
+        document.querySelectorAll('.track-class-checkbox:checked').forEach(cb => classSet.add(cb.value));
+        document.querySelectorAll('.track-student-checkbox:checked').forEach(cb => classSet.add(cb.dataset.class));
+        const selectedClasses = Array.from(classSet);
+        
         if (!title || selectedClasses.length === 0 || !date) return alert("Lütfen gerekli alanları doldurun!");
 
         selectedClasses.forEach(sinif => {
@@ -4521,7 +4696,8 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
                 <div><span class="xp-badge">${item.type}</span><h4 style="margin:5px 0;">${item.title} (${item.sinif})</h4><p style="font-size:12px; margin:0; color:var(--text-muted);">Teslim: ${doneCount} / ${totalCount} | Son Tarih: ${new Date(item.date).toLocaleString('tr-TR')}</p></div>
                 <div style="display:flex; gap:8px;"><button class="btn" style="padding:5px 12px; font-size:11px;" onclick="openEvaluation('${item.id}')">Değerlendir</button>
-                <button class="btn" style="background:#25D366; padding:5px 12px; font-size:11px;" onclick="shareTrackingSummary('${item.id}')"><i class="fab fa-whatsapp"></i> Özet</button>
+                <button class="btn" style="background:#25D366; padding:5px 12px; font-size:11px;" onclick="shareTrackingSummary('${item.id}')"><i class="fab fa-whatsapp"></i> WA Özet</button>
+                <button class="btn" style="background:#00B2FF; padding:5px 12px; font-size:11px;" onclick="shareTrackingSummaryBip('${item.id}')"><i class="fas fa-comment-dots"></i> BiP Özet</button>
                 <button class="action-btn btn-delete" onclick="deleteTrackingItem('${item.id}')"><i class="fas fa-trash"></i></button></div></div>`;
             list.appendChild(card);
         });
@@ -4548,7 +4724,10 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                 <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} onchange="toggleSubmission('${s.adSoyad}', this.checked)"> Yapıldı</label></td>
                 <td><span style="font-size:11px;">${sub.date || '-'}</span></td>
                 <td><span style="color:${sub.done ? 'var(--accent)' : 'var(--red)'}; font-weight:700;">${sub.done ? '+' : '-'}${sub.done ? (sub.xp || item.xp) : (sub.penalty || item.penaltyXp)}</span></td>
-                <td><button class="action-btn" onclick="shareStudentResult(${id}, '${s.adSoyad}')" style="color:#25D366; background:none; font-size:16px;"><i class="fab fa-whatsapp"></i></button></td>`;
+                <td style="display:flex;gap:4px;align-items:center;">
+                    <button class="action-btn" onclick="shareStudentResult(${id}, '${s.adSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button class="action-btn" onclick="shareStudentResultBip(${id}, '${s.adSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                </td>`;
             body.appendChild(tr);
         });
         document.getElementById('evaluation-modal').style.display = 'block';
@@ -4598,10 +4777,24 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
         window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
     }
+    function shareTrackingSummaryBip(id) {
+        const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return;
+        let students = studentData.filter(s => s.sinif === item.sinif); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
+        const submissions = item.submissions || {};
+        const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
+        const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
+        let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
+        window.open(`https://web.bip.com/share?text=${encodeURIComponent(text)}`, '_blank');
+    }
     function shareStudentResult(id, name) {
         const item = trackingData.find(i => i.id === id); const sub = item.submissions[name] || { done: false };
         let text = `🎯 *${item.type} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n📊 *Durum:* ${sub.done ? '✅ Tamamlandı (+'+sub.xp+' XP)' : '❌ Teslim Edilmedi (-'+sub.penaltyXp+' XP)'}`;
         window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+    function shareStudentResultBip(id, name) {
+        const item = trackingData.find(i => i.id === id); const sub = item.submissions[name] || { done: false };
+        let text = `🎯 *${item.type} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n📊 *Durum:* ${sub.done ? '✅ Tamamlandı (+'+sub.xp+' XP)' : '❌ Teslim Edilmedi (-'+sub.penaltyXp+' XP)'}`;
+        window.open(`https://web.bip.com/share?text=${encodeURIComponent(text)}`, '_blank');
     }
 
     function addExam() {
@@ -4799,10 +4992,13 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         const skorlar = hedefOgrenciler.map(s => {
             let toplam = 0; let agirlik = 0;
 
-            // XP skoru (0-100 normalleştirilmiş)
+            // XP skoru — min-max normalizasyonu (negatif XP değerlerine karşı güvenli)
             if (kritXP) {
-                const maxXP = Math.max(...hedefOgrenciler.map(x => x.xp || 0), 1);
-                const xpNorm = ((s.xp || 0) / maxXP) * 100;
+                const allXP = hedefOgrenciler.map(x => x.xp || 0);
+                const minXP = Math.min(...allXP);
+                const maxXP = Math.max(...allXP);
+                const range = maxXP - minXP;
+                const xpNorm = range > 0 ? (((s.xp || 0) - minXP) / range) * 100 : 50;
                 toplam += xpNorm * 0.30; agirlik += 0.30;
             }
 
@@ -4882,7 +5078,8 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                 <h4 style="margin:0;color:var(--secondary);"><i class="fas fa-layer-group me-2"></i>İleri Çalışma Grupları</h4>
                 <div style="display:flex;gap:8px;">
                     <button class="btn" style="font-size:11px;padding:5px 12px;background:#8b5cf6;" onclick="ileriGrupProjeAktar()"><i class="fas fa-project-diagram me-1"></i>Sisteme Aktar (Proje & Sınıf Yönetimi)</button>
-                    <button class="btn" style="font-size:11px;padding:5px 12px;background:#25D366;" onclick="ileriGrupWhatsapp()"><i class="fab fa-whatsapp me-1"></i>Velilere Gönder</button>
+                    <button class="btn" style="font-size:11px;padding:5px 12px;background:#25D366;" onclick="ileriGrupWhatsapp()"><i class="fab fa-whatsapp me-1"></i>Velilere WA</button>
+                    <button class="btn" style="font-size:11px;padding:5px 12px;background:#00B2FF;" onclick="ileriGrupBip()"><i class="fas fa-comment-dots me-1"></i>Velilere BiP</button>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px;">`;
@@ -4901,7 +5098,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             grup.forEach((ogr, oi) => {
                 const rol = rollerler[Math.min(oi, rollerler.length-1)];
                 const renk = renkler[Math.min(oi, renkler.length-1)];
-                const skorBar = Math.round(ogr._skor);
+                const skorBar = Math.max(0, Math.min(100, Math.round(ogr._skor)));
                 resultHtml += `
                         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
                             <div style="flex:1;">
@@ -5015,6 +5212,17 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         });
         mesaj += '_Proje Tabanlı Ders İşleme Sistemi tarafından oluşturulmuştur._';
         window.open('https://api.whatsapp.com/send/?text='+encodeURIComponent(mesaj),'_blank');
+    }
+    function ileriGrupBip() {
+        if (!advancedGroupData || advancedGroupData.length === 0) return alert('Önce analiz yapın!');
+        let mesaj = '🚀 *İLERİ ÇALIŞMA GRUPLARI*\n\n';
+        advancedGroupData.forEach((grup, gi) => {
+            mesaj += `📦 *İleri Grup ${gi+1}:*\n`;
+            grup.forEach((o, oi) => { mesaj += `   ${oi+1}. ${o.adSoyad} (${o._skor}p)\n`; });
+            mesaj += '\n';
+        });
+        mesaj += '_Proje Tabanlı Ders İşleme Sistemi tarafından oluşturulmuştur._';
+        window.open('https://web.bip.com/share?text='+encodeURIComponent(mesaj),'_blank');
     }
 
     function ileriGrupProjeAktar() {
@@ -5441,6 +5649,22 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
 
         window.open('https://api.whatsapp.com/send/?text='+encodeURIComponent(mesaj), '_blank');
     }
+    function sendExamResultToBip() {
+        const select = document.getElementById('exam-share-student-select');
+        const examId = document.getElementById('exam-share-exam-select')?.value;
+        if (!select || !examId) return alert('Lütfen sınav ve öğrenci seçiniz.');
+        const studentName = select.value;
+        const exam = examData.find(e => String(e.id) === String(examId)); if (!exam) return;
+        const r = exam.results?.[studentName]; if (!r) return alert('Bu öğrenci için sonuç bulunamadı.');
+        const sinifNets = Object.values(exam.results || {});
+        const sinifOrta = sinifNets.length ? (sinifNets.reduce((a,b) => a+(b.totalNet||0),0)/sinifNets.length).toFixed(1) : '-';
+        const trendEmoji = r.trend > 0 ? '📈' : r.trend < 0 ? '📉' : '➡️';
+        const sinifOrtaText = sinifOrta !== '-' ? `\n🏫 Sınıf Orta: *${sinifOrta}*` : '';
+        const trendText = r.trend !== undefined && r.trend !== 0 ? `\n${trendEmoji} Değişim: *${r.trend > 0 ? '+' : ''}${r.trend}*` : '';
+        let yorum = r.totalNet >= 80 ? '🌟 Harika bir performans!' : r.totalNet >= 60 ? '👍 İyi gidiyorsun!' : r.totalNet >= 40 ? '⚠️ Biraz daha çalışman gerekiyor.' : '🔴 Ciddi çalışma gerekiyor!';
+        let mesaj = `📊 *SINAV SONUÇ RAPORU*\n📚 *Sınav:* ${exam.title}\n👤 *Öğrenci:* ${studentName}\n📅 *Tarih:* ${new Date(exam.date).toLocaleDateString('tr-TR')}\n\n📝 *DERS NETLERI:*\n📐 Mat: *${r.Matematik||0}*\n📖 Türkçe: *${r.Turkce||0}*\n🔬 Fen: *${r.Fen||0}*\n🌍 Sosyal: *${r.Sosyal||0}*\n☪️ Din Kültürü: *${r.DinKulturu||0}*\n🇬🇧 İngilizce: *${r.Ingilizce||0}*\n\n🎯 *TOPLAM NET:* *${r.totalNet||0}*  |  Sıra: *${r.rank||'-'}*${sinifOrtaText}${trendText}\n\n${yorum}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        window.open('https://web.bip.com/share?text='+encodeURIComponent(mesaj), '_blank');
+    }
 
     function renderEmptyChart(msg) {
         const ctx = document.getElementById('progressChart');
@@ -5678,7 +5902,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(raw));
             
             // Firebase Realtime DB'ye kaydet (Hatalı olan Firestore metodunu kaldırdık)
-            db.ref("app_data/main_data").update({
+            db.ref(window.userDBPath).update({
                 projeGruplari: projeGruplariData,
                 lastUpdate: new Date().toISOString()
             }).catch(err => console.error("Realtime DB pgSave error:", err));
@@ -6149,12 +6373,21 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
         
         let allMsgs = [...(g.mesajlar || [])];
         
+        function escapeHTML(str) {
+            return (str || '').toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         const gForms = pgFormsData.filter(f => f.grupAdi === g.title);
         gForms.forEach(f => {
             let msgText = `<strong>📝 Proje Aşaması Raporu</strong><br>
-            <strong>Gönderen:</strong> ${f.adSoyad}<br>
-            <strong>Çözüm Fikri:</strong> ${f.formResponse.cozumOneri}<br>
-            <strong>Katkısı:</strong> ${f.formResponse.kisiselKatki}`;
+            <strong>Gönderen:</strong> ${escapeHTML(f.adSoyad)}<br>
+            <strong>Çözüm Fikri:</strong> ${escapeHTML(f.formResponse.cozumOneri)}<br>
+            <strong>Katkısı:</strong> ${escapeHTML(f.formResponse.kisiselKatki)}`;
             
             let timeStr = new Date(f.timestamp || Date.now()).toLocaleString('tr-TR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'});
             
@@ -6195,6 +6428,14 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
             text += `${m.taraf==='teacher'?'🧑‍🏫 Öğretmen':'👨‍🎓 Öğrenci'}: ${m.metin}\n`;
         });
         window.open('https://api.whatsapp.com/send/?text='+encodeURIComponent(text),'_blank');
+    }
+    function pgShareMsgBip() {
+        const g = projeGruplariData.find(x => x.id === pgActiveId); if(!g) return;
+        let text = `📋 *${g.title}* — Grup Mesajları\n\n`;
+        g.mesajlar.slice(-10).forEach(m => {
+            text += `${m.taraf==='teacher'?'🧑‍🏫 Öğretmen':'👨‍🎓 Öğrenci'}: ${m.metin}\n`;
+        });
+        window.open('https://web.bip.com/share?text='+encodeURIComponent(text),'_blank');
     }
 
     // ── İçerik & Ödev ──
