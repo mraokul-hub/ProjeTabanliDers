@@ -11,10 +11,13 @@ const firebaseConfig = {
 };
 
 // Firebase'i Başlat (Daha önce başlatılmadıysa başlatır, hata vermesini önler)
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+try {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    window.analytics = firebase.analytics();
+    window.db = firebase.database();
+} catch (e) {
+    console.error("Firebase başlatma hatası (Çevrimdışı veya bağlantı sorunu):", e);
+    window.db = null; // db objesinin null olması, çökmesini engelleyecek
 }
-
-// Değişkenleri tüm HTML dosyalarından erişilebilir olması için window objesine atıyoruz
-window.analytics = firebase.analytics();
-window.db = firebase.database();
