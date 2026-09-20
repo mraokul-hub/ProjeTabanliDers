@@ -1,0 +1,37 @@
+{
+  "rules": {
+    // 1. Ana Veri Havuzu (Sınıflar, Öğrenciler, Puanlar vb.)
+    "app_data": {
+      // main_data: Sadece yönetici okuyup yazabilir (Göç işlemi için gerekli)
+      "main_data": {
+        ".read": "auth != null && auth.token.email === 'mremzi@gmail.com'",
+        ".write": "auth != null && auth.token.email === 'mremzi@gmail.com'"
+      },
+      // $uid: Her öğretmen sadece kendi klasörünü okuyup yazabilir (Yönetici herkesi görebilir)
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'mremzi@gmail.com')",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'mremzi@gmail.com')"
+      }
+    },
+    
+    // 2. Formlar (Ortak Havuz) - Şifresiz giriş serbest bırakıldı ki öğrenciler form doldurabilsin
+    "student_forms": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "project_group_forms": {
+      ".read": "true",
+      ".write": "true"
+    },
+
+    // 3. Kullanıcı Kayıt/Onay Sistemi
+    "kullanicilar": {
+      "$uid": {
+        // Kullanıcılar kendi kayıtlarını görebilir, Admin herkesi görebilir
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'mremzi@gmail.com')",
+        // Kayıt olurken onayli=false ile yazılabilir. Admin herkesi güncelleyebilir.
+        ".write": "auth != null && (auth.token.email === 'mremzi@gmail.com' || (!data.exists() && auth.uid === $uid && newData.child('onayli').val() === false))"
+      }
+    }
+  }
+}
