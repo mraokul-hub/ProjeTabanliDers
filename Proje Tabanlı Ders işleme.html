@@ -32,6 +32,12 @@
                 // İstisnasız herkesin veritabanı kendi UID'si altında oluşturulur
                 window.userDBPath = "app_data/" + user.uid;
 
+                if (user.email === 'mremzi@gmail.com') {
+                    const adminTabBtn = document.getElementById('admin-tab-btn');
+                    if (adminTabBtn) adminTabBtn.style.display = 'inline-block';
+                    if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
+                }
+
                 try {
                     if (window.db) {
                         window.db.ref("kullanicilar/" + user.uid).once("value").then(snapshot => {
@@ -442,6 +448,12 @@
             background: var(--input-bg);
         }
 
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .action-btn {
             border: none;
             width: 32px;
@@ -461,6 +473,15 @@
             transform: scale(1.1);
         }
 
+        .btn-view {
+            background: var(--teal);
+        }
+
+        .btn-view:hover {
+            background: #0f766e;
+            transform: scale(1.1);
+        }
+
         .btn-delete {
             background: #ef4444;
         }
@@ -468,6 +489,81 @@
         .btn-delete:hover {
             background: #dc2626;
             transform: scale(1.1);
+        }
+
+        /* XP Popup Dropdown */
+        .xp-popup-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .xp-popup-panel {
+            display: none;
+            position: fixed;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 280px;
+            animation: fadeInUp 0.15s ease;
+        }
+
+        .xp-popup-panel.open {
+            display: block;
+        }
+
+        .xp-popup-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 6px;
+        }
+
+        .xp-popup-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .xp-popup-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .btn-xp-trigger {
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            background: var(--accent);
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-xp-trigger:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .btn-xp {
@@ -590,6 +686,111 @@
             background: var(--red);
             color: white;
             transform: scale(1.1);
+        }
+
+        /* === Mobil Uyumlu Çoklu Öğrenci Seçici === */
+        .student-multi-picker {
+            flex: 1;
+            position: relative;
+        }
+
+        .picker-toggle {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            text-align: left;
+            transition: var(--transition);
+        }
+
+        .picker-toggle:hover,
+        .picker-toggle:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+
+        .picker-toggle.has-selection {
+            border-color: var(--secondary);
+            background: rgba(59, 130, 246, 0.08);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .picker-arrow {
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .picker-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .picker-dropdown {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 9999;
+            padding: 6px 0;
+        }
+
+        .picker-search-input {
+            width: calc(100% - 16px);
+            margin: 6px 8px;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 12px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .picker-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .picker-item:hover,
+        .picker-item.checked {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .picker-item input[type=checkbox] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--secondary);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .picker-select-all {
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            color: var(--secondary);
+            font-size: 12px;
         }
 
         .btn-mini-xp {
@@ -1215,6 +1416,8 @@
             <button class="tab-btn" onclick="openTab('tab8')">🌙 9. İleri Çalışma Grupları</button>
             <button class="tab-btn" onclick="openTab('tab9')" id="tab9-btn">🌳 10. Proje Grupları</button>
             <button class="tab-btn" onclick="openTab('tab10')">🧭 11. Sistem Kullanım Kılavuzu</button>
+            <button class="tab-btn" id="admin-tab-btn" onclick="openTab('tab-admin')"
+                style="display: none; color: #f59e0b;">👑 Yönetici Paneli</button>
         </div>
 
         <div id="tab1" class="tab-content active">
@@ -1276,13 +1479,19 @@
                 </div>
 
                 <div class="right-panel">
-                    <div class="search-bar-wrapper" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div class="search-bar-wrapper"
+                        style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                         <input type="text" class="search-bar" id="search-input"
-                            placeholder="İsim veya numara ile ara..." onkeyup="searchStudents()" style="flex: 3;">
+                            placeholder="İsim veya numara ile ara..." onkeyup="searchStudents()"
+                            style="flex: 3; min-width: 200px;">
                         <select id="class-view-filter" onchange="searchStudents()" class="search-bar"
-                            style="flex: 1; cursor: pointer;">
+                            style="flex: 1; cursor: pointer; min-width: 120px;">
                             <option value="">Tüm Sınıflar</option>
                         </select>
+                        <button class="btn" style="background: var(--accent); padding: 10px 15px;"
+                            onclick="document.getElementById('rubric-modal').style.display='flex'"
+                            title="Rubriği Görüntüle"><i class="fas fa-book-open"></i>
+                            Rubriği Gör</button>
                         <button class="btn" style="background: #ef4444; padding: 10px 15px;"
                             onclick="deleteSelectedStudents()" title="Seçilenleri Sil"><i class="fas fa-trash-alt"></i>
                             Seçilenleri Sil</button>
@@ -1300,6 +1509,8 @@
                                     <th onclick="sortTable('sinif')">SINIF <i class="fas fa-sort"></i></th>
                                     <th onclick="sortTable('xp')">XP <i class="fas fa-star"
                                             style="color:var(--yellow);"></i></th>
+                                    <th onclick="sortTable('artmayanNot')" title="Telafisi Olmayan Puan (Eksi Değer)">
+                                        ARTMAYAN <i class="fas fa-minus-circle" style="color:var(--red);"></i></th>
                                     <th>İŞLEM</th>
                                 </tr>
                             </thead>
@@ -1309,6 +1520,7 @@
                 </div>
             </div>
         </div>
+
 
         <div id="tab2" class="tab-content">
             <h2>⛺ Sınıf Yönetimi & Küme Oluşturma</h2>
@@ -1342,11 +1554,11 @@
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; font-size: 13px; line-height: 1.6;">
                     <div>
                         <p><strong>A) Yönetici:</strong> Grubun öğretmenle iletişimini sağlar.</p>
-                        <p><strong>B) Yazıcı:</strong> Grubun raporlamasını yapar.</p>
+                        <p><strong>B) Yazıcı:</strong> Grubun raporlamasını yapar. Ödev kontrolü yapar.</p>
                     </div>
                     <div>
                         <p><strong>C) Malzemeci:</strong> Ders ekipmanlarını tamamlamasını sağlar.</p>
-                        <p><strong>D) Sözcü:</strong> Grubun laboratuvara uyumunu sağlar.</p>
+                        <p><strong>D) Sözcü:</strong> Grubun laboratuvara uyumunu sağlar. Kümenin ders sessizliğine uyumunu sağlar.</p>
                     </div>
                     <div
                         style="grid-column: 1 / -1; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; border-left: 4px solid var(--red);">
@@ -1395,13 +1607,20 @@
                         class="fas fa-robot"></i> Yapay Zeka ile Yeni Üret</button>
             </div>
 
-            <div id="manual-ai-container" style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-left: 4px solid #8b5cf6; border-radius: 8px;">
+            <div id="manual-ai-container"
+                style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-left: 4px solid #8b5cf6; border-radius: 8px;">
                 <label style="color: #8b5cf6; font-weight: bold; font-size: 13px; display: block; margin-bottom: 10px;">
                     <i class="fas fa-paste"></i> Gemini'den Aldığınız JSON Sonucunu Yapıştırın:
                 </label>
-                <textarea id="manual-ai-input" style="width: 100%; height: 100px; padding: 10px; border: 1px solid #8b5cf6; border-radius: 6px; background: var(--card-bg); color: var(--text-main); font-family: monospace; font-size: 12px; margin-bottom: 10px; resize: vertical;" placeholder='[&#10;  {&#10;    "baslik": "Ayna Dedektifi",&#10;    "sure": "10 dk",&#10;    "aciklama": "Bir öğrenci dışarı çıkar...",&#10;    "tur": "Odaklanma"&#10;  }&#10;]'></textarea>
-                <button class="btn" style="background: #8b5cf6;" onclick="renderManualAIResult()"><i class="fas fa-magic"></i> Sonucu Görselleştir</button>
-                <button class="btn" style="background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color);" onclick="document.getElementById('manual-ai-container').style.display='none'"><i class="fas fa-times"></i> İptal</button>
+                <textarea id="manual-ai-input"
+                    style="width: 100%; height: 100px; padding: 10px; border: 1px solid #8b5cf6; border-radius: 6px; background: var(--card-bg); color: var(--text-main); font-family: monospace; font-size: 12px; margin-bottom: 10px; resize: vertical;"
+                    placeholder='[&#10;  {&#10;    "baslik": "Ayna Dedektifi",&#10;    "sure": "10 dk",&#10;    "aciklama": "Bir öğrenci dışarı çıkar...",&#10;    "tur": "Odaklanma"&#10;  }&#10;]'></textarea>
+                <button class="btn" style="background: #8b5cf6;" onclick="renderManualAIResult()"><i
+                        class="fas fa-magic"></i> Sonucu Görselleştir</button>
+                <button class="btn"
+                    style="background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color);"
+                    onclick="document.getElementById('manual-ai-container').style.display='none'"><i
+                        class="fas fa-times"></i> İptal</button>
             </div>
 
             <div id="buz-kirma-output" class="grid-layout"
@@ -1419,12 +1638,12 @@
                         if (jsonStr.includes('```json')) {
                             jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
                         } else if (jsonStr.includes('```')) {
-                             jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
+                            jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
                         }
-                        
+
                         // Metni JSON nesnesine dönüştür
                         const etkinlikler = JSON.parse(jsonStr);
-                        
+
                         // Sonuçları ekrana yerleştir
                         output.style.display = 'grid';
                         output.innerHTML = '';
@@ -1461,11 +1680,11 @@
 
                 // Global değişkende seçili etkinliği tut
                 window.selectedIcebreaker = null;
-                
+
                 function markIceBreakerSelected(btn, baslik, sure, aciklama) {
                     // Seçilen etkinliği global değişkene kaydet
                     window.selectedIcebreaker = { baslik, sure, aciklama };
-                    
+
                     // Ekrandaki diğer tüm etkinlik butonlarının stilini sıfırla
                     document.querySelectorAll('#buz-kirma-output .btn').forEach(b => {
                         if (b.getAttribute('data-is-ai') === 'true') {
@@ -1478,7 +1697,7 @@
                             b.style.color = '#0284c7';
                         }
                     });
-                    
+
                     // Tıklanan butonu 'Seçildi' olarak işaretle ve stilini değiştir
                     btn.innerHTML = '<i class="fas fa-check"></i> Etkinlik Seçildi (Derse Eklenecek)';
                     btn.style.background = btn.getAttribute('data-is-ai') === 'true' ? '#8b5cf6' : '#38bdf8';
@@ -1495,7 +1714,7 @@
                 function clearIceBreakerSelection() {
                     // Seçimi iptal et ve global değişkeni sıfırla
                     window.selectedIcebreaker = null;
-                    
+
                     // Seçim panosunu gizle
                     const sib = document.getElementById('selected-icebreaker-display');
                     if (sib) sib.style.display = 'none';
@@ -1619,13 +1838,13 @@
                     // İlgili sınıfın etkinlik listesini al
                     const secilen = etkinlikler[seviye];
                     if (!secilen) return alert('Seçilen sınıf seviyesi için etkinlik bulunamadı.');
-                    
+
                     // Her bir etkinliği kart olarak ekrana çiz
                     secilen.forEach(etk => {
                         const div = document.createElement('div');
                         div.className = 'group-card';
                         div.style.borderTop = '4px solid #38bdf8';
-                        
+
                         // Olası HTML/JS karakter hatalarını (tırnak, satır sonu) temizle
                         const safeBaslik = (etk.baslik || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/[\r\n]+/g, ' ');
                         const safeSure = (etk.sure || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/[\r\n]+/g, ' ');
@@ -2676,6 +2895,127 @@ Sadece geçerli bir JSON stringi döndür.`;
     </div>
     </div>
 
+    <!-- Rubrik Açılır Pencere (Modal) -->
+    <div id="rubric-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:2500; backdrop-filter:blur(6px); padding:20px; box-sizing:border-box; overflow-y:auto; align-items:center; justify-content:center;">
+        <div class="container"
+            style="max-width:800px; margin: auto; position:relative; background:var(--card-bg); border-radius:var(--radius); padding:30px; box-shadow:0 25px 50px rgba(0,0,0,0.4);">
+            <button class="action-btn btn-delete" onclick="document.getElementById('rubric-modal').style.display='none'"
+                style="position:absolute; top:20px; right:20px; font-size:18px;"><i class="fas fa-times"></i></button>
+            <h3 style="margin-top:0; color:var(--primary);"><i class="fas fa-book-open"
+                    style="color:var(--accent);"></i>
+                Öğrenci Davranış ve Değerlendirme Rubriği</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Öğrenci performansını ve genel
+                puanlama standartlarını buradan takip edebilirsiniz.</p>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+                <!-- Pozitif -->
+                <div
+                    style="background:var(--input-bg); border-radius:10px; padding:14px; border-left:4px solid #10b981;">
+                    <div
+                        style="font-weight:800; font-size:13px; color:#10b981; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                        <i class="fas fa-arrow-up me-1"></i> Pozitif Puanlamalar (+)
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Öğrencilerin olumlu
+                        davranışlarını ve gelişimlerini pekiştirmek için verilir.</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Derse Hazırlıklı Gelme</span>
+                            <span
+                                style="background:#10b981; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">+5
+                                XP</span>
+                        </div>
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Günün Sorusu</span>
+                            <span
+                                style="background:#059669; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">+5
+                                XP</span>
+                        </div>
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Etkin Katılım / Cevap</span>
+                            <span
+                                style="background:#3b82f6; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">+10
+                                XP</span>
+                        </div>
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Ödev / İşbirliği</span>
+                            <span
+                                style="background:#8b5cf6; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">+15
+                                XP</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Yenilikçi Fikir / Üstün Performans</span>
+                            <span
+                                style="background:#f59e0b; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">+20
+                                XP</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Negatif -->
+                <div
+                    style="background:var(--input-bg); border-radius:10px; padding:14px; border-left:4px solid #ef4444;">
+                    <div
+                        style="font-weight:800; font-size:13px; color:#ef4444; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                        <i class="fas fa-arrow-down me-1"></i> Negatif Puanlamalar (-)
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Öğrencilerin istenmeyen
+                        davranışlarını düzeltmek ve sorumluluk bilincini artırmak için verilir.</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Hazırlıksız Gelme</span>
+                            <span
+                                style="background:#ef4444; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">-5
+                                XP</span>
+                        </div>
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Dersi Bölme</span>
+                            <span
+                                style="background:#dc2626; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">-10
+                                XP</span>
+                        </div>
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span>Ödev Teslim Etmeme</span>
+                            <span
+                                style="background:#b91c1c; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">-15
+                                XP</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Ciddi Kural İhlali</span>
+                            <span
+                                style="background:#991b1b; color:white; padding:3px 8px; border-radius:20px; font-weight:800; font-size:11px;">-20
+                                XP</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Artmayan -->
+                <div
+                    style="background:var(--input-bg); border-radius:10px; padding:14px; border-left:4px solid #7c3aed;">
+                    <div
+                        style="font-weight:800; font-size:13px; color:#7c3aed; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                        <i class="fas fa-ban me-1"></i> Artmayan (-)
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.6;">
+                        Telafisi olmayan ders puanı. <strong>XP ile ilişkisi yoktur</strong>, bağımsız bir puan olarak
+                        tabloda ayrı sütunda gösterilir.
+                    </div>
+                    <div
+                        style="font-size:12px; color:var(--text-muted); background:var(--card-bg); border-radius:8px; padding:10px; border:1px solid var(--border); margin-top: 15px;">
+                        <i class="fas fa-info-circle" style="color:var(--accent); margin-right:4px;"></i>
+                        Bu kısma not girişi <strong>Hızlı Gözlem Ekle</strong> <i class="fas fa-eye"
+                            style="color:var(--teal);"></i> butonu ile yapılabilir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="observation-modal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:2500; backdrop-filter:blur(6px); padding:20px; box-sizing:border-box; overflow-y:auto; align-items:center; justify-content:center;">
         <div class="container"
@@ -2702,6 +3042,9 @@ Sadece geçerli bir JSON stringi döndür.`;
                     <button type="button" class="btn"
                         style="padding:5px 10px; font-size:12px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border);"
                         onclick="addObservationTag('Liderlik Etti')">Liderlik Etti</button>
+                    <button type="button" class="btn"
+                        style="padding:5px 10px; font-size:12px; background:rgba(239, 68, 68, 0.1); color:var(--red); border:1px solid var(--red);"
+                        onclick="addNegativeNote()">Artmayan - Not</button>
                 </div>
             </div>
 
@@ -2843,6 +3186,28 @@ Sadece geçerli bir JSON stringi döndür.`;
                 </p>
             </div>
         </div>
+    </div>
+
+    <!-- Admin Panel Tab -->
+    <div id="tab-admin" class="tab-content">
+        <h2>👑 Yönetici Paneli - Kullanıcı Onay ve Yönetimi</h2>
+        <div class="table-container" style="margin-top: 20px;">
+            <table class="custom-table" id="admin-users-table">
+                <thead>
+                    <tr>
+                        <th>AD SOYAD</th>
+                        <th>E-POSTA</th>
+                        <th>KAYIT TARİHİ</th>
+                        <th>DURUM</th>
+                        <th>İŞLEMLER</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-users-list">
+                    <!-- Users will be loaded here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -3109,11 +3474,11 @@ Sadece geçerli bir JSON stringi döndür.`;
                             const name = nameEl ? (nameEl.getAttribute('data-name') || nameEl.textContent.split(' - ').pop()) : '';
                             const selectEl = li.querySelector('.role-select');
                             const role = selectEl ? selectEl.value : '';
-                            if(name) {
-                                students.push({name, role});
+                            if (name) {
+                                students.push({ name, role });
                             }
                         });
-                        parsedGroups.push({title, students});
+                        parsedGroups.push({ title, students });
                     });
                     groupData[safeClass] = parsedGroups;
                 }
@@ -3214,8 +3579,8 @@ Sadece geçerli bir JSON stringi döndür.`;
             if (!listContainer) return;
             if (!window.db) return;
 
-            // Realtime Database'de orderByKey kullanıyoruz
-            window.db.ref('student_forms').on('value', (snapshot) => {
+            // Sadece son 100 formu getir (Performans için)
+            window.db.ref('student_forms').orderByKey().limitToLast(100).on('value', (snapshot) => {
                 if (!snapshot.exists()) {
                     listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz doldurulmuş form bulunmuyor.</div>';
                     return;
@@ -3352,7 +3717,7 @@ Sadece geçerli bir JSON stringi döndür.`;
             // Otomatik Göç ve Temizleme (Migration)
             let rawGroups = parsed.groups || {};
             let needsMigration = false;
-            
+
             if (typeof rawGroups === 'object' && rawGroups !== null) {
                 const cleanedGroups = {};
                 for (let key in rawGroups) {
@@ -3361,7 +3726,7 @@ Sadece geçerli bir JSON stringi döndür.`;
                         needsMigration = true;
                         continue;
                     }
-                    
+
                     let val = rawGroups[key];
                     // Eğer HTML string ise Diziye çevir
                     if (typeof val === 'string' && val.includes('<div class="group-card"')) {
@@ -3372,7 +3737,7 @@ Sadece geçerli bir JSON stringi döndür.`;
                         tempDiv.querySelectorAll('.group-card').forEach(card => {
                             let titleInput = card.querySelector('.group-title-input');
                             let title = titleInput ? titleInput.value : '';
-                            if(!titleInput) {
+                            if (!titleInput) {
                                 let h3 = card.querySelector('h3');
                                 title = h3 ? h3.textContent.trim() : '';
                             }
@@ -3383,14 +3748,14 @@ Sadece geçerli bir JSON stringi döndür.`;
                                 let roleEl = li.querySelector('.role-select');
                                 // value özelliğine erişmeden önce seçili option var mı bak
                                 let role = '';
-                                if(roleEl) {
+                                if (roleEl) {
                                     let selectedOpt = roleEl.querySelector('option[selected="selected"]');
-                                    if(selectedOpt) role = selectedOpt.value;
+                                    if (selectedOpt) role = selectedOpt.value;
                                     else role = roleEl.value;
                                 }
-                                if (name) students.push({name, role});
+                                if (name) students.push({ name, role });
                             });
-                            classArray.push({title, students});
+                            classArray.push({ title, students });
                         });
                         cleanedGroups[key] = classArray;
                     } else {
@@ -3403,7 +3768,7 @@ Sadece geçerli bir JSON stringi döndür.`;
                         }
                     }
                 }
-                
+
                 groupData = cleanedGroups;
             } else if (typeof rawGroups === 'string') {
                 groupData = { "Genel": rawGroups };
@@ -3524,10 +3889,21 @@ Sadece geçerli bir JSON stringi döndür.`;
                 pgLoad();
                 pgRenderList();
             }
+
+            if (tabId === 'tab-admin') {
+                if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
+            }
         }
 
         // DİĞER STANDART İŞLEVLER (Tablo Render, Filtreleme, vb. KORUNDU)
-        function renderStudentTable(dataToRender = studentData) {
+        function renderStudentTable(dataToRender = null) {
+            if (!dataToRender) {
+                searchStudents();
+                return;
+            }
+            // Eski menüleri (body'ye taşınmış olanları) temizle
+            document.querySelectorAll('body > .xp-popup-panel').forEach(p => p.remove());
+
             const tbody = document.getElementById('student-table-body'); tbody.innerHTML = '';
             dataToRender.forEach((student) => {
                 const realIndex = studentData.indexOf(student);
@@ -3546,19 +3922,30 @@ Sadece geçerli bir JSON stringi döndür.`;
                 <td><span style="font-weight: 600;">${student.adSoyad || '-'}</span>${vakIcon}</td>
                 <td>${student.sinif || '-'}</td>
                 <td title="Geçmişi Görmek İçin Tıklayın" style="cursor:pointer;" onclick="showXPLogs(${realIndex})"><span class="xp-badge">${student.xp || 0}</span></td>
+                <td><span style="font-weight:bold; color:var(--red);">${student.artmayanNot ? '-' + student.artmayanNot : '0'}</span></td>
                 <td style="white-space: nowrap;">
-                    <div style="display:inline-flex; gap: 4px; align-items:center;">
-                        <button class="btn-xp" style="background:#10b981; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, 5, 'Derse Hazırlıklı Gelme')" title="Derse Hazırlıklı Gelme (+5 XP)"><i class="fas fa-check"></i> +5</button>
-                        <button class="btn-xp" style="background:#059669; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, 5, 'Günün Sorusu')" title="Günün Sorusu (+5 XP)"><i class="fas fa-question-circle"></i> +5</button>
-                        <button class="btn-xp" style="background:#3b82f6; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, 10, 'Etkin Katılım / Cevap')" title="Etkin Katılım / Cevap (+10 XP)"><i class="fas fa-star"></i> +10</button>
-                        <button class="btn-xp" style="background:#8b5cf6; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, 15, 'Ödev / İşbirliği')" title="Ödev / İşbirliği (+15 XP)"><i class="fas fa-hands-helping"></i> +15</button>
-                        <button class="btn-xp" style="background:#f59e0b; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, 20, 'Yenilikçi Fikir / Üstün Performans')" title="Yenilikçi Fikir / Üstün Performans (+20 XP)"><i class="fas fa-rocket"></i> +20</button>
-                        <div style="width: 1px; height: 20px; background: var(--border); margin: 0 2px;"></div>
-                        <button class="btn-xp" style="background:#ef4444; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, -5, 'Hazırlıksız Gelme')" title="Hazırlıksız Gelme (-5 XP)"><i class="fas fa-minus-circle"></i> -5</button>
-                        <button class="btn-xp" style="background:#dc2626; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, -10, 'Dersi Bölme')" title="Dersi Bölme (-10 XP)"><i class="fas fa-comment-slash"></i> -10</button>
-                        <button class="btn-xp" style="background:#b91c1c; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, -15, 'Ödev Teslim Etmeme')" title="Ödev Teslim Etmeme (-15 XP)"><i class="fas fa-file-excel"></i> -15</button>
-                        <button class="btn-xp" style="background:#991b1b; padding: 4px 8px; font-size: 11px;" onclick="addXP(${realIndex}, -20, 'Ciddi Kural İhlali')" title="Ciddi Kural İhlali (-20 XP)"><i class="fas fa-ban"></i> -20</button>
-                        <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
+                    <div style="display:inline-flex; gap: 5px; align-items:center;">
+                        <!-- XP Popup Trigger -->
+                        <div class="xp-popup-wrapper">
+                            <button type="button" class="btn-xp-trigger" onclick="toggleXPPopup(this, event)" title="XP Puan Ver">Xp</button>
+                            <div class="xp-popup-panel">
+                                <div class="xp-popup-label">⬆️ Artır</div>
+                                <div class="xp-popup-row">
+                                    <button class="btn-xp" style="background:#10b981;" onclick="addXP(${realIndex}, 5, 'Derse Hazırlıklı Gelme'); closeXPPopup(this)" title="Derse Hazırlıklı Gelme (+5 XP)"><i class="fas fa-check"></i> +5</button>
+                                    <button class="btn-xp" style="background:#059669;" onclick="addXP(${realIndex}, 5, 'Günün Sorusu'); closeXPPopup(this)" title="Günün Sorusu (+5 XP)"><i class="fas fa-question-circle"></i> +5</button>
+                                    <button class="btn-xp" style="background:#3b82f6;" onclick="addXP(${realIndex}, 10, 'Etkin Katılım / Cevap'); closeXPPopup(this)" title="Etkin Katılım (+10 XP)"><i class="fas fa-star"></i> +10</button>
+                                    <button class="btn-xp" style="background:#8b5cf6;" onclick="addXP(${realIndex}, 15, 'Ödev / İşbirliği'); closeXPPopup(this)" title="Ödev / İşbirliği (+15 XP)"><i class="fas fa-hands-helping"></i> +15</button>
+                                    <button class="btn-xp" style="background:#f59e0b;" onclick="addXP(${realIndex}, 20, 'Yenilikçi Fikir'); closeXPPopup(this)" title="Yenilikçi Fikir (+20 XP)"><i class="fas fa-rocket"></i> +20</button>
+                                </div>
+                                <div class="xp-popup-label">⬇️ Düşür</div>
+                                <div class="xp-popup-row">
+                                    <button class="btn-xp" style="background:#ef4444;" onclick="addXP(${realIndex}, -5, 'Hazırlıksız Gelme'); closeXPPopup(this)" title="Hazırlıksız Gelme (-5 XP)"><i class="fas fa-minus-circle"></i> -5</button>
+                                    <button class="btn-xp" style="background:#dc2626;" onclick="addXP(${realIndex}, -10, 'Dersi Bölme'); closeXPPopup(this)" title="Dersi Bölme (-10 XP)"><i class="fas fa-comment-slash"></i> -10</button>
+                                    <button class="btn-xp" style="background:#b91c1c;" onclick="addXP(${realIndex}, -15, 'Ödev Teslim Etmeme'); closeXPPopup(this)" title="Ödev Teslim Etmeme (-15 XP)"><i class="fas fa-file-excel"></i> -15</button>
+                                    <button class="btn-xp" style="background:#991b1b;" onclick="addXP(${realIndex}, -20, 'Ciddi Kural İhlali'); closeXPPopup(this)" title="Ciddi Kural İhlali (-20 XP)"><i class="fas fa-ban"></i> -20</button>
+                                </div>
+                            </div>
+                        </div>
                         <button class="action-btn btn-view" onclick="openObservationModal(${realIndex})" title="Hızlı Gözlem Ekle"><i class="fas fa-eye"></i></button>
                         <button class="action-btn btn-edit" onclick="editStudent(${realIndex})" title="Düzenle"><i class="fas fa-pen"></i></button>
                         <button class="action-btn btn-delete" onclick="deleteStudent(${realIndex})" title="Sil"><i class="fas fa-trash"></i></button>
@@ -5489,7 +5876,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             studentData.sort((a, b) => {
                 let valA = a[column] || ''; let valB = b[column] || '';
                 if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') { valA = Number(valA); valB = Number(valB); }
-                else if (column === 'xp') { valA = Number(valA) || 0; valB = Number(valB) || 0; }
+                else if (column === 'xp' || column === 'artmayanNot') { valA = Number(valA) || 0; valB = Number(valB) || 0; }
                 else { valA = valA.toString().toLocaleLowerCase('tr-TR'); valB = valB.toString().toLocaleLowerCase('tr-TR'); }
                 if (valA < valB) return currentSort.asc ? -1 : 1; if (valA > valB) return currentSort.asc ? 1 : -1; return 0;
             });
@@ -5498,15 +5885,116 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
 
         function clearForm() { document.getElementById('sira-no').value = ''; document.getElementById('okul-no').value = ''; document.getElementById('ad-soyad').value = ''; document.getElementById('sinif').value = ''; document.getElementById('xp-input').value = '0'; document.getElementById('edit-index').value = '-1'; }
         function saveStudent() {
-            const sira = document.getElementById('sira-no').value; const no = document.getElementById('okul-no').value; const adSoyad = document.getElementById('ad-soyad').value; const sinif = document.getElementById('sinif').value; const xp = parseInt(document.getElementById('xp-input').value) || 0; const editIndex = parseInt(document.getElementById('edit-index').value);
+            const sira = document.getElementById('sira-no').value;
+            const no = document.getElementById('okul-no').value;
+            const adSoyad = document.getElementById('ad-soyad').value;
+            const sinif = document.getElementById('sinif').value;
+            const xp = parseInt(document.getElementById('xp-input').value) || 0;
+            const editIndex = parseInt(document.getElementById('edit-index').value);
+
             if (!adSoyad || !no) return alert("Okul No ve Ad Soyad zorunludur.");
-            const newStudent = { sira, no, adSoyad, sinif, xp };
-            if (editIndex >= 0) studentData[editIndex] = newStudent; else studentData.push(newStudent);
+
+            if (editIndex >= 0) {
+                // 🔑 Mevcut öğrencinin tüm verilerini koru (xpLogs, gozlemler, artmayanNot, vak vb.)
+                // Sadece düzenlenen alanları güncelle
+                studentData[editIndex] = {
+                    ...studentData[editIndex],  // eski veriler korunur
+                    sira, no, adSoyad, sinif, xp
+                };
+            } else {
+                studentData.push({ sira, no, adSoyad, sinif, xp });
+            }
+
             clearForm(); renderStudentTable(); saveData();
         }
+
         function editStudent(index) { const student = studentData[index]; document.getElementById('sira-no').value = student.sira; document.getElementById('okul-no').value = student.no; document.getElementById('ad-soyad').value = student.adSoyad; document.getElementById('sinif').value = student.sinif; document.getElementById('xp-input').value = student.xp || 0; document.getElementById('edit-index').value = index; }
         function deleteStudent(index) { if (confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) { studentData.splice(index, 1); renderStudentTable(); saveData(); clearForm(); } }
+        function toggleXPPopup(btn, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            // Açık olan tüm panelleri kapat
+            document.querySelectorAll('.xp-popup-panel.open').forEach(p => {
+                p.classList.remove('open');
+            });
+
+            // Butona ait paneli bul
+            let panelId = btn.getAttribute('data-panel-id');
+            let panel;
+            if (panelId) {
+                panel = document.getElementById(panelId);
+            } else {
+                panel = btn.nextElementSibling;
+                if (panel && panel.classList.contains('xp-popup-panel')) {
+                    // Paneli body'ye taşı ki CSS transform/filter etkileşimlerinden kurtulsun
+                    panelId = 'xp-panel-' + Math.random().toString(36).substr(2, 9);
+                    panel.id = panelId;
+                    btn.setAttribute('data-panel-id', panelId);
+                    document.body.appendChild(panel);
+                } else {
+                    panel = null;
+                }
+            }
+
+            if (!panel) return;
+
+            const isOpen = panel.classList.contains('open');
+
+            if (!isOpen) {
+                // Önce görünmez yap, konumu hesapla, sonra göster
+                panel.style.visibility = 'hidden';
+                panel.style.top = '-9999px';
+                panel.style.left = '-9999px';
+                panel.classList.add('open');
+
+                // Bir sonraki frame'de boyutlar hazır olacak
+                requestAnimationFrame(() => {
+                    const rect = btn.getBoundingClientRect();
+                    const panelW = panel.offsetWidth || 280;
+                    const panelH = panel.offsetHeight || 160;
+
+                    // Butonun ortasına hizala
+                    let leftPos = rect.left + (rect.width / 2) - (panelW / 2);
+
+                    // Ekran sınırlarını aşmasın
+                    if (leftPos < 10) leftPos = 10;
+                    if (leftPos + panelW > window.innerWidth - 10) {
+                        leftPos = window.innerWidth - panelW - 10;
+                    }
+
+                    // Önce aşağıya aç, ekrana sığmazsa yukarı aç
+                    let topPos = rect.bottom + 8;
+                    if (topPos + panelH > window.innerHeight - 10) {
+                        topPos = rect.top - panelH - 8;
+                    }
+
+                    // Body'de olduğu için Viewport koordinatları kusursuz çalışır!
+                    panel.style.left = leftPos + 'px';
+                    panel.style.top = topPos + 'px';
+                    panel.style.bottom = 'auto';
+                    panel.style.transform = 'none';
+                    panel.style.visibility = 'visible';
+                });
+            } else {
+                panel.classList.remove('open');
+            }
+        }
+
+        function closeXPPopup(innerBtn) {
+            const panel = innerBtn.closest('.xp-popup-panel');
+            if (panel) panel.classList.remove('open');
+        }
+        // Dışarı tıklayınca popup kapansın
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.xp-popup-wrapper') && !e.target.closest('.xp-popup-panel')) {
+                document.querySelectorAll('.xp-popup-panel.open').forEach(p => p.classList.remove('open'));
+            }
+        });
+
         function addXP(index, amount, reason = 'Genel') {
+
             if (!studentData[index].xp) studentData[index].xp = 0;
             studentData[index].xp += amount;
 
@@ -5650,9 +6138,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             cards.forEach(card => {
                 if (!card.querySelector('.group-footer')) {
                     const footer = document.createElement('div'); footer.className = 'group-footer';
-                    footer.innerHTML = `<button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="addXPToGroup(this)"><i class="fas fa-users-cog"></i> Kümeye Toplu Puan Ver</button>
-                    <div style="display:flex; gap:8px;"><select class="student-picker" style="flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);"><option value="">Öğrenci Seç...</option></select>
-                    <button class="btn" onclick="addStudentToGroupUI(this)" style="padding:8px 15px; font-size:12px;">Ekle</button></div>`;
+                    footer.innerHTML = `<button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div>`;
                     card.appendChild(footer);
                 }
                 sortGroupByNo(card);
@@ -5747,7 +6233,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                     <div style="display:flex; gap:8px; align-items:center;"><select class="role-select" onchange="this.querySelectorAll('option').forEach(o => o.value === this.value ? o.setAttribute('selected', 'selected') : o.removeAttribute('selected')); updateRoleColor(this); saveData()"><option value="">Görev...</option><option value="Yönetici">Yönetici</option><option value="Yazıcı">Yazıcı</option><option value="Malzemeci">Malzemeci</option><option value="Sözcü">Sözcü</option><option value="Üye">Üye</option></select>
                         <button class="btn-remove-student" onclick="this.closest('li').remove(); updateStudentPickers(); saveData();"><i class="fas fa-user-minus"></i></button></div></li>`;
                 });
-                container.innerHTML += html + `</ul><div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="addXPToGroup(this)"><i class="fas fa-users-cog"></i> Kümeye Toplu Puan Ver</button><div style="display:flex; gap:5px;"><select class="student-picker" style="flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);"><option value="">Öğrenci Seç...</option></select><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:8px 15px; font-size:12px;">Ekle</button></div></div></div>`;
+                container.innerHTML += html + `</ul><div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div></div></div>`;
             });
             updateStudentPickers(); saveData();
         }
@@ -5764,12 +6250,12 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                     else if (index === 4) select.value = 'Malzemeci'; // 5'li grup: 2. Malzemeci
                     else if (index === 5) select.value = 'Yazıcı';    // 6'lı grup: 2. Yazıcı
                     else select.value = 'Üye';
-                    
+
                     select.querySelectorAll('option').forEach(o => {
                         if (o.value === select.value) o.setAttribute('selected', 'selected');
                         else o.removeAttribute('selected');
                     });
-                    
+
                     updateRoleColor(select);
                 });
             });
@@ -5791,7 +6277,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             const container = document.getElementById('groups-container'); const groupIndex = container.querySelectorAll('.group-card').length + 1;
             const groupCard = document.createElement('div'); groupCard.className = 'group-card';
             groupCard.innerHTML = `<h3><input type="text" class="group-title-input" value="Küme ${groupIndex}" oninput="this.setAttribute('value', this.value); saveData()"><button class="action-btn btn-delete" onclick="if(confirm('Kümeyi silmek istiyor musunuz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}" title="Küme Sil"><i class="fas fa-times"></i></button></h3><ul style="padding:0;list-style:none; min-height:30px;"></ul>
-            <div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:8px;"><select class="student-picker" style="flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);"><option value="">Öğrenci Seç...</option></select><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:8px 15px; font-size:12px;">Ekle</button></div></div>`;
+            <div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div></div>`;
             container.appendChild(groupCard); updateStudentPickers(); saveData();
         }
         function clearAllGroups() {
@@ -5827,8 +6313,9 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                 html += `<div class="group-card">
                 <h3><input type="text" class="group-title-input" value="${group.title}" oninput="saveData()"><button class="action-btn btn-delete" onclick="if(confirm('Kümeyi silmek istiyor musunuz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}" title="Küme Sil"><i class="fas fa-times"></i></button></h3>
                 <ul style="padding:0;list-style:none; min-height:30px;">${studentsHtml}</ul>
-                <div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:8px;"><select class="student-picker" style="flex:1; padding:8px; border-radius:8px; font-size:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);"><option value="">Öğrenci Seç...</option></select><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:8px 15px; font-size:12px;">Ekle</button></div></div>
+                <div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div></div>
             </div>`;
+
             });
             return html;
         }
@@ -5885,31 +6372,138 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             }
         }
 
+        // ===== MOBİL UYUMLU ÇOKLU ÖĞRENCİ SEÇİCİ FONKSİYONLARI =====
+
+        // Dropdown aç/kapat
+        function toggleStudentPicker(toggleBtn) {
+            const dropdown = toggleBtn.nextElementSibling;
+            const arrow = toggleBtn.querySelector('.picker-arrow');
+            const isOpen = dropdown.style.display !== 'none';
+            // Tüm diğer açık dropdown'ları kapat
+            document.querySelectorAll('.picker-dropdown').forEach(d => { d.style.display = 'none'; });
+            document.querySelectorAll('.picker-arrow').forEach(a => a.classList.remove('open'));
+            if (!isOpen) {
+                dropdown.style.display = 'block';
+                arrow.classList.add('open');
+                // Arama kutusunu temizle ve odaklan
+                const searchInput = dropdown.querySelector('.picker-search-input');
+                if (searchInput) { searchInput.value = ''; filterPickerItems(searchInput); searchInput.focus(); }
+            }
+        }
+
+        // Dropdown dışına tıklayınca kapat
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.student-multi-picker')) {
+                document.querySelectorAll('.picker-dropdown').forEach(d => d.style.display = 'none');
+                document.querySelectorAll('.picker-arrow').forEach(a => a.classList.remove('open'));
+            }
+        });
+
+        // Arama filtresi
+        function filterPickerItems(input) {
+            const term = input.value.toLowerCase();
+            const dropdown = input.closest('.picker-dropdown');
+            dropdown.querySelectorAll('.picker-item:not(.picker-select-all)').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        // Tümünü seç toggle
+        function toggleAllPickerItems(cbAll) {
+            const dropdown = cbAll.closest('.picker-dropdown');
+            dropdown.querySelectorAll('.picker-cb:not(.picker-cb-all)').forEach(cb => {
+                const item = cb.closest('.picker-item');
+                if (item.style.display !== 'none') { cb.checked = cbAll.checked; item.classList.toggle('checked', cbAll.checked); }
+            });
+            updatePickerLabel(dropdown);
+        }
+
+        // Seçim etiketi güncelle
+        function updatePickerLabel(dropdown) {
+            const picker = dropdown.closest('.student-multi-picker');
+            const toggleBtn = picker.querySelector('.picker-toggle');
+            const label = toggleBtn.querySelector('.picker-label');
+            const checked = dropdown.querySelectorAll('.picker-cb:not(.picker-cb-all):checked');
+            if (checked.length === 0) {
+                label.textContent = 'Öğrenci seç...';
+                toggleBtn.classList.remove('has-selection');
+            } else {
+                label.textContent = `${checked.length} öğrenci seçildi`;
+                toggleBtn.classList.add('has-selection');
+            }
+        }
+
         function updateStudentPickers() {
-            const selectedClass = document.getElementById('class-filter').value; const allStudentsInClass = studentData.filter(s => s.sinif === selectedClass);
+            const selectedClass = document.getElementById('class-filter').value;
+            const allStudentsInClass = studentData.filter(s => s.sinif === selectedClass);
             const assignedStudentNames = Array.from(document.querySelectorAll('.group-card li .student-name-text')).map(s => s.getAttribute('data-name') || s.textContent);
             const availableStudents = allStudentsInClass.filter(s => !assignedStudentNames.includes(s.adSoyad));
-            document.querySelectorAll('.student-picker').forEach(picker => {
-                picker.innerHTML = '<option value="">Öğrenci Seç...</option>';
-                availableStudents.forEach(s => picker.innerHTML += `<option value="${s.adSoyad}">${s.no} - ${s.adSoyad}</option>`);
+
+            document.querySelectorAll('.student-multi-picker').forEach(picker => {
+                const dropdown = picker.querySelector('.picker-dropdown');
+                const toggleBtn = picker.querySelector('.picker-toggle');
+                const label = toggleBtn.querySelector('.picker-label');
+                // Sabit öğeleri (arama ve tümünü seç) koru, öğrenci satırlarını yenile
+                dropdown.querySelectorAll('.picker-item:not(.picker-select-all)').forEach(el => el.remove());
+                dropdown.querySelector('.picker-cb-all').checked = false;
+                label.textContent = 'Öğrenci seç...';
+                toggleBtn.classList.remove('has-selection');
+                availableStudents.forEach(s => {
+                    const lbl = document.createElement('label');
+                    lbl.className = 'picker-item';
+                    lbl.innerHTML = `<input type="checkbox" class="picker-cb" value="${s.adSoyad}"> ${s.no} - ${s.adSoyad}`;
+                    lbl.querySelector('input').addEventListener('change', function () {
+                        lbl.classList.toggle('checked', this.checked);
+                        updatePickerLabel(dropdown);
+                    });
+                    dropdown.appendChild(lbl);
+                });
             });
         }
 
         function addStudentToGroupUI(btn) {
-            const picker = btn.previousElementSibling; const studentName = picker.value; if (!studentName) return;
-            const student = studentData.find(s => s.adSoyad === studentName); const xp = student ? (student.xp || 0) : 0; const displayNo = student ? student.no : "";
-            const groupCard = btn.closest('.group-card'); const ul = groupCard.querySelector('ul'); const li = document.createElement('li');
-            li.style = "margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;";
-            li.innerHTML = `<div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${studentName}" style="font-weight: 600; font-size: 14px;">${displayNo} - ${studentName}</span>
-                <div style="display:flex; align-items:center; gap:5px;"><span class="xp-badge" style="font-size:10px; padding:1px 5px;">${xp} XP</span>
-                    <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${studentName}', 1)">+</button><button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${studentName}', -1)">-</button><button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${studentName}', 5)"><i class="fas fa-question"></i></button>
-                </div></div>
-            <div style="display:flex; gap:8px; align-items:center;"><select class="role-select" onchange="updateRoleColor(this)"><option value="">Görev...</option><option value="Yönetici">Yönetici</option><option value="Yazıcı">Yazıcı</option><option value="Malzemeci">Malzemeci</option><option value="Sözcü">Sözcü</option><option value="Üye">Üye</option></select>
-                <button class="btn-remove-student" onclick="this.closest('li').remove(); updateStudentPickers(); saveData();"><i class="fas fa-user-minus"></i></button></div>`;
-            ul.appendChild(li);
-            // Öğrenci eklendikten sonra kümeyi numaraya göre sırala
-            sortGroupByNo(groupCard);
-            updateStudentPickers(); saveData();
+            const picker = btn.previousElementSibling.matches('.student-multi-picker')
+                ? btn.previousElementSibling
+                : btn.closest('.group-footer').querySelector('.student-multi-picker');
+            if (!picker) return;
+            const dropdown = picker.querySelector('.picker-dropdown');
+            const checkedBoxes = Array.from(dropdown.querySelectorAll('.picker-cb:not(.picker-cb-all):checked'));
+            if (checkedBoxes.length === 0) return;
+
+            const groupCard = btn.closest('.group-card');
+            const ul = groupCard.querySelector('ul');
+            let added = false;
+
+            checkedBoxes.forEach(cb => {
+                const studentName = cb.value;
+                const student = studentData.find(s => s.adSoyad === studentName);
+                const xp = student ? (student.xp || 0) : 0;
+                const displayNo = student ? student.no : '';
+                const li = document.createElement('li');
+                li.style = 'margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;';
+                li.innerHTML = `<div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${studentName}" style="font-weight: 600; font-size: 14px;">${displayNo} - ${studentName}</span>
+                    <div style="display:flex; align-items:center; gap:5px;"><span class="xp-badge" style="font-size:10px; padding:1px 5px;">${xp} XP</span>
+                        <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${studentName}', 1)">+</button>
+                        <button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${studentName}', -1)">-</button>
+                        <button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${studentName}', 5)"><i class="fas fa-question"></i></button>
+                    </div></div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="role-select" onchange="updateRoleColor(this)"><option value="">Görev...</option><option value="Yönetici">Yönetici</option><option value="Yazıcı">Yazıcı</option><option value="Malzemeci">Malzemeci</option><option value="Sözcü">Sözcü</option><option value="Üye">Üye</option></select>
+                    <button class="btn-remove-student" onclick="this.closest('li').remove(); updateStudentPickers(); saveData();"><i class="fas fa-user-minus"></i></button>
+                </div>`;
+                ul.appendChild(li);
+                added = true;
+            });
+
+            if (added) {
+                sortGroupByNo(groupCard);
+                // Dropdown'u kapat ve seçimleri sıfırla
+                const dropdownEl = picker.querySelector('.picker-dropdown');
+                dropdownEl.style.display = 'none';
+                picker.querySelector('.picker-arrow').classList.remove('open');
+                updateStudentPickers();
+                saveData();
+            }
         }
 
         function addXPByName(name, amount) {
@@ -5994,6 +6588,33 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             const noteEl = document.getElementById('obs-note');
             if (noteEl.value) noteEl.value += `, ${tag}`; else noteEl.value = tag;
         }
+        function addNegativeNote() {
+            if (currentObsStudentIndex === -1) return;
+            const deductionStr = prompt("Bu öğrenciye uygulanacak telafisi olmayan (-) puan miktarını girin (Örn: 10):", "10");
+            if (!deductionStr) return;
+            const amount = parseInt(deductionStr);
+            if (isNaN(amount) || amount <= 0) return alert("Lütfen geçerli pozitif bir sayı girin.");
+
+            const student = studentData[currentObsStudentIndex];
+
+            // XP'den tamamen bağımsız alan
+            if (student.artmayanNot === undefined || student.artmayanNot === null) student.artmayanNot = 0;
+            student.artmayanNot += amount;
+
+            // Kendi bağımsız log kaydı (xpLogs ile karışmıyor)
+            if (!student.artmayanLogs) student.artmayanLogs = [];
+            student.artmayanLogs.unshift({ tarih: new Date().toLocaleString('tr-TR'), miktar: amount });
+
+            // Gözlem geçmişine de tarih damalı not düş
+            if (!student.gozlemler) student.gozlemler = [];
+            student.gozlemler.unshift({ tarih: new Date().toLocaleString('tr-TR'), not: `⛔ Artmayan - Not uygulandı: -${amount} Puan (Toplam: -${student.artmayanNot})` });
+
+            saveData();
+            renderStudentTable();
+            document.getElementById('observation-modal').style.display = 'none';
+            alert(`✅ "${student.adSoyad}" için ${amount} puanlık Artmayan Not kaydedildi.\nBu puan XP’yi etkilemez, tabloda ARTMAYAN sütununda gösterilir.`);
+        }
+
         function saveObservation() {
             if (currentObsStudentIndex === -1) return;
             const note = document.getElementById('obs-note').value.trim();
@@ -6016,6 +6637,19 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         function renderSchedule() {
             const body = document.getElementById('schedule-body'); if (!body) return; body.innerHTML = '';
             const times = [...new Set(scheduleData.map(s => s.time))].sort(); const days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
+
+            // Renk paleti ve derse göre renk eşleştirme
+            const uniqueLessons = [...new Set(scheduleData.map(s => s.lesson.trim()))];
+            const colorPalette = [
+                '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444',
+                '#06b6d4', '#d946ef', '#f97316', '#14b8a6', '#6366f1',
+                '#ec4899', '#84cc16', '#0ea5e9', '#f43f5e', '#a855f7'
+            ];
+            const colorMap = {};
+            uniqueLessons.forEach((lesson, index) => {
+                colorMap[lesson] = colorPalette[index % colorPalette.length];
+            });
+
             times.forEach(time => {
                 const tr = document.createElement('tr'); tr.innerHTML = `<td style="font-weight:700; color:var(--secondary);">${time}</td>`;
                 days.forEach(day => {
@@ -6025,7 +6659,8 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                         .filter(s => s.day === day && s.time === time);
                     entries.forEach(e => {
                         const div = document.createElement('div');
-                        div.style.cssText = 'background:var(--secondary); color:white; padding:5px 8px; border-radius:8px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between; align-items:center;';
+                        const bgColor = colorMap[e.lesson.trim()] || 'var(--secondary)';
+                        div.style.cssText = `background:${bgColor}; color:white; padding:5px 8px; border-radius:8px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between; align-items:center;`;
                         div.innerHTML = `<span>${e.lesson}</span>`;
                         const btn = document.createElement('button');
                         btn.style.cssText = 'background:none; border:none; color:white; cursor:pointer;';
@@ -7297,7 +7932,8 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
 
         function pgListenToForms() {
             if (!window.db) return;
-            window.db.ref('project_group_forms').on('value', (snapshot) => {
+            // Sadece son 100 mesaj/formu getir (Performans için)
+            window.db.ref('project_group_forms').orderByKey().limitToLast(100).on('value', (snapshot) => {
                 if (!snapshot.exists()) {
                     pgFormsData = [];
                     if (document.getElementById('pg-detail-modal').style.display === 'block') pgRenderMessages();
@@ -7922,6 +8558,73 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
             pgListenToForms();
         });
 
+    </script>
+    <script>
+        // ── YÖNETİCİ PANELİ İŞLEMLERİ ──
+        function loadUsersAdmin() {
+            const adminUsersList = document.getElementById('admin-users-list');
+            if (!adminUsersList) return;
+
+            window.db.ref('kullanicilar').off('value'); // Remove old listeners to prevent duplicates
+            window.db.ref('kullanicilar').on('value', snapshot => {
+                adminUsersList.innerHTML = '';
+                if (!snapshot.exists()) return;
+
+                snapshot.forEach(childSnapshot => {
+                    const uid = childSnapshot.key;
+                    const data = childSnapshot.val();
+
+                    const tr = document.createElement('tr');
+                    const tarih = data.kayitTarihi ? new Date(data.kayitTarihi).toLocaleDateString('tr-TR') : '-';
+                    const durumBadge = data.onayli
+                        ? `<span class="xp-badge" style="background:#10b981; color:white;">Onaylı</span>`
+                        : `<span class="xp-badge" style="background:#ef4444; color:white;">Onaysız</span>`;
+
+                    let buttons = '';
+                    if (!data.onayli) {
+                        buttons += `<button class="btn btn-save" style="padding: 6px 10px; font-size: 11px; margin-right: 5px; flex: initial;" onclick="approveUser('${uid}')">Onayla</button>`;
+                    }
+                    buttons += `<button class="btn btn-reset" style="padding: 6px 10px; font-size: 11px; margin-right: 5px; flex: initial; margin-top: 0; width: auto;" onclick="rejectUser('${uid}')">Sil</button>`;
+                    buttons += `<button class="btn btn-purple" style="padding: 6px 10px; font-size: 11px; flex: initial;" onclick="sendPasswordResetAdmin('${data.email}')">Şifre Sıfırla</button>`;
+
+                    tr.innerHTML = `
+                        <td style="font-weight:600;">${data.adSoyad || '-'}</td>
+                        <td>${data.email || '-'}</td>
+                        <td>${tarih}</td>
+                        <td>${durumBadge}</td>
+                        <td style="display: flex;">${buttons}</td>
+                    `;
+                    adminUsersList.appendChild(tr);
+                });
+            });
+        }
+
+        function approveUser(uid) {
+            if (confirm("Bu kullanıcıyı onaylamak istediğinize emin misiniz?")) {
+                window.db.ref('kullanicilar/' + uid).update({ onayli: true }).then(() => {
+                    alert("Kullanıcı onaylandı.");
+                });
+            }
+        }
+
+        function rejectUser(uid) {
+            if (confirm("Bu kullanıcıyı reddetmek (silmek) istediğinize emin misiniz?")) {
+                window.db.ref('kullanicilar/' + uid).remove().then(() => {
+                    alert("Kullanıcı veritabanından silindi.");
+                });
+            }
+        }
+
+        function sendPasswordResetAdmin(email) {
+            if (!email) return alert("E-posta bulunamadı.");
+            if (confirm(email + " adresine şifre sıfırlama bağlantısı gönderilsin mi?")) {
+                firebase.auth().sendPasswordResetEmail(email).then(() => {
+                    alert("Şifre sıfırlama e-postası gönderildi.");
+                }).catch(err => {
+                    alert("Hata: " + err.message);
+                });
+            }
+        }
     </script>
 </body>
 
