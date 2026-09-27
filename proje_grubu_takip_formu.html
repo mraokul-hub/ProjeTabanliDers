@@ -327,6 +327,19 @@
         <p>Proje grubu gelişim raporunuz sisteme kaydedildi. Yapay zeka ve öğretmeniniz kısa süre içinde bunu değerlendirecektir.</p>
     </div>
     
+    <!-- KRİZ KARTI MODAL -->
+    <div id="crisis-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; justify-content:center; align-items:center;">
+        <div style="background:var(--bg-color); color:var(--text-main); padding:25px; border-radius:12px; max-width:500px; width:90%; border-left:6px solid #ef4444; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color:#ef4444; margin-top:0;"><i class="fas fa-exclamation-triangle fa-shake"></i> 🚨 Beklenmedik Gelişme! (Kriz Kartı)</h3>
+            <p style="font-size:14px; margin-bottom:15px;" id="crisis-text">Buraya kriz senaryosu gelecek.</p>
+            <div class="input-group">
+                <label style="color:var(--text-main);">Bu krizi grubunuzla nasıl çözeceksiniz?</label>
+                <textarea id="crisis-response" rows="3" style="width:100%; padding:10px; border-radius:8px; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color);" placeholder="Kriz eylem planınızı yazın..."></textarea>
+            </div>
+            <button class="btn-submit" style="background:#ef4444; margin-top:15px; width:100%;" onclick="resolveCrisisAndSubmit()"><i class="fas fa-shield-alt"></i> Krizi Çöz ve Gönder</button>
+        </div>
+    </div>
+    
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -360,6 +373,23 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
 
+            if (!window.crisisResolved && Math.random() < 0.20) { // %20 İhtimal
+                const crises = [
+                    "Projenizin ana bütçesi beklenmedik bir şekilde %40 kesintiye uğradı.",
+                    "Ekip üyelerinizden biri kritik bir aşamada hastalandı ve 1 hafta projede yok.",
+                    "Kullandığınız temel malzemelerden biri artık piyasada bulunmuyor.",
+                    "Çözümünüzün çevresel bir yan etkisi olduğu fark edildi (Örn: Aşırı atık üretimi).",
+                    "Rakip bir grup/firma, sizin çözümünüze çok benzer bir şeyi sizden önce sundu."
+                ];
+                window.activeCrisis = crises[Math.floor(Math.random() * crises.length)];
+                document.getElementById('crisis-text').innerText = window.activeCrisis;
+                document.getElementById('crisis-modal').style.display = 'flex';
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Proje Takip Raporunu Gönder';
+                return; // Durdur
+            }
+
             const formData = {
                 ogrenciNo: document.getElementById('ogrenciNo').value,
                 sinif: document.getElementById('sinif').value,
@@ -371,7 +401,9 @@
                     problemTanim: document.getElementById('problemTanim').value,
                     cozumOneri: document.getElementById('cozumOneri').value,
                     kisiselKatki: document.getElementById('kisiselKatki').value,
-                    peerReview: document.getElementById('peerReview').value
+                    peerReview: document.getElementById('peerReview').value,
+                    krizSenaryosu: window.activeCrisis || "",
+                    krizCozumu: document.getElementById('crisis-response') ? document.getElementById('crisis-response').value : ""
                 },
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 isAIProcessed: false // AI'nin daha okumadığını işaretlemek için bayrak
@@ -388,6 +420,18 @@
                 submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Tekrar Dene';
                 alert("Bağlantı hatası! Lütfen internetinizi kontrol edip tekrar deneyin.");
             }
+        }
+
+        function resolveCrisisAndSubmit() {
+            const resp = document.getElementById('crisis-response').value;
+            if (!resp || resp.trim() === '') {
+                alert('Krizi atlatmak için bir eylem planı yazmalısınız!');
+                return;
+            }
+            window.crisisResolved = true;
+            document.getElementById('crisis-modal').style.display = 'none';
+            // Trigger submit again
+            submitProjectForm(new Event('submit'));
         }
     </script>
 </body>

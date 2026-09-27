@@ -180,7 +180,8 @@
                 </form>
 
                 <div class="footer-link mt-4 small" style="color: #64748b;">
-                    Hesabınız yok mu? <a href="register.html">Hemen Kaydolun</a>
+                    Hesabınız yok mu? <a href="register.html">Hemen Kaydolun</a><br>
+                    <a href="#" onclick="resetPassword()" style="color: #f59e0b; margin-top: 8px; display: inline-block;">Şifremi Unuttum?</a>
                 </div>
             </div>
         </div>
@@ -244,6 +245,20 @@
                     showAlert(msg);
                 });
         });
+
+        function resetPassword() {
+            const email = prompt("Lütfen şifresini sıfırlamak istediğiniz e-posta adresini giriniz:");
+            if (email) {
+                auth.sendPasswordResetEmail(email).then(() => {
+                    showAlert("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen gelen kutunuzu (ve spam klasörünü) kontrol edin.", "success");
+                }).catch((error) => {
+                    let msg = "Şifre sıfırlama hatası: " + error.message;
+                    if (error.code === 'auth/user-not-found') msg = "Bu e-posta adresine ait bir kullanıcı bulunamadı.";
+                    if (error.code === 'auth/invalid-email') msg = "Geçersiz bir e-posta adresi girdiniz.";
+                    showAlert(msg, "warning");
+                });
+            }
+        }
     </script>
 </body>
 </html>
