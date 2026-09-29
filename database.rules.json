@@ -14,18 +14,25 @@
       }
     },
     
-    // 2. Formlar (Ortak Havuz) - Şifresiz giriş serbest bırakıldı ki öğrenciler form doldurabilsin
+    // 2. Formlar (Ortak Havuz)
+    // Güvenlik güncellendi: Okuma sadece giriş yapmış kullanıcılara (öğretmen/yönetici), yazma ise sadece yeni veri (append-only) olarak eklenebilir.
     "student_forms": {
-      ".read": "true",
-      ".write": "true"
+      ".read": "auth != null",
+      "$formId": {
+        ".write": "!data.exists()"
+      }
     },
     "project_group_forms": {
-      ".read": "true",
-      ".write": "true"
+      ".read": "auth != null",
+      "$formId": {
+        ".write": "!data.exists()"
+      }
     },
 
     // 3. Kullanıcı Kayıt/Onay Sistemi
     "kullanicilar": {
+      // Yönetici tüm kullanıcı listesini görebilir (loadUsersAdmin için gerekli)
+      ".read": "auth != null && auth.token.email === 'mremzi@gmail.com'",
       "$uid": {
         // Kullanıcılar kendi kayıtlarını görebilir, Admin herkesi görebilir
         ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'mremzi@gmail.com')",

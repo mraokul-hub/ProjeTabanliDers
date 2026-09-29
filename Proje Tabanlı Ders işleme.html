@@ -1564,12 +1564,12 @@
                 <div
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; font-size: 13px; line-height: 1.6;">
                     <div>
-                        <p><strong>A) Yönetici:</strong> Grubun öğretmenle iletişimini sağlar.</p>
-                        <p><strong>B) Yazıcı:</strong> Grubun raporlamasını yapar. Ödev kontrolü yapar.</p>
+                        <p><strong>A) Proje Koordinatörü:</strong> Grubun öğretmenle iletişimini sağlar.</p>
+                        <p><strong>B) Veri Analisti:</strong> Grubun raporlamasını yapar. Ödev kontrolü yapar.</p>
                     </div>
                     <div>
-                        <p><strong>C) Malzemeci:</strong> Ders ekipmanlarını tamamlamasını sağlar.</p>
-                        <p><strong>D) Sözcü:</strong> Grubun laboratuvara uyumunu sağlar. Kümenin ders sessizliğine
+                        <p><strong>C) Ar-Ge Sorumlusu:</strong> Ders ekipmanlarını tamamlamasını sağlar.</p>
+                        <p><strong>D) Halkla İlişkiler:</strong> Grubun laboratuvara uyumunu sağlar. Kümenin ders sessizliğine
                             uyumunu sağlar.</p>
                     </div>
                     <div
@@ -2092,17 +2092,26 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <label>Varsayılan Ceza XP (Yapmayanlar):</label>
                             <input type="number" id="track-penalty" value="5">
                         </div>
-                        <button class="btn" onclick="addTrackingItem()" style="width:100%;"><i class="fas fa-check"></i>
+                        <button id="track-add-btn" class="btn" onclick="addTrackingItem()" style="width:100%;"><i class="fas fa-check"></i>
                             Çalışmayı Başlat</button>
                     </div>
                 </div>
 
                 <div class="right-panel">
                     <div style="padding: 20px;">
-                        <h4 style="margin:0;"><i class="fas fa-list-ul"></i> Aktif Takip Listesi</h4>
+                        <h4 style="margin:0;"><i class="fas fa-bolt" style="color:var(--accent);"></i> Aktif Ödevler</h4>
                     </div>
-                    <div id="tracking-list"
+                    <div id="tracking-list-active"
                         style="padding: 0 20px 20px 20px; display: flex; flex-direction: column; gap: 15px;"></div>
+
+                    <!-- Eski Ödevler (Pasif) Bölümü -->
+                    <div style="padding: 0 20px 10px 20px;">
+                        <button onclick="togglePasifOdevler()" style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; padding:10px 0; width:100%; border-top: 1px solid var(--border);">
+                            <i class="fas fa-archive"></i> Eski Ödevler (Pasif)
+                            <i id="pasif-arrow" class="fas fa-chevron-down" style="margin-left:auto; transition:transform 0.3s;"></i>
+                        </button>
+                    </div>
+                    <div id="tracking-list-passive" style="padding: 0 20px 20px 20px; display: none; flex-direction: column; gap: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -3001,100 +3010,116 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
         </div>
     </div>
 
+    <!-- Tab 10: Sistem Kullanım Kılavuzu -->
     <div id="tab10" class="tab-content">
-        <h2>🧭 Sistem Açıklaması & Kullanım Kılavuzu</h2>
-        <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">
-            Yabgu Eğitim Sistemi (PDÖG) Plan, Devamlılık, Ölçme ve Geri Dönüt ilkeleri doğrultusunda öğretmenlerin tüm
-            süreçlerini dijitalleştiren uçtan uca bir çözümdür. Aşağıda her bir bölümün basamaklı işleyişini
-            inceleyebilirsiniz:
+        <h2>🧭 11. Sistem Kullanım Kılavuzu</h2>
+        <p style="font-size:15px; color:var(--text-main); margin-bottom:25px;">
+            Bu kılavuz, <strong>Yabgu Eğitim Sistemi (Proje Tabanlı Ders İşleme)</strong> platformunun tüm özelliklerini en verimli şekilde kullanabilmeniz için hazırlanmıştır. 
+            Sistemin temel felsefesi; geleneksel sınıf ortamını oyunlaştırma (XP), veri analitiği ve Yapay Zeka (AI) ile birleştirerek öğrencileri pasif dinleyici olmaktan çıkarıp aktif problem çözücülere dönüştürmektir. <strong>Plan, Devamlılık, Ölçme ve Geri Dönüt</strong> döngüsü üzerine kurulan bu yapıda, aşağıdaki başlıklardan sistemin tüm modüllerinde neyi, nasıl yapacağınızı adım adım öğrenebilirsiniz.
         </p>
 
-        <div style="display:flex; flex-direction:column; gap:15px; padding-bottom:30px;">
-            <!-- Basamak 1 -->
-            <div style="background:var(--card-bg); border-radius:10px; padding:15px; border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0; color:var(--accent); display:flex; align-items:center;"><i
-                        class="fas fa-users me-2"></i> 1. Öğrenci ve Sınıf Yönetimi (Sekme 1 & 2)</h4>
-                <p style="font-size:13px; color:var(--text-main); line-height:1.6; margin:0;">
-                    Sistemin temel taşıdır. Öğrenci listeleri (Excel üzerinden veya manuel) eklenebilir. Sınıf Yönetimi
-                    sekmesinde öğrenciler özelliklerine göre gruplandırılabilir ve anlık "XP (Deneyim Puanı)" sistemiyle
-                    derse katılımları teşvik edilebilir. Ayrıca öğrencilere "Proje Koordinatörü, Ar-Ge Sorumlusu" gibi
-                    <strong>gerçek mesleki roller</strong> atanabilir ve kişisel <strong>Bağlam Eğilimleri (İlgi
-                        Alanları)</strong>
-                    kayıt altına alınarak bağlam temelli sisteme entegre edilir.
-                </p>
+        <div class="grid-layout" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <!-- 1 -->
+            <div class="form-box" style="border-left: 4px solid var(--primary);">
+                <h3 style="color: var(--primary); margin-top:0;"><i class="fas fa-users"></i> 1. Öğrenci Bilgi Sistemi (Veri Tabanı ve XP)</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Öğrenci Eklemek İçin:</strong> Sınıf seçip "Öğrenci Ekle" formunu kullanarak manuel kayıt yapabilir veya sağ üstteki <strong>"Excel'den Yükle"</strong> butonuna basarak e-Okul listelerinizi toplu olarak aktarabilirsiniz.</li>
+                    <li><strong>Düzenleme/Silme:</strong> Listede öğrencinin yanındaki kalem ikonuna basarak bilgilerini/ilgi alanını (Bağlam) güncelleyebilir veya çöp kutusu ikonuyla silebilirsiniz.</li>
+                    <li><strong>Arama (Süzgeç):</strong> Arama çubuğuna isim veya numara yazarak istediğiniz öğrenciyi anında bulabilirsiniz.</li>
+                </ul>
             </div>
 
-            <!-- Basamak 2 -->
-            <div style="background:var(--card-bg); border-radius:10px; padding:15px; border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0; color:#38bdf8; display:flex; align-items:center;"><i
-                        class="fas fa-snowflake me-2"></i> 2. Derse Hazırlık ve Planlama (Sekme 3 & 4)</h4>
-                <p style="font-size:13px; color:var(--text-main); line-height:1.6; margin:0;">
-                    Derse girmeden önce "Buz Kırma Etkinlikleri" sekmesinde sınıf seviyesine (1-12. sınıf) uygun
-                    eğlenceli ve odaklanmayı artırıcı oyunlar seçilebilir. Ayrıca "Ders İşleme" sekmesindeki
-                    <strong>🧠 Bağlam Senaryoları Üret</strong> butonuyla işlenecek konuya dair (Uzay, Doğa, Ekonomi vb.
-                    temalarda)
-                    ilgi çekici gerçek hayat kancaları (senaryolar) anında Gemini yapay zekasına ürettirilir. Bütüncül
-                    bir
-                    A5 formatlı ders planı tasarımı tamamlanır.
-                </p>
+            <!-- 2 -->
+            <div class="form-box" style="border-left: 4px solid var(--secondary);">
+                <h3 style="color: var(--secondary); margin-top:0;"><i class="fas fa-layer-group"></i> 2. Sınıf Yönetimi ve Kümeleme</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Grup Oluşturmak İçin:</strong> Üstteki menüden bir sınıf seçin. Sınıfı hızlıca dağıtmak için <strong>"Rastgele Otomatik Grupla"</strong> butonunu kullanın. Kendi gruplarınızı kurmak istiyorsanız <strong>"Manuel Küme Ekle"</strong> diyerek öğrencileri tek tek seçin.</li>
+                    <li><strong>Rol Atama:</strong> Kümeye eklenen öğrencilerin yanında yer alan listeden <em>Proje Koordinatörü, Veri Analisti, Ar-Ge Sorumlusu veya Halkla İlişkiler</em> gibi onlara uygun mesleki rolü atayın.</li>
+                    <li><strong>Puanlama:</strong> Grubun ders/proje performansına göre öğrencilerin yanındaki (+/-) butonlarını veya "Grubu Değerlendir" seçeneğini kullanarak XP puanı verin.</li>
+                </ul>
             </div>
 
-            <!-- Basamak 3 -->
-            <div style="background:var(--card-bg); border-radius:10px; padding:15px; border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0; color:#10b981; display:flex; align-items:center;"><i
-                        class="fas fa-tasks me-2"></i> 3. Ödev, Sınav ve Performans Takibi (Sekme 6 & 7)</h4>
-                <p style="font-size:13px; color:var(--text-main); line-height:1.6; margin:0;">
-                    Öğrencilere atanan görevler, ödevler ve projeler tek ekrandan XP eklenerek/çıkarılarak takip edilir.
-                    Gerekli durumlarda velilere WhatsApp üzerinden tek tuşla bildirim gönderilir. Sınav Analiz bölümünde
-                    Excel'den okunan optik form verileriyle sınıfın net ortalamaları anında analiz edilir.
-                </p>
+            <!-- 3 -->
+            <div class="form-box" style="border-left: 4px solid #ef4444;">
+                <h3 style="color: #ef4444; margin-top:0;"><i class="fas fa-fire"></i> 3. Buz Kırma Etkinlikleri</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Etkinlik Seçimi:</strong> Yeni bir sınıfa girerken veya derste enerjinin düştüğünü hissettiğinizde bu sekmedeki listeden uygun bir oyunu seçin.</li>
+                    <li><strong>Nasıl Uygulanır:</strong> Seçtiğiniz etkinliğin üzerine tıklayarak kurallarını okuyun ve sınıfa yönergeleri vererek anında uygulayın. (Ekstra materyal gerektirmez).</li>
+                </ul>
             </div>
 
-            <!-- Basamak 4 -->
-            <div style="background:var(--card-bg); border-radius:10px; padding:15px; border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0; color:#f59e0b; display:flex; align-items:center;"><i
-                        class="fas fa-clipboard-list me-2"></i> 4. Devamlılık: Formlar ve Öz Değerlendirme (Sekme 8)
-                </h4>
-                <p style="font-size:13px; color:var(--text-main); line-height:1.6; margin:0;">
-                    Dersten Önce ("Öğrenme Stili Testi") ve Dersten Sonra (Geribildirim) form linkleri, WhatsApp
-                    jeneratörü ile kolayca paylaşılır. Öğrencilerin sisteme girdikleri yanıtlar ve anketler anlık olarak
-                    (Firebase üzerinden) buluta yansır ve listelenir.
-                </p>
+            <!-- 4 -->
+            <div class="form-box" style="border-left: 4px solid #10b981;">
+                <h3 style="color: #10b981; margin-top:0;"><i class="fas fa-chalkboard-teacher"></i> 4. Ders İşleme & Strateji (Yapay Zeka Destekli)</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Konu Girme:</strong> Metin kutularına o günkü dersinizin adını ve hedefini (Örn: Hücrenin Yapısı) yazın.</li>
+                    <li><strong>Strateji Üretimi:</strong> <strong>"Strateji Geliştir"</strong> butonuna tıklayın.</li>
+                    <li><strong>Sonuç:</strong> Sistem (Yapay Zeka) size yalnızca <strong>5E Modeli</strong>'ne (Girme, Keşfetme vb.) değil; aynı zamanda <strong>Sosyal İnşacılık</strong>, <strong>Bütüncül Keşif</strong> ve <strong>Bağlam Temelli Öğrenme (REACT Modeli)</strong> yaklaşımlarına da uygun, öğrencilerin ilgi alanlarına göre hikayeleştirilmiş adım adım bir ders işleyiş planı sunacaktır. Bu planı derste sırasıyla uygulayın.</li>
+                </ul>
             </div>
 
-            <!-- Basamak 5 -->
-            <div style="background:var(--card-bg); border-radius:10px; padding:15px; border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0; color:#8b5cf6; display:flex; align-items:center;"><i
-                        class="fas fa-rocket me-2"></i> 5. Ölçme: İleri Çalışma Grupları Tespiti (Sekme 9)</h4>
-                <p style="font-size:13px; color:var(--text-main); line-height:1.6; margin:0;">
-                    Sistemin en güçlü yanlarından biridir. Yapay zeka tabanlı bir kural motoru, öğrencinin kazandığı
-                    XP'leri ve Dersten Önce/Sonra formlarına katılımını tarayarak yüksek potansiyelli öğrencileri bulur.
-                    Bu başarılı öğrenciler için 4'er kişilik (Yönetici, Yazıcı, Sözcü vb.) elit çalışma grupları (🚀
-                    İleri Gruplar) otomatik olarak kurulur. "Proje Gruplarına Aktar" butonu ile bu ekipler doğrudan bir
-                    üst seviyeye taşınır.
-                </p>
+            <!-- 5 -->
+            <div class="form-box" style="border-left: 4px solid #f59e0b;">
+                <h3 style="color: #f59e0b; margin-top:0;"><i class="fas fa-calendar-alt"></i> 5. Öğretmen Ders Programı</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Programı Doldurma:</strong> Tablodaki boş kutucukların üzerine tıklayarak o saatte derse gireceğiniz sınıfın adını doğrudan yazın.</li>
+                    <li><strong>Görselleştirme:</strong> Siz yazdıkça ders kutucukları otomatik olarak renklenecek ve programınız takibi kolay görsel bir tabloya dönüşecektir.</li>
+                    <li><strong>Kaydetme:</strong> İşleminiz bittiğinde alt kısımdaki <strong>"Değişiklikleri Kaydet"</strong> butonuna basmayı unutmayın.</li>
+                </ul>
             </div>
 
-            <!-- Basamak 6 -->
-            <div style="background:var(--card-bg); border-radius:10px; padding:15px; border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0; color:#ef4444; display:flex; align-items:center;"><i
-                        class="fas fa-layer-group me-2"></i> 6. Geri Dönüt: Proje Grupları ve AI Değerlendirmesi (Sekme
-                    10)</h4>
-                <p style="font-size:13px; color:var(--text-main); line-height:1.6; margin:0;">
-                    İleri düzey çalışma yapan öğrencilerin takibi için Firebase veritabanıyla entegre "Proje Takip
-                    Formu" linki üretilir ve WhatsApp üzerinden öğrencilere ulaştırılır. Öğrenciler proje formunu
-                    doldururken
-                    <strong>%20 ihtimalle rastgele bir Kriz Kartı (Case Study)</strong> ile karşılaşır ve bu duruma
-                    çözüm
-                    üretmek zorundadır. Öğretmen, <strong>"AI Promptu Üret"</strong> butonuna basarak öğrenci formlarını
-                    (kriz cevaplarıyla birlikte)
-                    Gemini yapay zekasına okutur. AI, her öğrenciye bir Performans Puanı (1-100) verir ve projenin
-                    etkisine göre <strong>Sürdürülebilir Kalkınma Ödülü</strong> atar. (Örn: Eğitim
-                    Gönüllüsü).
-                    Öğretmen bu verilerden tek tuşla <strong>"Özel Bağlam Eğilimi Karnesi"</strong> oluşturup WhatsApp
-                    üzerinden velilere gönderebilir.
-                </p>
+            <!-- 6 -->
+            <div class="form-box" style="border-left: 4px solid #6366f1;">
+                <h3 style="color: #6366f1; margin-top:0;"><i class="fas fa-tasks"></i> 6. Ödev & Proje Takip Sistemi</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Yeni Görev Atama:</strong> "Görev Türü", "Konu", "XP Puanı" ve "Son Tarih" kısımlarını doldurup <strong>"Çalışmayı Başlat"</strong> butonuna basarak bir takip kartı oluşturun.</li>
+                    <li><strong>Değerlendirme (Puan Verme):</strong> Tarih geldiğinde görevin üzerindeki <strong>"Değerlendir"</strong> butonuna basın. Açılan sınıftan yapan öğrencileri işaretleyip XP'lerini güncelleyin.</li>
+                    <li><strong>Eski Ödevler:</strong> Son teslim tarihi geçmiş olan ödevler kalabalık yapmamak için otomatik olarak <em>"Eski Ödevler (Pasif)"</em> arşivine taşınır. Dilerseniz tarihini düzenleyip tekrar aktif edebilirsiniz.</li>
+                    <li><strong>Raporlama:</strong> Kartın altındaki ikonlara (WA/BiP) tıklayarak ödevi yapanlar/yapmayanlar listesini tek tıkla veli gruplarına gönderin.</li>
+                </ul>
             </div>
+
+            <!-- 7 -->
+            <div class="form-box" style="border-left: 4px solid #db2777;">
+                <h3 style="color: #db2777; margin-top:0;"><i class="fas fa-chart-line"></i> 7. Deneme Sınavları & Detaylı Grafik Analiz</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Veri Yükleme:</strong> Optik okuyucudan aldığınız sınav sonuçlarını içeren Excel dosyasını seçin.</li>
+                    <li><strong>Sütun Eşleştirme:</strong> Sistem sütunları otomatik tanımaya çalışır. Siz sadece "Adı", "Sınıfı" ve "Netler" gibi alanların doğruluğunu onaylayıp "İçe Aktar" deyin.</li>
+                    <li><strong>Analiz Görüntüleme:</strong> Açılan analiz menüsünden kıyaslamak istediğiniz sınıfları ve dersleri seçin. Sistem size şubeler arası başarı durumunu çubuk grafiklerle ve renkli tablolarla anında gösterecektir.</li>
+                </ul>
+            </div>
+
+            <!-- 8 -->
+            <div class="form-box" style="border-left: 4px solid #8b5cf6;">
+                <h3 style="color: #8b5cf6; margin-top:0;"><i class="fas fa-clipboard-check"></i> 8. Öz Değerlendirme & Geri Bildirim Formları</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Form Paylaşımı:</strong> Sayfadaki "Dersten Önce" veya "Dersten Sonra" butonlarına tıklayarak mobil uyumlu özel anket linkinizi veya QR kodunuzu oluşturun. Bunu sınıftaki öğrencilerle (veya WhatsApp'tan) paylaşın.</li>
+                    <li><strong>Yanıtları Görme:</strong> Öğrenciler telefonlarından formu doldurduğu an, sayfanın altındaki "Gelen Yanıtlar" tablosuna cevaplar anlık olarak düşer. Yüksek katılım gösterenleri ödüllendirebilirsiniz.</li>
+                </ul>
+            </div>
+
+            <!-- 9 -->
+            <div class="form-box" style="border-left: 4px solid #14b8a6;">
+                <h3 style="color: #14b8a6; margin-top:0;"><i class="fas fa-rocket"></i> 9. İleri Çalışma Grupları Tespiti</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Öğrenci Tespiti:</strong> Sistem; sınıftaki en yüksek XP'ye ve anket katılımına sahip elit öğrencileri sizin için otomatik hesaplar ve ekranda listeler.</li>
+                    <li><strong>Elit Grup Kurulumu:</strong> Listelenen bu yüksek potansiyelli öğrencileri bir araya getirerek 4'er kişilik (🚀) İleri Düzey Çalışma Grupları oluşturun.</li>
+                    <li><strong>Aktarım:</strong> Kurduğunuz ekibi <strong>"Proje Gruplarına Aktar"</strong> butonuna basarak doğrudan üst düzey projelerin verildiği Modül 10'a taşıyın.</li>
+                </ul>
+            </div>
+
+            <!-- 10 -->
+            <div class="form-box" style="border-left: 4px solid #059669;">
+                <h3 style="color: #059669; margin-top:0;"><i class="fas fa-medal"></i> 10. Proje Grupları ve AI Kriz Değerlendirmesi</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Kriz Kartları:</strong> İleri gruplara online Proje Formu'nu gönderin. Sistemi doldururken %20 ihtimalle karşılarına dijital bir "Kriz Kartı" (Örn: Bütçe bitti) çıkacak ve buna bir çözüm üretmeleri istenecektir.</li>
+                    <li><strong>Yapay Zeka Değerlendirmesi:</strong> Gelen proje yanıtlarını ekranda gördüğünüzde <strong>"AI Promptu Üret"</strong> butonuna basın ve kopyalanan metni Gemini yapay zekasına okutun.</li>
+                    <li><strong>Karne Oluşturma:</strong> Gemini'nin verdiği 1-100 arası puanı ve önerdiği "Sürdürülebilir Kalkınma Ödülünü" (Örn: Çevre Dostu) sisteme girip <strong>"Karne Üret"</strong> diyerek veliye gönderilebilecek şık bir PDF/Görsel çıktı alın.</li>
+                </ul>
+            </div>
+            
+
+
         </div>
     </div>
 

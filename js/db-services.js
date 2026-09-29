@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // db-services.js
 // Firebase ve LocalStorage veri işlemleri
 // ============================================================
@@ -355,7 +355,10 @@
             if (typeof ileriSinifDoldur === 'function') ileriSinifDoldur();
 
             const selectedClass = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
-            if (selectedClass) loadClassGroups(selectedClass);
+            if (selectedClass) {
+                loadClassGroups(selectedClass);
+                if (typeof updateStudentPickers === 'function') updateStudentPickers();
+            }
 
             // Proje grupları UI güncellemesi (sekmeler hazırsa tetikle)
             if (typeof pgFillSinifDropdowns === 'function') pgFillSinifDropdowns();

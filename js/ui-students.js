@@ -360,8 +360,32 @@ function updatePickerLabel(dropdown) {
 function updateStudentPickers() {
     const selectedClass = document.getElementById('class-filter').value;
     const allStudentsInClass = studentData.filter(s => s.sinif === selectedClass);
-    const assignedStudentNames = Array.from(document.querySelectorAll('.group-card li .student-name-text')).map(s => s.getAttribute('data-name') || s.textContent);
-    const availableStudents = allStudentsInClass.filter(s => !assignedStudentNames.includes(s.adSoyad));
+    
+    // Proje gruplarındaki (İleri Çalışma / Kulüp) öğrencileri filtrele
+    let advancedStudentNames = [];
+    if (typeof projeGruplariData !== 'undefined' && projeGruplariData && projeGruplariData.length > 0) {
+        projeGruplariData.forEach(grup => {
+            if (grup && grup.members) {
+                grup.members.forEach(ogr => { if (ogr) advancedStudentNames.push(ogr.name); });
+            }
+        });
+    }
+
+    // SADECE #groups-container içindeki kümelerdeki öğrencileri topla
+    const groupsContainer = document.getElementById('groups-container');
+    const assignedStudentNames = groupsContainer
+        ? Array.from(groupsContainer.querySelectorAll('.group-card li .student-name-text')).map(s => s.getAttribute('data-name') || s.textContent)
+        : [];
+    
+    // Hem normal gruplara atanmış hem de proje gruplarına atanmış öğrencileri listeden çıkar
+    const availableStudents = allStudentsInClass.filter(s => !assignedStudentNames.includes(s.adSoyad) && !advancedStudentNames.includes(s.adSoyad));
+
+    // Debug: Sorun tespiti için konsola detaylı bilgi yaz
+    console.log('[updateStudentPickers] Seçili sınıf:', selectedClass);
+    console.log('[updateStudentPickers] Sınıftaki toplam öğrenci:', allStudentsInClass.length);
+    console.log('[updateStudentPickers] Kümelere atanmış öğrenci sayısı:', assignedStudentNames.length, assignedStudentNames);
+    console.log('[updateStudentPickers] Proje gruplarındaki öğrenci sayısı:', advancedStudentNames.length);
+    console.log('[updateStudentPickers] Uygun (boşta) öğrenci sayısı:', availableStudents.length);
 
     document.querySelectorAll('.student-multi-picker').forEach(picker => {
         const dropdown = picker.querySelector('.picker-dropdown');
