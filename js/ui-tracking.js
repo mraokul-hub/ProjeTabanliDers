@@ -225,19 +225,28 @@
             const sIdx = studentData.findIndex(s => s.adSoyad === name);
 
             if (sIdx !== -1) {
+                if (!studentData[sIdx].xpLogs) studentData[sIdx].xpLogs = [];
                 // 1. ADIM: Eski durumu sıfırla (Geri al)
                 if (sub.done) {
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) - (sub.xp || item.xp);
+                    let oldAmt = sub.xp || item.xp;
+                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) - oldAmt;
+                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (İptal)`, amount: -oldAmt, date: new Date().toISOString() });
                 } else if (sub.date !== '') {
                     // Daha önce yapmadı (ceza yemiştik), cezayı geri ver
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) + (sub.penalty || item.penaltyXp);
+                    let oldAmt = sub.penalty || item.penaltyXp;
+                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
+                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
                 }
 
                 // 2. ADIM: Yeni durumu uygula
                 if (done) {
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) + (sub.xp || item.xp);
+                    let newAmt = sub.xp || item.xp;
+                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) + newAmt;
+                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (Tamamladı)`, amount: newAmt, date: new Date().toISOString() });
                 } else {
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) - (sub.penalty || item.penaltyXp);
+                    let newAmt = sub.penalty || item.penaltyXp;
+                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) - newAmt;
+                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (Eksik)`, amount: -newAmt, date: new Date().toISOString() });
                 }
             }
 
@@ -255,18 +264,24 @@
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return;
             let students = studentData.filter(s => s.sinif === item.sinif); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
             const submissions = item.submissions || {};
-            const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-            const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
+            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}`;
+            if (Object.keys(submissions).length > 0) {
+                const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
+                const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
+                text += `\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
+            }
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
         }
         function shareTrackingSummaryBip(id) {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return;
             let students = studentData.filter(s => s.sinif === item.sinif); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
             const submissions = item.submissions || {};
-            const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-            const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
+            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}`;
+            if (Object.keys(submissions).length > 0) {
+                const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
+                const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
+                text += `\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
+            }
             window.open(`https://web.bip.com/share?text=${encodeURIComponent(text)}`, '_blank');
         }
         function shareStudentResult(id, name) {
