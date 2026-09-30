@@ -404,23 +404,25 @@
 
         function resetAllData() {
             if (confirm('Sistemdeki TÜM veriler (Öğrenciler, Sınavlar, Gruplar, Proje Grupları) temizlenecek! Emin misiniz?')) {
-                localStorage.removeItem(STORAGE_KEY);
-                studentData = [];
-                examData = [];
-                trackingData = [];
-                scheduleData = [];
-                advancedGroupData = [];
-                projeGruplariData = [];
-                document.getElementById('groups-container').innerHTML = '';
-                renderStudentTable();
-                renderSchedule();
-                renderTrackingList();
-                renderExams();
-                updateClassDropdown();
-                if (typeof pgFillSinifDropdowns === 'function') pgFillSinifDropdowns();
-                if (typeof pgRenderList === 'function') pgRenderList();
-                saveData();
-                if (typeof pgSave === 'function') pgSave();
-                alert('Sistem sıfırlandı.');
+                if (confirm('Bu işlem GERİ ALINAMAZ! Tüm verilerin silinmesini kesin olarak onaylıyor musunuz?')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    studentData = [];
+                    examData = [];
+                    trackingData = [];
+                    scheduleData = [];
+                    advancedGroupData = [];
+                    projeGruplariData = [];
+                    document.getElementById('groups-container').innerHTML = '';
+                    renderStudentTable();
+                    renderSchedule();
+                    renderTrackingList();
+                    renderExams();
+                    updateClassDropdown();
+                    if (typeof pgFillSinifDropdowns === 'function') pgFillSinifDropdowns();
+                    if (typeof pgRenderList === 'function') pgRenderList();
+                    saveData();
+                    if (typeof pgSave === 'function') pgSave();
+                    alert('Sistem sıfırlandı.');
+                }
             }
         }

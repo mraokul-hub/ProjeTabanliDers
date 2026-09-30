@@ -155,7 +155,7 @@ function generateGroups() {
                             <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${m.adSoyad}', 1)">+</button><button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${m.adSoyad}', -1)">-</button><button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${m.adSoyad}', 5)"><i class="fas fa-question"></i></button>
                         </div></div>
                     <div style="display:flex; gap:8px; align-items:center;"><select class="role-select" onchange="this.querySelectorAll('option').forEach(o => o.value === this.value ? o.setAttribute('selected', 'selected') : o.removeAttribute('selected')); updateRoleColor(this); saveData()"><option value="">Görev...</option><option value="Proje Koordinatörü">Proje Koordinatörü</option><option value="Veri Analisti">Veri Analisti</option><option value="Ar-Ge Sorumlusu">Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler">Halkla İlişkiler</option><option value="Üye">Üye</option></select>
-                        <button class="btn-remove-student" onclick="this.closest('li').remove(); updateStudentPickers(); saveData();"><i class="fas fa-user-minus"></i></button></div></li>`;
+                        <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove(); updateStudentPickers(); saveData();}"><i class="fas fa-user-minus"></i></button></div></li>`;
         });
         container.innerHTML += html + `</ul><div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div></div></div>`;
     });
@@ -231,7 +231,7 @@ function generateHTMLFromGroups(groups) {
                             <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${student.name}', 1)">+</button><button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${student.name}', -1)">-</button><button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${student.name}', 5)"><i class="fas fa-question"></i></button>
                         </div></div>
                     <div style="display:flex; gap:8px; align-items:center;"><select class="role-select" onchange="updateRoleColor(this)"><option value="">Görev...</option><option value="Proje Koordinatörü" ${student.role === 'Proje Koordinatörü' ? 'selected' : ''}>Proje Koordinatörü</option><option value="Veri Analisti" ${student.role === 'Veri Analisti' ? 'selected' : ''}>Veri Analisti</option><option value="Ar-Ge Sorumlusu" ${student.role === 'Ar-Ge Sorumlusu' ? 'selected' : ''}>Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler" ${student.role === 'Halkla İlişkiler' ? 'selected' : ''}>Halkla İlişkiler</option><option value="Üye" ${student.role === 'Üye' ? 'selected' : ''}>Üye</option></select>
-                        <button class="btn-remove-student" onclick="this.closest('li').remove(); updateStudentPickers(); saveData();"><i class="fas fa-user-minus"></i></button></div></li>`;
+                        <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove(); updateStudentPickers(); saveData();}"><i class="fas fa-user-minus"></i></button></div></li>`;
             });
         }
         html += `<div class="group-card">
@@ -437,7 +437,7 @@ function addStudentToGroupUI(btn) {
                     </div></div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <select class="role-select" onchange="updateRoleColor(this)"><option value="">Görev...</option><option value="Proje Koordinatörü">Proje Koordinatörü</option><option value="Veri Analisti">Veri Analisti</option><option value="Ar-Ge Sorumlusu">Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler">Halkla İlişkiler</option><option value="Üye">Üye</option></select>
-                    <button class="btn-remove-student" onclick="this.closest('li').remove(); updateStudentPickers(); saveData();"><i class="fas fa-user-minus"></i></button>
+                    <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove(); updateStudentPickers(); saveData();}"><i class="fas fa-user-minus"></i></button>
                 </div>`;
         ul.appendChild(li);
         added = true;

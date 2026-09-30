@@ -390,7 +390,7 @@
                             <option value="Halkla İlişkiler" ${rol === 'Halkla İlişkiler' ? 'selected' : ''}>Halkla İlişkiler</option>
                             <option value="Üye" ${rol === 'Üye' ? 'selected' : ''}>Üye</option>
                         </select>
-                        <button class="btn-remove-student" onclick="this.closest('li').remove();updateStudentPickers();saveData();"><i class="fas fa-user-minus"></i></button>
+                        <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove();updateStudentPickers();saveData();}"><i class="fas fa-user-minus"></i></button>
                     </div></li>`;
                 });
                 card.innerHTML = `<h3><input type="text" class="group-title-input" value="🚀 İleri Grup ${gi + 1}" oninput="saveData()">

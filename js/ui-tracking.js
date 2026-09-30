@@ -49,24 +49,30 @@
             if (!banner || !bannerText) return;
 
             const now = new Date();
-            const upcomingTasks = trackingData.filter(item => {
+            let upcomingTasks = trackingData.filter(item => {
                 const dueDate = new Date(item.date);
                 const diffTime = dueDate - now;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                // Teslimine 3 gün veya daha az kalan görevler
-                return diffDays >= 0 && diffDays <= 3;
+                return diffDays >= 0 && diffDays <= 7;
             });
 
             if (upcomingTasks.length > 0) {
                 banner.style.display = 'flex';
-                if (upcomingTasks.length === 1) {
-                    const diffDays = Math.ceil((new Date(upcomingTasks[0].date) - now) / (1000 * 60 * 60 * 24));
+                banner.style.alignItems = upcomingTasks.length > 1 ? 'flex-start' : 'center';
+                
+                // Tarihe göre yakından uzağa sırala
+                upcomingTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                let htmlParts = upcomingTasks.map((task, idx) => {
+                    const diffDays = Math.ceil((new Date(task.date) - now) / (1000 * 60 * 60 * 24));
                     const dayText = diffDays === 0 ? 'Bugün' : (diffDays === 1 ? 'Yarın' : `Son ${diffDays} gün`);
-                    bannerText.innerHTML = `Yaklaşan Görev: <strong>${upcomingTasks[0].title}</strong> (${upcomingTasks[0].sinif}) için ${dayText}!`;
-                } else {
-                    bannerText.innerHTML = `Dikkat! Teslim tarihi yaklaşan <strong>${upcomingTasks.length} adet</strong> göreviniz bulunuyor. (Takip Paneli'ni Kontrol Edin)`;
-                }
+                    return `<strong>${idx + 1}.</strong> ${task.title} <span style="opacity:0.9;">(${task.sinif} - ${dayText})</span>`;
+                });
+                
+                let prefix = upcomingTasks.length > 1 ? `<div style="font-weight: 800; margin-bottom: 5px;">Yaklaşan Görevler:</div>` : `<span style="font-weight: 800; margin-right: 5px;">Yaklaşan Görev:</span>`;
+                let separator = upcomingTasks.length > 1 ? '<br>' : '';
+                
+                bannerText.innerHTML = prefix + htmlParts.join(separator);
             } else {
                 banner.style.display = 'none';
             }

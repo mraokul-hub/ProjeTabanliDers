@@ -1466,17 +1466,23 @@
 
                     <div class="excel-box">
                         <h4><i class="fas fa-file-excel"></i> EXCEL / CSV YÜKLE</h4>
+                        <div style="margin-bottom: 10px;">
+                            <a href="ogrenci.xlsx" download style="font-size: 12px; color: var(--accent); text-decoration: underline;"><i class="fas fa-download"></i> Örnek (Öğrenci Liste) Formatı İndir</a>
+                        </div>
                         <div class="excel-input-wrapper">
                             <input type="file" id="excel-file" accept=".xlsx, .xls, .csv">
                         </div>
                         <button class="btn-upload" onclick="loadExcel()"><i class="fas fa-upload"></i> YÜKLE</button>
                     </div>
 
-                    <button class="btn-reset" onclick="resetAllData()"><i class="fas fa-trash-alt"></i> TÜM VERİLERİ
-                        SIFIRLA</button>
+                    <div style="margin-top: 15px;">
+                        <button class="btn-reset" onclick="document.getElementById('reset-wrapper').style.display = document.getElementById('reset-wrapper').style.display === 'none' ? 'block' : 'none';" style="background: rgba(239, 68, 68, 0.05); color: var(--text-muted); border-color: transparent;"><i class="fas fa-exclamation-triangle"></i> SIFIRLAMA SEÇENEKLERİ</button>
+                        <div id="reset-wrapper" style="display:none; margin-top:10px;">
+                            <button class="btn-reset" onclick="resetAllData()"><i class="fas fa-trash-alt"></i> TÜM VERİLERİ SIFIRLA</button>
+                        </div>
+                    </div>
+                    
                     <div style="display: flex; gap: 5px; margin-top: 10px;">
-                        <button class="btn-save" style="background: var(--secondary); flex: 1;" onclick="saveData()"><i
-                                class="fas fa-save"></i> DOSYAYA KAYDET</button>
                         <button class="btn-save" style="background: #27ae60; flex: 1;" onclick="exportToJson()"><i
                                 class="fas fa-history"></i> YEDEK AL</button>
                     </div>
@@ -1506,6 +1512,29 @@
                         <button class="btn" style="background: #ef4444; padding: 10px 15px;"
                             onclick="deleteSelectedStudents()" title="Seçilenleri Sil"><i class="fas fa-trash-alt"></i>
                             Seçilenleri Sil</button>
+
+                        <!-- Bulk XP Popup Trigger -->
+                        <div class="xp-popup-wrapper" style="position:relative;">
+                            <button type="button" class="btn" style="background: #10b981; padding: 10px 15px; width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="toggleXPPopup(this, event)" title="Sınıfa / Seçilenlere XP Ver"><i class="fas fa-star"></i> Toplu XP Ver</button>
+                            <div class="xp-popup-panel" style="z-index: 9999;">
+                                <div class="xp-popup-label">⬆️ Toplu Artır</div>
+                                <div class="xp-popup-row" style="flex-wrap: wrap;">
+                                    <button class="btn-xp" style="background:#10b981;" onclick="addBulkXP(2, 'Teşvik / Gelişime Açık', this)" title="Teşvik / Gelişime Açık (+2 XP)"><i class="fas fa-seedling"></i> +2</button>
+                                    <button class="btn-xp" style="background:#059669;" onclick="addBulkXP(5, 'Sorumlu / Beklenen Katılım', this)" title="Sorumlu / Beklenen Katılım (+5 XP)"><i class="fas fa-check"></i> +5</button>
+                                    <button class="btn-xp" style="background:#3b82f6;" onclick="addBulkXP(10, 'Üstün Katılım / Orijinal Fikir', this)" title="Üstün Katılım / Orijinal Fikir (+10 XP)"><i class="fas fa-lightbulb"></i> +10</button>
+                                    <button class="btn-xp" style="background:#8b5cf6;" onclick="addBulkXP(10, 'Uyumlu Takım Oyuncusu', this)" title="Uyumlu Takım Oyuncusu (+10 XP)"><i class="fas fa-users"></i> +10</button>
+                                    <button class="btn-xp" style="background:#f59e0b;" onclick="addBulkXP(15, 'Doğal Lider / Mentor', this)" title="Doğal Lider / Mentor (+15 XP)"><i class="fas fa-crown"></i> +15</button>
+                                    <button class="btn-xp" style="background:#eab308;" onclick="addBulkXP(20, 'Sınırları Zorlayan (Azimli)', this)" title="Sınırları Zorlayan / Azimli (+20 XP)"><i class="fas fa-mountain"></i> +20</button>
+                                </div>
+                                <div class="xp-popup-label">⬇️ Toplu Düşür</div>
+                                <div class="xp-popup-row">
+                                    <button class="btn-xp" style="background:#ef4444;" onclick="addBulkXP(-5, 'Hazırlıksız Gelme', this)" title="Hazırlıksız Gelme (-5 XP)"><i class="fas fa-minus-circle"></i> -5</button>
+                                    <button class="btn-xp" style="background:#dc2626;" onclick="addBulkXP(-10, 'Dersi Bölme', this)" title="Dersi Bölme (-10 XP)"><i class="fas fa-comment-slash"></i> -10</button>
+                                    <button class="btn-xp" style="background:#b91c1c;" onclick="addBulkXP(-15, 'Ödev Teslim Etmeme', this)" title="Ödev Teslim Etmeme (-15 XP)"><i class="fas fa-file-excel"></i> -15</button>
+                                    <button class="btn-xp" style="background:#991b1b;" onclick="addBulkXP(-20, 'Ciddi Kural İhlali', this)" title="Ciddi Kural İhlali (-20 XP)"><i class="fas fa-ban"></i> -20</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="table-container">

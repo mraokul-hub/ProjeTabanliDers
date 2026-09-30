@@ -539,6 +539,52 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             }
         });
 
+        function addBulkXP(amount, reason, btn) {
+            const classFilter = document.getElementById('class-view-filter');
+            const classVal = classFilter ? classFilter.value : '';
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            
+            let targetIndexes = [];
+            
+            if (checkedBoxes.length > 0) {
+                checkedBoxes.forEach(cb => targetIndexes.push(parseInt(cb.getAttribute('data-index'))));
+            } else if (classVal) {
+                for (let i = 0; i < studentData.length; i++) {
+                    if (studentData[i].sinif === classVal) targetIndexes.push(i);
+                }
+            } else {
+                alert("Lütfen toplu XP vermek için listeden öğrenci seçin veya yukarıdan bir Sınıf seçin.");
+                return;
+            }
+
+            if (targetIndexes.length === 0) {
+                alert("Uygun öğrenci bulunamadı.");
+                return;
+            }
+
+            targetIndexes.forEach(index => {
+                if (!studentData[index].xp) studentData[index].xp = 0;
+                studentData[index].xp += amount;
+                if (!studentData[index].xpLogs) studentData[index].xpLogs = [];
+                studentData[index].xpLogs.push({ reason: reason + ' (Toplu)', amount: amount, date: new Date().toISOString() });
+            });
+
+            renderStudentTable();
+            saveData();
+
+            const isNegative = amount < 0;
+            const color = isNegative ? '#ef4444' : '#f1c40f';
+            const sign = isNegative ? '' : '+';
+            const toast = document.createElement('div');
+            toast.style = `position:fixed; bottom:20px; right:20px; background:var(--accent); color:white; padding:12px 24px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3); z-index:9999; font-size: 13px; opacity:1; transition: opacity 0.5s ease-in-out; border-left: 5px solid ${color};`;
+            toast.innerHTML = `<i class="${isNegative ? 'fas fa-exclamation-triangle' : 'fas fa-award'} me-2" style="font-size:16px;"></i> <strong>${targetIndexes.length} Öğrenci</strong>: <span style="color:${color}; font-weight:bold;">${sign}${amount} XP</span> <br><small style="opacity:0.8;">Kategori: ${reason}</small>`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+
+            if (btn) closeXPPopup(btn);
+        }
+
+
         function addXP(index, amount, reason = 'Genel') {
 
             if (!studentData[index].xp) studentData[index].xp = 0;
