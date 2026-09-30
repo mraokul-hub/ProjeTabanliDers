@@ -9,8 +9,13 @@
             if (mode === 'mufredat') {
                 classInput = document.getElementById('mufredat-class').value || 'Belirtilmedi';
                 nameInput = document.getElementById('mufredat-ders').value || 'Belirtilmedi';
-                uniteInput = document.getElementById('mufredat-unite').value || 'Belirtilmedi';
-                topicInput = document.getElementById('mufredat-konu').value || 'Genel Konu';
+                const konuSel = document.getElementById('mufredat-konu');
+                if (konuSel.multiple) {
+                    topicInput = Array.from(konuSel.selectedOptions).map(opt => opt.value).filter(v => v !== "").join(' / ');
+                    if (!topicInput) topicInput = 'Genel Konu';
+                } else {
+                    topicInput = konuSel.value || 'Genel Konu';
+                }
             } else {
                 classInput = document.getElementById('free-class').value.trim() || 'Tüm Sınıflar';
                 nameInput = document.getElementById('free-name').value.trim() || 'Genel Ders';
@@ -676,9 +681,13 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
 
 
             const mode = document.querySelector('input[name="input-mode"]:checked').value;
-            let topicInput = mode === 'mufredat' 
-                ? document.getElementById('mufredat-konu').value 
-                : document.getElementById('free-topic').value;
+            let topicInput = 'Genel Konu';
+            if (mode === 'mufredat') {
+                const kSel = document.getElementById('mufredat-konu');
+                topicInput = kSel.multiple ? Array.from(kSel.selectedOptions).map(o => o.value).filter(v=>v).join(' / ') : kSel.value;
+            } else {
+                topicInput = document.getElementById('free-topic').value;
+            }
 
             if (!topicInput || topicInput.trim() === '') {
                 alert('Lütfen bir konu seçin veya girin.');
