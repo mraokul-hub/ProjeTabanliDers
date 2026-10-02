@@ -9,6 +9,7 @@
             if (mode === 'mufredat') {
                 classInput = document.getElementById('mufredat-class').value || 'Belirtilmedi';
                 nameInput = document.getElementById('mufredat-ders').value || 'Belirtilmedi';
+                uniteInput = document.getElementById('mufredat-unite').value || 'Genel Tema'; // DÜZELTME: mufredat modunda unite okunuyor
                 const konuSel = document.getElementById('mufredat-konu');
                 if (konuSel.multiple) {
                     topicInput = Array.from(konuSel.selectedOptions).map(opt => opt.value).filter(v => v !== "").join(' / ');
@@ -57,9 +58,20 @@
                 const lowerTopic = topicInput.toLocaleLowerCase('tr-TR');
 
                 // ── Zaman dağılımı ──
-                let t1, t2, t3, t4;
-                if (sureVal <= 40) { t1 = 5; t4 = 5; t2 = Math.floor((sureVal - t1 - t4) * 0.5); t3 = sureVal - t1 - t2 - t4; }
-                else { t1 = 10; t4 = 10; t2 = Math.floor((sureVal - t1 - t4) * 0.5); t3 = sureVal - t1 - t2 - t4; }
+                let t1, t2, t2b, t3, t4;
+                if (sureVal <= 40) {
+                    t1 = 5; t4 = 5;
+                    const ortaKalan = sureVal - t1 - t4;
+                    t2 = Math.floor(ortaKalan * 0.3);  // Explore
+                    t2b = Math.floor(ortaKalan * 0.3); // Explain
+                    t3 = ortaKalan - t2 - t2b;          // Elaborate
+                } else {
+                    t1 = 10; t4 = 10;
+                    const ortaKalan = sureVal - t1 - t4;
+                    t2 = Math.floor(ortaKalan * 0.3);
+                    t2b = Math.floor(ortaKalan * 0.3);
+                    t3 = ortaKalan - t2 - t2b;
+                }
 
                 // ── Analiz aracı ──
                 let analizAraci = { isim: 'SCAMPER Tekniği', ikon: 'fa-lightbulb', aciklama: `Öğrencilerden "${topicInput}" konusundaki bir fikri S(Yerine Koy), C(Birleştir), M(Değiştir) adımlarıyla yeni bir ürüne dönüştürmelerini isteyin.` };
@@ -150,7 +162,7 @@ SEÇİLEN BUZ KIRMA ETKİNLİĞİ:
 ` : ''}
 
 UYGULANACAK EĞİTİM MODELLERİ VE AŞAMALARI:
-1. 5E Öğrenme Modeli (Giriş/Engage: ${t1} dk, Keşfetme/Explore: ${t2} dk, Açıklama/Explain: ${t2} dk, Derinleştirme/Elaborate: ${t3} dk, Değerlendirme/Evaluate: ${t4} dk aşamalarını detaylandır).
+1. 5E Öğrenme Modeli (Giriş/Engage: ${t1} dk, Keşfetme/Explore: ${t2} dk, Açıklama/Explain: ${t2b} dk, Derinleştirme/Elaborate: ${t3} dk, Değerlendirme/Evaluate: ${t4} dk aşamalarını detaylandır).
 `;
 
                 if (useKolb) {
@@ -251,10 +263,11 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                     </p>
                     <!-- Zaman Çizelgesi -->
                     <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;">
-                        <span style="background:var(--yellow);color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">⚡ Uyanış: ${t1} dk</span>
-                        <span style="background:var(--secondary);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">🔍 Keşif: ${t2} dk</span>
-                        <span style="background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">⚙️ Otantik Görev: ${t3} dk</span>
-                        <span style="background:#8b5cf6;color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">🤲 Kapanış: ${t4} dk</span>
+                        <span style="background:var(--yellow);color:#000;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">⚡ Engage: ${t1} dk</span>
+                        <span style="background:var(--secondary);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">🔍 Explore: ${t2} dk</span>
+                        <span style="background:#0ea5e9;color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">💬 Explain: ${t2b} dk</span>
+                        <span style="background:var(--accent);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">⚙️ Elaborate: ${t3} dk</span>
+                        <span style="background:#8b5cf6;color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">🤲 Evaluate: ${t4} dk</span>
                         <span style="background:var(--input-bg);color:var(--text-muted);padding:4px 10px;border-radius:20px;font-size:11px;border:1px solid var(--border);">Toplam: ${sureVal} dk</span>
                     </div>
                     <!-- Web 2.0 Öneri -->

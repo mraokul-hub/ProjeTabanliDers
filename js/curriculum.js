@@ -3668,7 +3668,7 @@ function toggleInputMode() {
             const uniteSelect = document.getElementById('mufredat-unite');
             const konuSelect = document.getElementById('mufredat-konu');
 
-            const isNewModel = ["1", "2", "3", "5", "6", "7", "9", "10", "11"].some(prefix => classVal.startsWith(prefix + "."));
+            const isNewModel = ["1. ", "2. ", "3. ", "5. ", "6. ", "7. ", "9. ", "10. ", "11. "].some(prefix => classVal.startsWith(prefix));
             if (uniteSelect.previousElementSibling) uniteSelect.previousElementSibling.innerHTML = isNewModel ? 'Tema / Alan Becerisi:' : 'Ünite:';
             if (konuSelect.previousElementSibling) konuSelect.previousElementSibling.innerHTML = isNewModel ? 'Öğrenim Çıktısı:' : 'Konu:';
 
@@ -3729,6 +3729,17 @@ function toggleInputMode() {
             konuSelect.disabled = !uniteVal;
 
             if (uniteVal) {
+                if (isNewModel) {
+                    konuSelect.multiple = true;
+                    konuSelect.style.height = '120px';
+                    konuSelect.innerHTML = '<option value="" disabled>Birden fazla seçim yapabilirsiniz (Ctrl / Cmd ile)...</option>';
+                } else {
+                    konuSelect.multiple = false;
+                    konuSelect.style.height = 'auto';
+                    // Önceki multiple seçimlerini temizle
+                    Array.from(konuSelect.options).forEach(opt => opt.selected = false);
+                    konuSelect.innerHTML = '<option value="">Kazanım Seçin...</option>';
+                }
                 curriculumData[classVal][dersVal][uniteVal].forEach(function (k) {
                     konuSelect.innerHTML += '<option value="' + k + '">' + k + '</option>';
                 });

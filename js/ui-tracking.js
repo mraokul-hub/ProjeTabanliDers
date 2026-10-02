@@ -234,23 +234,23 @@
                 if (!studentData[sIdx].xpLogs) studentData[sIdx].xpLogs = [];
                 // 1. ADIM: Eski durumu sıfırla (Geri al)
                 if (sub.done) {
-                    let oldAmt = sub.xp || item.xp;
+                    let oldAmt = sub.xp !== undefined ? sub.xp : item.xp;
                     studentData[sIdx].xp = (studentData[sIdx].xp || 0) - oldAmt;
                     studentData[sIdx].xpLogs.push({ reason: `${item.title} (İptal)`, amount: -oldAmt, date: new Date().toISOString() });
                 } else if (sub.date !== '') {
                     // Daha önce yapmadı (ceza yemiştik), cezayı geri ver
-                    let oldAmt = sub.penalty || item.penaltyXp;
+                    let oldAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
                     studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
                     studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
                 }
 
                 // 2. ADIM: Yeni durumu uygula
                 if (done) {
-                    let newAmt = sub.xp || item.xp;
+                    let newAmt = sub.xp !== undefined ? sub.xp : item.xp;
                     studentData[sIdx].xp = (studentData[sIdx].xp || 0) + newAmt;
                     studentData[sIdx].xpLogs.push({ reason: `${item.title} (Tamamladı)`, amount: newAmt, date: new Date().toISOString() });
                 } else {
-                    let newAmt = sub.penalty || item.penaltyXp;
+                    let newAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
                     studentData[sIdx].xp = (studentData[sIdx].xp || 0) - newAmt;
                     studentData[sIdx].xpLogs.push({ reason: `${item.title} (Eksik)`, amount: -newAmt, date: new Date().toISOString() });
                 }

@@ -388,8 +388,12 @@
         function pgUpdatePhase(idx, field, val) {
             const g = projeGruplariData.find(x => x.id === pgActiveId); if (!g) return;
             g.asamalar[idx][field] = val;
-            if (field === 'durum' && val === 'done') g.asamalar[idx].tarih = new Date().toLocaleDateString('tr-TR');
+            if (field === 'durum') {
+                if (val === 'done') g.asamalar[idx].tarih = new Date().toLocaleDateString('tr-TR');
+                else g.asamalar[idx].tarih = null;
+            }
             pgSave();
+            pgRenderPhaseEditor();
         }
 
         // ── Üye Puanlama (AI) ──
@@ -397,7 +401,7 @@
             const g = projeGruplariData.find(x => x.id === pgActiveId); if (!g) return;
 
             // Form verilerini topla
-            const gForms = pgFormsData.filter(f => f.grupAdi === g.title);
+            const gForms = pgFormsData.filter(f => f.grupAdi === g.title && f.sinif === g.sinif);
             let formDataText = gForms.map(f => `Öğrenci: ${f.adSoyad}\nİçerik İzledi mi: ${f.formResponse.icerikIzlendi}\nProblem: ${f.formResponse.problemTanim}\nÇözüm Önerisi: ${f.formResponse.cozumOneri}\nKişisel Katkısı: ${f.formResponse.kisiselKatki}\nArkadaşlarına Yorumu: ${f.formResponse.peerReview}\nKriz Senaryosu: ${f.formResponse.krizSenaryosu || "Yok"}\nKriz Çözümü: ${f.formResponse.krizCozumu || "Yok"}`).join("\n\n");
 
             let promptText = `Sen bir proje yöneticisi ve öğretmensin. Aşağıda "${g.title}" adlı proje grubunda yer alan öğrencilerin sisteme girdikleri son "Proje Grubu Takip Formu" verileri bulunmaktadır.
