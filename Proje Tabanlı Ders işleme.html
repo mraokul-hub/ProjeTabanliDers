@@ -35,6 +35,9 @@
                 if (user.email === 'mremzi@gmail.com') {
                     const adminTabBtn = document.getElementById('admin-tab-btn');
                     if (adminTabBtn) adminTabBtn.style.display = 'inline-block';
+                    // Mobil panel yönetici butonu
+                    const mobAdminBtn = document.getElementById('mob-btn-tab-admin');
+                    if (mobAdminBtn) mobAdminBtn.style.display = 'flex';
                     if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
                 }
 
@@ -1412,24 +1415,117 @@
                 font-size: 12px;
             }
 
-            /* ── Sekmeler ── */
+            /* ── Sekmeler — mobilde gizle, hamburger overlay ile aç ── */
             .tabs {
-                width: 100%;
-                overflow-x: auto;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                gap: 4px;
-                padding: 4px;
+                display: none !important;
             }
 
-            .tabs::-webkit-scrollbar { display: none; }
+            /* ── Mobil menü çubuğu ── */
+            .mobile-nav-bar {
+                display: flex !important;
+            }
 
-            .tab-btn {
-                padding: 7px 11px;
-                font-size: 11px;
+            /* ── Hamburger overlay panel ── */
+            .mobile-menu-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 9000;
+                background: rgba(0,0,0,0.55);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                animation: fadeIn 0.2s ease;
+            }
+            .mobile-menu-overlay.open {
+                display: flex;
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            .mobile-menu-panel {
+                width: min(85vw, 320px);
+                height: 100dvh;
+                background: var(--card-bg);
+                border-right: 1px solid var(--border);
+                box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                animation: slideInLeft 0.25s cubic-bezier(0.4,0,0.2,1);
+            }
+            @keyframes slideInLeft {
+                from { transform: translateX(-100%); }
+                to   { transform: translateX(0); }
+            }
+            .mobile-menu-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 18px 16px 14px;
+                border-bottom: 1px solid var(--border);
+                background: var(--secondary);
+                color: #fff;
+                position: sticky;
+                top: 0;
+            }
+            .mobile-menu-header span {
+                font-weight: 800;
+                font-size: 15px;
+                letter-spacing: -0.3px;
+            }
+            .mobile-menu-close {
+                background: rgba(255,255,255,0.18);
+                border: none;
+                color: #fff;
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+            }
+            .mobile-menu-close:hover { background: rgba(255,255,255,0.32); }
+            .mobile-menu-items {
+                display: flex;
+                flex-direction: column;
+                padding: 10px 8px;
+                gap: 4px;
+                flex: 1;
+            }
+            .mobile-tab-btn {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 13px 14px;
+                border: none;
+                border-radius: 10px;
+                background: transparent;
+                color: var(--text-main);
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                text-align: left;
+                transition: background 0.18s, color 0.18s;
+                width: 100%;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .mobile-tab-btn .mob-icon {
+                font-size: 20px;
+                width: 28px;
+                text-align: center;
                 flex-shrink: 0;
-                border-radius: 6px;
+            }
+            .mobile-tab-btn:hover {
+                background: var(--tab-bg);
+            }
+            .mobile-tab-btn.active {
+                background: rgba(59,130,246,0.12);
+                color: var(--secondary);
+            }
+            .mobile-tab-btn.active .mob-icon {
+                filter: none;
             }
 
             /* ── Ana grid ── */
@@ -1638,6 +1734,10 @@
                 display: none !important;
             }
 
+            /* Tablet da hamburger menü kullansın */
+            .tabs { display: none !important; }
+            .mobile-nav-bar { display: flex !important; }
+
             .pg-type-bar {
                 grid-template-columns: 1fr 1fr !important;
             }
@@ -1656,6 +1756,11 @@
                 max-height: 85vh;
                 overflow-y: auto;
             }
+        }
+        /* ── Masaüstü: mobil bileşenleri gizle ── */
+        @media (min-width: 769px) {
+            .mobile-nav-bar    { display: none !important; }
+            .mobile-menu-overlay { display: none !important; }
         }
     </style>
 </head>
@@ -1692,6 +1797,43 @@
                     class="fas fa-times"></i></button>
         </div>
 
+        <!-- ── Mobil Menü Çubuğu (≤768px'de görünür) ── -->
+        <div class="mobile-nav-bar" style="display:none; align-items:center; gap:10px; margin-bottom:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:10px 14px; box-shadow:var(--shadow);">
+            <button id="hamburger-btn" onclick="toggleMobileMenu()" style="background:var(--secondary); color:#fff; border:none; width:40px; height:40px; border-radius:8px; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s;">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:10px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1px;">Aktif Modül</div>
+                <div id="mobile-active-tab-label" style="font-size:14px; font-weight:800; color:var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🏹 Öğrenci Bilgi Sistemi</div>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); background:var(--tab-bg); padding:4px 9px; border-radius:20px; border:1px solid var(--border); flex-shrink:0; font-weight:600;">1/11</div>
+        </div>
+
+        <!-- ── Hamburger Overlay Panel ── -->
+        <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMobileMenuOnOverlay(event)">
+            <div class="mobile-menu-panel">
+                <div class="mobile-menu-header">
+                    <span>📋 Modüller</span>
+                    <button class="mobile-menu-close" onclick="closeMobileMenu()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="mobile-menu-items">
+                    <button class="mobile-tab-btn active" id="mob-btn-tab1" onclick="openTab('tab1')"><span class="mob-icon">🏹</span>1. Öğrenci Bilgi Sistemi</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab2" onclick="openTab('tab2')"><span class="mob-icon">⛺</span>2. Sınıf Yönetimi</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab-buz-kirma" onclick="openTab('tab-buz-kirma')"><span class="mob-icon">🔥</span>3. Buz Kırma Etkinlikleri</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab3" onclick="openTab('tab3')"><span class="mob-icon">⚔️</span>4. Ders İşleme &amp; Strateji</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab4" onclick="openTab('tab4')"><span class="mob-icon">🐎</span>5. Öğretmen Ders Programı</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab5" onclick="openTab('tab5')"><span class="mob-icon">📜</span>6. Ödev &amp; Proje Takip</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab6" onclick="openTab('tab6')"><span class="mob-icon">🦅</span>7. Sınav Analiz</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab7" onclick="openTab('tab7')"><span class="mob-icon">🛡️</span>8. Öz Değerlendirme &amp; Formlar</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab8" onclick="openTab('tab8')"><span class="mob-icon">🌙</span>9. İleri Çalışma Grupları</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab9" onclick="openTab('tab9')"><span class="mob-icon">🌳</span>10. Proje Grupları</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab10" onclick="openTab('tab10')"><span class="mob-icon">🧭</span>11. Sistem Kullanım Kılavuzu</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab-admin" onclick="openTab('tab-admin')" style="display:none; color:#f59e0b;"><span class="mob-icon">👑</span>Yönetici Paneli</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Masaüstü Tab Çubuğu ── -->
         <div class="tabs">
             <button class="tab-btn active" onclick="openTab('tab1')">🏹 1. Öğrenci Bilgi Sistemi</button>
             <button class="tab-btn" onclick="openTab('tab2')">⛺ 2. Sınıf Yönetimi</button>

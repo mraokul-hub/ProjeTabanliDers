@@ -3,6 +3,28 @@
 // Tab yönetimi ve öğrenci tablosu render
 // ============================================================
 
+        // Tab adı - seçilen modülün adını bar'da göstermek için
+        const TAB_LABELS = {
+            'tab1':           '🏹 Öğrenci Bilgi Sistemi',
+            'tab2':           '⛺ Sınıf Yönetimi',
+            'tab-buz-kirma':  '🔥 Buz Kırma Etkinlikleri',
+            'tab3':           '⚔️ Ders İşleme & Strateji',
+            'tab4':           '🐎 Öğretmen Ders Programı',
+            'tab5':           '📜 Ödev & Proje Takip',
+            'tab6':           '🦅 Sınav Analiz',
+            'tab7':           '🛡️ Öz Değerlendirme & Formlar',
+            'tab8':           '🌙 İleri Çalışma Grupları',
+            'tab9':           '🌳 Proje Grupları',
+            'tab10':          '🧭 Sistem Kullanım Kılavuzu',
+            'tab-admin':      '👑 Yönetici Paneli'
+        };
+
+        // Toplam normal (admin háriç) modül sayısı
+        const TAB_NUMBERS = {
+            'tab1':1,'tab2':2,'tab-buz-kirma':3,'tab3':4,'tab4':5,
+            'tab5':6,'tab6':7,'tab7':8,'tab8':9,'tab9':10,'tab10':11,'tab-admin':''
+        };
+
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -23,6 +45,21 @@
             }
             if (foundBtn) foundBtn.classList.add('active');
 
+            // ─ Mobil: overlay'i kapat, aktif etiketi güncelle
+            closeMobileMenu();
+            const label = TAB_LABELS[tabId] || tabId;
+            const num   = TAB_NUMBERS[tabId] || '';
+            const labelEl = document.getElementById('mobile-active-tab-label');
+            if (labelEl) labelEl.textContent = label;
+            const numEl = document.querySelector('.mobile-nav-bar > div:last-child');
+            if (numEl && num) numEl.textContent = num + '/11';
+            if (numEl && !num) numEl.textContent = '★';
+
+            // Mobil panel: aktif butonu vurgula
+            document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+            const mobBtn = document.getElementById('mob-btn-' + tabId);
+            if (mobBtn) mobBtn.classList.add('active');
+
             if (tabId === 'tab9') {
                 pgLoad();
                 pgRenderList();
@@ -30,6 +67,29 @@
 
             if (tabId === 'tab-admin') {
                 if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
+            }
+        }
+
+        // ── Hamburger Menü Fonksiyonları ──
+        function toggleMobileMenu() {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (!overlay) return;
+            overlay.classList.toggle('open');
+            document.body.style.overflow = overlay.classList.contains('open') ? 'hidden' : '';
+        }
+
+        function closeMobileMenu() {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (overlay) {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function closeMobileMenuOnOverlay(event) {
+            // Sadece arka plana tıklanınca kapansın (panel içine değil)
+            if (event.target === document.getElementById('mobile-menu-overlay')) {
+                closeMobileMenu();
             }
         }
 
