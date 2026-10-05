@@ -117,24 +117,37 @@ function generateGroups() {
     if (filteredStudents.length === 0) return alert('Bu sınıfa ait (proje/ileri düzey gruplar haricinde) öğrenci bulunamadı!');
 
     let groupSize = filteredStudents.length > 30 ? 6 : (filteredStudents.length > 20 ? 5 : 4);
+    let numGroups = Math.ceil(filteredStudents.length / groupSize);
 
-    let visuals = filteredStudents.filter(s => s.vak === 'Görsel').sort(() => 0.5 - Math.random());
-    let auditories = filteredStudents.filter(s => s.vak === 'İşitsel').sort(() => 0.5 - Math.random());
-    let kinesthetics = filteredStudents.filter(s => s.vak === 'Kinestetik').sort(() => 0.5 - Math.random());
-    let unknowns = filteredStudents.filter(s => !['Görsel', 'İşitsel', 'Kinestetik'].includes(s.vak)).sort(() => 0.5 - Math.random());
+    // FAZ 3: Öğrencileri rastgele yerine XP (Soru çözüm istikrarı) puanlarına göre sıralıyoruz (Büyükten küçüğe)
+    const sortByXpDesc = (a, b) => (parseInt(b.xp) || 0) - (parseInt(a.xp) || 0);
+    
+    let visuals = filteredStudents.filter(s => s.vak === 'Görsel').sort(sortByXpDesc);
+    let auditories = filteredStudents.filter(s => s.vak === 'İşitsel').sort(sortByXpDesc);
+    let kinesthetics = filteredStudents.filter(s => s.vak === 'Kinestetik').sort(sortByXpDesc);
+    let unknowns = filteredStudents.filter(s => !['Görsel', 'İşitsel', 'Kinestetik'].includes(s.vak)).sort(sortByXpDesc);
 
-    let allShuffled = [];
+    // VAK dengesini bozmadan en yüksek XP'lilerden en düşük XP'lilere doğru sıraya dizme
+    let allSorted = [];
     let totalLen = filteredStudents.length;
     for (let i = 0; i < totalLen; i++) {
-        if (visuals.length > 0) allShuffled.push(visuals.pop());
-        if (auditories.length > 0) allShuffled.push(auditories.pop());
-        if (kinesthetics.length > 0) allShuffled.push(kinesthetics.pop());
-        if (unknowns.length > 0) allShuffled.push(unknowns.pop());
+        if (visuals.length > 0) allSorted.push(visuals.shift());
+        if (auditories.length > 0) allSorted.push(auditories.shift());
+        if (kinesthetics.length > 0) allSorted.push(kinesthetics.shift());
+        if (unknowns.length > 0) allSorted.push(unknowns.shift());
     }
 
-    let groups = [];
-    for (let i = 0; i < allShuffled.length; i += groupSize) groups.push(allShuffled.slice(i, i + groupSize));
-    // Her kümedeki öğrencileri öğrenci numarasına göre sırala
+    // Gruplara kart dağıtır gibi (Round-Robin) dağıtıyoruz.
+    // Böylece her grupta hem Yüksek XP hem Düşük XP'li öğrenciler (Akademik Homojenlik) 
+    // hem de farklı VAK profilleri (Öğrenme Stili Homojenliği) dengeli şekilde yer alacak.
+    let groups = Array.from({ length: numGroups }, () => []);
+    let groupIndex = 0;
+    allSorted.forEach(student => {
+        groups[groupIndex].push(student);
+        groupIndex = (groupIndex + 1) % numGroups;
+    });
+
+    // Her kümedeki öğrencileri öğrenci numarasına göre sırala (görünüm için)
     groups.forEach(g => g.sort((a, b) => {
         const aNo = parseInt(a.no) || 0; const bNo = parseInt(b.no) || 0;
         if (aNo !== bNo) return aNo - bNo;
@@ -214,6 +227,60 @@ function clearAllGroups() {
         document.getElementById('groups-container').innerHTML = '';
         saveData();
     }
+}
+
+function openKumeKagitFormu() {
+    const sel = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
+    
+    // 1. Seçili sınıfın ekrandaki mevcut kümelerini anında topla ve kaydet
+    if (sel) {
+        const container = document.getElementById('groups-container');
+        if (container) {
+            const currentClassGroups = [];
+            container.querySelectorAll('.group-card').forEach((card, idx) => {
+                const titleInput = card.querySelector('.group-title-input');
+                const title = titleInput ? titleInput.value : `Küme ${idx + 1}`;
+                const students = [];
+                card.querySelectorAll('li').forEach(li => {
+                    const nameEl = li.querySelector('.student-name-text');
+                    const name = nameEl ? (nameEl.getAttribute('data-name') || nameEl.textContent.split(' - ').pop().trim()) : '';
+                    const selectEl = li.querySelector('.role-select');
+                    const role = selectEl ? selectEl.value : '';
+                    
+                    // Öğrenci numarasını bul
+                    let studentNo = '';
+                    if (name) {
+                        const sObj = (typeof studentData !== 'undefined') ? studentData.find(s => s.adSoyad === name) : null;
+                        if (sObj) studentNo = sObj.no || '';
+                        else if (nameEl) {
+                            const match = nameEl.textContent.match(/^\s*(\d+)/);
+                            if (match) studentNo = match[1];
+                        }
+                        students.push({ name, role, no: studentNo });
+                    }
+                });
+                currentClassGroups.push({ title, students });
+            });
+
+            // groupData ve depolamaya anında işle
+            const safeClass = sel.replace(/\//g, '_');
+            if (typeof groupData !== 'object' || groupData === null) groupData = {};
+            groupData[safeClass] = currentClassGroups;
+            groupData[sel] = currentClassGroups;
+
+            try {
+                sessionStorage.setItem('kume_form_sinif', sel);
+                sessionStorage.setItem('kume_form_groups', JSON.stringify(currentClassGroups));
+                if (typeof saveDataLocal === 'function') saveDataLocal();
+                else if (typeof saveData === 'function') saveData();
+            } catch (e) {
+                console.warn('Küme formu önbellek hatası:', e);
+            }
+        }
+    }
+
+    const url = 'Sinif_Kume_Kagit_Formu.html' + (sel ? '?sinif=' + encodeURIComponent(sel) : '');
+    window.open(url, '_blank');
 }
 
 function generateHTMLFromGroups(groups) {

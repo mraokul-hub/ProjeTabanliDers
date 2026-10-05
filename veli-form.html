@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soru Çözüm Takip Formu</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #F3F4F6;
+            --surface: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --success: #10B981;
+            --error: #EF4444;
+            --orange: #F97316;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.07);
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* ── Mod Sekmeleri ── */
+        .mode-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            background: var(--bg-color);
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .mode-tab-btn {
+            flex: 1;
+            padding: 0.6rem 0.5rem;
+            background: transparent;
+            border: none;
+            border-radius: 7px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+
+        .mode-tab-btn.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .mode-panel { display: none; }
+        .mode-panel.active { display: block; }
+
+        /* ── GÖREV 1: Progress Bar (Wizard) ── */
+        .progress-bar-wrapper {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+
+        .progress-dot {
+            flex: 1;
+            height: 5px;
+            border-radius: 10px;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+
+        .progress-dot.active  { background: var(--primary); }
+        .progress-dot.done    { background: var(--success); }
+
+        .progress-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-left: 4px;
+        }
+
+        /* ── GÖREV 1: Wizard Adımları ── */
+        .wizard-step { display: none; }
+        .wizard-step.active {
+            display: block;
+            animation: fadeSlideIn 0.25s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateX(12px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .wizard-nav {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        /* ── Form Elemanları ── */
+        .form-group { margin-bottom: 1rem; }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.7rem 0.85rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+            color: var(--text-main);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+
+        /* GÖREV 2: Hata durumu */
+        input.field-error, select.field-error {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.12) !important;
+        }
+
+        .field-error-msg {
+            color: var(--error);
+            font-size: 0.78rem;
+            margin-top: 4px;
+            display: block;
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        /* ── Butonlar ── */
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover   { background-color: var(--primary-hover); }
+        button:active  { transform: scale(0.98); }
+        button:disabled { background-color: var(--text-muted); cursor: not-allowed; }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: var(--text-main);
+            border: 1.5px solid var(--border);
+        }
+        .btn-secondary:hover { background-color: #e5e7eb; }
+
+        .btn-orange { background-color: var(--orange); }
+        .btn-orange:hover { background-color: #ea6c0b; }
+
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #059669; }
+
+        /* ── Fotoğraf Alanı ── */
+        .photo-drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .photo-drop-zone:hover { border-color: var(--primary); background: rgba(79,70,229,0.03); }
+        .photo-drop-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0;
+            cursor: pointer; width: 100%; margin: 0; padding: 0;
+        }
+
+        .photo-drop-zone .drop-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+        .photo-drop-zone p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+        .photo-drop-zone p strong { color: var(--primary); }
+
+        #fotoPreview {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 0.75rem;
+            display: none;
+            border: 1.5px solid var(--border);
+        }
+
+        /* ── OMR Kamera ── */
+        #omrSection { margin-bottom: 0.5rem; }
+
+        #cameraWrapper {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            margin-bottom: 0.75rem;
+        }
+
+        #cameraVideo { width: 100%; display: block; }
+        #cameraCanvas { display: none; }
+
+        .omr-result-box {
+            background: rgba(79,70,229,0.07);
+            border: 1.5px solid rgba(79,70,229,0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            display: none;
+        }
+
+        .omr-result-box strong { color: var(--primary); }
+
+        /* ── Durum Mesajı ── */
+        #statusMessage {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .status-success {
+            background-color: rgba(16,185,129,0.1);
+            color: var(--success);
+            border: 1px solid rgba(16,185,129,0.25);
+        }
+
+        .status-error {
+            background-color: rgba(239,68,68,0.1);
+            color: var(--error);
+            border: 1px solid rgba(239,68,68,0.25);
+        }
+
+        /* ── GÖREV 4: Başarı Ekranı ── */
+        #successScreen {
+            display: none;
+            text-align: center;
+            padding: 2.5rem 1rem;
+            animation: fadeSlideIn 0.35s ease;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 1rem;
+            animation: bounce 0.6s ease;
+        }
+
+        @keyframes bounce {
+            0%,100% { transform: scale(1); }
+            50%      { transform: scale(1.25); }
+        }
+
+        .success-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
+        .success-sub {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-new-btn {
+            display: inline-flex;
+            width: auto;
+            padding: 0.7rem 2rem;
+            font-size: 0.9rem;
+            margin: 0 auto;
+        }
+
+        /* ── Loader ── */
+        .loader {
+            width: 18px; height: 18px;
+            border: 2.5px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s ease-in-out infinite;
+            display: none;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .section-divider {
+            border: none;
+            border-top: 1.5px dashed var(--border);
+            margin: 1.25rem 0;
+        }
+
+        /* Adım ipucu */
+        .step-hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        /* ── Soru Tipi Seçici ── */
+        .soru-tipi-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .soru-tipi-btn {
+            flex: 1;
+            padding: 0.55rem 0.4rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            text-align: center;
+            width: auto;
+            margin-top: 0;
+        }
+
+        .soru-tipi-btn.selected {
+            border-color: var(--primary);
+            background: rgba(79,70,229,0.08);
+            color: var(--primary);
+        }
+
+        .soru-tipi-btn:hover:not(.selected) {
+            border-color: #a5b4fc;
+            background: rgba(79,70,229,0.03);
+        }
+
+        .grid-kaynak {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📊 Soru Çözüm Takip</h2>
+    <p class="subtitle" id="studentNameDisplay">Lütfen öğrencinin çözüm verilerini giriniz.</p>
+
+    <!-- Mod Sekmeleri -->
+    <div class="mode-tabs">
+        <button type="button" class="mode-tab-btn active" onclick="switchMode('manual')" id="tab-manual">✍️ Elle Giriş</button>
+        <button type="button" class="mode-tab-btn" onclick="switchMode('photo')"  id="tab-photo">📷 Fotoğraflı</button>
+        <button type="button" class="mode-tab-btn" onclick="switchMode('omr')"    id="tab-omr">📄 Kağıt Oku</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         GÖREV 1 & 2: MOD 1 — Elle Giriş (Wizard)
+         ══════════════════════════════════════════ -->
+    <div id="panel-manual" class="mode-panel active">
+
+        <!-- Progress Bar -->
+        <div class="progress-bar-wrapper" id="wizard-progress">
+            <div class="progress-dot active" id="pdot-1"></div>
+            <div class="progress-dot"        id="pdot-2"></div>
+            <div class="progress-dot"        id="pdot-3"></div>
+            <span class="progress-label" id="progress-label">Adım 1 / 3</span>
+        </div>
+
+        <!-- ADIM 1: Ders & Konu -->
+        <div class="wizard-step active" id="step-1">
+            <p class="step-hint">📅 Hangi ders ve konudan soru çözdü?</p>
+            <div class="form-group">
+                <label for="tarih">Tarih</label>
+                <input type="date" id="tarih">
+            </div>
+            <div class="form-group">
+                <label for="ders">Ders</label>
+                <select id="ders">
+                    <option value="">Seçiniz...</option>
+                </select>
+            </div>
+            <!-- GELİŞTİRME 3: Kitap/Kaynak ve Konu ayrımı -->
+            <div class="grid-kaynak">
+                <div class="form-group">
+                    <label for="kaynak">📚 Kaynak / Yayın <span style="color:var(--text-muted); font-weight:400;">(isteğe bağlı)</span></label>
+                    <input type="text" id="kaynak" placeholder="Örn: Okyanus Master">
+                </div>
+                <div class="form-group">
+                    <label for="konu">📖 Konu <span style="color:var(--text-muted); font-weight:400;">(isteğe bağlı)</span></label>
+                    <input type="text" id="konu" placeholder="Örn: Kesirler, Sf:47">
+                </div>
+            </div>
+            <!-- GELİŞTİRME 1: Soru Tipi -->
+            <div class="form-group">
+                <label>Soru Tipi</label>
+                <div class="soru-tipi-group" id="soruTipiGroup">
+                    <button type="button" class="soru-tipi-btn selected" data-value="temel" onclick="selectSoruTipi(this)">🎯 Temel<br><small>(Kazanım)</small></button>
+                    <button type="button" class="soru-tipi-btn" data-value="yeni-nesil" onclick="selectSoruTipi(this)">🧠 Yeni Nesil<br><small>(LGS)</small></button>
+                    <button type="button" class="soru-tipi-btn" data-value="karisik" onclick="selectSoruTipi(this)">🔀 Karışık<br><small>(Her İkisi)</small></button>
+                </div>
+            </div>
+            <div class="wizard-nav">
+                <button type="button" class="btn-success" onclick="nextWizardStep()">İleri →</button>
+            </div>
+        </div>
+
+        <!-- ADIM 2: Net Sonuçları -->
+        <div class="wizard-step" id="step-2">
+            <p class="step-hint">🔢 Kaç doğru, yanlış ve boş yaptı?</p>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="dogru">✅ Doğru</label>
+                    <input type="number" id="dogru" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="yanlis">❌ Yanlış</label>
+                    <input type="number" id="yanlis" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="bos">⬜ Boş</label>
+                    <input type="number" id="bos" min="0" placeholder="0">
+                </div>
+            </div>
+            <!-- GELİŞTİRME 2: Öğretmene Sorulacak Soru -->
+            <div class="form-group" style="margin-top:0.25rem;">
+                <label for="ogrSoru">🙋 Öğretmene Sorulacak Soru <span style="color:var(--text-muted); font-weight:400;">(isteğe bağlı)</span></label>
+                <input type="number" id="ogrSoru" min="0" placeholder="0" style="max-width:140px;">
+            </div>
+            <div class="wizard-nav">
+                <button type="button" class="btn-secondary" onclick="prevWizardStep()" style="flex:1;">← Geri</button>
+                <button type="button" class="btn-success"   onclick="nextWizardStep()" style="flex:2;">İleri →</button>
+            </div>
+        </div>
+
+        <!-- ADIM 3: Fotoğraf (Opsiyonel) + Gönder -->
+        <div class="wizard-step" id="step-3">
+            <p class="step-hint">📸 Yanlış yaptığı soruların fotoğrafını ekleyebilirsiniz. <em>(isteğe bağlı)</em></p>
+            <div class="photo-drop-zone" id="manualDropZone">
+                <input type="file" id="manualFotoInput" accept="image/*" capture="environment">
+                <span class="drop-icon">📸</span>
+                <p><strong>Fotoğraf Çek veya Seç</strong></p>
+                <p>Yanlış yapılan soruları öğretmene iletin</p>
+            </div>
+            <img id="manualFotoPreview" alt="Önizleme" style="width:100%;border-radius:8px;margin-bottom:0.75rem;display:none;border:1.5px solid var(--border);">
+
+            <div class="wizard-nav">
+                <button type="button" class="btn-secondary" onclick="prevWizardStep()" style="flex:1;">← Geri</button>
+                <button type="button" id="submitBtn"        onclick="submitManualForm()" style="flex:2;">
+                    <span id="btnText">✅ Gönder</span>
+                    <span class="loader" id="btnLoader"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MOD 2 — Fotoğraflı Soru Köprüsü (Kural 2)
+         ══════════════════════════════════════════ -->
+    <div id="panel-photo" class="mode-panel">
+        <form id="fotoForm">
+            <div class="form-group">
+                <label for="foto-ders">Ders</label>
+                <select id="foto-ders" required>
+                    <option value="">Seçiniz...</option>
+                </select>
+            </div>
+            <!-- GELİŞTİRME 3: Kaynak/Konu ayrımı -->
+            <div class="grid-kaynak">
+                <div class="form-group">
+                    <label for="foto-kaynak">📚 Kaynak / Yayın</label>
+                    <input type="text" id="foto-kaynak" placeholder="Örn: MEB Kitabı">
+                </div>
+                <div class="form-group">
+                    <label for="foto-konu">📖 Konu</label>
+                    <input type="text" id="foto-konu" placeholder="Örn: Kesirler">
+                </div>
+            </div>
+            <!-- GELİŞTİRME 1: Soru Tipi -->
+            <div class="form-group">
+                <label>Soru Tipi</label>
+                <div class="soru-tipi-group" id="fotoSoruTipiGroup">
+                    <button type="button" class="soru-tipi-btn selected" data-value="temel" onclick="selectSoruTipi(this)">🎯 Temel<br><small>(Kazanım)</small></button>
+                    <button type="button" class="soru-tipi-btn" data-value="yeni-nesil" onclick="selectSoruTipi(this)">🧠 Yeni Nesil<br><small>(LGS)</small></button>
+                    <button type="button" class="soru-tipi-btn" data-value="karisik" onclick="selectSoruTipi(this)">🔀 Karışık<br><small>(Her İkisi)</small></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="foto-aciklama">💬 Soru Hakkında Not <span style="color:var(--text-muted); font-weight:400;">(isteğe bağlı)</span></label>
+                <textarea id="foto-aciklama" placeholder="Örn: 3. soru anlaşılmadı, neden bu yöntem işe yaramadı?"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Çözülemeyen Sorunun Fotoğrafı</label>
+                <div class="photo-drop-zone" id="dropZone">
+                    <input type="file" id="fotoInput" accept="image/*" capture="environment">
+                    <span class="drop-icon">📸</span>
+                    <p><strong>Fotoğraf Çek veya Seç</strong></p>
+                    <p>Çözülemeyen soruyu kameraya tutun</p>
+                </div>
+                <img id="fotoPreview" alt="Soru fotoğrafı önizleme">
+            </div>
+            <button type="submit" id="fotoSubmitBtn" class="btn-orange">
+                <span id="fotoBtnText">📤 Öğretmene Gönder</span>
+                <span class="loader" id="fotoBtnLoader"></span>
+            </button>
+        </form>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MOD 3 — OMR: Kağıt Okuma (Kamera)
+         ══════════════════════════════════════════ -->
+    <div id="panel-omr" class="mode-panel">
+        <div id="omrSection">
+            <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1rem 0;">
+                📋 Öğretmeninizin verdiği <strong>Optik Takip Formu</strong>'nu kameraya tutun.<br>
+                Sistem QR kodu okuyup verileri otomatik dolduracaktır.
+            </p>
+            <div id="cameraWrapper">
+                <video id="cameraVideo" autoplay playsinline muted></video>
+                <canvas id="cameraCanvas"></canvas>
+            </div>
+            <div class="omr-result-box" id="omrResultBox"></div>
+            <button type="button" id="startCameraBtn" class="btn-orange">📷 Kamerayı Aç (Kağıdı Okut)</button>
+            <button type="button" id="stopCameraBtn"  class="btn-secondary" style="display:none;">⏹️ Kamerayı Kapat</button>
+            <hr class="section-divider">
+            <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 0.75rem 0;">
+                QR okuma başarısız olduysa verileri elle de tamamlayabilirsiniz:
+            </p>
+            <form id="omrForm">
+                <div class="form-group">
+                    <label for="omr-tarih">Tarih</label>
+                    <input type="date" id="omr-tarih" required>
+                </div>
+                <div class="form-group">
+                    <label for="omr-ders">Ders</label>
+                    <select id="omr-ders" required>
+                        <option value="">Seçiniz...</option>
+                    </select>
+                </div>
+                <!-- GELİŞTİRME 3: Kaynak/Konu ayrımı -->
+                <div class="grid-kaynak">
+                    <div class="form-group">
+                        <label for="omr-kaynak">📚 Kaynak / Yayın</label>
+                        <input type="text" id="omr-kaynak" placeholder="Örn: Palme">
+                    </div>
+                    <div class="form-group">
+                        <label for="omr-konu">📖 Konu</label>
+                        <input type="text" id="omr-konu" placeholder="Örn: DNA">
+                    </div>
+                </div>
+                <!-- GELİŞTİRME 1: Soru Tipi -->
+                <div class="form-group">
+                    <label>Soru Tipi</label>
+                    <div class="soru-tipi-group" id="omrSoruTipiGroup">
+                        <button type="button" class="soru-tipi-btn selected" data-value="temel" onclick="selectSoruTipi(this)">🎯 Temel<br><small>(Kazanım)</small></button>
+                        <button type="button" class="soru-tipi-btn" data-value="yeni-nesil" onclick="selectSoruTipi(this)">🧠 Yeni Nesil<br><small>(LGS)</small></button>
+                        <button type="button" class="soru-tipi-btn" data-value="karisik" onclick="selectSoruTipi(this)">🔀 Karışık<br><small>(Her İkisi)</small></button>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="omr-dogru">✅ Doğru</label>
+                        <input type="number" id="omr-dogru" min="0" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="omr-yanlis">❌ Yanlış</label>
+                        <input type="number" id="omr-yanlis" min="0" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="omr-bos">⬜ Boş</label>
+                        <input type="number" id="omr-bos" min="0" value="0" required>
+                    </div>
+                </div>
+                <!-- GELİŞTİRME 2: Öğretmene Sorulacak Soru -->
+                <div class="form-group">
+                    <label for="omr-ogrSoru">🙋 Öğretmene Sorulacak Soru <span style="color:var(--text-muted); font-weight:400;">(isteğe bağlı)</span></label>
+                    <input type="number" id="omr-ogrSoru" min="0" placeholder="0" style="max-width:140px;">
+                </div>
+                <button type="submit" id="omrSubmitBtn">
+                    <span id="omrBtnText">✅ Onayla ve Gönder</span>
+                    <span class="loader" id="omrBtnLoader"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         GÖREV 4: Başarı Ekranı (Tüm modlar)
+         ══════════════════════════════════════════ -->
+    <div id="successScreen">
+        <span class="success-icon">🎉</span>
+        <div class="success-title">Harika!</div>
+        <p class="success-sub">
+            Veriler öğretmene başarıyla iletildi.<br>
+            Teşekkür ederiz! ❤️
+        </p>
+        <button class="btn-success success-new-btn" onclick="resetAllForms()">
+            ➕ Yeni Veri Gir
+        </button>
+    </div>
+
+    <div id="statusMessage"></div>
+</div>
+
+<script>
+    // ═══════════════════════════════════════════════════════
+    // GÖREV 3: Merkezi Ders Listesi (DRY — tek kaynaktan)
+    // ═══════════════════════════════════════════════════════
+    const DERS_LISTESI = [
+        'Türkçe', 'Matematik', 'Fen Bilimleri',
+        'Sosyal Bilgiler', 'İngilizce', 'Din Kültürü',
+        'T.C. İnkılap Tarihi', 'Beden Eğitimi', 'Görsel Sanatlar'
+    ];
+
+    function fillDersSelects() {
+        ['ders', 'foto-ders', 'omr-ders'].forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Seçiniz...</option>';
+            DERS_LISTESI.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                sel.appendChild(opt);
+            });
+        });
+    }
+    fillDersSelects();
+
+    // ═══════════════════════════════════════════════════════
+    // GELİŞTİRME 1: Soru Tipi Seçici
+    // ═══════════════════════════════════════════════════════
+    function selectSoruTipi(btn) {
+        // Aynı grup içindeki diğer butonları sıfırla
+        const group = btn.closest('.soru-tipi-group');
+        if (!group) return;
+        group.querySelectorAll('.soru-tipi-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    }
+
+    function getSelectedSoruTipi(groupId) {
+        const group = document.getElementById(groupId);
+        if (!group) return 'temel';
+        const sel = group.querySelector('.soru-tipi-btn.selected');
+        return sel ? sel.dataset.value : 'temel';
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // TEMEL YARDIMCI FONKSİYONLAR
+    // ═══════════════════════════════════════════════════════
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid   = urlParams.get('uid');
+    const sid   = urlParams.get('sid');
+    const sName = urlParams.get('sname');
+
+    if (sName) {
+        document.getElementById('studentNameDisplay').textContent =
+            `${decodeURIComponent(sName)} için veri girişi yapıyorsunuz.`;
+    }
+
+    document.getElementById('tarih').valueAsDate    = new Date();
+    document.getElementById('omr-tarih').valueAsDate = new Date();
+
+    const statusMsg = document.getElementById('statusMessage');
+
+    function showStatus(msg, isError = false) {
+        statusMsg.textContent = msg;
+        statusMsg.style.display = 'block';
+        statusMsg.className = isError ? 'status-error' : 'status-success';
+        statusMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function setLoading(btn, textEl, loaderEl, isLoading) {
+        btn.disabled            = isLoading;
+        textEl.style.display    = isLoading ? 'none'         : 'inline';
+        loaderEl.style.display  = isLoading ? 'inline-block' : 'none';
+    }
+
+    function switchMode(mode) {
+        ['manual','photo','omr'].forEach(m => {
+            document.getElementById('panel-' + m).classList.toggle('active', m === mode);
+            document.getElementById('tab-' + m).classList.toggle('active', m === mode);
+        });
+        statusMsg.style.display = 'none';
+        document.getElementById('successScreen').style.display = 'none';
+    }
+
+    function checkParams() {
+        if (!uid || !sid) {
+            showStatus("Bağlantı hatası: URL'de eksik parametre var. Öğretmenin gönderdiği linki kullanın.", true);
+            return false;
+        }
+        return true;
+    }
+
+    async function sendToFirebase(data) {
+        await firebase.auth().signInAnonymously();
+        const ref = firebase.database().ref(`soru_takip_forms/${uid}/${sid}`).push();
+        await ref.set({ ...data, timestamp: firebase.database.ServerValue.TIMESTAMP });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // GÖREV 4: Tebrik ekranını göster
+    // ═══════════════════════════════════════════════════════
+    function showSuccessScreen() {
+        // Tüm panelleri ve sekmeleri gizle
+        document.querySelector('.mode-tabs').style.opacity = '0.4';
+        document.querySelector('.mode-tabs').style.pointerEvents = 'none';
+        ['manual','photo','omr'].forEach(m => {
+            document.getElementById('panel-' + m).classList.remove('active');
+        });
+        statusMsg.style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('successScreen').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+
+    function resetAllForms() {
+        // Wizard sıfırla
+        currentStep = 1;
+        updateWizard();
+        document.getElementById('tarih').valueAsDate = new Date();
+        document.getElementById('ders').value   = '';
+        document.getElementById('kaynak').value = '';
+        document.getElementById('konu').value   = '';
+        document.getElementById('dogru').value  = '';
+        document.getElementById('yanlis').value = '';
+        document.getElementById('bos').value    = '';
+        document.getElementById('ogrSoru').value = '';
+        document.getElementById('manualFotoPreview').style.display = 'none';
+        manualFotoBase64 = null;
+        // Soru tipi butonlarını sıfırla
+        ['soruTipiGroup', 'fotoSoruTipiGroup', 'omrSoruTipiGroup'].forEach(gid => {
+            const g = document.getElementById(gid);
+            if (!g) return;
+            g.querySelectorAll('.soru-tipi-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
+        });
+
+        // Fotoğraf modunu sıfırla
+        document.getElementById('fotoForm').reset();
+        document.getElementById('fotoPreview').style.display = 'none';
+        fotoBase64 = null;
+
+        // Sekmeleri geri aç
+        document.querySelector('.mode-tabs').style.opacity = '1';
+        document.querySelector('.mode-tabs').style.pointerEvents = '';
+
+        // Başarı ekranını kapat, elle giriş sekmesine dön
+        document.getElementById('successScreen').style.display = 'none';
+        switchMode('manual');
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // GÖREV 1: Wizard Yönetimi
+    // ═══════════════════════════════════════════════════════
+    let currentStep = 1;
+    const TOTAL_STEPS = 3;
+
+    const STEP_LABELS = ['Ders & Konu', 'Net Sonuçları', 'Fotoğraf & Gönder'];
+
+    function updateWizard() {
+        for (let i = 1; i <= TOTAL_STEPS; i++) {
+            const step = document.getElementById('step-' + i);
+            const dot  = document.getElementById('pdot-' + i);
+            if (step) step.classList.toggle('active', i === currentStep);
+            if (dot) {
+                dot.className = 'progress-dot';
+                if (i < currentStep)  dot.classList.add('done');
+                if (i === currentStep) dot.classList.add('active');
+            }
+        }
+        const lbl = document.getElementById('progress-label');
+        if (lbl) lbl.textContent = `Adım ${currentStep} / ${TOTAL_STEPS} — ${STEP_LABELS[currentStep - 1]}`;
+    }
+
+    function nextWizardStep() {
+        if (!validateStep(currentStep)) return;
+        if (currentStep < TOTAL_STEPS) {
+            currentStep++;
+            updateWizard();
+        }
+    }
+
+    function prevWizardStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateWizard();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // GÖREV 2: Gerçek Zamanlı Doğrulama (Inline Validation)
+    // ═══════════════════════════════════════════════════════
+    function hiliteError(fieldId, message) {
+        const el = document.getElementById(fieldId);
+        if (!el) return;
+        el.classList.add('field-error');
+
+        // Hata mesajı span
+        let errEl = el.parentNode.querySelector('.field-error-msg');
+        if (!errEl) {
+            errEl = document.createElement('span');
+            errEl.className = 'field-error-msg';
+            el.parentNode.appendChild(errEl);
+        }
+        errEl.textContent = message;
+
+        // Kullanıcı düzeltince hata kaldırılır
+        el.addEventListener('input', () => {
+            el.classList.remove('field-error');
+            if (errEl) errEl.remove();
+        }, { once: true });
+        el.addEventListener('change', () => {
+            el.classList.remove('field-error');
+            if (errEl) errEl.remove();
+        }, { once: true });
+
+        el.focus();
+    }
+
+    function validateStep(step) {
+        if (step === 1) {
+            if (!document.getElementById('tarih').value) {
+                hiliteError('tarih', 'Lütfen bir tarih seçin.');
+                return false;
+            }
+            if (!document.getElementById('ders').value) {
+                hiliteError('ders', 'Lütfen bir ders seçin.');
+                return false;
+            }
+        }
+        if (step === 2) {
+            const d = Number(document.getElementById('dogru').value);
+            const y = Number(document.getElementById('yanlis').value);
+            const b = Number(document.getElementById('bos').value);
+
+            if (document.getElementById('dogru').value === '' ||
+                document.getElementById('yanlis').value === '') {
+                hiliteError('dogru', 'Doğru ve yanlış sayısını giriniz.');
+                return false;
+            }
+            if (d < 0 || y < 0 || b < 0) {
+                hiliteError('dogru', 'Değerler 0 veya daha büyük olmalıdır.');
+                return false;
+            }
+            if (d === 0 && y === 0 && b === 0) {
+                hiliteError('dogru', 'En az bir değer (0 dışında) girilmelidir.');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Sayısal alanlarda eksi ve 'e' karakterini engelle
+    ['dogru','yanlis','bos','omr-dogru','omr-yanlis','omr-bos'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('keydown', e => {
+            if (e.key === '-' || e.key === 'e' || e.key === '+') e.preventDefault();
+        });
+        el.addEventListener('input', () => {
+            if (el.value < 0) el.value = 0;
+        });
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // MOD 1 — Elle Veri Girişi (Wizard Submit)
+    // ═══════════════════════════════════════════════════════
+    let manualFotoBase64 = null;
+
+    document.getElementById('manualFotoInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        // GÖREV 2: Sadece resim kabul et
+        if (!file.type.startsWith('image/')) {
+            alert('Yalnızca resim dosyası (JPG, PNG vb.) yükleyebilirsiniz.');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            manualFotoBase64 = ev.target.result;
+            const prev = document.getElementById('manualFotoPreview');
+            prev.src = manualFotoBase64;
+            prev.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    async function submitManualForm() {
+        if (!validateStep(1) || !validateStep(2)) {
+            // Adım 1'e geri dön eğer hata orada ise
+            if (!validateStep(1)) { currentStep = 1; updateWizard(); }
+            return;
+        }
+        if (!checkParams()) return;
+
+        const btn    = document.getElementById('submitBtn');
+        const btnTxt = document.getElementById('btnText');
+        const loader = document.getElementById('btnLoader');
+        setLoading(btn, btnTxt, loader, true);
+        statusMsg.style.display = 'none';
+
+        try {
+            const payload = {
+                mod      : manualFotoBase64 ? 'elle+fotograf' : 'elle',
+                tarih    : document.getElementById('tarih').value,
+                ders     : document.getElementById('ders').value,
+                kaynak   : document.getElementById('kaynak').value || '',
+                konu     : document.getElementById('konu').value || '',
+                soruTipi : getSelectedSoruTipi('soruTipiGroup'),
+                dogru    : parseInt(document.getElementById('dogru').value)   || 0,
+                yanlis   : parseInt(document.getElementById('yanlis').value)  || 0,
+                bos      : parseInt(document.getElementById('bos').value)     || 0,
+                ogrSoru  : parseInt(document.getElementById('ogrSoru').value) || 0,
+            };
+            if (manualFotoBase64) payload.fotoBase64 = manualFotoBase64;
+
+            await sendToFirebase(payload);
+            showSuccessScreen(); // GÖREV 4
+        } catch (err) {
+            showStatus('Hata: ' + err.message, true);
+        } finally {
+            setLoading(btn, btnTxt, loader, false);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MOD 2 — Fotoğraflı Soru Köprüsü (Kural 2)
+    // ═══════════════════════════════════════════════════════
+    let fotoBase64 = null;
+
+    document.getElementById('fotoInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Yalnızca resim dosyası yükleyebilirsiniz.');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            fotoBase64 = ev.target.result;
+            const preview = document.getElementById('fotoPreview');
+            preview.src = fotoBase64;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.getElementById('fotoForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!checkParams()) return;
+
+        if (!document.getElementById('foto-ders').value) {
+            hiliteError('foto-ders', 'Lütfen bir ders seçin.');
+            return;
+        }
+        if (!fotoBase64) {
+            showStatus('Lütfen önce soru fotoğrafı ekleyiniz.', true);
+            return;
+        }
+
+        const btn    = document.getElementById('fotoSubmitBtn');
+        const btnTxt = document.getElementById('fotoBtnText');
+        const loader = document.getElementById('fotoBtnLoader');
+        setLoading(btn, btnTxt, loader, true);
+        statusMsg.style.display = 'none';
+
+        try {
+            await sendToFirebase({
+                mod      : 'fotograf',
+                tarih    : new Date().toISOString().split('T')[0],
+                ders     : document.getElementById('foto-ders').value,
+                kaynak   : document.getElementById('foto-kaynak').value || '',
+                konu     : document.getElementById('foto-konu').value || '',
+                soruTipi : getSelectedSoruTipi('fotoSoruTipiGroup'),
+                aciklama : document.getElementById('foto-aciklama').value || '',
+                fotoBase64: fotoBase64,
+            });
+            showSuccessScreen(); // GÖREV 4
+        } catch (err) {
+            showStatus('Hata: ' + err.message, true);
+        } finally {
+            setLoading(btn, btnTxt, loader, false);
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // MOD 3 — Tarayıcı Tabanlı OMR (jsQR)
+    // ═══════════════════════════════════════════════════════
+    let videoStream = null;
+    let omrScanLoop = null;
+
+    const videoEl   = document.getElementById('cameraVideo');
+    const canvasEl  = document.getElementById('cameraCanvas');
+    const cameraDiv = document.getElementById('cameraWrapper');
+    const resultBox = document.getElementById('omrResultBox');
+
+    document.getElementById('startCameraBtn').addEventListener('click', async () => {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            videoEl.srcObject = videoStream;
+            cameraDiv.style.display = 'block';
+            document.getElementById('startCameraBtn').style.display = 'none';
+            document.getElementById('stopCameraBtn').style.display  = 'block';
+            resultBox.style.display = 'none';
+            startOMRScan();
+        } catch (err) {
+            showStatus('Kamera açılamadı: ' + err.message, true);
+        }
+    });
+
+    document.getElementById('stopCameraBtn').addEventListener('click', stopCamera);
+
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(t => t.stop());
+            videoStream = null;
+        }
+        if (omrScanLoop) {
+            clearInterval(omrScanLoop);
+            omrScanLoop = null;
+        }
+        cameraDiv.style.display = 'none';
+        document.getElementById('startCameraBtn').style.display = 'block';
+        document.getElementById('stopCameraBtn').style.display  = 'none';
+    }
+
+    function startOMRScan() {
+        const ctx = canvasEl.getContext('2d');
+        omrScanLoop = setInterval(() => {
+            if (videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA) return;
+            canvasEl.width  = videoEl.videoWidth;
+            canvasEl.height = videoEl.videoHeight;
+            ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+            const imageData = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
+            if (typeof jsQR === 'undefined') return;
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert'
+            });
+
+            if (code && code.data) {
+                try {
+                    const parsed = JSON.parse(code.data);
+                    fillOMRForm(parsed);
+                    stopCamera();
+                    resultBox.style.display = 'block';
+                    resultBox.innerHTML = `✅ <strong>QR Kodu Başarıyla Okundu!</strong><br>
+                        Ders: ${parsed.ders || '?'} | Doğru: ${parsed.dogru ?? '?'} | 
+                        Yanlış: ${parsed.yanlis ?? '?'} | Boş: ${parsed.bos ?? '?'}<br>
+                        <em>Lütfen verileri kontrol edin ve onaylayın.</em>`;
+                } catch (_) {
+                    resultBox.style.display = 'block';
+                    resultBox.innerHTML = `📄 <strong>QR Okundu (ham veri):</strong> ${code.data}<br>
+                        <em>Verileri manuel olarak tamamlayınız.</em>`;
+                    stopCamera();
+                }
+            }
+        }, 300);
+    }
+
+    function fillOMRForm(data) {
+        if (data.tarih) document.getElementById('omr-tarih').value = data.tarih;
+        if (data.ders) {
+            const sel = document.getElementById('omr-ders');
+            [...sel.options].forEach(o => { if (o.value === data.ders) o.selected = true; });
+        }
+        if (data.dogru  != null) document.getElementById('omr-dogru').value  = data.dogru;
+        if (data.yanlis != null) document.getElementById('omr-yanlis').value  = data.yanlis;
+        if (data.bos    != null) document.getElementById('omr-bos').value     = data.bos;
+    }
+
+    document.getElementById('omrForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!checkParams()) return;
+
+        // GÖREV 2: OMR formu için de doğrulama
+        if (!document.getElementById('omr-ders').value) {
+            hiliteError('omr-ders', 'Lütfen bir ders seçin.');
+            return;
+        }
+        const od = Number(document.getElementById('omr-dogru').value);
+        const oy = Number(document.getElementById('omr-yanlis').value);
+        const ob = Number(document.getElementById('omr-bos').value);
+        if (od < 0 || oy < 0 || ob < 0) {
+            hiliteError('omr-dogru', 'Değerler 0 veya daha büyük olmalıdır.');
+            return;
+        }
+
+        const btn    = document.getElementById('omrSubmitBtn');
+        const btnTxt = document.getElementById('omrBtnText');
+        const loader = document.getElementById('omrBtnLoader');
+        setLoading(btn, btnTxt, loader, true);
+        statusMsg.style.display = 'none';
+
+        try {
+            await sendToFirebase({
+                mod      : 'omr',
+                tarih    : document.getElementById('omr-tarih').value,
+                ders     : document.getElementById('omr-ders').value,
+                kaynak   : document.getElementById('omr-kaynak').value || '',
+                konu     : document.getElementById('omr-konu').value || '',
+                soruTipi : getSelectedSoruTipi('omrSoruTipiGroup'),
+                dogru    : parseInt(document.getElementById('omr-dogru').value)    || 0,
+                yanlis   : parseInt(document.getElementById('omr-yanlis').value)   || 0,
+                bos      : parseInt(document.getElementById('omr-bos').value)      || 0,
+                ogrSoru  : parseInt(document.getElementById('omr-ogrSoru').value)  || 0,
+            });
+            showSuccessScreen(); // GÖREV 4
+            document.getElementById('omr-tarih').valueAsDate = new Date();
+            resultBox.style.display = 'none';
+        } catch (err) {
+            showStatus('Hata: ' + err.message, true);
+        } finally {
+            setLoading(btn, btnTxt, loader, false);
+        }
+    });
+</script>
+</body>
+</html>

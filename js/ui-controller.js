@@ -3,117 +3,118 @@
 // Tab yönetimi ve öğrenci tablosu render
 // ============================================================
 
-        // Tab adı - seçilen modülün adını bar'da göstermek için
-        const TAB_LABELS = {
-            'tab1':           '🏹 Öğrenci Bilgi Sistemi',
-            'tab2':           '⛺ Sınıf Yönetimi',
-            'tab-buz-kirma':  '🔥 Buz Kırma Etkinlikleri',
-            'tab3':           '⚔️ Ders İşleme & Strateji',
-            'tab4':           '🐎 Öğretmen Ders Programı',
-            'tab5':           '📜 Ödev & Proje Takip',
-            'tab6':           '🦅 Sınav Analiz',
-            'tab7':           '🛡️ Öz Değerlendirme & Formlar',
-            'tab8':           '🌙 İleri Çalışma Grupları',
-            'tab9':           '🌳 Proje Grupları',
-            'tab10':          '🧭 Sistem Kullanım Kılavuzu',
-            'tab-admin':      '👑 Yönetici Paneli'
-        };
+// Tab adı - seçilen modülün adını bar'da göstermek için
+const TAB_LABELS = {
+    'tab1': '🏹 Öğrenci Bilgi Sistemi',
+    'tab2': '⛺ Sınıf Yönetimi',
+    'tab-buz-kirma': '🔥 Buz Kırma Etkinlikleri',
+    'tab3': '⚔️ Ders İşleme & Strateji',
+    'tab4': '🐎 Öğretmen Ders Programı',
+    'tab5': '📜 Ödev & Proje Takip',
+    'tab6': '🦅 Sınav Analiz',
+    'tab7': '🛡️ Öz Değerlendirme & Formlar',
+    'tab8': '🌙 İleri Çalışma Grupları',
+    'tab9': '🌳 Proje Grupları',
+    'tab10': '🧭 Sistem Kullanım Kılavuzu',
+    'tab11': '📊 Soru Çözüm Takip',
+    'tab-admin': '👑 Yönetici Paneli'
+};
 
-        // Toplam normal (admin háriç) modül sayısı
-        const TAB_NUMBERS = {
-            'tab1':1,'tab2':2,'tab-buz-kirma':3,'tab3':4,'tab4':5,
-            'tab5':6,'tab6':7,'tab7':8,'tab8':9,'tab9':10,'tab10':11,'tab-admin':''
-        };
+// Toplam normal (admin háriç) modül sayısı
+const TAB_NUMBERS = {
+    'tab1': 1, 'tab2': 2, 'tab-buz-kirma': 3, 'tab3': 4, 'tab4': 5,
+    'tab5': 6, 'tab6': 7, 'tab7': 8, 'tab8': 9, 'tab9': 10, 'tab10': 11, 'tab11': 12, 'tab-admin': ''
+};
 
-        function openTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            const targetTab = document.getElementById(tabId);
-            if (targetTab) targetTab.classList.add('active');
+function openTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    const targetTab = document.getElementById(tabId);
+    if (targetTab) targetTab.classList.add('active');
 
-            let foundBtn = null;
-            if (window.event && window.event.target && window.event.target.classList.contains('tab-btn')) {
-                foundBtn = window.event.target;
-            } else {
-                const buttons = document.querySelectorAll('.tab-btn');
-                buttons.forEach(btn => {
-                    const onc = btn.getAttribute('onclick');
-                    if (onc && onc.includes(`'${tabId}'`)) {
-                        foundBtn = btn;
-                    }
-                });
+    let foundBtn = null;
+    if (window.event && window.event.target && window.event.target.classList.contains('tab-btn')) {
+        foundBtn = window.event.target;
+    } else {
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            const onc = btn.getAttribute('onclick');
+            if (onc && onc.includes(`'${tabId}'`)) {
+                foundBtn = btn;
             }
-            if (foundBtn) foundBtn.classList.add('active');
+        });
+    }
+    if (foundBtn) foundBtn.classList.add('active');
 
-            // ─ Mobil: overlay'i kapat, aktif etiketi güncelle
-            closeMobileMenu();
-            const label = TAB_LABELS[tabId] || tabId;
-            const num   = TAB_NUMBERS[tabId] || '';
-            const labelEl = document.getElementById('mobile-active-tab-label');
-            if (labelEl) labelEl.textContent = label;
-            const numEl = document.querySelector('.mobile-nav-bar > div:last-child');
-            if (numEl && num) numEl.textContent = num + '/11';
-            if (numEl && !num) numEl.textContent = '★';
+    // ─ Mobil: overlay'i kapat, aktif etiketi güncelle
+    closeMobileMenu();
+    const label = TAB_LABELS[tabId] || tabId;
+    const num = TAB_NUMBERS[tabId] || '';
+    const labelEl = document.getElementById('mobile-active-tab-label');
+    if (labelEl) labelEl.textContent = label;
+    const numEl = document.querySelector('.mobile-nav-bar > div:last-child');
+    if (numEl && num) numEl.textContent = num + '/12';
+    if (numEl && !num) numEl.textContent = '★';
 
-            // Mobil panel: aktif butonu vurgula
-            document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
-            const mobBtn = document.getElementById('mob-btn-' + tabId);
-            if (mobBtn) mobBtn.classList.add('active');
+    // Mobil panel: aktif butonu vurgula
+    document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+    const mobBtn = document.getElementById('mob-btn-' + tabId);
+    if (mobBtn) mobBtn.classList.add('active');
 
-            if (tabId === 'tab9') {
-                pgLoad();
-                pgRenderList();
-            }
+    if (tabId === 'tab9') {
+        pgLoad();
+        pgRenderList();
+    }
 
-            if (tabId === 'tab-admin') {
-                if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
-            }
-        }
+    if (tabId === 'tab-admin') {
+        if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
+    }
+}
 
-        // ── Hamburger Menü Fonksiyonları ──
-        function toggleMobileMenu() {
-            const overlay = document.getElementById('mobile-menu-overlay');
-            if (!overlay) return;
-            overlay.classList.toggle('open');
-            document.body.style.overflow = overlay.classList.contains('open') ? 'hidden' : '';
-        }
+// ── Hamburger Menü Fonksiyonları ──
+function toggleMobileMenu() {
+    const overlay = document.getElementById('mobile-menu-overlay');
+    if (!overlay) return;
+    overlay.classList.toggle('open');
+    document.body.style.overflow = overlay.classList.contains('open') ? 'hidden' : '';
+}
 
-        function closeMobileMenu() {
-            const overlay = document.getElementById('mobile-menu-overlay');
-            if (overlay) {
-                overlay.classList.remove('open');
-                document.body.style.overflow = '';
-            }
-        }
+function closeMobileMenu() {
+    const overlay = document.getElementById('mobile-menu-overlay');
+    if (overlay) {
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+}
 
-        function closeMobileMenuOnOverlay(event) {
-            // Sadece arka plana tıklanınca kapansın (panel içine değil)
-            if (event.target === document.getElementById('mobile-menu-overlay')) {
-                closeMobileMenu();
-            }
-        }
+function closeMobileMenuOnOverlay(event) {
+    // Sadece arka plana tıklanınca kapansın (panel içine değil)
+    if (event.target === document.getElementById('mobile-menu-overlay')) {
+        closeMobileMenu();
+    }
+}
 
-        // DİĞER STANDART İŞLEVLER (Tablo Render, Filtreleme, vb. KORUNDU)
-        function renderStudentTable(dataToRender = null) {
-            if (!dataToRender) {
-                searchStudents();
-                return;
-            }
-            // Eski menüleri (body'ye taşınmış olanları) temizle
-            document.querySelectorAll('body > .xp-popup-panel').forEach(p => p.remove());
+// DİĞER STANDART İŞLEVLER (Tablo Render, Filtreleme, vb. KORUNDU)
+function renderStudentTable(dataToRender = null) {
+    if (!dataToRender) {
+        searchStudents();
+        return;
+    }
+    // Eski menüleri (body'ye taşınmış olanları) temizle
+    document.querySelectorAll('body > .xp-popup-panel').forEach(p => p.remove());
 
-            const tbody = document.getElementById('student-table-body'); tbody.innerHTML = '';
-            dataToRender.forEach((student) => {
-                const realIndex = studentData.indexOf(student);
+    const tbody = document.getElementById('student-table-body'); tbody.innerHTML = '';
+    dataToRender.forEach((student) => {
+        const realIndex = studentData.indexOf(student);
 
-                // VAK İkonu Belirleme
-                let vakIcon = '';
-                if (student.vak === 'Görsel') vakIcon = '<i class="fas fa-eye" title="Görsel Öğrenen" style="color: #3b82f6; margin-left: 8px;"></i>';
-                else if (student.vak === 'İşitsel') vakIcon = '<i class="fas fa-headphones" title="İşitsel Öğrenen" style="color: #8b5cf6; margin-left: 8px;"></i>';
-                else if (student.vak === 'Kinestetik') vakIcon = '<i class="fas fa-hand-paper" title="Kinestetik Öğrenen" style="color: #f59e0b; margin-left: 8px;"></i>';
+        // VAK İkonu Belirleme
+        let vakIcon = '';
+        if (student.vak === 'Görsel') vakIcon = '<i class="fas fa-eye" title="Görsel Öğrenen" style="color: #3b82f6; margin-left: 8px;"></i>';
+        else if (student.vak === 'İşitsel') vakIcon = '<i class="fas fa-headphones" title="İşitsel Öğrenen" style="color: #8b5cf6; margin-left: 8px;"></i>';
+        else if (student.vak === 'Kinestetik') vakIcon = '<i class="fas fa-hand-paper" title="Kinestetik Öğrenen" style="color: #f59e0b; margin-left: 8px;"></i>';
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
                 <td><input type="checkbox" class="row-checkbox" data-index="${realIndex}"></td>
                 <td>${student.sira || '-'}</td>
                 <td>${student.no || '-'}</td>
@@ -151,39 +152,44 @@
                     </div>
                 </td>
             `;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('select-all').checked = false;
-            updateClassDropdown();
+        tbody.appendChild(tr);
+    });
+    document.getElementById('select-all').checked = false;
+    updateClassDropdown();
+    
+    // Öğrenci tablosu yenilendiğinde, Soru Takip modülündeki dropdown'ı da senkronize et
+    if (window.SoruTakipUI && typeof window.SoruTakipUI.populateStudentDropdown === 'function') {
+        window.SoruTakipUI.populateStudentDropdown();
+    }
+}
+
+function updateClassDropdown() {
+    const classFilter = document.getElementById('class-filter'); const classViewFilter = document.getElementById('class-view-filter');
+    const currentVal = classFilter ? classFilter.value : ""; const currentViewVal = classViewFilter ? classViewFilter.value : "";
+    const classes = [...new Set(studentData.map(s => s.sinif).filter(c => c && c.toString().trim() !== ''))].sort();
+
+    if (classFilter) {
+        if (classes.length === 0) classFilter.innerHTML = '<option value="">Önce sisteme öğrenci yükleyin...</option>';
+        else {
+            classFilter.innerHTML = '<option value="">-- Sınıf Seçiniz --</option>';
+            classes.forEach(c => classFilter.innerHTML += `<option value="${c}">${c}</option>`);
+            if (classes.includes(currentVal)) classFilter.value = currentVal;
         }
+    }
+    if (classViewFilter) {
+        classViewFilter.innerHTML = '<option value="">Tüm Sınıflar</option>';
+        classes.forEach(c => classViewFilter.innerHTML += `<option value="${c}">${c}</option>`);
+        if (classes.includes(currentViewVal)) classViewFilter.value = currentViewVal;
+    }
 
-        function updateClassDropdown() {
-            const classFilter = document.getElementById('class-filter'); const classViewFilter = document.getElementById('class-view-filter');
-            const currentVal = classFilter ? classFilter.value : ""; const currentViewVal = classViewFilter ? classViewFilter.value : "";
-            const classes = [...new Set(studentData.map(s => s.sinif).filter(c => c && c.toString().trim() !== ''))].sort();
-
-            if (classFilter) {
-                if (classes.length === 0) classFilter.innerHTML = '<option value="">Önce sisteme öğrenci yükleyin...</option>';
-                else {
-                    classFilter.innerHTML = '<option value="">-- Sınıf Seçiniz --</option>';
-                    classes.forEach(c => classFilter.innerHTML += `<option value="${c}">${c}</option>`);
-                    if (classes.includes(currentVal)) classFilter.value = currentVal;
-                }
-            }
-            if (classViewFilter) {
-                classViewFilter.innerHTML = '<option value="">Tüm Sınıflar</option>';
-                classes.forEach(c => classViewFilter.innerHTML += `<option value="${c}">${c}</option>`);
-                if (classes.includes(currentViewVal)) classViewFilter.value = currentViewVal;
-            }
-
-            const trackClassContainer = document.getElementById('track-class-container');
-            if (trackClassContainer) {
-                trackClassContainer.innerHTML = '';
-                classes.forEach(c => {
-                    const studentsInClass = studentData.filter(s => s.sinif === c).sort((a, b) => a.no - b.no);
-                    const div = document.createElement('div');
-                    div.className = 'track-class-card';
-                    div.innerHTML = `
+    const trackClassContainer = document.getElementById('track-class-container');
+    if (trackClassContainer) {
+        trackClassContainer.innerHTML = '';
+        classes.forEach(c => {
+            const studentsInClass = studentData.filter(s => s.sinif === c).sort((a, b) => a.no - b.no);
+            const div = document.createElement('div');
+            div.className = 'track-class-card';
+            div.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <input type="checkbox" class="track-class-checkbox" value="${c}" id="chk-${c}" style="width: 18px; height: 18px; accent-color: var(--secondary); cursor: pointer;" onchange="toggleClassAllStudents('${c}', this.checked)"> 
@@ -208,28 +214,28 @@
                         </div>
                     </div>
                 `;
-                    trackClassContainer.appendChild(div);
-                });
-            }
+            trackClassContainer.appendChild(div);
+        });
+    }
 
-            const examClassCheckboxGrid = document.getElementById('exam-class-checkbox-grid');
-            if (examClassCheckboxGrid) {
-                examClassCheckboxGrid.innerHTML = '';
-                classes.forEach(c => {
-                    examClassCheckboxGrid.innerHTML += `
+    const examClassCheckboxGrid = document.getElementById('exam-class-checkbox-grid');
+    if (examClassCheckboxGrid) {
+        examClassCheckboxGrid.innerHTML = '';
+        classes.forEach(c => {
+            examClassCheckboxGrid.innerHTML += `
                     <label class="checkbox-item">
                         <input type="checkbox" class="exam-class-checkbox" value="${c}"> ${c}
                     </label>
                 `;
-                });
-            }
-            updateExamUploadDropdowns();
-            updateEvalClassDropdown();
-        }
+        });
+    }
+    updateExamUploadDropdowns();
+    updateEvalClassDropdown();
+}
 
-        // ----------------------------------------------------------------------
-        // TAB 3: GELİŞMİŞ YAPAY ZEKA DERS İŞLEME STRATEJİSİ ALGORİTMASI
-        // (Bütüncül Kuram, 5E, Kolb, Bloom, Vygotsky Entegrasyonu)
-        // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// TAB 3: GELİŞMİŞ YAPAY ZEKA DERS İŞLEME STRATEJİSİ ALGORİTMASI
+// (Bütüncül Kuram, 5E, Kolb, Bloom, Vygotsky Entegrasyonu)
+// ----------------------------------------------------------------------
 
-        // MÜFREDAT VERİ TABANI (Örnek Şablonlar)
+// MÜFREDAT VERİ TABANI (Örnek Şablonlar)

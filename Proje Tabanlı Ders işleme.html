@@ -31,6 +31,8 @@
             } else {
                 // İstisnasız herkesin veritabanı kendi UID'si altında oluşturulur
                 window.userDBPath = "app_data/" + user.uid;
+                // currentUser global nesnesi (ui-soru-takip.js gibi modüller kullanır)
+                window.currentUser = user;
 
                 if (user.email === 'mremzi@gmail.com') {
                     const adminTabBtn = document.getElementById('admin-tab-btn');
@@ -44,28 +46,46 @@
                 try {
                     if (window.db) {
                         window.db.ref("kullanicilar/" + user.uid).once("value").then(snapshot => {
+                            const profil = snapshot.val() || {};
+
+                            // Yönetici dışındaki kullanıcıların onay durumunu denetle
+                            if (user.email !== 'mremzi@gmail.com' && !profil.onayli) {
+                                alert("Hesabınız henüz yönetici tarafından onaylanmamış veya askıya alınmış.");
+                                firebase.auth().signOut().then(() => {
+                                    window.location.href = 'login.html';
+                                });
+                                return;
+                            }
+
+                            // ── Kullanıcı adını göster ──
                             const nameSpan = document.getElementById('user-display-name');
                             if (nameSpan) {
-                                if (snapshot.exists() && snapshot.val().adSoyad) {
-                                    nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${snapshot.val().adSoyad}`;
-                                } else {
-                                    nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${user.email}`;
-                                }
+                                nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${profil.adSoyad || user.email}`;
                             }
+
                         }).catch(e => console.error("Kullanıcı profili alınamadı:", e));
                     }
                 } catch (e) {
                     console.error("Firebase db erişimi hatası:", e);
                 }
 
-                // Kullanıcı kimliği belli olduktan sonra verileri yükle
+                // Kullanıcı kimliği belli olduktan sonra verileri yükle (Script yüklenme yarışını engelle)
+                const tryLoadData = () => {
+                    if (typeof loadFromLocalStorage === 'function') {
+                        loadFromLocalStorage();
+                    } else {
+                        setTimeout(tryLoadData, 50);
+                    }
+                };
+
                 if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', () => loadFromLocalStorage());
+                    document.addEventListener('DOMContentLoaded', tryLoadData);
                 } else {
-                    loadFromLocalStorage();
+                    tryLoadData();
                 }
             }
         });
+
     </script>
 
     <style>
@@ -1374,6 +1394,242 @@
             display: block;
         }
 
+        /* ── Yaklaşan Görevler Açılır Menü (Deadline Dropdown Banner) ── */
+        #deadline-banner {
+            margin-bottom: 16px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.16);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: var(--card-bg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .deadline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            cursor: pointer;
+            user-select: none;
+            transition: filter 0.2s ease;
+        }
+
+        .deadline-header:hover {
+            filter: brightness(1.05);
+        }
+
+        .deadline-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+        }
+
+        .deadline-icon-pulse {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            font-size: 12px;
+            animation: pulse-ring 2.2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .deadline-title {
+            letter-spacing: 0.2px;
+        }
+
+        .deadline-count-badge {
+            background: #ffffff;
+            color: #059669;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+
+        .deadline-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .deadline-toggle-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
+
+        .deadline-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        #deadline-chevron {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .deadline-close-btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: none;
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
+
+        .deadline-close-btn:hover {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .deadline-dropdown-body {
+            display: none;
+            padding: 10px 14px;
+            background: var(--card-bg);
+            border-top: 1px solid rgba(16, 185, 129, 0.2);
+            animation: fadeInDown 0.2s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .deadline-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .deadline-task-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid #10b981;
+            border-radius: 8px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .deadline-task-row:hover {
+            border-color: #10b981;
+            transform: translateX(2px);
+        }
+
+        .deadline-task-main {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .deadline-task-idx {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            background: #10b981;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .deadline-task-desc {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .deadline-task-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .deadline-class-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            background: rgba(99, 102, 241, 0.12);
+            color: #4f46e5;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        [data-theme='dark'] .deadline-class-pill {
+            background: rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+        }
+
+        .deadline-time-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .deadline-tag-today {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            font-weight: 800;
+        }
+
+        .deadline-tag-tomorrow {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+        }
+
+        .deadline-tag-days {
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+        }
+
         /* ═══════════════════════════════════════════════
            MOBİL UYUMLULUK — Cep Telefonu (≤ 480px)
            ═══════════════════════════════════════════════ */
@@ -1392,7 +1648,8 @@
             h1 {
                 font-size: 15px;
                 gap: 6px;
-                margin-bottom: 60px; /* theme-switcher için yer bırak */
+                margin-bottom: 60px;
+                /* theme-switcher için yer bırak */
                 padding-right: 0;
                 line-height: 1.3;
             }
@@ -1431,31 +1688,40 @@
                 position: fixed;
                 inset: 0;
                 z-index: 9000;
-                background: rgba(0,0,0,0.55);
+                background: rgba(0, 0, 0, 0.55);
                 backdrop-filter: blur(4px);
                 -webkit-backdrop-filter: blur(4px);
                 animation: fadeIn 0.2s ease;
             }
+
             .mobile-menu-overlay.open {
                 display: flex;
                 align-items: flex-start;
                 justify-content: flex-start;
             }
+
             .mobile-menu-panel {
                 width: min(85vw, 320px);
                 height: 100dvh;
                 background: var(--card-bg);
                 border-right: 1px solid var(--border);
-                box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto;
-                animation: slideInLeft 0.25s cubic-bezier(0.4,0,0.2,1);
+                animation: slideInLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             }
+
             @keyframes slideInLeft {
-                from { transform: translateX(-100%); }
-                to   { transform: translateX(0); }
+                from {
+                    transform: translateX(-100%);
+                }
+
+                to {
+                    transform: translateX(0);
+                }
             }
+
             .mobile-menu-header {
                 display: flex;
                 align-items: center;
@@ -1467,13 +1733,15 @@
                 position: sticky;
                 top: 0;
             }
+
             .mobile-menu-header span {
                 font-weight: 800;
                 font-size: 15px;
                 letter-spacing: -0.3px;
             }
+
             .mobile-menu-close {
-                background: rgba(255,255,255,0.18);
+                background: rgba(255, 255, 255, 0.18);
                 border: none;
                 color: #fff;
                 width: 32px;
@@ -1486,7 +1754,11 @@
                 justify-content: center;
                 transition: background 0.2s;
             }
-            .mobile-menu-close:hover { background: rgba(255,255,255,0.32); }
+
+            .mobile-menu-close:hover {
+                background: rgba(255, 255, 255, 0.32);
+            }
+
             .mobile-menu-items {
                 display: flex;
                 flex-direction: column;
@@ -1494,6 +1766,7 @@
                 gap: 4px;
                 flex: 1;
             }
+
             .mobile-tab-btn {
                 display: flex;
                 align-items: center;
@@ -1511,19 +1784,23 @@
                 width: 100%;
                 -webkit-tap-highlight-color: transparent;
             }
+
             .mobile-tab-btn .mob-icon {
                 font-size: 20px;
                 width: 28px;
                 text-align: center;
                 flex-shrink: 0;
             }
+
             .mobile-tab-btn:hover {
                 background: var(--tab-bg);
             }
+
             .mobile-tab-btn.active {
-                background: rgba(59,130,246,0.12);
+                background: rgba(59, 130, 246, 0.12);
                 color: var(--secondary);
             }
+
             .mobile-tab-btn.active .mob-icon {
                 filter: none;
             }
@@ -1582,11 +1859,25 @@
                 padding: 8px 5px;
             }
 
-            /* ── Deadline banner ── */
-            #deadline-banner {
-                flex-direction: column !important;
-                gap: 8px;
-                padding: 10px;
+            /* ── Deadline banner (Mobil) ── */
+            .deadline-header {
+                padding: 8px 12px;
+            }
+
+            .deadline-title {
+                font-size: 13px;
+            }
+
+            .deadline-task-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                padding: 8px 10px;
+            }
+
+            .deadline-task-meta {
+                width: 100%;
+                justify-content: flex-end;
             }
 
             /* ── Proje Tipi Seçici ── */
@@ -1611,10 +1902,10 @@
             }
 
             /* ── XP modal ── */
-            #xp-modal > div,
-            #rubric-modal > div,
-            #chart-modal > div,
-            #evaluation-modal > div {
+            #xp-modal>div,
+            #rubric-modal>div,
+            #chart-modal>div,
+            #evaluation-modal>div {
                 width: 96vw !important;
                 max-width: 96vw !important;
                 padding: 14px !important;
@@ -1658,7 +1949,9 @@
                 gap: 4px;
             }
 
-            .pg-tab-inner::-webkit-scrollbar { display: none; }
+            .pg-tab-inner::-webkit-scrollbar {
+                display: none;
+            }
 
             .pg-tab-inner-btn {
                 padding: 6px 10px;
@@ -1700,7 +1993,7 @@
             }
 
             /* ── Sınıf yönetimi grup kartları ── */
-            .groups-container > div {
+            .groups-container>div {
                 grid-template-columns: 1fr !important;
             }
 
@@ -1735,8 +2028,13 @@
             }
 
             /* Tablet da hamburger menü kullansın */
-            .tabs { display: none !important; }
-            .mobile-nav-bar { display: flex !important; }
+            .tabs {
+                display: none !important;
+            }
+
+            .mobile-nav-bar {
+                display: flex !important;
+            }
 
             .pg-type-bar {
                 grid-template-columns: 1fr 1fr !important;
@@ -1747,20 +2045,26 @@
                 padding: 20px;
             }
 
-            #xp-modal > div,
-            #rubric-modal > div,
-            #chart-modal > div,
-            #evaluation-modal > div {
+            #xp-modal>div,
+            #rubric-modal>div,
+            #chart-modal>div,
+            #evaluation-modal>div {
                 width: 90vw !important;
                 max-width: 90vw !important;
                 max-height: 85vh;
                 overflow-y: auto;
             }
         }
+
         /* ── Masaüstü: mobil bileşenleri gizle ── */
         @media (min-width: 769px) {
-            .mobile-nav-bar    { display: none !important; }
-            .mobile-menu-overlay { display: none !important; }
+            .mobile-nav-bar {
+                display: none !important;
+            }
+
+            .mobile-menu-overlay {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -1786,27 +2090,46 @@
                 style="font-size: 14px; margin-left: 10px; color: var(--red);"><i class="fas fa-database"></i></span>
         </h1>
 
-        <div id="deadline-banner"
-            style="display:none; background-color: var(--accent); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 15px; justify-content: space-between; align-items: center; box-shadow: var(--shadow);">
-            <div>
-                <i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>
-                <span id="deadline-banner-text" style="font-weight: 600; font-size: 14px;"></span>
+        <!-- ── Yaklaşan Görevler Açılır Menü (Deadline Dropdown Banner) ── -->
+        <div id="deadline-banner" style="display:none;">
+            <div class="deadline-header" onclick="toggleDeadlineDropdown(event)">
+                <div class="deadline-title-wrap">
+                    <span class="deadline-icon-pulse"><i class="fas fa-bell"></i></span>
+                    <span class="deadline-title">Yaklaşan Görevler</span>
+                    <span id="deadline-badge" class="deadline-count-badge">0</span>
+                </div>
+                <div class="deadline-controls">
+                    <button type="button" class="deadline-toggle-btn" title="Aç / Kapat" aria-label="Aç / Kapat">
+                        <i class="fas fa-chevron-down" id="deadline-chevron"></i>
+                    </button>
+                    <button type="button" class="deadline-close-btn" onclick="closeDeadlineBanner(event)" title="Kapat" aria-label="Kapat">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
-            <button onclick="document.getElementById('deadline-banner').style.display='none'"
-                style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer;"><i
-                    class="fas fa-times"></i></button>
+            <div id="deadline-dropdown-body" class="deadline-dropdown-body">
+                <div id="deadline-banner-text" class="deadline-items-list"></div>
+            </div>
         </div>
 
         <!-- ── Mobil Menü Çubuğu (≤768px'de görünür) ── -->
-        <div class="mobile-nav-bar" style="display:none; align-items:center; gap:10px; margin-bottom:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:10px 14px; box-shadow:var(--shadow);">
-            <button id="hamburger-btn" onclick="toggleMobileMenu()" style="background:var(--secondary); color:#fff; border:none; width:40px; height:40px; border-radius:8px; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s;">
+        <div class="mobile-nav-bar"
+            style="display:none; align-items:center; gap:12px; margin-bottom:16px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:12px 16px; box-shadow:var(--shadow);">
+            <button id="hamburger-btn" onclick="toggleMobileMenu()"
+                style="background:var(--secondary); color:#fff; border:none; width:48px; height:48px; border-radius:10px; cursor:pointer; font-size:24px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s;">
                 <i class="fas fa-bars"></i>
             </button>
             <div style="flex:1; min-width:0;">
-                <div style="font-size:10px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1px;">Aktif Modül</div>
-                <div id="mobile-active-tab-label" style="font-size:14px; font-weight:800; color:var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🏹 Öğrenci Bilgi Sistemi</div>
+                <div
+                    style="font-size:12px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">
+                    Aktif Modül</div>
+                <div id="mobile-active-tab-label"
+                    style="font-size:18px; font-weight:800; color:var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    🏹 Öğrenci Bilgi Sistemi</div>
             </div>
-            <div style="font-size:11px; color:var(--text-muted); background:var(--tab-bg); padding:4px 9px; border-radius:20px; border:1px solid var(--border); flex-shrink:0; font-weight:600;">1/11</div>
+            <div
+                style="font-size:14px; color:var(--text-muted); background:var(--tab-bg); padding:6px 12px; border-radius:20px; border:1px solid var(--border); flex-shrink:0; font-weight:700;">
+                1/12</div>
         </div>
 
         <!-- ── Hamburger Overlay Panel ── -->
@@ -1817,18 +2140,32 @@
                     <button class="mobile-menu-close" onclick="closeMobileMenu()"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="mobile-menu-items">
-                    <button class="mobile-tab-btn active" id="mob-btn-tab1" onclick="openTab('tab1')"><span class="mob-icon">🏹</span>1. Öğrenci Bilgi Sistemi</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab2" onclick="openTab('tab2')"><span class="mob-icon">⛺</span>2. Sınıf Yönetimi</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab-buz-kirma" onclick="openTab('tab-buz-kirma')"><span class="mob-icon">🔥</span>3. Buz Kırma Etkinlikleri</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab3" onclick="openTab('tab3')"><span class="mob-icon">⚔️</span>4. Ders İşleme &amp; Strateji</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab4" onclick="openTab('tab4')"><span class="mob-icon">🐎</span>5. Öğretmen Ders Programı</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab5" onclick="openTab('tab5')"><span class="mob-icon">📜</span>6. Ödev &amp; Proje Takip</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab6" onclick="openTab('tab6')"><span class="mob-icon">🦅</span>7. Sınav Analiz</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab7" onclick="openTab('tab7')"><span class="mob-icon">🛡️</span>8. Öz Değerlendirme &amp; Formlar</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab8" onclick="openTab('tab8')"><span class="mob-icon">🌙</span>9. İleri Çalışma Grupları</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab9" onclick="openTab('tab9')"><span class="mob-icon">🌳</span>10. Proje Grupları</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab10" onclick="openTab('tab10')"><span class="mob-icon">🧭</span>11. Sistem Kullanım Kılavuzu</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab-admin" onclick="openTab('tab-admin')" style="display:none; color:#f59e0b;"><span class="mob-icon">👑</span>Yönetici Paneli</button>
+                    <button class="mobile-tab-btn active" id="mob-btn-tab1" onclick="openTab('tab1')"><span
+                            class="mob-icon">🏹</span>1. Öğrenci Bilgi Sistemi</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab2" onclick="openTab('tab2')"><span
+                            class="mob-icon">⛺</span>2. Sınıf Yönetimi</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab-buz-kirma" onclick="openTab('tab-buz-kirma')"><span
+                            class="mob-icon">🔥</span>3. Buz Kırma Etkinlikleri</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab3" onclick="openTab('tab3')"><span
+                            class="mob-icon">⚔️</span>4. Ders İşleme &amp; Strateji</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab4" onclick="openTab('tab4')"><span
+                            class="mob-icon">🐎</span>5. Öğretmen Ders Programı</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab5" onclick="openTab('tab5')"><span
+                            class="mob-icon">📜</span>6. Ödev &amp; Proje Takip</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab6" onclick="openTab('tab6')"><span
+                            class="mob-icon">🦅</span>7. Sınav Analiz</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab7" onclick="openTab('tab7')"><span
+                            class="mob-icon">🛡️</span>8. Öz Değerlendirme &amp; Formlar</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab8" onclick="openTab('tab8')"><span
+                            class="mob-icon">🌙</span>9. İleri Çalışma Grupları</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab9" onclick="openTab('tab9')"><span
+                            class="mob-icon">🌳</span>10. Proje Grupları</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab10" onclick="openTab('tab10')"><span
+                            class="mob-icon">🧭</span>11. Sistem Kullanım Kılavuzu</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab11" onclick="openTab('tab11')"><span
+                            class="mob-icon">📊</span>12. Soru Çözüm Takip</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab-admin" onclick="openTab('tab-admin')"
+                        style="display:none; color:#f59e0b;"><span class="mob-icon">👑</span>Yönetici Paneli</button>
                 </div>
             </div>
         </div>
@@ -1846,6 +2183,7 @@
             <button class="tab-btn" onclick="openTab('tab8')">🌙 9. İleri Çalışma Grupları</button>
             <button class="tab-btn" onclick="openTab('tab9')" id="tab9-btn">🌳 10. Proje Grupları</button>
             <button class="tab-btn" onclick="openTab('tab10')">🧭 11. Sistem Kullanım Kılavuzu</button>
+            <button class="tab-btn" onclick="openTab('tab11')">📊 12. Soru Çözüm Takip</button>
             <button class="tab-btn" id="admin-tab-btn" onclick="openTab('tab-admin')"
                 style="display: none; color: #f59e0b;">👑 Yönetici Paneli</button>
         </div>
@@ -1897,7 +2235,9 @@
                     <div class="excel-box">
                         <h4><i class="fas fa-file-excel"></i> EXCEL / CSV YÜKLE</h4>
                         <div style="margin-bottom: 10px;">
-                            <a href="ogrenci.xlsx" download style="font-size: 12px; color: var(--accent); text-decoration: underline;"><i class="fas fa-download"></i> Örnek (Öğrenci Liste) Formatı İndir</a>
+                            <a href="ogrenci.xlsx" download
+                                style="font-size: 12px; color: var(--accent); text-decoration: underline;"><i
+                                    class="fas fa-download"></i> Örnek (Öğrenci Liste) Formatı İndir</a>
                         </div>
                         <div class="excel-input-wrapper">
                             <input type="file" id="excel-file" accept=".xlsx, .xls, .csv">
@@ -1906,12 +2246,16 @@
                     </div>
 
                     <div style="margin-top: 15px;">
-                        <button class="btn-reset" onclick="document.getElementById('reset-wrapper').style.display = document.getElementById('reset-wrapper').style.display === 'none' ? 'block' : 'none';" style="background: rgba(239, 68, 68, 0.05); color: var(--text-muted); border-color: transparent;"><i class="fas fa-exclamation-triangle"></i> SIFIRLAMA SEÇENEKLERİ</button>
+                        <button class="btn-reset"
+                            onclick="document.getElementById('reset-wrapper').style.display = document.getElementById('reset-wrapper').style.display === 'none' ? 'block' : 'none';"
+                            style="background: rgba(239, 68, 68, 0.05); color: var(--text-muted); border-color: transparent;"><i
+                                class="fas fa-exclamation-triangle"></i> SIFIRLAMA SEÇENEKLERİ</button>
                         <div id="reset-wrapper" style="display:none; margin-top:10px;">
-                            <button class="btn-reset" onclick="resetAllData()"><i class="fas fa-trash-alt"></i> TÜM VERİLERİ SIFIRLA</button>
+                            <button class="btn-reset" onclick="resetAllData()"><i class="fas fa-trash-alt"></i> TÜM
+                                VERİLERİ SIFIRLA</button>
                         </div>
                     </div>
-                    
+
                     <div style="display: flex; gap: 5px; margin-top: 10px;">
                         <button class="btn-save" style="background: #27ae60; flex: 1;" onclick="exportToJson()"><i
                                 class="fas fa-history"></i> YEDEK AL</button>
@@ -1945,23 +2289,52 @@
 
                         <!-- Bulk XP Popup Trigger -->
                         <div class="xp-popup-wrapper" style="position:relative;">
-                            <button type="button" class="btn" style="background: #10b981; padding: 10px 15px; width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="toggleXPPopup(this, event)" title="Sınıfa / Seçilenlere XP Ver"><i class="fas fa-star"></i> Toplu XP Ver</button>
+                            <button type="button" class="btn"
+                                style="background: #10b981; padding: 10px 15px; width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:5px;"
+                                onclick="toggleXPPopup(this, event)" title="Sınıfa / Seçilenlere XP Ver"><i
+                                    class="fas fa-star"></i> Toplu XP Ver</button>
                             <div class="xp-popup-panel" style="z-index: 9999;">
                                 <div class="xp-popup-label">⬆️ Toplu Artır</div>
                                 <div class="xp-popup-row" style="flex-wrap: wrap;">
-                                    <button class="btn-xp" style="background:#10b981;" onclick="addBulkXP(2, 'Teşvik / Gelişime Açık', this)" title="Teşvik / Gelişime Açık (+2 XP)"><i class="fas fa-seedling"></i> +2</button>
-                                    <button class="btn-xp" style="background:#059669;" onclick="addBulkXP(5, 'Sorumlu / Beklenen Katılım', this)" title="Sorumlu / Beklenen Katılım (+5 XP)"><i class="fas fa-check"></i> +5</button>
-                                    <button class="btn-xp" style="background:#3b82f6;" onclick="addBulkXP(10, 'Üstün Katılım / Orijinal Fikir', this)" title="Üstün Katılım / Orijinal Fikir (+10 XP)"><i class="fas fa-lightbulb"></i> +10</button>
-                                    <button class="btn-xp" style="background:#8b5cf6;" onclick="addBulkXP(10, 'Uyumlu Takım Oyuncusu', this)" title="Uyumlu Takım Oyuncusu (+10 XP)"><i class="fas fa-users"></i> +10</button>
-                                    <button class="btn-xp" style="background:#f59e0b;" onclick="addBulkXP(15, 'Doğal Lider / Mentor', this)" title="Doğal Lider / Mentor (+15 XP)"><i class="fas fa-crown"></i> +15</button>
-                                    <button class="btn-xp" style="background:#eab308;" onclick="addBulkXP(20, 'Sınırları Zorlayan (Azimli)', this)" title="Sınırları Zorlayan / Azimli (+20 XP)"><i class="fas fa-mountain"></i> +20</button>
+                                    <button class="btn-xp" style="background:#10b981;"
+                                        onclick="addBulkXP(2, 'Teşvik / Gelişime Açık', this)"
+                                        title="Teşvik / Gelişime Açık (+2 XP)"><i class="fas fa-seedling"></i>
+                                        +2</button>
+                                    <button class="btn-xp" style="background:#059669;"
+                                        onclick="addBulkXP(5, 'Sorumlu / Beklenen Katılım', this)"
+                                        title="Sorumlu / Beklenen Katılım (+5 XP)"><i class="fas fa-check"></i>
+                                        +5</button>
+                                    <button class="btn-xp" style="background:#3b82f6;"
+                                        onclick="addBulkXP(10, 'Üstün Katılım / Orijinal Fikir', this)"
+                                        title="Üstün Katılım / Orijinal Fikir (+10 XP)"><i class="fas fa-lightbulb"></i>
+                                        +10</button>
+                                    <button class="btn-xp" style="background:#8b5cf6;"
+                                        onclick="addBulkXP(10, 'Uyumlu Takım Oyuncusu', this)"
+                                        title="Uyumlu Takım Oyuncusu (+10 XP)"><i class="fas fa-users"></i> +10</button>
+                                    <button class="btn-xp" style="background:#f59e0b;"
+                                        onclick="addBulkXP(15, 'Doğal Lider / Mentor', this)"
+                                        title="Doğal Lider / Mentor (+15 XP)"><i class="fas fa-crown"></i> +15</button>
+                                    <button class="btn-xp" style="background:#eab308;"
+                                        onclick="addBulkXP(20, 'Sınırları Zorlayan (Azimli)', this)"
+                                        title="Sınırları Zorlayan / Azimli (+20 XP)"><i class="fas fa-mountain"></i>
+                                        +20</button>
                                 </div>
                                 <div class="xp-popup-label">⬇️ Toplu Düşür</div>
                                 <div class="xp-popup-row">
-                                    <button class="btn-xp" style="background:#ef4444;" onclick="addBulkXP(-5, 'Hazırlıksız Gelme', this)" title="Hazırlıksız Gelme (-5 XP)"><i class="fas fa-minus-circle"></i> -5</button>
-                                    <button class="btn-xp" style="background:#dc2626;" onclick="addBulkXP(-10, 'Dersi Bölme', this)" title="Dersi Bölme (-10 XP)"><i class="fas fa-comment-slash"></i> -10</button>
-                                    <button class="btn-xp" style="background:#b91c1c;" onclick="addBulkXP(-15, 'Ödev Teslim Etmeme', this)" title="Ödev Teslim Etmeme (-15 XP)"><i class="fas fa-file-excel"></i> -15</button>
-                                    <button class="btn-xp" style="background:#991b1b;" onclick="addBulkXP(-20, 'Ciddi Kural İhlali', this)" title="Ciddi Kural İhlali (-20 XP)"><i class="fas fa-ban"></i> -20</button>
+                                    <button class="btn-xp" style="background:#ef4444;"
+                                        onclick="addBulkXP(-5, 'Hazırlıksız Gelme', this)"
+                                        title="Hazırlıksız Gelme (-5 XP)"><i class="fas fa-minus-circle"></i>
+                                        -5</button>
+                                    <button class="btn-xp" style="background:#dc2626;"
+                                        onclick="addBulkXP(-10, 'Dersi Bölme', this)" title="Dersi Bölme (-10 XP)"><i
+                                            class="fas fa-comment-slash"></i> -10</button>
+                                    <button class="btn-xp" style="background:#b91c1c;"
+                                        onclick="addBulkXP(-15, 'Ödev Teslim Etmeme', this)"
+                                        title="Ödev Teslim Etmeme (-15 XP)"><i class="fas fa-file-excel"></i>
+                                        -15</button>
+                                    <button class="btn-xp" style="background:#991b1b;"
+                                        onclick="addBulkXP(-20, 'Ciddi Kural İhlali', this)"
+                                        title="Ciddi Kural İhlali (-20 XP)"><i class="fas fa-ban"></i> -20</button>
                                 </div>
                             </div>
                         </div>
@@ -2010,6 +2383,8 @@
                     Ekle</button>
                 <button class="btn" style="background: var(--text-muted);" onclick="autoAssignRoles()"><i
                         class="fas fa-magic"></i> Görevleri Dağıt</button>
+                <button class="btn" style="background: #059669; color: white;" onclick="openKumeKagitFormu()"><i
+                        class="fas fa-print"></i> A4 Küme Formu Yazdır (OCR)</button>
                 <button class="btn" style="background: #ef4444;" onclick="clearAllGroups()"><i
                         class="fas fa-trash-alt"></i> Grupları Temizle</button>
             </div>
@@ -2028,7 +2403,8 @@
                     </div>
                     <div>
                         <p><strong>C) Ar-Ge Sorumlusu:</strong> Ders ekipmanlarını tamamlamasını sağlar.</p>
-                        <p><strong>D) Halkla İlişkiler:</strong> Grubun laboratuvara uyumunu sağlar. Kümenin ders sessizliğine
+                        <p><strong>D) Halkla İlişkiler:</strong> Grubun laboratuvara uyumunu sağlar. Kümenin ders
+                            sessizliğine
                             uyumunu sağlar.</p>
                     </div>
                     <div
@@ -2551,26 +2927,31 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <label>Varsayılan Ceza XP (Yapmayanlar):</label>
                             <input type="number" id="track-penalty" value="5">
                         </div>
-                        <button id="track-add-btn" class="btn" onclick="addTrackingItem()" style="width:100%;"><i class="fas fa-check"></i>
+                        <button id="track-add-btn" class="btn" onclick="addTrackingItem()" style="width:100%;"><i
+                                class="fas fa-check"></i>
                             Çalışmayı Başlat</button>
                     </div>
                 </div>
 
                 <div class="right-panel">
                     <div style="padding: 20px;">
-                        <h4 style="margin:0;"><i class="fas fa-bolt" style="color:var(--accent);"></i> Aktif Ödevler</h4>
+                        <h4 style="margin:0;"><i class="fas fa-bolt" style="color:var(--accent);"></i> Aktif Ödevler
+                        </h4>
                     </div>
                     <div id="tracking-list-active"
                         style="padding: 0 20px 20px 20px; display: flex; flex-direction: column; gap: 15px;"></div>
 
                     <!-- Eski Ödevler (Pasif) Bölümü -->
                     <div style="padding: 0 20px 10px 20px;">
-                        <button onclick="togglePasifOdevler()" style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; padding:10px 0; width:100%; border-top: 1px solid var(--border);">
+                        <button onclick="togglePasifOdevler()"
+                            style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; padding:10px 0; width:100%; border-top: 1px solid var(--border);">
                             <i class="fas fa-archive"></i> Eski Ödevler (Pasif)
-                            <i id="pasif-arrow" class="fas fa-chevron-down" style="margin-left:auto; transition:transform 0.3s;"></i>
+                            <i id="pasif-arrow" class="fas fa-chevron-down"
+                                style="margin-left:auto; transition:transform 0.3s;"></i>
                         </button>
                     </div>
-                    <div id="tracking-list-passive" style="padding: 0 20px 20px 20px; display: none; flex-direction: column; gap: 15px;"></div>
+                    <div id="tracking-list-passive"
+                        style="padding: 0 20px 20px 20px; display: none; flex-direction: column; gap: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -3473,28 +3854,43 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <div id="tab10" class="tab-content">
         <h2>🧭 11. Sistem Kullanım Kılavuzu</h2>
         <p style="font-size:15px; color:var(--text-main); margin-bottom:25px;">
-            Bu kılavuz, <strong>Yabgu Eğitim Sistemi (Proje Tabanlı Ders İşleme)</strong> platformunun tüm özelliklerini en verimli şekilde kullanabilmeniz için hazırlanmıştır. 
-            Sistemin temel felsefesi; geleneksel sınıf ortamını oyunlaştırma (XP), veri analitiği ve Yapay Zeka (AI) ile birleştirerek öğrencileri pasif dinleyici olmaktan çıkarıp aktif problem çözücülere dönüştürmektir. <strong>Plan, Devamlılık, Ölçme ve Geri Dönüt</strong> döngüsü üzerine kurulan bu yapıda, aşağıdaki başlıklardan sistemin tüm modüllerinde neyi, nasıl yapacağınızı adım adım öğrenebilirsiniz.
+            Bu kılavuz, <strong>Yabgu Eğitim Sistemi (Proje Tabanlı Ders İşleme)</strong> platformunun tüm özelliklerini
+            en verimli şekilde kullanabilmeniz için hazırlanmıştır.
+            Sistemin temel felsefesi; geleneksel sınıf ortamını oyunlaştırma (XP), veri analitiği ve Yapay Zeka (AI) ile
+            birleştirerek öğrencileri pasif dinleyici olmaktan çıkarıp aktif problem çözücülere dönüştürmektir.
+            <strong>Plan, Devamlılık, Ölçme ve Geri Dönüt</strong> döngüsü üzerine kurulan bu yapıda, aşağıdaki
+            başlıklardan sistemin tüm modüllerinde neyi, nasıl yapacağınızı adım adım öğrenebilirsiniz.
         </p>
 
         <div class="grid-layout" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <!-- 1 -->
             <div class="form-box" style="border-left: 4px solid var(--primary);">
-                <h3 style="color: var(--primary); margin-top:0;"><i class="fas fa-users"></i> 1. Öğrenci Bilgi Sistemi (Veri Tabanı ve XP)</h3>
+                <h3 style="color: var(--primary); margin-top:0;"><i class="fas fa-users"></i> 1. Öğrenci Bilgi Sistemi
+                    (Veri Tabanı ve XP)</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Öğrenci Eklemek İçin:</strong> Sınıf seçip "Öğrenci Ekle" formunu kullanarak manuel kayıt yapabilir veya sağ üstteki <strong>"Excel'den Yükle"</strong> butonuna basarak e-Okul listelerinizi toplu olarak aktarabilirsiniz.</li>
-                    <li><strong>Düzenleme/Silme:</strong> Listede öğrencinin yanındaki kalem ikonuna basarak bilgilerini/ilgi alanını (Bağlam) güncelleyebilir veya çöp kutusu ikonuyla silebilirsiniz.</li>
-                    <li><strong>Arama (Süzgeç):</strong> Arama çubuğuna isim veya numara yazarak istediğiniz öğrenciyi anında bulabilirsiniz.</li>
+                    <li><strong>Öğrenci Eklemek İçin:</strong> Sınıf seçip "Öğrenci Ekle" formunu kullanarak manuel
+                        kayıt yapabilir veya sağ üstteki <strong>"Excel'den Yükle"</strong> butonuna basarak e-Okul
+                        listelerinizi toplu olarak aktarabilirsiniz.</li>
+                    <li><strong>Düzenleme/Silme:</strong> Listede öğrencinin yanındaki kalem ikonuna basarak
+                        bilgilerini/ilgi alanını (Bağlam) güncelleyebilir veya çöp kutusu ikonuyla silebilirsiniz.</li>
+                    <li><strong>Arama (Süzgeç):</strong> Arama çubuğuna isim veya numara yazarak istediğiniz öğrenciyi
+                        anında bulabilirsiniz.</li>
                 </ul>
             </div>
 
             <!-- 2 -->
             <div class="form-box" style="border-left: 4px solid var(--secondary);">
-                <h3 style="color: var(--secondary); margin-top:0;"><i class="fas fa-layer-group"></i> 2. Sınıf Yönetimi ve Kümeleme</h3>
+                <h3 style="color: var(--secondary); margin-top:0;"><i class="fas fa-layer-group"></i> 2. Sınıf Yönetimi
+                    ve Kümeleme</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Grup Oluşturmak İçin:</strong> Üstteki menüden bir sınıf seçin. Sınıfı hızlıca dağıtmak için <strong>"Rastgele Otomatik Grupla"</strong> butonunu kullanın. Kendi gruplarınızı kurmak istiyorsanız <strong>"Manuel Küme Ekle"</strong> diyerek öğrencileri tek tek seçin.</li>
-                    <li><strong>Rol Atama:</strong> Kümeye eklenen öğrencilerin yanında yer alan listeden <em>Proje Koordinatörü, Veri Analisti, Ar-Ge Sorumlusu veya Halkla İlişkiler</em> gibi onlara uygun mesleki rolü atayın.</li>
-                    <li><strong>Puanlama:</strong> Grubun ders/proje performansına göre öğrencilerin yanındaki (+/-) butonlarını veya "Grubu Değerlendir" seçeneğini kullanarak XP puanı verin.</li>
+                    <li><strong>Grup Oluşturmak İçin:</strong> Üstteki menüden bir sınıf seçin. Sınıfı hızlıca dağıtmak
+                        için <strong>"Rastgele Otomatik Grupla"</strong> butonunu kullanın. Kendi gruplarınızı kurmak
+                        istiyorsanız <strong>"Manuel Küme Ekle"</strong> diyerek öğrencileri tek tek seçin.</li>
+                    <li><strong>Rol Atama:</strong> Kümeye eklenen öğrencilerin yanında yer alan listeden <em>Proje
+                            Koordinatörü, Veri Analisti, Ar-Ge Sorumlusu veya Halkla İlişkiler</em> gibi onlara uygun
+                        mesleki rolü atayın.</li>
+                    <li><strong>Puanlama:</strong> Grubun ders/proje performansına göre öğrencilerin yanındaki (+/-)
+                        butonlarını veya "Grubu Değerlendir" seçeneğini kullanarak XP puanı verin.</li>
                 </ul>
             </div>
 
@@ -3502,81 +3898,121 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             <div class="form-box" style="border-left: 4px solid #ef4444;">
                 <h3 style="color: #ef4444; margin-top:0;"><i class="fas fa-fire"></i> 3. Buz Kırma Etkinlikleri</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Etkinlik Seçimi:</strong> Yeni bir sınıfa girerken veya derste enerjinin düştüğünü hissettiğinizde bu sekmedeki listeden uygun bir oyunu seçin.</li>
-                    <li><strong>Nasıl Uygulanır:</strong> Seçtiğiniz etkinliğin üzerine tıklayarak kurallarını okuyun ve sınıfa yönergeleri vererek anında uygulayın. (Ekstra materyal gerektirmez).</li>
+                    <li><strong>Etkinlik Seçimi:</strong> Yeni bir sınıfa girerken veya derste enerjinin düştüğünü
+                        hissettiğinizde bu sekmedeki listeden uygun bir oyunu seçin.</li>
+                    <li><strong>Nasıl Uygulanır:</strong> Seçtiğiniz etkinliğin üzerine tıklayarak kurallarını okuyun ve
+                        sınıfa yönergeleri vererek anında uygulayın. (Ekstra materyal gerektirmez).</li>
                 </ul>
             </div>
 
             <!-- 4 -->
             <div class="form-box" style="border-left: 4px solid #10b981;">
-                <h3 style="color: #10b981; margin-top:0;"><i class="fas fa-chalkboard-teacher"></i> 4. Ders İşleme & Strateji (Yapay Zeka Destekli)</h3>
+                <h3 style="color: #10b981; margin-top:0;"><i class="fas fa-chalkboard-teacher"></i> 4. Ders İşleme &
+                    Strateji (Yapay Zeka Destekli)</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Konu Girme:</strong> Metin kutularına o günkü dersinizin adını ve hedefini (Örn: Hücrenin Yapısı) yazın.</li>
+                    <li><strong>Konu Girme:</strong> Metin kutularına o günkü dersinizin adını ve hedefini (Örn:
+                        Hücrenin Yapısı) yazın.</li>
                     <li><strong>Strateji Üretimi:</strong> <strong>"Strateji Geliştir"</strong> butonuna tıklayın.</li>
-                    <li><strong>Sonuç:</strong> Sistem (Yapay Zeka) size yalnızca <strong>5E Modeli</strong>'ne (Girme, Keşfetme vb.) değil; aynı zamanda <strong>Sosyal İnşacılık</strong>, <strong>Bütüncül Keşif</strong> ve <strong>Bağlam Temelli Öğrenme (REACT Modeli)</strong> yaklaşımlarına da uygun, öğrencilerin ilgi alanlarına göre hikayeleştirilmiş adım adım bir ders işleyiş planı sunacaktır. Bu planı derste sırasıyla uygulayın.</li>
+                    <li><strong>Sonuç:</strong> Sistem (Yapay Zeka) size yalnızca <strong>5E Modeli</strong>'ne (Girme,
+                        Keşfetme vb.) değil; aynı zamanda <strong>Sosyal İnşacılık</strong>, <strong>Bütüncül
+                            Keşif</strong> ve <strong>Bağlam Temelli Öğrenme (REACT Modeli)</strong> yaklaşımlarına da
+                        uygun, öğrencilerin ilgi alanlarına göre hikayeleştirilmiş adım adım bir ders işleyiş planı
+                        sunacaktır. Bu planı derste sırasıyla uygulayın.</li>
                 </ul>
             </div>
 
             <!-- 5 -->
             <div class="form-box" style="border-left: 4px solid #f59e0b;">
-                <h3 style="color: #f59e0b; margin-top:0;"><i class="fas fa-calendar-alt"></i> 5. Öğretmen Ders Programı</h3>
+                <h3 style="color: #f59e0b; margin-top:0;"><i class="fas fa-calendar-alt"></i> 5. Öğretmen Ders Programı
+                </h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Programı Doldurma:</strong> Tablodaki boş kutucukların üzerine tıklayarak o saatte derse gireceğiniz sınıfın adını doğrudan yazın.</li>
-                    <li><strong>Görselleştirme:</strong> Siz yazdıkça ders kutucukları otomatik olarak renklenecek ve programınız takibi kolay görsel bir tabloya dönüşecektir.</li>
-                    <li><strong>Kaydetme:</strong> İşleminiz bittiğinde alt kısımdaki <strong>"Değişiklikleri Kaydet"</strong> butonuna basmayı unutmayın.</li>
+                    <li><strong>Programı Doldurma:</strong> Tablodaki boş kutucukların üzerine tıklayarak o saatte derse
+                        gireceğiniz sınıfın adını doğrudan yazın.</li>
+                    <li><strong>Görselleştirme:</strong> Siz yazdıkça ders kutucukları otomatik olarak renklenecek ve
+                        programınız takibi kolay görsel bir tabloya dönüşecektir.</li>
+                    <li><strong>Kaydetme:</strong> İşleminiz bittiğinde alt kısımdaki <strong>"Değişiklikleri
+                            Kaydet"</strong> butonuna basmayı unutmayın.</li>
                 </ul>
             </div>
 
             <!-- 6 -->
             <div class="form-box" style="border-left: 4px solid #6366f1;">
-                <h3 style="color: #6366f1; margin-top:0;"><i class="fas fa-tasks"></i> 6. Ödev & Proje Takip Sistemi</h3>
+                <h3 style="color: #6366f1; margin-top:0;"><i class="fas fa-tasks"></i> 6. Ödev & Proje Takip Sistemi
+                </h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Yeni Görev Atama:</strong> "Görev Türü", "Konu", "XP Puanı" ve "Son Tarih" kısımlarını doldurup <strong>"Çalışmayı Başlat"</strong> butonuna basarak bir takip kartı oluşturun.</li>
-                    <li><strong>Değerlendirme (Puan Verme):</strong> Tarih geldiğinde görevin üzerindeki <strong>"Değerlendir"</strong> butonuna basın. Açılan sınıftan yapan öğrencileri işaretleyip XP'lerini güncelleyin.</li>
-                    <li><strong>Eski Ödevler:</strong> Son teslim tarihi geçmiş olan ödevler kalabalık yapmamak için otomatik olarak <em>"Eski Ödevler (Pasif)"</em> arşivine taşınır. Dilerseniz tarihini düzenleyip tekrar aktif edebilirsiniz.</li>
-                    <li><strong>Raporlama:</strong> Kartın altındaki ikonlara (WA/BiP) tıklayarak ödevi yapanlar/yapmayanlar listesini tek tıkla veli gruplarına gönderin.</li>
+                    <li><strong>Yeni Görev Atama:</strong> "Görev Türü", "Konu", "XP Puanı" ve "Son Tarih" kısımlarını
+                        doldurup <strong>"Çalışmayı Başlat"</strong> butonuna basarak bir takip kartı oluşturun.</li>
+                    <li><strong>Değerlendirme (Puan Verme):</strong> Tarih geldiğinde görevin üzerindeki
+                        <strong>"Değerlendir"</strong> butonuna basın. Açılan sınıftan yapan öğrencileri işaretleyip
+                        XP'lerini güncelleyin.</li>
+                    <li><strong>Eski Ödevler:</strong> Son teslim tarihi geçmiş olan ödevler kalabalık yapmamak için
+                        otomatik olarak <em>"Eski Ödevler (Pasif)"</em> arşivine taşınır. Dilerseniz tarihini düzenleyip
+                        tekrar aktif edebilirsiniz.</li>
+                    <li><strong>Raporlama:</strong> Kartın altındaki ikonlara (WA/BiP) tıklayarak ödevi
+                        yapanlar/yapmayanlar listesini tek tıkla veli gruplarına gönderin.</li>
                 </ul>
             </div>
 
             <!-- 7 -->
             <div class="form-box" style="border-left: 4px solid #db2777;">
-                <h3 style="color: #db2777; margin-top:0;"><i class="fas fa-chart-line"></i> 7. Deneme Sınavları & Detaylı Grafik Analiz</h3>
+                <h3 style="color: #db2777; margin-top:0;"><i class="fas fa-chart-line"></i> 7. Deneme Sınavları &
+                    Detaylı Grafik Analiz</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Veri Yükleme:</strong> Optik okuyucudan aldığınız sınav sonuçlarını içeren Excel dosyasını seçin.</li>
-                    <li><strong>Sütun Eşleştirme:</strong> Sistem sütunları otomatik tanımaya çalışır. Siz sadece "Adı", "Sınıfı" ve "Netler" gibi alanların doğruluğunu onaylayıp "İçe Aktar" deyin.</li>
-                    <li><strong>Analiz Görüntüleme:</strong> Açılan analiz menüsünden kıyaslamak istediğiniz sınıfları ve dersleri seçin. Sistem size şubeler arası başarı durumunu çubuk grafiklerle ve renkli tablolarla anında gösterecektir.</li>
+                    <li><strong>Veri Yükleme:</strong> Optik okuyucudan aldığınız sınav sonuçlarını içeren Excel
+                        dosyasını seçin.</li>
+                    <li><strong>Sütun Eşleştirme:</strong> Sistem sütunları otomatik tanımaya çalışır. Siz sadece "Adı",
+                        "Sınıfı" ve "Netler" gibi alanların doğruluğunu onaylayıp "İçe Aktar" deyin.</li>
+                    <li><strong>Analiz Görüntüleme:</strong> Açılan analiz menüsünden kıyaslamak istediğiniz sınıfları
+                        ve dersleri seçin. Sistem size şubeler arası başarı durumunu çubuk grafiklerle ve renkli
+                        tablolarla anında gösterecektir.</li>
                 </ul>
             </div>
 
             <!-- 8 -->
             <div class="form-box" style="border-left: 4px solid #8b5cf6;">
-                <h3 style="color: #8b5cf6; margin-top:0;"><i class="fas fa-clipboard-check"></i> 8. Öz Değerlendirme & Geri Bildirim Formları</h3>
+                <h3 style="color: #8b5cf6; margin-top:0;"><i class="fas fa-clipboard-check"></i> 8. Öz Değerlendirme &
+                    Geri Bildirim Formları</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Form Paylaşımı:</strong> Sayfadaki "Dersten Önce" veya "Dersten Sonra" butonlarına tıklayarak mobil uyumlu özel anket linkinizi veya QR kodunuzu oluşturun. Bunu sınıftaki öğrencilerle (veya WhatsApp'tan) paylaşın.</li>
-                    <li><strong>Yanıtları Görme:</strong> Öğrenciler telefonlarından formu doldurduğu an, sayfanın altındaki "Gelen Yanıtlar" tablosuna cevaplar anlık olarak düşer. Yüksek katılım gösterenleri ödüllendirebilirsiniz.</li>
+                    <li><strong>Form Paylaşımı:</strong> Sayfadaki "Dersten Önce" veya "Dersten Sonra" butonlarına
+                        tıklayarak mobil uyumlu özel anket linkinizi veya QR kodunuzu oluşturun. Bunu sınıftaki
+                        öğrencilerle (veya WhatsApp'tan) paylaşın.</li>
+                    <li><strong>Yanıtları Görme:</strong> Öğrenciler telefonlarından formu doldurduğu an, sayfanın
+                        altındaki "Gelen Yanıtlar" tablosuna cevaplar anlık olarak düşer. Yüksek katılım gösterenleri
+                        ödüllendirebilirsiniz.</li>
                 </ul>
             </div>
 
             <!-- 9 -->
             <div class="form-box" style="border-left: 4px solid #14b8a6;">
-                <h3 style="color: #14b8a6; margin-top:0;"><i class="fas fa-rocket"></i> 9. İleri Çalışma Grupları Tespiti</h3>
+                <h3 style="color: #14b8a6; margin-top:0;"><i class="fas fa-rocket"></i> 9. İleri Çalışma Grupları
+                    Tespiti</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Öğrenci Tespiti:</strong> Sistem; sınıftaki en yüksek XP'ye ve anket katılımına sahip elit öğrencileri sizin için otomatik hesaplar ve ekranda listeler.</li>
-                    <li><strong>Elit Grup Kurulumu:</strong> Listelenen bu yüksek potansiyelli öğrencileri bir araya getirerek 4'er kişilik (🚀) İleri Düzey Çalışma Grupları oluşturun.</li>
-                    <li><strong>Aktarım:</strong> Kurduğunuz ekibi <strong>"Proje Gruplarına Aktar"</strong> butonuna basarak doğrudan üst düzey projelerin verildiği Modül 10'a taşıyın.</li>
+                    <li><strong>Öğrenci Tespiti:</strong> Sistem; sınıftaki en yüksek XP'ye ve anket katılımına sahip
+                        elit öğrencileri sizin için otomatik hesaplar ve ekranda listeler.</li>
+                    <li><strong>Elit Grup Kurulumu:</strong> Listelenen bu yüksek potansiyelli öğrencileri bir araya
+                        getirerek 4'er kişilik (🚀) İleri Düzey Çalışma Grupları oluşturun.</li>
+                    <li><strong>Aktarım:</strong> Kurduğunuz ekibi <strong>"Proje Gruplarına Aktar"</strong> butonuna
+                        basarak doğrudan üst düzey projelerin verildiği Modül 10'a taşıyın.</li>
                 </ul>
             </div>
 
             <!-- 10 -->
             <div class="form-box" style="border-left: 4px solid #059669;">
-                <h3 style="color: #059669; margin-top:0;"><i class="fas fa-medal"></i> 10. Proje Grupları ve AI Kriz Değerlendirmesi</h3>
+                <h3 style="color: #059669; margin-top:0;"><i class="fas fa-medal"></i> 10. Proje Grupları ve AI Kriz
+                    Değerlendirmesi</h3>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
-                    <li><strong>Kriz Kartları:</strong> İleri gruplara online Proje Formu'nu gönderin. Sistemi doldururken %20 ihtimalle karşılarına dijital bir "Kriz Kartı" (Örn: Bütçe bitti) çıkacak ve buna bir çözüm üretmeleri istenecektir.</li>
-                    <li><strong>Yapay Zeka Değerlendirmesi:</strong> Gelen proje yanıtlarını ekranda gördüğünüzde <strong>"AI Promptu Üret"</strong> butonuna basın ve kopyalanan metni Gemini yapay zekasına okutun.</li>
-                    <li><strong>Karne Oluşturma:</strong> Gemini'nin verdiği 1-100 arası puanı ve önerdiği "Sürdürülebilir Kalkınma Ödülünü" (Örn: Çevre Dostu) sisteme girip <strong>"Karne Üret"</strong> diyerek veliye gönderilebilecek şık bir PDF/Görsel çıktı alın.</li>
+                    <li><strong>Kriz Kartları:</strong> İleri gruplara online Proje Formu'nu gönderin. Sistemi
+                        doldururken %20 ihtimalle karşılarına dijital bir "Kriz Kartı" (Örn: Bütçe bitti) çıkacak ve
+                        buna bir çözüm üretmeleri istenecektir.</li>
+                    <li><strong>Yapay Zeka Değerlendirmesi:</strong> Gelen proje yanıtlarını ekranda gördüğünüzde
+                        <strong>"AI Promptu Üret"</strong> butonuna basın ve kopyalanan metni Gemini yapay zekasına
+                        okutun.</li>
+                    <li><strong>Karne Oluşturma:</strong> Gemini'nin verdiği 1-100 arası puanı ve önerdiği
+                        "Sürdürülebilir Kalkınma Ödülünü" (Örn: Çevre Dostu) sisteme girip <strong>"Karne Üret"</strong>
+                        diyerek veliye gönderilebilecek şık bir PDF/Görsel çıktı alın.</li>
                 </ul>
             </div>
-            
+
 
 
         </div>
@@ -3605,6 +4041,107 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
         </div>
     </div>
+
+    <!-- Soru Çözüm Takip Sekmesi (4 Altın Kural) -->
+    <div id="tab11" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h2 style="margin: 0;">📊 12. Soru Çözüm Takip Sistemi</h2>
+            <button class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-weight: 600;" onclick="openSoruTakipKagitFormu()">
+                <i class="fas fa-print"></i> A4 Soru Takip Formu Yazdır (OCR)
+            </button>
+        </div>
+        <div id="soru-takip-container" class="grid-layout">
+            <!-- SOL PANEL: Sınıf & Öğrenci Seçim + Link + AI -->
+            <div class="left-panel">
+                <div class="form-box">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-weight:700; font-size:12px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-school" style="color:var(--secondary);"></i> SINIF SEÇİN:
+                        </label>
+                        <select id="soru-takip-class-select" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border);">
+                            <option value="">Tüm Sınıflar</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700; font-size:12px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-user-graduate" style="color:var(--accent);"></i> ÖĞRENCİ SEÇİN:
+                        </label>
+                        <select id="soru-takip-student-select" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border);">
+                            <option value="">-- Tüm Sınıf (Toplu Form) --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>VELİ VERİ GİRİŞ LİNKİ: (Kural 1)</label>
+                        <input type="text" id="soru-takip-link-output" readonly placeholder="Öğrenci seçince link üretilir..." style="margin-bottom: 10px;">
+                        <button class="btn btn-purple" id="soru-takip-whatsapp-btn" style="width: 100%;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp'tan Gönder
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kural 3: Radar Grafik -->
+                <div class="form-box">
+                    <p style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin:0 0 12px 0;">
+                        📡 Ders Bazlı Analiz (Radar)
+                    </p>
+                    <canvas id="soru-takip-radar-chart" style="max-height:250px;"></canvas>
+                </div>
+
+                <!-- Kural 3: Çizgi Grafik -->
+                <div class="form-box">
+                    <p style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin:0 0 12px 0;">
+                        📈 Gelişim Trendi (Günlük Doğru)
+                    </p>
+                    <canvas id="soru-takip-trend-chart" style="max-height:220px;"></canvas>
+                </div>
+
+                <!-- Kural 4: AI Koçluğu -->
+                <div class="form-box">
+                    <p style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin:0 0 12px 0;">
+                        🤖 Yapay Zeka Koçu 
+                    </p>
+                    <button class="btn btn-purple" id="soru-takip-ai-btn" style="width:100%; font-size:13px; margin-bottom: 8px;">
+                        ✨ Öğretmen Koçluk Raporu (AI)
+                    </button>
+                    <button class="btn btn-purple" id="soru-takip-veli-ai-btn" style="width:100%; font-size:13px; background-color: var(--orange);">
+                        📱 Veli Gelişim Raporu Üret (AI)
+                    </button>
+                    <div id="soru-takip-ai-result" style="
+                        display:none; margin-top:14px; padding:12px 14px;
+                        background:rgba(79,70,229,0.07); border:1px solid rgba(79,70,229,0.2);
+                        border-radius:10px; font-size:13px; line-height:1.6; color:var(--text-main);">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAĞ PANEL: Veri Tablosu -->
+            <div class="right-panel">
+                <div class="table-container">
+                    <table class="custom-table" id="soru-takip-table">
+                        <thead>
+                            <tr>
+                                <th>TARİH</th>
+                                <th>DERS</th>
+                                <th>KAYNAK / KONU</th>
+                                <th>SORU TİPİ</th>
+                                <th>✅ DOĞRU</th>
+                                <th>❌ YANLIŞ</th>
+                                <th>⬜ BOŞ</th>
+                                <th>🙋 Öğr. Soru</th>
+                                <th>MOD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="soru-takip-table-body">
+                            <tr>
+                                <td colspan="9">Lütfen sol taraftan bir öğrenci seçiniz.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Admin Panel Tab -->
     <div id="tab-admin" class="tab-content">
@@ -3643,6 +4180,17 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/ui-exams.js?v=4"></script>
     <script src="js/ui-proje-gruplari.js?v=4"></script>
     <script src="js/auth.js?v=4"></script>
+    <script src="js/ui-soru-takip.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Soru Takip modülünü başlat
+            setTimeout(() => {
+                if (window.SoruTakipUI) {
+                    window.SoruTakipUI.init();
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 
 </html>

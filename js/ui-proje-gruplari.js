@@ -48,19 +48,9 @@
         }
 
         function pgSave() {
-            try {
-                const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-                raw.projeGruplari = projeGruplariData;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(raw));
-
-                // Firebase Realtime DB'ye kaydet (Hatalı olan Firestore metodunu kaldırdık)
-                if (window.db) {
-                    window.db.ref(window.userDBPath).update({
-                        projeGruplari: projeGruplariData,
-                        lastUpdate: new Date().toISOString()
-                    }).catch(err => console.error("Realtime DB pgSave error:", err));
-                }
-            } catch (e) { }
+            if (typeof saveData === 'function') {
+                saveData(); // Artık db-services.js atomik olarak Firebase'i yönetiyor!
+            }
         }
 
         // ── Sınıf filtre dropdownlarını doldur ──
@@ -598,7 +588,11 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
             g.mesajlar.slice(-10).forEach(m => {
                 text += `${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'}: ${m.metin}\n`;
             });
-            window.open('https://web.bip.com/share?text=' + encodeURIComponent(text), '_blank');
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(text, `${g.title} Mesajları`);
+            } else {
+                window.open('https://web.bip.com/', '_blank');
+            }
         }
 
         // ── İçerik & Ödev ──

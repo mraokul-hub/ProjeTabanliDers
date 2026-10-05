@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soru Çözüm Takip Formu (A4 - OCR & Optik Uyumlu)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+        :root {
+            --ocr-black: #000000;
+            --ocr-line: #111827;
+            --ocr-guide: #9ca3af;
+            --ocr-bg-light: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+            color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* EKRAN KONTROL PANELİ (Yazdırmada Gizlenir) */
+        .no-print-toolbar {
+            width: 210mm;
+            background: #1e293b;
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .toolbar-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-info h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .toolbar-info p {
+            margin: 0;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .toolbar-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .toolbar-btn-secondary:hover {
+            background: #475569;
+        }
+
+        .toolbar-select {
+            background: #0f172a;
+            color: #fff;
+            border: 1px solid #475569;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-weight: 500;
+            outline: none;
+            max-width: 200px;
+        }
+
+        .toolbar-status {
+            width: 210mm;
+            background: #0284c7;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* ── ÇOKLU SAYFA TAŞIYICISI ── */
+        #pages-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* ── A4 SAYFA TASARIMI (210mm x 297mm) ── */
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            background: #ffffff;
+            margin: 0 auto 25px auto;
+            padding: 6.5mm;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ── OPTİK REGİSTRASYON & HİZALAMA İŞARETLERİ (FIDUCIAL MARKERS) ── */
+        .fiducial-target {
+            position: absolute;
+            width: 11mm;
+            height: 11mm;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .fiducial-target::before {
+            content: '';
+            width: 5mm;
+            height: 5mm;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .fiducial-target::after {
+            content: '';
+            width: 2.2mm;
+            height: 2.2mm;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .fiducial-tl { top: 4mm; left: 4mm; }
+        .fiducial-tr { top: 4mm; right: 4mm; }
+        .fiducial-bl { bottom: 4mm; left: 4mm; }
+        .fiducial-br { bottom: 4mm; right: 4mm; }
+
+        /* Ara Kalibrasyon Çentikleri (Timing Ticks) */
+        .tick-h {
+            position: absolute;
+            width: 4mm;
+            height: 2.2mm;
+            background: #000;
+            z-index: 40;
+        }
+        .tick-v {
+            position: absolute;
+            width: 2.2mm;
+            height: 4mm;
+            background: #000;
+            z-index: 40;
+        }
+
+        .tick-top-1 { top: 4mm; left: 33%; }
+        .tick-top-2 { top: 4mm; left: 66%; }
+        .tick-bottom-1 { bottom: 4mm; left: 33%; }
+        .tick-bottom-2 { bottom: 4mm; left: 66%; }
+        .tick-left-1 { left: 4mm; top: 35%; }
+        .tick-left-2 { left: 4mm; top: 68%; }
+        .tick-right-1 { right: 4mm; top: 35%; }
+        .tick-right-2 { right: 4mm; top: 68%; }
+
+        /* ── BAŞLIK & METADATA BÖLÜMÜ ── */
+        .header-section {
+            border: 2px solid #000;
+            padding: 5px 8px;
+            margin-bottom: 3.5mm;
+            background: #fff;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .header-titles h1 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .header-titles h2 {
+            margin: 1px 0 0 0;
+            font-size: 10px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .machine-code-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .doc-barcode {
+            display: flex;
+            align-items: center;
+            height: 16px;
+            gap: 1.5px;
+            background: #fff;
+            padding: 2px 3px;
+            border: 1px solid #000;
+        }
+
+        .bar-b { background: #000; height: 12px; }
+        .w1 { width: 1.5px; }
+        .w2 { width: 3px; }
+        .w3 { width: 4.5px; }
+        .bar-w { background: #fff; height: 12px; }
+
+        .doc-tag {
+            font-size: 8.5px;
+            font-weight: 700;
+            border: 1.5px solid #000;
+            padding: 1.5px 4px;
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+
+        /* Form Üst Bilgi Kutuları */
+        .header-fields {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1fr 0.9fr;
+            gap: 8px;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .field-lbl {
+            font-weight: 700;
+            font-size: 9.5px;
+            color: #111;
+            white-space: nowrap;
+        }
+
+        .field-comb {
+            display: flex;
+            gap: 2px;
+        }
+
+        .comb-cell {
+            width: 14px;
+            height: 16px;
+            border: 1.2px solid #000;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            background: #fff;
+        }
+
+        .field-line {
+            flex: 1;
+            border-bottom: 1.2px dashed #000;
+            height: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            padding-left: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 16px;
+        }
+
+        /* ── OPTİK SORU ÇÖZÜM TABLOSU ── */
+        .table-wrap {
+            flex: 1;
+            margin-bottom: 3.5mm;
+            border: 2px solid #000;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tracking-table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            font-size: 9.5px;
+            table-layout: fixed;
+        }
+
+        .tracking-table th, 
+        .tracking-table td {
+            border: 1.2px solid #000;
+            padding: 1.5px 2px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .tracking-table th {
+            background: var(--ocr-bg-light);
+            font-weight: 800;
+            text-align: center;
+            font-size: 9px;
+            padding: 3px 2px;
+            letter-spacing: 0.2px;
+            line-height: 1.15;
+        }
+
+        /* Sütun Genişlikleri: Tarih alanı tam sığacak şekilde 68px'e genişletildi */
+        .col-sira { width: 24px; text-align: center !important; font-weight: 700; background: #fafafa; font-size: 9px; }
+        .col-tarih { width: 68px; text-align: center !important; padding: 0 2px !important; }
+        .col-ders { width: 72px; font-weight: 600; font-size: 9px; padding-left: 4px !important; }
+        .col-kaynak { width: auto; font-size: 9px; padding-left: 4px !important; }
+        .col-tip { width: 64px; text-align: center !important; }
+        .col-dyb { width: 38px; text-align: center !important; }
+        .col-os { width: 36px; text-align: center !important; }
+
+        /* 21 Satır Yüksekliği: Tam A4 sayfasına eşit dağıtılır */
+        .tracking-table tbody tr {
+            height: calc((297mm - 124mm) / 21);
+        }
+
+        /* Tarih Kılavuzu: Taşma yapmaz, tek satırda net sığar */
+        .date-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5px;
+            font-weight: 600;
+            color: #6b7280;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+            display: inline-block;
+            line-height: 1;
+        }
+
+        /* 2 Haneli Segmented Rakam Kutucukları */
+        .comb-2 {
+            display: inline-flex;
+            gap: 1.5px;
+            vertical-align: middle;
+            justify-content: center;
+        }
+
+        .comb-2-cell {
+            width: 11px;
+            height: 14px;
+            border: 1px solid #4b5563;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            background: #fff;
+        }
+
+        /* Soru Tipi OMR Balonları (T, YN, K) */
+        .omr-bubbles {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1px;
+            font-size: 7.5px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .bubble-tag {
+            border: 1px solid #6b7280;
+            border-radius: 2px;
+            padding: 0 2px;
+            line-height: 12px;
+            height: 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: #111;
+        }
+
+        /* Dotted Yazı Çizgisi */
+        .line-guide {
+            border-bottom: 1px dashed #cbd5e1;
+            height: 12px;
+            display: block;
+            width: 100%;
+        }
+
+        /* ── SAYFA ALTI / OCR KALİBRASYON ŞERİDİ ── */
+        .footer-section {
+            border: 1.5px solid #000;
+            background: #fff;
+            padding: 3.5px 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8px;
+        }
+
+        .footer-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .footer-rules {
+            font-weight: 700;
+            color: #000;
+        }
+
+        .footer-sub {
+            color: #4b5563;
+            font-size: 7.5px;
+        }
+
+        /* Gri Skala ve Eşikleme Kalibratörü */
+        .calibration-strip {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            border: 1px solid #000;
+            padding: 1px;
+            background: #fff;
+        }
+
+        .cal-box {
+            width: 7.5px;
+            height: 9.5px;
+            border: 0.5px solid #d1d5db;
+        }
+
+        .cal-0 { background: #ffffff; }
+        .cal-20 { background: #cccccc; }
+        .cal-40 { background: #999999; }
+        .cal-60 { background: #666666; }
+        .cal-80 { background: #333333; }
+        .cal-100 { background: #000000; }
+
+        .system-seal {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7.5px;
+            font-weight: 700;
+            border: 1px solid #000;
+            padding: 1px 3.5px;
+            background: #fafafa;
+            white-space: nowrap;
+        }
+
+        /* ── YAZDIRMA (PRINT) ÖZEL AYARLARI ── */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body {
+                background: #fff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print, .no-print-toolbar, .toolbar-status {
+                display: none !important;
+            }
+            #pages-container {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+            .a4-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 6.5mm !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .a4-page:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- EKRAN EYLEM ÇUBUĞU (Yazıcıda Çıkmaz) -->
+    <div class="no-print-toolbar no-print">
+        <div class="toolbar-info">
+            <i class="fas fa-tasks" style="font-size:24px; color:#38bdf8;"></i>
+            <div>
+                <h3>Soru Çözüm Takip Formu (A4)</h3>
+                <p>21 Satırlı Optik & El Yazısı Formu &middot; Sınıf Bazlı Toplu Baskı</p>
+            </div>
+        </div>
+
+        <div class="toolbar-controls">
+            <!-- Sınıf Seçimi -->
+            <select id="sinif-secici" class="toolbar-select" onchange="onSinifChange(this.value)">
+                <option value="">Tüm Sınıflar</option>
+            </select>
+
+            <!-- Öğrenci Seçimi -->
+            <select id="ogrenci-secici" class="toolbar-select" onchange="onOgrenciChange(this.value)">
+                <option value="__ALL__">👥 Tüm Sınıf (Toplu Formlar)</option>
+                <option value="">📄 Boş Şablon (Öğrencisiz)</option>
+            </select>
+
+            <!-- Yazdır Butonu -->
+            <button class="toolbar-btn" id="btn-print-main" onclick="window.print()">
+                <i class="fas fa-print"></i> Formları Yazdır (A4)
+            </button>
+
+            <!-- Boş Şablon Butonu -->
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="renderBlankOnly()" title="Tek boş şablon gösterir">
+                <i class="fas fa-eraser"></i> Boş Şablon
+            </button>
+
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="window.close()" title="Sekmeyi Kapat">
+                <i class="fas fa-times"></i> Kapat
+            </button>
+        </div>
+    </div>
+
+    <!-- EKRAN BİLGİLENDİRME ŞERİDİ (Yazıcıda Çıkmaz) -->
+    <div id="print-status-banner" class="toolbar-status no-print">
+        <span id="banner-text"><i class="fas fa-info-circle"></i> Hazırlanıyor...</span>
+        <span style="font-size:11px; opacity:0.9;">Yazdırmak için üstteki butona veya Ctrl + P'ye basabilirsiniz.</span>
+    </div>
+
+    <!-- ── DİNAMİK A4 SAYFA ALANI ── -->
+    <div id="pages-container">
+        <!-- JS ile 1 veya Tüm Sınıf İçin Çoklu A4 Sayfası Basılacak -->
+    </div>
+
+    <!-- ── FORM OLUŞTURMA VE VERİ ENTEGRASYON SCRIPTİ ── -->
+    <script>
+        const STORAGE_KEY = 'proje_tabanli_ders_data';
+        let allStudents = [];
+        let selectedClass = '';
+        let selectedStudentNo = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudentData();
+            initURLAndSession();
+            populateClassDropdown();
+            populateStudentDropdown();
+            renderPages();
+        });
+
+        // Veritabanı ve Session'dan Öğrenci Verilerini Al
+        function loadStudentData() {
+            // 1. SessionStorage kontrolü (en güncel anlık veri)
+            try {
+                const sessionRaw = sessionStorage.getItem('soru_takip_print_students');
+                if (sessionRaw) {
+                    const parsed = JSON.parse(sessionRaw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        allStudents = parsed;
+                    }
+                }
+            } catch (e) {}
+
+            // 2. LocalStorage yedeği
+            if (!allStudents.length) {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && Array.isArray(parsed.studentData)) {
+                            allStudents = parsed.studentData;
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // URL ve Session Parametrelerini Çözümle
+        function initURLAndSession() {
+            const params = new URLSearchParams(window.location.search);
+            const classParam = params.get('class') || params.get('sinif') || sessionStorage.getItem('soru_takip_print_class') || '';
+            const noParam = params.get('no') || params.get('sid') || sessionStorage.getItem('soru_takip_print_student_no') || '';
+
+            selectedClass = classParam ? decodeURIComponent(classParam) : '';
+            selectedStudentNo = noParam ? decodeURIComponent(noParam) : '';
+
+            // Eğer öğrenci parametresi varsa ve sınıf boşsa, öğrencinin sınıfını bul
+            if (selectedStudentNo && !selectedClass) {
+                const st = allStudents.find(s => String(s.no) === String(selectedStudentNo));
+                if (st && st.sinif) selectedClass = st.sinif;
+            }
+        }
+
+        // Sınıf Açılır Kutusunu Doldur
+        function populateClassDropdown() {
+            const classSelect = document.getElementById('sinif-secici');
+            if (!classSelect) return;
+
+            const classes = Array.from(new Set(allStudents.map(s => s.sinif).filter(Boolean))).sort();
+            classSelect.innerHTML = '<option value="">Tüm Sınıflar</option>';
+            classes.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                classSelect.appendChild(opt);
+            });
+
+            if (selectedClass && classes.includes(selectedClass)) {
+                classSelect.value = selectedClass;
+            } else if (classes.length > 0 && !selectedClass && !selectedStudentNo) {
+                // Varsayılan ilk sınıfı seç
+                selectedClass = classes[0];
+                classSelect.value = selectedClass;
+            }
+        }
+
+        // Öğrenci Açılır Kutusunu Doldur
+        function populateStudentDropdown() {
+            const studentSelect = document.getElementById('ogrenci-secici');
+            if (!studentSelect) return;
+
+            studentSelect.innerHTML = '';
+
+            const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+            let filtered = allStudents;
+            if (selectedClass) {
+                filtered = allStudents.filter(s => s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass));
+            }
+
+            // Toplu form seçeneği
+            const allOpt = document.createElement('option');
+            allOpt.value = '__ALL__';
+            allOpt.textContent = selectedClass 
+                ? `👥 ${selectedClass} Sınıfı (${filtered.length} Öğrenci - Toplu Formlar)`
+                : `👥 Tüm Sınıf (Toplu Formlar - ${filtered.length} Öğrenci)`;
+            studentSelect.appendChild(allOpt);
+
+            // Boş şablon seçeneği
+            const blankOpt = document.createElement('option');
+            blankOpt.value = '';
+            blankOpt.textContent = '📄 Boş Şablon (Öğrencisiz)';
+            studentSelect.appendChild(blankOpt);
+
+            // Tekil öğrenciler
+            filtered.slice().sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0)).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.no;
+                opt.textContent = `${s.no} - ${s.adSoyad}${selectedClass ? '' : ' (' + (s.sinif || '') + ')'}`;
+                studentSelect.appendChild(opt);
+            });
+
+            if (selectedStudentNo) {
+                studentSelect.value = selectedStudentNo;
+            } else {
+                studentSelect.value = '__ALL__';
+            }
+        }
+
+        // Sınıf Değiştiğinde
+        function onSinifChange(cls) {
+            selectedClass = cls;
+            selectedStudentNo = '';
+            populateStudentDropdown();
+            renderPages();
+        }
+
+        // Öğrenci Değiştiğinde
+        function onOgrenciChange(val) {
+            selectedStudentNo = (val === '__ALL__' || val === '') ? val : val;
+            renderPages();
+        }
+
+        // Sadece Boş Şablon Göster
+        function renderBlankOnly() {
+            const studentSelect = document.getElementById('ogrenci-secici');
+            if (studentSelect) studentSelect.value = '';
+            selectedStudentNo = '';
+            renderPages(true);
+        }
+
+        // Sayfaları Render Et
+        function renderPages(forceBlank = false) {
+            const container = document.getElementById('pages-container');
+            const bannerText = document.getElementById('banner-text');
+            const printBtn = document.getElementById('btn-print-main');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            const studentSelect = document.getElementById('ogrenci-secici');
+            const mode = forceBlank ? '' : (studentSelect ? studentSelect.value : selectedStudentNo);
+
+            const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+            let targetStudents = [];
+
+            if (mode === '' || forceBlank) {
+                // Tek boş form
+                targetStudents = [null];
+                if (bannerText) bannerText.innerHTML = '<i class="fas fa-file"></i> 1 Adet Boş Soru Takip Şablonu (El ile doldurulabilir)';
+                if (printBtn) printBtn.innerHTML = '<i class="fas fa-print"></i> Boş Formu Yazdır (1 Sayfa)';
+            } else if (mode === '__ALL__') {
+                // Tüm sınıf için toplu formlar
+                if (selectedClass) {
+                    targetStudents = allStudents.filter(s => s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass));
+                } else {
+                    targetStudents = allStudents;
+                }
+                targetStudents.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
+
+                if (targetStudents.length === 0) {
+                    targetStudents = [null]; // Öğrenci yoksa en azından 1 boş form göster
+                    if (bannerText) bannerText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Bu sınıfta kayıtlı öğrenci bulunamadı (Boş şablon açıldı)';
+                    if (printBtn) printBtn.innerHTML = '<i class="fas fa-print"></i> Formu Yazdır (1 Sayfa)';
+                } else {
+                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-layer-group"></i> <strong>${selectedClass || 'Tüm'} Sınıfı:</strong> ${targetStudents.length} A4 Sayfası Hazır (Her öğrenci için 1 sayfa)`;
+                    if (printBtn) printBtn.innerHTML = `<i class="fas fa-print"></i> Formları Yazdır (${targetStudents.length} Sayfa)`;
+                }
+            } else {
+                // Tek bir öğrenci seçildi
+                const singleStudent = allStudents.find(s => String(s.no) === String(mode));
+                targetStudents = singleStudent ? [singleStudent] : [null];
+
+                if (singleStudent) {
+                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-user-check"></i> <strong>${singleStudent.adSoyad}</strong> (${singleStudent.sinif || ''}) - 1 A4 Sayfası Hazır`;
+                    if (printBtn) printBtn.innerHTML = `<i class="fas fa-print"></i> Formu Yazdır (1 Sayfa)`;
+                }
+            }
+
+            // HTML Üretimi
+            targetStudents.forEach(st => {
+                container.insertAdjacentHTML('beforeend', generateSinglePageHTML(st));
+            });
+        }
+
+        // 21 Satırlık Tablo Gövdesi Üretici
+        function generateTableRowsHTML() {
+            let html = '';
+            for (let i = 1; i <= 21; i++) {
+                html += `
+                    <tr>
+                        <td class="col-sira">${i}</td>
+                        <td class="col-tarih">
+                            <span class="date-box">__.__.202_</span>
+                        </td>
+                        <td class="col-ders">
+                            <span class="line-guide"></span>
+                        </td>
+                        <td class="col-kaynak">
+                            <span class="line-guide"></span>
+                        </td>
+                        <td class="col-tip">
+                            <div class="omr-bubbles">
+                                <span class="bubble-tag" title="Temel">T</span>
+                                <span class="bubble-tag" title="Yeni Nesil">YN</span>
+                                <span class="bubble-tag" title="Karışık">K</span>
+                            </div>
+                        </td>
+                        <td class="col-dyb">
+                            <div class="comb-2">
+                                <span class="comb-2-cell">&nbsp;</span>
+                                <span class="comb-2-cell">&nbsp;</span>
+                            </div>
+                        </td>
+                        <td class="col-dyb">
+                            <div class="comb-2">
+                                <span class="comb-2-cell">&nbsp;</span>
+                                <span class="comb-2-cell">&nbsp;</span>
+                            </div>
+                        </td>
+                        <td class="col-dyb">
+                            <div class="comb-2">
+                                <span class="comb-2-cell">&nbsp;</span>
+                                <span class="comb-2-cell">&nbsp;</span>
+                            </div>
+                        </td>
+                        <td class="col-os">
+                            <div class="comb-2">
+                                <span class="comb-2-cell">&nbsp;</span>
+                                <span class="comb-2-cell">&nbsp;</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            return html;
+        }
+
+        // Tek Bir A4 Sayfasının Eksiksiz HTML'i
+        function generateSinglePageHTML(student) {
+            const isPrefilled = !!student;
+            const nameText = isPrefilled ? (student.adSoyad || '') : '';
+            
+            // Okul No Combs (4 cells)
+            let noCombsHTML = '';
+            if (isPrefilled && student.no) {
+                const noChars = String(student.no).padStart(4, ' ').split('').slice(0, 4);
+                noChars.forEach(c => {
+                    noCombsHTML += `<span class="comb-cell">${(c && c !== ' ') ? c : '&nbsp;'}</span>`;
+                });
+            } else {
+                noCombsHTML = '<span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span>';
+            }
+
+            // Sınıf Combs (4 cells e.g. 8 / A)
+            let sinifCombsHTML = '';
+            if (isPrefilled && student.sinif) {
+                const sinifStr = String(student.sinif).trim();
+                let chars = [];
+                if (sinifStr.includes('/')) {
+                    chars = sinifStr.replace(/\s+/g, '').split('');
+                } else if (sinifStr.includes('_')) {
+                    chars = sinifStr.replace('_', '/').split('');
+                } else {
+                    chars = sinifStr.split('');
+                }
+                chars.forEach(c => {
+                    sinifCombsHTML += `<span class="comb-cell">${c}</span>`;
+                });
+                while (chars.length < 4) {
+                    sinifCombsHTML += '<span class="comb-cell">&nbsp;</span>';
+                    chars.push('');
+                }
+            } else {
+                sinifCombsHTML = '<span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span><span class="comb-cell">/</span><span class="comb-cell">&nbsp;</span>';
+            }
+
+            return `
+            <div class="a4-page">
+                <!-- 4 KÖŞE OPTİK REGİSTRASYON HEDEFLERİ (FIDUCIAL TARGETS) -->
+                <div class="fiducial-target fiducial-tl" title="TL Marker"></div>
+                <div class="fiducial-target fiducial-tr" title="TR Marker"></div>
+                <div class="fiducial-target fiducial-bl" title="BL Marker"></div>
+                <div class="fiducial-target fiducial-br" title="BR Marker"></div>
+
+                <!-- KENAR HİZALAMA ÇENTİKLERİ (AXIS TIMING TICKS) -->
+                <div class="tick-h tick-top-1"></div>
+                <div class="tick-h tick-top-2"></div>
+                <div class="tick-h tick-bottom-1"></div>
+                <div class="tick-h tick-bottom-2"></div>
+                <div class="tick-v tick-left-1"></div>
+                <div class="tick-v tick-left-2"></div>
+                <div class="tick-v tick-right-1"></div>
+                <div class="tick-v tick-right-2"></div>
+
+                <!-- ── FORM ÜST BİLGİ & METADATA ALANI ── -->
+                <div class="header-section">
+                    <div class="header-top">
+                        <div class="header-titles">
+                            <h1>SORU ÇÖZÜM TAKİP FORMU (BİREYSEL GELİŞİM)</h1>
+                            <h2>Proje Tabanlı Ders İşleme Sistemi &middot; Optik Form ve El Yazısı Veri Girişi</h2>
+                        </div>
+                        <div class="machine-code-box">
+                            <div class="doc-barcode" title="OCR Kalibrasyon Kodu">
+                                <div class="bar-b w2"></div><div class="bar-w w1"></div>
+                                <div class="bar-b w1"></div><div class="bar-w w1"></div>
+                                <div class="bar-b w3"></div><div class="bar-w w2"></div>
+                                <div class="bar-b w2"></div><div class="bar-w w1"></div>
+                                <div class="bar-b w1"></div><div class="bar-w w2"></div>
+                                <div class="bar-b w3"></div><div class="bar-w w1"></div>
+                                <div class="bar-b w2"></div>
+                            </div>
+                            <div class="doc-tag">FORM-ID: SORU-TAKIP-A4</div>
+                        </div>
+                    </div>
+
+                    <div class="header-fields">
+                        <div class="field-group">
+                            <span class="field-lbl">ÖĞRENCİ ADI SOYADI:</span>
+                            <div class="field-line">${nameText ? nameText : '&nbsp;'}</div>
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-lbl">ÖĞRENCİ NO:</span>
+                            <div class="field-comb">
+                                ${noCombsHTML}
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-lbl">SINIF / ŞUBE:</span>
+                            <div class="field-comb">
+                                ${sinifCombsHTML}
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-lbl">TAKİP HAFTASI:</span>
+                            <div class="field-comb">
+                                <span class="comb-cell">&nbsp;</span>
+                                <span class="comb-cell">&nbsp;</span>
+                                <span style="font-size:9px; font-weight:700; margin-left:2px;">.HF</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── OPTİK SORU ÇÖZÜM TABLOSU (21 SATIR) ── -->
+                <div class="table-wrap">
+                    <table class="tracking-table">
+                        <thead>
+                            <tr>
+                                <th class="col-sira">#</th>
+                                <th class="col-tarih">TARİH</th>
+                                <th class="col-ders">DERS</th>
+                                <th class="col-kaynak">KAYNAK KİTAP / KONU</th>
+                                <th class="col-tip">SORU TİPİ<br><span style="font-size:7.5px; font-weight:500;">(T / YN / K)</span></th>
+                                <th class="col-dyb">✅ DOĞRU</th>
+                                <th class="col-dyb">❌ YANLIŞ</th>
+                                <th class="col-dyb">⬜ BOŞ</th>
+                                <th class="col-os">🙋 ÖĞR.<br>SORU</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateTableRowsHTML()}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ── FORM ALTI & OCR KALİBRASYON ŞERİDİ ── -->
+                <div class="footer-section">
+                    <div class="footer-left">
+                        <div class="footer-rules">
+                            📌 <strong>OCR & Veli Bilgilendirme:</strong> Rakamları 2 haneli kutucuklara net yazınız (Örn: 05, 18). Soru tipini <strong>[T]</strong> Temel, <strong>[YN]</strong> Yeni Nesil veya <strong>[K]</strong> Karışık yuvarlak içine alınız.
+                        </div>
+                        <div class="footer-sub">
+                            * Sayfayı düz zeminde, 4 köşedeki siyah hedef işaretleri (■) kadraja tam sığacak ve dik açıdan fotoğraflayıp sisteme yükleyiniz.
+                        </div>
+                    </div>
+
+                    <div class="calibration-strip" title="Optik Binarizasyon Kalibratörü (0% - 100%)">
+                        <div class="cal-box cal-0"></div>
+                        <div class="cal-box cal-20"></div>
+                        <div class="cal-box cal-40"></div>
+                        <div class="cal-box cal-60"></div>
+                        <div class="cal-box cal-80"></div>
+                        <div class="cal-box cal-100"></div>
+                    </div>
+
+                    <div class="system-seal">
+                        PROJE-AI &middot; 2026
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+    </script>
+</body>
+</html>

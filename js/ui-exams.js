@@ -428,7 +428,11 @@
                 mesaj += '\n';
             });
             mesaj += '_Proje Tabanlı Ders İşleme Sistemi tarafından oluşturulmuştur._';
-            window.open('https://web.bip.com/share?text=' + encodeURIComponent(mesaj), '_blank');
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(mesaj, 'İleri Çalışma Grupları');
+            } else {
+                window.open('https://web.bip.com/', '_blank');
+            }
         }
 
         function ileriGrupProjeAktar() {
@@ -874,7 +878,11 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             const trendText = r.trend !== undefined && r.trend !== 0 ? `\n${trendEmoji} Değişim: *${r.trend > 0 ? '+' : ''}${r.trend}*` : '';
             let yorum = r.totalNet >= 80 ? '🌟 Harika bir performans!' : r.totalNet >= 60 ? '👍 İyi gidiyorsun!' : r.totalNet >= 40 ? '⚠️ Biraz daha çalışman gerekiyor.' : '🔴 Ciddi çalışma gerekiyor!';
             let mesaj = `📊 *SINAV SONUÇ RAPORU*\n📚 *Sınav:* ${exam.title}\n👤 *Öğrenci:* ${studentName}\n📅 *Tarih:* ${new Date(exam.date).toLocaleDateString('tr-TR')}\n\n📝 *DERS NETLERI:*\n📐 Mat: *${r.Matematik || 0}*\n📖 Türkçe: *${r.Turkce || 0}*\n🔬 Fen: *${r.Fen || 0}*\n🌍 Sosyal: *${r.Sosyal || 0}*\n☪️ Din Kültürü: *${r.DinKulturu || 0}*\n🇬🇧 İngilizce: *${r.Ingilizce || 0}*\n\n🎯 *TOPLAM NET:* *${r.totalNet || 0}*  |  Sıra: *${r.rank || '-'}*${sinifOrtaText}${trendText}\n\n${yorum}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
-            window.open('https://web.bip.com/share?text=' + encodeURIComponent(mesaj), '_blank');
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(mesaj, `${studentName} - Sınav Sonucu`);
+            } else {
+                window.open('https://web.bip.com/', '_blank');
+            }
         }
 
         function renderEmptyChart(msg) {

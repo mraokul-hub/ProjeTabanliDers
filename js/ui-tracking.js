@@ -43,9 +43,38 @@
             document.querySelectorAll('[id^="student-list-"]').forEach(el => el.style.display = 'none');
         }
 
+        function toggleDeadlineDropdown(event) {
+            if (event && event.target && event.target.closest('.deadline-close-btn')) return;
+            const body = document.getElementById('deadline-dropdown-body');
+            const chevron = document.getElementById('deadline-chevron');
+            if (!body) return;
+            
+            const isVisible = window.getComputedStyle(body).display !== 'none';
+            if (isVisible) {
+                body.style.display = 'none';
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            } else {
+                body.style.display = 'block';
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        function closeDeadlineBanner(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            const banner = document.getElementById('deadline-banner');
+            if (banner) banner.style.display = 'none';
+        }
+
+        window.toggleDeadlineDropdown = toggleDeadlineDropdown;
+        window.closeDeadlineBanner = closeDeadlineBanner;
+
         function checkDeadlines() {
             const banner = document.getElementById('deadline-banner');
             const bannerText = document.getElementById('deadline-banner-text');
+            const countBadge = document.getElementById('deadline-badge');
             if (!banner || !bannerText) return;
 
             const now = new Date();
@@ -57,22 +86,43 @@
             });
 
             if (upcomingTasks.length > 0) {
-                banner.style.display = 'flex';
-                banner.style.alignItems = upcomingTasks.length > 1 ? 'flex-start' : 'center';
+                banner.style.display = 'block';
+                if (countBadge) {
+                    countBadge.textContent = upcomingTasks.length;
+                }
                 
                 // Tarihe göre yakından uzağa sırala
                 upcomingTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
                 
                 let htmlParts = upcomingTasks.map((task, idx) => {
                     const diffDays = Math.ceil((new Date(task.date) - now) / (1000 * 60 * 60 * 24));
-                    const dayText = diffDays === 0 ? 'Bugün' : (diffDays === 1 ? 'Yarın' : `Son ${diffDays} gün`);
-                    return `<strong>${idx + 1}.</strong> ${task.title} <span style="opacity:0.9;">(${task.sinif} - ${dayText})</span>`;
+                    let dayText = `Son ${diffDays} gün`;
+                    let badgeClass = 'deadline-tag-days';
+                    if (diffDays === 0) {
+                        dayText = 'Bugün';
+                        badgeClass = 'deadline-tag-today';
+                    } else if (diffDays === 1) {
+                        dayText = 'Yarın';
+                        badgeClass = 'deadline-tag-tomorrow';
+                    }
+
+                    const safeTitle = typeof escapeHTML === 'function' ? escapeHTML(task.title) : task.title;
+                    const safeSinif = typeof escapeHTML === 'function' ? escapeHTML(task.sinif || '') : (task.sinif || '');
+
+                    return `
+                    <div class="deadline-task-row">
+                        <div class="deadline-task-main">
+                            <span class="deadline-task-idx">${idx + 1}</span>
+                            <span class="deadline-task-desc">${safeTitle}</span>
+                        </div>
+                        <div class="deadline-task-meta">
+                            <span class="deadline-class-pill">${safeSinif}</span>
+                            <span class="deadline-time-pill ${badgeClass}">${dayText}</span>
+                        </div>
+                    </div>`;
                 });
                 
-                let prefix = upcomingTasks.length > 1 ? `<div style="font-weight: 800; margin-bottom: 5px;">Yaklaşan Görevler:</div>` : `<span style="font-weight: 800; margin-right: 5px;">Yaklaşan Görev:</span>`;
-                let separator = upcomingTasks.length > 1 ? '<br>' : '';
-                
-                bannerText.innerHTML = prefix + htmlParts.join(separator);
+                bannerText.innerHTML = htmlParts.join('');
             } else {
                 banner.style.display = 'none';
             }
@@ -266,37 +316,68 @@
         }
         function closeEvaluation() { document.getElementById('evaluation-modal').style.display = 'none'; activeTrackingId = null; activeExamId = null; }
 
+        function buildTrackingSummaryText(id) {
+            const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
+            const normSinif = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+            let students = studentData.filter(s => s.sinif === item.sinif || normSinif(s.sinif) === normSinif(item.sinif));
+            if (item.targetStudents && item.targetStudents.length > 0) {
+                students = students.filter(s => item.targetStudents.includes(s.adSoyad));
+            }
+            students.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
+
+            const submissions = item.submissions || {};
+            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}`;
+            if (item.xp) text += `\n⭐ *Puan:* +${item.xp} XP` + (item.penaltyXp ? ` (Eksik: -${item.penaltyXp} XP)` : '');
+
+            // Ödeve not / değerlendirme verilmediyse (submissions boş ise) yapanlar ve yapmayanlar mesajda görünmez
+            const hasEvaluations = Object.keys(submissions).length > 0;
+            if (hasEvaluations && students.length > 0) {
+                const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
+                const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
+                text += `\n\n✅ *TAMAMLAYANLAR (${done.length} / ${students.length}):*\n` + (done.length > 0 ? '🔹 ' + done.join('\n🔹 ') : 'Henüz teslim eden yok');
+                text += `\n\n❌ *EKSİK OLANLAR (${notDone.length} / ${students.length}):*\n` + (notDone.length > 0 ? '🔸 ' + notDone.join('\n🔸 ') : 'Herkes tamamladı! 🎉');
+            }
+            return text;
+        }
+
         function shareTrackingSummary(id) {
-            const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return;
-            let students = studentData.filter(s => s.sinif === item.sinif); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
-            const submissions = item.submissions || {};
-            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}`;
-            if (Object.keys(submissions).length > 0) {
-                const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-                const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-                text += `\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
-            }
+            const text = buildTrackingSummaryText(id);
+            if (!text) return;
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
         }
+
         function shareTrackingSummaryBip(id) {
-            const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return;
-            let students = studentData.filter(s => s.sinif === item.sinif); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
-            const submissions = item.submissions || {};
-            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}`;
-            if (Object.keys(submissions).length > 0) {
-                const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-                const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => s.adSoyad);
-                text += `\n\n✅ *TAMAMLAYANLAR (${done.length}):*\n🔹 ` + (done.length > 0 ? done.join('\n🔹 ') : 'Henüz yok') + `\n\n❌ *EKSİK OLANLAR (${notDone.length}):*\n🔸 ` + (notDone.length > 0 ? notDone.join('\n🔸 ') : 'Herkes tamamladı!');
+            const item = trackingData.find(i => String(i.id) === String(id));
+            const text = buildTrackingSummaryText(id);
+            if (!text) return;
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(text, `${item?.sinif || ''} - ${item?.title || ''} Özeti`);
+            } else {
+                window.copyTextToClipboard ? window.copyTextToClipboard(text) : null;
+                window.open(`https://web.bip.com/`, '_blank');
             }
-            window.open(`https://web.bip.com/share?text=${encodeURIComponent(text)}`, '_blank');
         }
+
+        function buildStudentResultText(id, name) {
+            const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
+            const sub = (item.submissions && item.submissions[name]) ? item.submissions[name] : { done: false };
+            return `🎯 *${item.type.toUpperCase()} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📊 *Durum:* ${sub.done ? '✅ Tamamlandı (+' + (sub.xp || item.xp) + ' XP)' : '❌ Teslim Edilmedi (-' + (sub.penalty || item.penaltyXp) + ' XP)'}`;
+        }
+
         function shareStudentResult(id, name) {
-            const item = trackingData.find(i => i.id === id); const sub = item.submissions[name] || { done: false };
-            let text = `🎯 *${item.type} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n📊 *Durum:* ${sub.done ? '✅ Tamamlandı (+' + sub.xp + ' XP)' : '❌ Teslim Edilmedi (-' + sub.penaltyXp + ' XP)'}`;
+            const text = buildStudentResultText(id, name);
+            if (!text) return;
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
         }
+
         function shareStudentResultBip(id, name) {
-            const item = trackingData.find(i => i.id === id); const sub = item.submissions[name] || { done: false };
-            let text = `🎯 *${item.type} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n📊 *Durum:* ${sub.done ? '✅ Tamamlandı (+' + sub.xp + ' XP)' : '❌ Teslim Edilmedi (-' + sub.penaltyXp + ' XP)'}`;
-            window.open(`https://web.bip.com/share?text=${encodeURIComponent(text)}`, '_blank');
+            const item = trackingData.find(i => String(i.id) === String(id));
+            const text = buildStudentResultText(id, name);
+            if (!text) return;
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(text, `${name} - ${item?.title || ''}`);
+            } else {
+                window.copyTextToClipboard ? window.copyTextToClipboard(text) : null;
+                window.open(`https://web.bip.com/`, '_blank');
+            }
         }

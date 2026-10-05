@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sınıf Yönetimi & Küme Takip Formu (A4 - OCR Uyumlu)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+        :root {
+            --ocr-black: #000000;
+            --ocr-line: #111827;
+            --ocr-guide: #9ca3af;
+            --ocr-bg-light: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+            color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* EKRAN KONTROL PANELİ (Yazdırmada Gizlenir) */
+        .no-print-toolbar {
+            width: 210mm;
+            background: #1e293b;
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .toolbar-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-info h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .toolbar-info p {
+            margin: 0;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .toolbar-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .toolbar-btn-secondary:hover {
+            background: #475569;
+        }
+
+        .toolbar-select {
+            background: #0f172a;
+            color: #fff;
+            border: 1px solid #475569;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+        }
+
+        /* ── A4 SAYFA TASARIMI (210mm x 296mm) ── */
+        .a4-page {
+            width: 210mm;
+            height: 296mm;
+            background: #ffffff;
+            margin: 0 auto;
+            padding: 7mm;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ── OPTİK REGİSTRASYON & HİZALAMA İŞARETLERİ (FIDUCIAL MARKERS) ── */
+        .fiducial-target {
+            position: absolute;
+            width: 11mm;
+            height: 11mm;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .fiducial-target::before {
+            content: '';
+            width: 5mm;
+            height: 5mm;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .fiducial-target::after {
+            content: '';
+            width: 2.2mm;
+            height: 2.2mm;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .fiducial-tl { top: 4.5mm; left: 4.5mm; }
+        .fiducial-tr { top: 4.5mm; right: 4.5mm; }
+        .fiducial-bl { bottom: 4.5mm; left: 4.5mm; }
+        .fiducial-br { bottom: 4.5mm; right: 4.5mm; }
+
+        /* Ara Kalibrasyon Çentikleri (Timing Ticks) */
+        .tick-h {
+            position: absolute;
+            width: 4mm;
+            height: 2.2mm;
+            background: #000;
+            z-index: 40;
+        }
+        .tick-v {
+            position: absolute;
+            width: 2.2mm;
+            height: 4mm;
+            background: #000;
+            z-index: 40;
+        }
+
+        .tick-top-1 { top: 4.5mm; left: 33%; }
+        .tick-top-2 { top: 4.5mm; left: 66%; }
+        .tick-bottom-1 { bottom: 4.5mm; left: 33%; }
+        .tick-bottom-2 { bottom: 4.5mm; left: 66%; }
+        .tick-left-1 { left: 4.5mm; top: 35%; }
+        .tick-left-2 { left: 4.5mm; top: 68%; }
+        .tick-right-1 { right: 4.5mm; top: 35%; }
+        .tick-right-2 { right: 4.5mm; top: 68%; }
+
+        /* ── BAŞLIK & METADATA BÖLÜMÜ ── */
+        .header-section {
+            border: 2px solid #000;
+            padding: 6px 10px;
+            margin-bottom: 5px;
+            background: #fff;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .header-titles h1 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .header-titles h2 {
+            margin: 1px 0 0 0;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .machine-code-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .doc-barcode {
+            display: flex;
+            align-items: center;
+            height: 18px;
+            gap: 1.5px;
+            background: #fff;
+            padding: 2px 4px;
+            border: 1px solid #000;
+        }
+
+        .bar-b { background: #000; height: 14px; }
+        .w1 { width: 1.5px; }
+        .w2 { width: 3px; }
+        .w3 { width: 4.5px; }
+        .bar-w { background: #fff; height: 14px; }
+
+        .doc-tag {
+            font-size: 9px;
+            font-weight: 700;
+            border: 1.5px solid #000;
+            padding: 2px 5px;
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+
+        /* Form Üst Bilgi Kutuları */
+        .header-fields {
+            display: grid;
+            grid-template-columns: 1.1fr 1.3fr 1.1fr 1fr;
+            gap: 8px;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .field-lbl {
+            font-weight: 700;
+            font-size: 10px;
+            color: #111;
+            white-space: nowrap;
+        }
+
+        .field-comb {
+            display: flex;
+            gap: 2px;
+        }
+
+        .comb-cell {
+            width: 15px;
+            height: 17px;
+            border: 1.2px solid #000;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            background: #fff;
+        }
+
+        .field-line {
+            flex: 1;
+            border-bottom: 1.2px dashed #000;
+            height: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            padding-left: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── 6 KÜMELİ IZGARA (2 SÜTUN X 3 SATIR) ── */
+        .clusters-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 5.5px 6.5px;
+            flex: 1;
+            margin-bottom: 5px;
+        }
+
+        /* KÜME KARTI */
+        .cluster-card {
+            border: 2px solid #000;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0;
+            position: relative;
+        }
+
+        /* Küme Başlık Şeridi */
+        .cluster-header {
+            background: #000;
+            color: #fff;
+            padding: 3px 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .cluster-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cluster-badge {
+            background: #fff;
+            color: #000;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-size: 9.5px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cluster-name-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            margin: 0 6px;
+        }
+
+        .cluster-name-label {
+            font-size: 9.5px;
+            color: #d1d5db;
+            font-weight: 600;
+        }
+
+        .cluster-name-input {
+            background: #fff;
+            color: #000;
+            border: 1px solid #9ca3af;
+            border-radius: 2px;
+            padding: 1px 6px;
+            font-size: 10.5px;
+            font-weight: 700;
+            width: 100%;
+            height: 17px;
+            display: flex;
+            align-items: center;
+        }
+
+        .cluster-score-box {
+            font-size: 9.5px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background: #1f2937;
+            padding: 1px 5px;
+            border: 1px solid #4b5563;
+            border-radius: 2px;
+            white-space: nowrap;
+        }
+
+        .cluster-score-val {
+            display: inline-block;
+            width: 24px;
+            height: 14px;
+            background: #fff;
+            color: #000;
+            border: 1px solid #000;
+            text-align: center;
+            font-weight: 700;
+            font-size: 10px;
+            line-height: 14px;
+        }
+
+        /* ÖĞRENCİ TABLOSU */
+        .cluster-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            table-layout: fixed;
+        }
+
+        .cluster-table th, 
+        .cluster-table td {
+            border: 1.2px solid #000;
+            padding: 1.5px 3px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .cluster-table th {
+            background: var(--ocr-bg-light);
+            font-weight: 800;
+            text-align: center;
+            font-size: 9px;
+            padding: 2.5px 2px;
+            letter-spacing: 0.2px;
+        }
+
+        .cluster-table td {
+            height: 20px;
+        }
+
+        .col-sira { width: 14px; text-align: center !important; font-weight: 700; background: #fafafa; font-size: 9.5px; }
+        .col-no { width: 50px; text-align: center !important; }
+        .col-ad { width: auto; font-weight: 600; font-size: 9.5px; }
+        .col-rol { width: 88px; text-align: center !important; }
+        .col-not { width: 24px; text-align: center !important; }
+
+        /* No Kutucukları (Kutulu Yazım) */
+        .no-comb-grid {
+            display: inline-flex;
+            gap: 1.5px;
+            vertical-align: middle;
+        }
+
+        .no-cell {
+            width: 10.5px;
+            height: 15px;
+            border: 1px solid #4b5563;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            font-weight: 700;
+            background: #fff;
+        }
+
+        /* Ad Soyad Alanı */
+        .student-name-cell {
+            padding-left: 4px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+
+        /* Rol Seçenekleri */
+        .role-indicators {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1px;
+            font-size: 8px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .role-tag {
+            border: 1px solid #6b7280;
+            border-radius: 2px;
+            padding: 0 2px;
+            line-height: 12px;
+            height: 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: #111;
+        }
+
+        .role-tag.selected {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .score-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 9.5px;
+            text-align: center;
+        }
+
+        /* Küme Alt Not / Gözlem Alanı */
+        .cluster-footer-note {
+            border-top: 1.2px solid #000;
+            background: #fdfdfd;
+            padding: 2.5px 5px;
+            font-size: 8.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cluster-footer-note strong {
+            font-size: 8px;
+            text-transform: uppercase;
+            color: #1f2937;
+            white-space: nowrap;
+        }
+
+        .cluster-footer-line {
+            flex: 1;
+            border-bottom: 1px dashed #9ca3af;
+            height: 11px;
+        }
+
+        /* ── SAYFA ALTI / OCR KALİBRASYON ŞERİDİ ── */
+        .footer-section {
+            border: 1.5px solid #000;
+            background: #fff;
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8.5px;
+        }
+
+        .footer-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .footer-rules {
+            font-weight: 700;
+            color: #000;
+        }
+
+        .footer-sub {
+            color: #4b5563;
+            font-size: 8px;
+        }
+
+        /* Gri Skala ve Eşikleme Kalibratörü */
+        .calibration-strip {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            border: 1px solid #000;
+            padding: 1.5px;
+            background: #fff;
+        }
+
+        .cal-box {
+            width: 8px;
+            height: 10px;
+            border: 0.5px solid #d1d5db;
+        }
+
+        .cal-0 { background: #ffffff; }
+        .cal-20 { background: #cccccc; }
+        .cal-40 { background: #999999; }
+        .cal-60 { background: #666666; }
+        .cal-80 { background: #333333; }
+        .cal-100 { background: #000000; }
+
+        .system-seal {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            font-weight: 700;
+            border: 1px solid #000;
+            padding: 1px 4px;
+            background: #fafafa;
+        }
+
+        /* ── YAZDIRMA (PRINT) ÖZEL AYARLARI ── */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            body {
+                background: #fff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print, .no-print-toolbar {
+                display: none !important;
+            }
+            .a4-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 7mm !important;
+                width: 210mm !important;
+                height: 296mm !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- EKRAN EYLEM ÇUBUĞU (Yazıcıda ve Tarayıcıda Çıkmaz) -->
+    <div class="no-print-toolbar no-print">
+        <div class="toolbar-info">
+            <i class="fas fa-file-invoice" style="font-size:24px; color:#38bdf8;"></i>
+            <div>
+                <h3>Sınıf Yönetimi & Küme Takip Formu (A4)</h3>
+                <p>Optik Karakter Tanıma (OCR) uyumlu referans noktaları ve el yazısı ızgaraları</p>
+            </div>
+        </div>
+
+        <div class="toolbar-controls">
+            <!-- Sınıf Seçimi -->
+            <select id="sinif-secici" class="toolbar-select" onchange="onSinifChange(this.value)">
+                <option value="">-- Boş Şablon (Sınıfsız) --</option>
+            </select>
+
+            <!-- Mod Butonları -->
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="renderBlankForm()" title="Tüm alanları boş bırakır">
+                <i class="fas fa-eraser"></i> Tamamen Boş
+            </button>
+            <button class="toolbar-btn toolbar-btn-secondary" id="btn-fill-groups" onclick="renderPrefilledForm()" title="Sistemdeki mevcut kümeleri yerleştirir">
+                <i class="fas fa-users"></i> Kümeleri Doldur
+            </button>
+
+            <!-- Yazdır Butonu -->
+            <button class="toolbar-btn" onclick="window.print()">
+                <i class="fas fa-print"></i> Formu Yazdır (A4)
+            </button>
+
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="window.close()" title="Sekmeyi Kapat">
+                <i class="fas fa-times"></i> Kapat
+            </button>
+        </div>
+    </div>
+
+    <!-- ── A4 BASILI FORM BAŞLANGICI ── -->
+    <div class="a4-page" id="printable-a4">
+
+        <!-- 4 KÖŞE OPTİK REGİSTRASYON HEDEFLERİ (FIDUCIAL TARGETS) -->
+        <div class="fiducial-target fiducial-tl" title="TL Marker"></div>
+        <div class="fiducial-target fiducial-tr" title="TR Marker"></div>
+        <div class="fiducial-target fiducial-bl" title="BL Marker"></div>
+        <div class="fiducial-target fiducial-br" title="BR Marker"></div>
+
+        <!-- KENAR HİZALAMA ÇENTİKLERİ (AXIS TIMING TICKS) -->
+        <div class="tick-h tick-top-1"></div>
+        <div class="tick-h tick-top-2"></div>
+        <div class="tick-h tick-bottom-1"></div>
+        <div class="tick-h tick-bottom-2"></div>
+        <div class="tick-v tick-left-1"></div>
+        <div class="tick-v tick-left-2"></div>
+        <div class="tick-v tick-right-1"></div>
+        <div class="tick-v tick-right-2"></div>
+
+        <!-- ── FORM ÜST BİLGİ & METADATA ALANI ── -->
+        <div class="header-section">
+            <div class="header-top">
+                <div class="header-titles">
+                    <h1>KÜME YÖNETİMİ & GRUP DEĞERLENDİRME FORMU</h1>
+                    <h2>Proje Tabanlı Ders İşleme Sistemi &middot; Optik Form ve El Yazısı Veri Girişi</h2>
+                </div>
+                <div class="machine-code-box">
+                    <div class="doc-barcode" title="OCR Kalibrasyon Kodu">
+                        <div class="bar-b w2"></div><div class="bar-w w1"></div>
+                        <div class="bar-b w1"></div><div class="bar-w w1"></div>
+                        <div class="bar-b w3"></div><div class="bar-w w2"></div>
+                        <div class="bar-b w2"></div><div class="bar-w w1"></div>
+                        <div class="bar-b w1"></div><div class="bar-w w2"></div>
+                        <div class="bar-b w3"></div><div class="bar-w w1"></div>
+                        <div class="bar-b w2"></div>
+                    </div>
+                    <div class="doc-tag">FORM-ID: KUME-OCR-A4</div>
+                </div>
+            </div>
+
+            <div class="header-fields">
+                <div class="field-group">
+                    <span class="field-lbl">SINIF / ŞUBE:</span>
+                    <div class="field-comb" id="header-sinif-comb">
+                        <span class="comb-cell">&nbsp;</span>
+                        <span class="comb-cell">&nbsp;</span>
+                        <span class="comb-cell">/</span>
+                        <span class="comb-cell">&nbsp;</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <span class="field-lbl">DERS / KONU:</span>
+                    <div class="field-line" id="header-ders-line">&nbsp;</div>
+                </div>
+
+                <div class="field-group">
+                    <span class="field-lbl">TARİH:</span>
+                    <div class="field-comb">
+                        <span class="comb-cell">&nbsp;</span>
+                        <span class="comb-cell">&nbsp;</span>
+                        <span class="comb-cell">.</span>
+                        <span class="comb-cell">&nbsp;</span>
+                        <span class="comb-cell">&nbsp;</span>
+                        <span class="comb-cell">.</span>
+                        <span class="comb-cell">2</span>
+                        <span class="comb-cell">0</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <span class="field-lbl">ÖĞRETMEN:</span>
+                    <div class="field-line" id="header-teacher-line">&nbsp;</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 6 KÜMELİ TABLO IZGARASI (2 SÜTUN X 3 SATIR) ── -->
+        <div class="clusters-grid" id="clusters-grid-container">
+            <!-- 6 KÜME KARTI JAVASCRIPT İLE DİNAMİK OLARAK OLUŞTURULACAK -->
+        </div>
+
+        <!-- ── FORM ALTI & OCR KALİBRASYON ŞERİDİ ── -->
+        <div class="footer-section">
+            <div class="footer-left">
+                <div class="footer-rules">
+                    📌 <strong>OCR ve Tarama Rehberi:</strong> Sayfayı düz zeminde, 4 köşedeki siyah hedef kareleri (■) kadraja tam sığacak şekilde dik açıdan fotoğraflayınız.
+                </div>
+                <div class="footer-sub">
+                    * ROL KISALTMALARI: <strong>[PK]</strong> Proje Koord. | <strong>[VA]</strong> Veri Analisti | <strong>[AR]</strong> Ar-Ge Sor. | <strong>[HI]</strong> Halkla İliş. | <strong>[Ü]</strong> Üye &nbsp;|&nbsp; Not ve numaraları kutucuklara taşmayacak şekilde yazınız.
+                </div>
+            </div>
+
+            <div class="calibration-strip" title="Optik Binarizasyon Kalibratörü (0% - 100%)">
+                <div class="cal-box cal-0"></div>
+                <div class="cal-box cal-20"></div>
+                <div class="cal-box cal-40"></div>
+                <div class="cal-box cal-60"></div>
+                <div class="cal-box cal-80"></div>
+                <div class="cal-box cal-100"></div>
+            </div>
+
+            <div class="system-seal">
+                PROJE-AI &middot; 2026
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── FORM OLUŞTURMA VE VERİ ENTEGRASYON SCRIPTİ ── -->
+    <script>
+        const STORAGE_KEY = 'proje_tabanli_ders_data';
+        let globalData = {};
+        let currentClass = '';
+        let isPrefilledMode = false;
+
+        // Sayfa Yüklendiğinde
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLocalSystemData();
+            initURLParams();
+            renderForm();
+        });
+
+        // LocalStorage'dan Sistem Verilerini Oku
+        function loadLocalSystemData() {
+            try {
+                let raw = localStorage.getItem(STORAGE_KEY);
+                // Kullanıcı bazlı depolamayı da tara (NoSQL izolasyonu)
+                if (!raw) {
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith(STORAGE_KEY)) {
+                            raw = localStorage.getItem(key);
+                            if (raw) break;
+                        }
+                    }
+                }
+                if (raw) {
+                    globalData = JSON.parse(raw);
+                }
+            } catch (e) {
+                console.warn('Veri okunamadı:', e);
+                globalData = {};
+            }
+
+            // Sınıf listesini doldur
+            const select = document.getElementById('sinif-secici');
+            const studentData = globalData.students || globalData.studentData || [];
+            const allGroups = globalData.groups || globalData.groupData || {};
+
+            const sinifSet = new Set();
+            studentData.forEach(s => { if (s.sinif) sinifSet.add(s.sinif); });
+            Object.keys(allGroups).forEach(gKey => { sinifSet.add(gKey.replace(/_/g, '/')); });
+
+            // SessionStorage'dan da sınıf varsa ekle
+            try {
+                const sessSinif = sessionStorage.getItem('kume_form_sinif');
+                if (sessSinif) sinifSet.add(sessSinif);
+            } catch (e) {}
+
+            const siniflar = [...sinifSet].sort();
+
+            select.innerHTML = '<option value="">-- Boş Şablon (Sınıfsız) --</option>';
+            siniflar.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = `${s} Sınıfı`;
+                select.appendChild(opt);
+            });
+        }
+
+        // URL Parametrelerini Çözümle (?sinif=7/B)
+        function initURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            const sParam = params.get('sinif');
+            if (sParam) {
+                currentClass = decodeURIComponent(sParam);
+                const select = document.getElementById('sinif-secici');
+                if (select) {
+                    let exists = false;
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].value === currentClass) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists && currentClass) {
+                        const opt = document.createElement('option');
+                        opt.value = currentClass;
+                        opt.textContent = `${currentClass} Sınıfı`;
+                        select.appendChild(opt);
+                    }
+                    select.value = currentClass;
+                }
+                isPrefilledMode = true; // Sınıf seçilerek gelindiğinde otomatik DOLU aç
+            }
+        }
+
+        function onSinifChange(val) {
+            currentClass = val;
+            isPrefilledMode = val ? true : false;
+            renderForm();
+        }
+
+        function renderBlankForm() {
+            isPrefilledMode = false;
+            renderForm();
+        }
+
+        function renderPrefilledForm() {
+            isPrefilledMode = true;
+            renderForm();
+        }
+
+        // 6 Kümeli A4 Izgarasını İnşa Et
+        function renderForm() {
+            const container = document.getElementById('clusters-grid-container');
+            container.innerHTML = '';
+
+            // Üst bilgiyi güncelle
+            updateHeaderInfo();
+
+            // Eğer sistemde o sınıfa ait kayıtlı kümeler varsa al
+            let prefilledGroups = [];
+            if (isPrefilledMode && currentClass) {
+                // 1. Önce sessionStorage'dan anlık aktarılan kümeleri kontrol et
+                try {
+                    const sessSinif = sessionStorage.getItem('kume_form_sinif');
+                    const sessGroups = sessionStorage.getItem('kume_form_groups');
+                    if (sessSinif === currentClass && sessGroups) {
+                        prefilledGroups = JSON.parse(sessGroups);
+                    }
+                } catch (e) {}
+
+                // 2. Yoksa globalData (groups / groupData) üzerinden kontrol et
+                if (!prefilledGroups || prefilledGroups.length === 0) {
+                    const allGroups = globalData.groups || globalData.groupData || {};
+                    const safeClass = currentClass.replace(/\//g, '_');
+                    prefilledGroups = allGroups[safeClass] || allGroups[currentClass] || [];
+                }
+            }
+
+            // 6 Küme kartı oluştur (2 sütun x 3 satır = 6 küme)
+            for (let k = 1; k <= 6; k++) {
+                const groupData = prefilledGroups[k - 1] || null;
+                const card = createClusterCard(k, groupData);
+                container.appendChild(card);
+            }
+        }
+
+        // Başlık Alanını Güncelle
+        function updateHeaderInfo() {
+            const combContainer = document.getElementById('header-sinif-comb');
+            combContainer.innerHTML = '';
+
+            if (currentClass) {
+                const chars = currentClass.replace(/\s+/g, '').split('');
+                chars.forEach(c => {
+                    const cell = document.createElement('span');
+                    cell.className = 'comb-cell';
+                    cell.textContent = c;
+                    combContainer.appendChild(cell);
+                });
+                while (combContainer.children.length < 4) {
+                    const emptyCell = document.createElement('span');
+                    emptyCell.className = 'comb-cell';
+                    emptyCell.innerHTML = '&nbsp;';
+                    combContainer.appendChild(emptyCell);
+                }
+            } else {
+                for (let i = 0; i < 4; i++) {
+                    const emptyCell = document.createElement('span');
+                    emptyCell.className = 'comb-cell';
+                    emptyCell.innerHTML = (i === 2) ? '/' : '&nbsp;';
+                    combContainer.appendChild(emptyCell);
+                }
+            }
+        }
+
+        // Tek Bir Küme Kartı Oluştur (Her biri 6 öğrenci satırı)
+        function createClusterCard(clusterNum, groupData) {
+            const card = document.createElement('div');
+            card.className = 'cluster-card';
+
+            const clusterIdTag = `K-0${clusterNum}`;
+            const groupTitle = groupData ? (groupData.title || `Küme ${clusterNum}`) : '';
+            const students = (groupData && groupData.students) ? groupData.students : [];
+
+            // Kart Başlığı
+            let html = `
+                <div class="cluster-header">
+                    <div class="cluster-title-wrap">
+                        <span class="cluster-badge">${clusterIdTag}</span>
+                        <span>KÜME ${clusterNum}</span>
+                    </div>
+                    <div class="cluster-name-box">
+                        <span class="cluster-name-label">KÜME ADI:</span>
+                        <div class="cluster-name-input">${escapeHTML(groupTitle)}</div>
+                    </div>
+                    <div class="cluster-score-box">
+                        <span>NOT:</span>
+                        <span class="cluster-score-val"></span>
+                    </div>
+                </div>
+
+                <table class="cluster-table">
+                    <thead>
+                        <tr>
+                            <th class="col-sira">#</th>
+                            <th class="col-no">OKUL NO</th>
+                            <th class="col-ad">ÖĞRENCİ ADI SOYADI</th>
+                            <th class="col-rol">GÖREV / ROL</th>
+                            <th class="col-not">NOT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // 6 Öğrenci Satırı (OCR İçin Sabit Koordinatlı Izgara)
+            for (let row = 1; row <= 6; row++) {
+                const student = students[row - 1] || null;
+                let studentNo = '';
+                let studentName = '';
+                let studentRole = '';
+
+                if (student) {
+                    studentName = student.name || '';
+                    studentRole = student.role || '';
+                    // Öğrenci numarasını bul
+                    if (student.no) {
+                        studentNo = student.no;
+                    } else {
+                        const studentList = globalData.students || globalData.studentData || [];
+                        const found = studentList.find(s => s.adSoyad === studentName);
+                        if (found) studentNo = found.no || '';
+                    }
+                }
+
+                // Okul No için 4'lü segmented kutucuklar
+                const noChars = (studentNo + '').padEnd(4, ' ').split('').slice(0, 4);
+                let noBoxesHtml = '<div class="no-comb-grid">';
+                for (let i = 0; i < 4; i++) {
+                    const ch = (noChars[i] && noChars[i] !== ' ') ? noChars[i] : '&nbsp;';
+                    noBoxesHtml += `<span class="no-cell">${ch}</span>`;
+                }
+                noBoxesHtml += '</div>';
+
+                // Rol Göstergeleri (PK, VA, AR, HI, Ü)
+                const isPK = studentRole.includes('Koordinatör') ? 'selected' : '';
+                const isVA = studentRole.includes('Analist') ? 'selected' : '';
+                const isAR = studentRole.includes('Ar-Ge') ? 'selected' : '';
+                const isHI = studentRole.includes('İlişkiler') ? 'selected' : '';
+                const isU = (studentRole === 'Üye' || (!isPK && !isVA && !isAR && !isHI && studentRole)) ? 'selected' : '';
+
+                const roleHtml = `
+                    <div class="role-indicators">
+                        <span class="role-tag ${isPK}" title="Proje Koordinatörü">PK</span>
+                        <span class="role-tag ${isVA}" title="Veri Analisti">VA</span>
+                        <span class="role-tag ${isAR}" title="Ar-Ge Sorumlusu">AR</span>
+                        <span class="role-tag ${isHI}" title="Halkla İlişkiler">HI</span>
+                        <span class="role-tag ${isU}" title="Üye">Ü</span>
+                    </div>
+                `;
+
+                html += `
+                    <tr>
+                        <td class="col-sira">${row}</td>
+                        <td class="col-no">${noBoxesHtml}</td>
+                        <td class="col-ad student-name-cell">${escapeHTML(studentName)}</td>
+                        <td class="col-rol">${roleHtml}</td>
+                        <td class="col-not score-cell"></td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                    </tbody>
+                </table>
+
+                <div class="cluster-footer-note">
+                    <strong>Gözlem / Not:</strong>
+                    <div class="cluster-footer-line"></div>
+                </div>
+            `;
+
+            card.innerHTML = html;
+            return card;
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
