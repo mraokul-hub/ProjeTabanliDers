@@ -143,12 +143,10 @@
 
             trackingData.forEach(item => {
                 const deadline = new Date(item.date);
-                const isPasif = deadline < now && deadline.toDateString() !== now.toDateString();
-                // Eğer deadline bugün ile aynı gündeyse aktif say
                 const isActiveDay = deadline.toDateString() === now.toDateString();
-                const isPassive = !isActiveDay && deadline < now;
+                const isPassive = item.isEvaluated || (!isActiveDay && deadline < now);
 
-                const totalCount = item.targetStudents ? item.targetStudents.length : studentData.filter(s => s.sinif === item.sinif).length;
+                const totalCount = item.targetStudents ? item.targetStudents.length : studentData.filter(s => s.sinif === item.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(item.sinif))).length;
                 const doneCount = item.submissions ? Object.values(item.submissions).filter(s => s.done).length : 0;
 
                 const borderColor = isPassive ? '#6b7280' : 'var(--secondary)';
@@ -248,21 +246,30 @@
             activeTrackingId = id; activeExamId = null;
             const item = trackingData.find(i => String(i.id) === String(id));
             if (!item) return;
-            let students = studentData.filter(s => s.sinif === item.sinif); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
+            let students = studentData.filter(s => s.sinif === item.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(item.sinif))); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
 
             document.getElementById('eval-title').textContent = `${item.title} - Değerlendirme`;
             document.getElementById('eval-info').textContent = `${item.sinif} Sınıfı Listesi`;
-            document.querySelector('#evaluation-modal thead tr').innerHTML = `<th>Öğrenci</th><th>Durum</th><th>Teslim Zamanı</th><th>XP</th><th>Paylaş</th>`;
+            document.querySelector('#evaluation-modal thead tr').innerHTML = `<th>Öğrenci</th><th>Durum</th><th>Gelmedi</th><th>Teslim Zamanı</th><th>XP</th><th>Paylaş</th>`;
 
             const body = document.getElementById('eval-body'); body.innerHTML = '';
             const submissions = item.submissions || {};
             students.forEach(s => {
-                const sub = submissions[s.adSoyad] || { done: false, date: '', xp: item.xp, penalty: item.penaltyXp };
+                const sub = submissions[s.adSoyad] || { done: false, absent: false, date: '', xp: item.xp, penalty: item.penaltyXp };
+                
+                let xpText = '';
+                if (sub.absent) {
+                    xpText = '<span style="color:#6b7280; font-weight:700;">Muaf (0)</span>';
+                } else {
+                    xpText = `<span style="color:${sub.done ? 'var(--accent)' : 'var(--red)'}; font-weight:700;">${sub.done ? '+' : '-'}${sub.done ? (sub.xp || item.xp) : (sub.penalty || item.penaltyXp)}</span>`;
+                }
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td>${s.no} - ${s.adSoyad}</td>
-                <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} onchange="toggleSubmission('${s.adSoyad}', this.checked)"> Yapıldı</label></td>
+                <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''} onchange="updateSubmissionStatus('${s.adSoyad}', 'done', this.checked)"> Yapıldı</label></td>
+                <td><label><input type="checkbox" ${sub.absent ? 'checked' : ''} onchange="updateSubmissionStatus('${s.adSoyad}', 'absent', this.checked)"> Gelmedi</label></td>
                 <td><span style="font-size:11px;">${sub.date || '-'}</span></td>
-                <td><span style="color:${sub.done ? 'var(--accent)' : 'var(--red)'}; font-weight:700;">${sub.done ? '+' : '-'}${sub.done ? (sub.xp || item.xp) : (sub.penalty || item.penaltyXp)}</span></td>
+                <td>${xpText}</td>
                 <td style="display:flex;gap:4px;align-items:center;">
                     <button class="action-btn" onclick="shareStudentResult(${id}, '${s.adSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button class="action-btn" onclick="shareStudentResultBip(${id}, '${s.adSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
@@ -272,47 +279,68 @@
             document.getElementById('evaluation-modal').style.display = 'block';
         }
 
-        function toggleSubmission(name, done) {
+        window.updateSubmissionStatus = function(name, field, value) {
             const item = trackingData.find(i => String(i.id) === String(activeTrackingId));
             if (!item.submissions) item.submissions = {};
-            if (!item.submissions[name]) item.submissions[name] = { done: false, date: '', xp: item.xp, penalty: item.penaltyXp };
+            if (!item.submissions[name]) item.submissions[name] = { done: false, absent: false, date: '', xp: item.xp, penalty: item.penaltyXp };
 
             const sub = item.submissions[name];
             const sIdx = studentData.findIndex(s => s.adSoyad === name);
 
             if (sIdx !== -1) {
                 if (!studentData[sIdx].xpLogs) studentData[sIdx].xpLogs = [];
-                // 1. ADIM: Eski durumu sıfırla (Geri al)
-                if (sub.done) {
-                    let oldAmt = sub.xp !== undefined ? sub.xp : item.xp;
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) - oldAmt;
-                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (İptal)`, amount: -oldAmt, date: new Date().toISOString() });
-                } else if (sub.date !== '') {
-                    // Daha önce yapmadı (ceza yemiştik), cezayı geri ver
-                    let oldAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
-                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
-                }
-
-                // 2. ADIM: Yeni durumu uygula
-                if (done) {
-                    let newAmt = sub.xp !== undefined ? sub.xp : item.xp;
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) + newAmt;
-                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (Tamamladı)`, amount: newAmt, date: new Date().toISOString() });
-                } else {
-                    let newAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
-                    studentData[sIdx].xp = (studentData[sIdx].xp || 0) - newAmt;
-                    studentData[sIdx].xpLogs.push({ reason: `${item.title} (Eksik)`, amount: -newAmt, date: new Date().toISOString() });
+                // Revert old state
+                if (!sub.absent) {
+                    if (sub.done) {
+                        let oldAmt = sub.xp !== undefined ? sub.xp : item.xp;
+                        studentData[sIdx].xp = (studentData[sIdx].xp || 0) - oldAmt;
+                        studentData[sIdx].xpLogs.push({ reason: `${item.title} (İptal)`, amount: -oldAmt, date: new Date().toISOString() });
+                    } else if (sub.date !== '') {
+                        let oldAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
+                        studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
+                        studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
+                    }
                 }
             }
 
-            sub.done = done;
+            sub[field] = value;
+            if (field === 'absent' && value === true) {
+                sub.done = false; // Cannot be done if absent
+            }
+
+            if (sIdx !== -1) {
+                // Apply new state
+                if (!sub.absent) {
+                    if (sub.done) {
+                        let newAmt = sub.xp !== undefined ? sub.xp : item.xp;
+                        studentData[sIdx].xp = (studentData[sIdx].xp || 0) + newAmt;
+                        studentData[sIdx].xpLogs.push({ reason: `${item.title} (Tamamladı)`, amount: newAmt, date: new Date().toISOString() });
+                    } else {
+                        let newAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
+                        studentData[sIdx].xp = (studentData[sIdx].xp || 0) - newAmt;
+                        studentData[sIdx].xpLogs.push({ reason: `${item.title} (Eksik)`, amount: -newAmt, date: new Date().toISOString() });
+                    }
+                }
+            }
+
             sub.date = new Date().toLocaleString('tr-TR');
 
             renderStudentTable();
             renderTrackingList();
             saveData();
             openEvaluation(activeTrackingId);
+        }
+
+        window.finishEvaluation = function() {
+            if (!activeTrackingId) return;
+            if (!confirm('Bu değerlendirmeyi bitirmek ve ödevi pasife almak istediğinize emin misiniz?')) return;
+            const item = trackingData.find(i => String(i.id) === String(activeTrackingId));
+            if (item) {
+                item.isEvaluated = true;
+                saveData();
+                renderTrackingList();
+                closeEvaluation();
+            }
         }
         function closeEvaluation() { document.getElementById('evaluation-modal').style.display = 'none'; activeTrackingId = null; activeExamId = null; }
 

@@ -2160,10 +2160,10 @@
                             class="mob-icon">🌙</span>9. İleri Çalışma Grupları</button>
                     <button class="mobile-tab-btn" id="mob-btn-tab9" onclick="openTab('tab9')"><span
                             class="mob-icon">🌳</span>10. Proje Grupları</button>
-                    <button class="mobile-tab-btn" id="mob-btn-tab10" onclick="openTab('tab10')"><span
-                            class="mob-icon">🧭</span>11. Sistem Kullanım Kılavuzu</button>
                     <button class="mobile-tab-btn" id="mob-btn-tab11" onclick="openTab('tab11')"><span
-                            class="mob-icon">📊</span>12. Soru Çözüm Takip</button>
+                            class="mob-icon">📊</span>11. Soru Çözüm Takip</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab10" onclick="openTab('tab10')"><span
+                            class="mob-icon">🧭</span>Sistem Kullanım Kılavuzu</button>
                     <button class="mobile-tab-btn" id="mob-btn-tab-admin" onclick="openTab('tab-admin')"
                         style="display:none; color:#f59e0b;"><span class="mob-icon">👑</span>Yönetici Paneli</button>
                 </div>
@@ -2182,8 +2182,8 @@
             <button class="tab-btn" onclick="openTab('tab7')">🛡️ 8. Öz Değerlendirme & Formlar</button>
             <button class="tab-btn" onclick="openTab('tab8')">🌙 9. İleri Çalışma Grupları</button>
             <button class="tab-btn" onclick="openTab('tab9')" id="tab9-btn">🌳 10. Proje Grupları</button>
-            <button class="tab-btn" onclick="openTab('tab10')">🧭 11. Sistem Kullanım Kılavuzu</button>
-            <button class="tab-btn" onclick="openTab('tab11')">📊 12. Soru Çözüm Takip</button>
+            <button class="tab-btn" onclick="openTab('tab11')">📊 11. Soru Çözüm Takip</button>
+            <button class="tab-btn" onclick="openTab('tab10')">🧭 Sistem Kullanım Kılavuzu</button>
             <button class="tab-btn" id="admin-tab-btn" onclick="openTab('tab-admin')"
                 style="display: none; color: #f59e0b;">👑 Yönetici Paneli</button>
         </div>
@@ -2293,7 +2293,7 @@
                                 style="background: #10b981; padding: 10px 15px; width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:5px;"
                                 onclick="toggleXPPopup(this, event)" title="Sınıfa / Seçilenlere XP Ver"><i
                                     class="fas fa-star"></i> Toplu XP Ver</button>
-                            <div class="xp-popup-panel" style="z-index: 9999;">
+                            <div class="xp-popup-panel bulk-xp-panel" style="z-index: 9999;">
                                 <div class="xp-popup-label">⬆️ Toplu Artır</div>
                                 <div class="xp-popup-row" style="flex-wrap: wrap;">
                                     <button class="btn-xp" style="background:#10b981;"
@@ -2842,6 +2842,8 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <option value="Çarşamba">Çarşamba</option>
                             <option value="Perşembe">Perşembe</option>
                             <option value="Cuma">Cuma</option>
+                            <option value="Cumartesi">Cumartesi</option>
+                            <option value="Pazar">Pazar</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex: 1; min-width: 100px;">
@@ -2881,6 +2883,8 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                                 <th>ÇARŞAMBA</th>
                                 <th>PERŞEMBE</th>
                                 <th>CUMA</th>
+                                <th>CUMARTESİ</th>
+                                <th>PAZAR</th>
                             </tr>
                         </thead>
                         <tbody id="schedule-body"></tbody>
@@ -3562,7 +3566,8 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     <tbody id="eval-body"></tbody>
                 </table>
             </div>
-            <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+            <div style="margin-top:20px; display:flex; justify-content:space-between; gap:10px;">
+                <button class="btn btn-purple" id="finish-evaluation-btn" onclick="finishEvaluation()" style="background:var(--secondary);"><i class="fas fa-archive"></i> Değerlendirmeyi Bitir (Ödevi Eski Ödevlere (Pasife) Al)</button>
                 <button class="btn" onclick="closeEvaluation()">Kapat ve Kaydet</button>
             </div>
         </div>
@@ -3852,7 +3857,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
 
     <!-- Tab 10: Sistem Kullanım Kılavuzu -->
     <div id="tab10" class="tab-content">
-        <h2>🧭 11. Sistem Kullanım Kılavuzu</h2>
+        <h2>🧭 Sistem Kullanım Kılavuzu</h2>
         <p style="font-size:15px; color:var(--text-main); margin-bottom:25px;">
             Bu kılavuz, <strong>Yabgu Eğitim Sistemi (Proje Tabanlı Ders İşleme)</strong> platformunun tüm özelliklerini
             en verimli şekilde kullanabilmeniz için hazırlanmıştır.
@@ -3944,10 +3949,8 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         doldurup <strong>"Çalışmayı Başlat"</strong> butonuna basarak bir takip kartı oluşturun.</li>
                     <li><strong>Değerlendirme (Puan Verme):</strong> Tarih geldiğinde görevin üzerindeki
                         <strong>"Değerlendir"</strong> butonuna basın. Açılan sınıftan yapan öğrencileri işaretleyip
-                        XP'lerini güncelleyin.</li>
-                    <li><strong>Eski Ödevler:</strong> Son teslim tarihi geçmiş olan ödevler kalabalık yapmamak için
-                        otomatik olarak <em>"Eski Ödevler (Pasif)"</em> arşivine taşınır. Dilerseniz tarihini düzenleyip
-                        tekrar aktif edebilirsiniz.</li>
+                        XP'lerini güncelleyin. Eğer öğrenci okula gelmediyse <strong>"Gelmedi"</strong> seçeneğini işaretleyerek öğrenciyi muaf (0) tutabilir, haksız ceza XP puanı kesilmesini önleyebilirsiniz.</li>
+                    <li><strong>Eski Ödevler ve Arşivleme:</strong> Değerlendirmeyi tamamladığınızda pencerenin altındaki <strong>"Değerlendirmeyi Bitir (Ödevi Eski Ödevlere (Pasife) Al)"</strong> butonuna tıklayarak ödevi hemen <em>"Eski Ödevler (Pasif)"</em> arşivine taşıyabilirsiniz.</li>
                     <li><strong>Raporlama:</strong> Kartın altındaki ikonlara (WA/BiP) tıklayarak ödevi
                         yapanlar/yapmayanlar listesini tek tıkla veli gruplarına gönderin.</li>
                 </ul>
@@ -4013,7 +4016,16 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                 </ul>
             </div>
 
-
+            <!-- 11 -->
+            <div class="form-box" style="border-left: 4px solid #f97316;">
+                <h3 style="color: #f97316; margin-top:0;"><i class="fas fa-chart-bar"></i> 11. Soru Çözüm Takip Sistemi</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Veli Veri Girişi:</strong> Öğrenci seçildiğinde beliren WhatsApp butonuyla veliye özel, otomatik tanımlanmış bir form linki gönderebilirsiniz. Veliler bu linkten öğrencinin soru çözümlerini kolayca aktarabilir.</li>
+                    <li><strong>Öğretmen Veri Girişi:</strong> WhatsApp butonunun yanındaki <strong>"Forma Git (Veri Gir)"</strong> butonuna basarak anında o öğrencinin formuna ulaşabilir ve doğrudan veri girişi yapabilirsiniz.</li>
+                    <li><strong>Veri Kontrolü:</strong> Sağdaki veri tablosunda <strong>"İŞLEM" (Sil)</strong> butonuyla hatalı girişleri anında silebilirsiniz.</li>
+                    <li><strong>Grafik & AI Analizi:</strong> Gelen verilerle Radar ve Eğilim grafikleri otomatik oluşur. Yapay zeka butonlarıyla (AI) saniyeler içinde Veli ve Öğrenci koçluk raporları oluşturabilirsiniz.</li>
+                </ul>
+            </div>
 
         </div>
     </div>
@@ -4045,7 +4057,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <!-- Soru Çözüm Takip Sekmesi (4 Altın Kural) -->
     <div id="tab11" class="tab-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-            <h2 style="margin: 0;">📊 12. Soru Çözüm Takip Sistemi</h2>
+            <h2 style="margin: 0;">📊 11. Soru Çözüm Takip Sistemi</h2>
             <button class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-weight: 600;" onclick="openSoruTakipKagitFormu()">
                 <i class="fas fa-print"></i> A4 Soru Takip Formu Yazdır (OCR)
             </button>
@@ -4071,11 +4083,16 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>VELİ VERİ GİRİŞ LİNKİ: (Kural 1)</label>
+                        <label>VELİ VERİ GİRİŞ LİNKİ:</label>
                         <input type="text" id="soru-takip-link-output" readonly placeholder="Öğrenci seçince link üretilir..." style="margin-bottom: 10px;">
-                        <button class="btn btn-purple" id="soru-takip-whatsapp-btn" style="width: 100%;">
-                            <i class="fab fa-whatsapp"></i> WhatsApp'tan Gönder
-                        </button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-purple" id="soru-takip-whatsapp-btn" style="flex: 1;">
+                                <i class="fab fa-whatsapp"></i> WhatsApp'tan Gönder
+                            </button>
+                            <button class="btn" style="flex: 1; background-color: var(--secondary); color: white;" onclick="if(document.getElementById('soru-takip-link-output').value) window.open(document.getElementById('soru-takip-link-output').value, '_blank')">
+                                <i class="fas fa-external-link-alt"></i> Forma Git (Veri Gir)
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -4129,11 +4146,12 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                                 <th>⬜ BOŞ</th>
                                 <th>🙋 Öğr. Soru</th>
                                 <th>MOD</th>
+                                <th>İŞLEM</th>
                             </tr>
                         </thead>
                         <tbody id="soru-takip-table-body">
                             <tr>
-                                <td colspan="9">Lütfen sol taraftan bir öğrenci seçiniz.</td>
+                                <td colspan="10">Lütfen sol taraftan bir öğrenci seçiniz.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -4179,7 +4197,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/ui-tracking.js?v=4"></script>
     <script src="js/ui-exams.js?v=4"></script>
     <script src="js/ui-proje-gruplari.js?v=4"></script>
-    <script src="js/auth.js?v=4"></script>
+    <script src="js/auth.js?v=6"></script>
     <script src="js/ui-soru-takip.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

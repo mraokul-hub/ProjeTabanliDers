@@ -472,8 +472,27 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             clearForm(); renderStudentTable(); saveData();
         }
 
-        function editStudent(index) { const student = studentData[index]; document.getElementById('sira-no').value = student.sira; document.getElementById('okul-no').value = student.no; document.getElementById('ad-soyad').value = student.adSoyad; document.getElementById('sinif').value = student.sinif; document.getElementById('xp-input').value = student.xp || 0; document.getElementById('ilgi-alani-input').value = (student.ilgi_alanlari && student.ilgi_alanlari[0]) || ''; document.getElementById('edit-index').value = index; }
-        function deleteStudent(index) { if (confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) { studentData.splice(index, 1); renderStudentTable(); saveData(); clearForm(); } }
+        function editStudent(index) { 
+            if (index < 0 || index >= studentData.length) return;
+            const student = studentData[index]; 
+            if (!student) return;
+            document.getElementById('sira-no').value = student.sira || ''; 
+            document.getElementById('okul-no').value = student.no || ''; 
+            document.getElementById('ad-soyad').value = student.adSoyad || ''; 
+            document.getElementById('sinif').value = student.sinif || ''; 
+            document.getElementById('xp-input').value = student.xp || 0; 
+            document.getElementById('ilgi-alani-input').value = (student.ilgi_alanlari && student.ilgi_alanlari[0]) || ''; 
+            document.getElementById('edit-index').value = index; 
+        }
+        function deleteStudent(index) { 
+            if (index < 0 || index >= studentData.length) return;
+            if (confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) { 
+                studentData.splice(index, 1); 
+                renderStudentTable(); 
+                saveData(); 
+                clearForm(); 
+            } 
+        }
         function toggleXPPopup(btn, event) {
             if (event) {
                 event.stopPropagation();
@@ -568,7 +587,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                 checkedBoxes.forEach(cb => targetIndexes.push(parseInt(cb.getAttribute('data-index'))));
             } else if (classVal) {
                 for (let i = 0; i < studentData.length; i++) {
-                    if (studentData[i].sinif === classVal) targetIndexes.push(i);
+                    if (studentData[i].sinif === classVal || (window.normSinif && window.normSinif(studentData[i].sinif) === window.normSinif(classVal))) targetIndexes.push(i);
                 }
             } else {
                 alert("Lütfen toplu XP vermek için listeden öğrenci seçin veya yukarıdan bir Sınıf seçin.");
@@ -604,6 +623,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
 
 
         function addXP(index, amount, reason = 'Genel') {
+            if (index < 0 || index >= studentData.length || !studentData[index]) return;
 
             if (!studentData[index].xp) studentData[index].xp = 0;
             studentData[index].xp += amount;
@@ -630,6 +650,7 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
 
         let activeXPStudentIndex = -1;
         function showXPLogs(index) {
+            if (index < 0 || index >= studentData.length || !studentData[index]) return;
             activeXPStudentIndex = index;
             const student = studentData[index];
             document.getElementById('xp-modal-title').innerHTML = `<i class="fas fa-star" style="color:var(--yellow);"></i> ${student.adSoyad} (${student.xp || 0} XP) - Geçmiş ve Rubrik`;
@@ -680,10 +701,18 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             showXPLogs(activeXPStudentIndex); // Refresh modal
         }
         function searchStudents() {
-            const query = document.getElementById('search-input').value.toLocaleLowerCase('tr-TR'); const selectedClass = document.getElementById('class-view-filter').value;
-            const filtered = studentData.filter(student => {
-                const matchesQuery = (student.adSoyad || '').toLocaleLowerCase('tr-TR').includes(query) || (student.no || '').toString().includes(query);
-                const matchesClass = selectedClass === "" || student.sinif === selectedClass;
+            const searchInput = document.getElementById('search-input');
+            const classViewFilter = document.getElementById('class-view-filter');
+            const query = searchInput ? searchInput.value.toLocaleLowerCase('tr-TR').trim() : '';
+            const selectedClass = classViewFilter ? classViewFilter.value.trim() : '';
+            const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+
+            const filtered = (studentData || []).filter(student => {
+                if (!student) return false;
+                const studentName = (student.adSoyad || '').toLocaleLowerCase('tr-TR');
+                const studentNo = (student.no || '').toString();
+                const matchesQuery = !query || studentName.includes(query) || studentNo.includes(query);
+                const matchesClass = !selectedClass || student.sinif === selectedClass || norm(student.sinif) === norm(selectedClass);
                 return matchesQuery && matchesClass;
             });
             renderStudentTable(filtered);

@@ -43,8 +43,11 @@
         function pgLoad() {
             try {
                 const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-                projeGruplariData = raw.projeGruplari || [];
-            } catch (e) { projeGruplariData = []; }
+                const loaded = raw.projects || raw.projeGruplari || [];
+                if (loaded.length > 0 && (!projeGruplariData || projeGruplariData.length === 0)) {
+                    projeGruplariData = loaded;
+                }
+            } catch (e) {}
         }
 
         function pgSave() {
@@ -88,7 +91,7 @@
             const sinif = document.getElementById('pg-c-sinif').value;
             const box = document.getElementById('pg-c-member-list');
             if (!sinif) { box.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">Önce sınıf seçin...</span>'; return; }
-            const students = studentData.filter(s => s.sinif === sinif).sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
+            const students = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
             if (!students.length) { box.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">Bu sınıfta öğrenci yok.</span>'; return; }
             box.innerHTML = students.map(s =>
                 `<label style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--card-bg);cursor:pointer;font-size:12px;font-weight:600;">
@@ -144,11 +147,13 @@
             const searchInput = document.getElementById('pg-search');
             const searchF = searchInput ? searchInput.value.toLocaleLowerCase('tr-TR') : '';
 
-            const list = projeGruplariData.filter(g => {
+            const list = (projeGruplariData || []).filter(g => {
+                if (!g) return false;
                 if (filterType && g.type !== filterType) return false;
                 if (filterSinif && g.sinif !== filterSinif) return false;
                 if (searchF) {
-                    const haystack = (g.title + (g.ders || '') + g.members.map(m => m.name).join(' ')).toLocaleLowerCase('tr-TR');
+                    const membersList = Array.isArray(g.members) ? g.members : [];
+                    const haystack = ((g.title || '') + (g.ders || '') + membersList.map(m => m.name || '').join(' ')).toLocaleLowerCase('tr-TR');
                     if (!haystack.includes(searchF)) return false;
                 }
                 return true;
@@ -163,19 +168,21 @@
 
             container.innerHTML = list.map(g => {
                 const color = typeColors[g.type] || '#3b82f6';
-                const donePh = g.asamalar.filter(a => a.durum === 'done').length;
-                const totalPh = g.asamalar.length;
-                const avgScore = g.members.length ? Math.round(g.members.reduce((s, m) => s + m.score, 0) / g.members.length) : 0;
+                const members = Array.isArray(g.members) ? g.members : [];
+                const asamalar = Array.isArray(g.asamalar) ? g.asamalar : [];
+                const donePh = asamalar.filter(a => a && a.durum === 'done').length;
+                const totalPh = asamalar.length;
+                const avgScore = members.length ? Math.round(members.reduce((s, m) => s + (m.score || 0), 0) / members.length) : 0;
                 const scoreColor = avgScore >= 70 ? '#10b981' : avgScore >= 45 ? '#f59e0b' : '#ef4444';
 
-                const phaseBar = g.asamalar.map(a =>
-                    `<div class="pg-phase-step ${a.durum}" title="${a.label}"></div>`
+                const phaseBar = asamalar.map(a =>
+                    `<div class="pg-phase-step ${a.durum || ''}" title="${a.label || ''}"></div>`
                 ).join('');
 
-                const chips = g.members.map(m => {
-                    const dot = m.score >= 70 ? 'pg-score-high' : m.score >= 45 ? 'pg-score-medium' : 'pg-score-low';
+                const chips = members.map(m => {
+                    const dot = (m.score || 0) >= 70 ? 'pg-score-high' : (m.score || 0) >= 45 ? 'pg-score-medium' : 'pg-score-low';
                     return `<span class="pg-member-chip ${m.aktif ? '' : 'inactive'}">
-                    <span class="pg-score-dot ${dot}"></span>${m.name}
+                    <span class="pg-score-dot ${dot}"></span>${m.name || ''}
                 </span>`;
                 }).join('');
 
@@ -630,7 +637,7 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
         }
 
         // ── Tab9 açılınca init ──
-        const _origOpenTab = openTab ? null : null;
+        const _origOpenTab = typeof openTab !== 'undefined' ? openTab : null;
         document.addEventListener('DOMContentLoaded', () => {
             pgLoad();
             pgFillSinifDropdowns();

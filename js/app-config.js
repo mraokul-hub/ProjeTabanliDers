@@ -18,6 +18,11 @@ let tempExcelRows = [];
 let tempExcelHeaders = [];
 const STORAGE_KEY = 'proje_tabanli_ders_data';
 
+// Sınıf adı standardizasyonu (7/A, 7-A, 7 A -> 7A)
+window.normSinif = function(s) {
+    return String(s || '').replace(/[\/_\-\s]/g, '').trim().toUpperCase();
+};
+
 // TEMA YÖNETİMİ
 let currentTheme = localStorage.getItem('theme') || 'auto';
 function setTheme(theme) { currentTheme = theme; localStorage.setItem('theme', theme); applyTheme(); }

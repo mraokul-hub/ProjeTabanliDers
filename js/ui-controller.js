@@ -62,8 +62,8 @@ function openTab(tabId) {
     if (mobBtn) mobBtn.classList.add('active');
 
     if (tabId === 'tab9') {
-        pgLoad();
-        pgRenderList();
+        if (typeof pgLoad === 'function') pgLoad();
+        if (typeof pgRenderList === 'function') pgRenderList();
     }
 
     if (tabId === 'tab-admin') {
@@ -97,13 +97,17 @@ function closeMobileMenuOnOverlay(event) {
 // DİĞER STANDART İŞLEVLER (Tablo Render, Filtreleme, vb. KORUNDU)
 function renderStudentTable(dataToRender = null) {
     if (!dataToRender) {
-        searchStudents();
+        if (typeof searchStudents === 'function') {
+            searchStudents();
+        }
         return;
     }
-    // Eski menüleri (body'ye taşınmış olanları) temizle
-    document.querySelectorAll('body > .xp-popup-panel').forEach(p => p.remove());
+    // Eski menüleri (body'ye taşınmış olanları) temizle, ancak toplu XP panelini koru
+    document.querySelectorAll('body > .xp-popup-panel:not(.bulk-xp-panel)').forEach(p => p.remove());
 
-    const tbody = document.getElementById('student-table-body'); tbody.innerHTML = '';
+    const tbody = document.getElementById('student-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
     dataToRender.forEach((student) => {
         const realIndex = studentData.indexOf(student);
 
@@ -154,7 +158,8 @@ function renderStudentTable(dataToRender = null) {
             `;
         tbody.appendChild(tr);
     });
-    document.getElementById('select-all').checked = false;
+    const selectAllEl = document.getElementById('select-all');
+    if (selectAllEl) selectAllEl.checked = false;
     updateClassDropdown();
     
     // Öğrenci tablosu yenilendiğinde, Soru Takip modülündeki dropdown'ı da senkronize et
@@ -186,7 +191,7 @@ function updateClassDropdown() {
     if (trackClassContainer) {
         trackClassContainer.innerHTML = '';
         classes.forEach(c => {
-            const studentsInClass = studentData.filter(s => s.sinif === c).sort((a, b) => a.no - b.no);
+            const studentsInClass = studentData.filter(s => s.sinif === c || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(c))).sort((a, b) => a.no - b.no);
             const div = document.createElement('div');
             div.className = 'track-class-card';
             div.innerHTML = `

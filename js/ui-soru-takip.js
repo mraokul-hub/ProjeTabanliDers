@@ -157,10 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // ─────────────────────────────────────────────
         generateLink(sid) {
             if (!window.currentUser?.uid) return;
-            const base    = window.location.origin;
+            
+            let baseUrl = "https://mraokul-hub.github.io";
+            if (window.location.origin && window.location.origin.startsWith('http')) {
+                baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+            }
+            
             const student = typeof studentData !== 'undefined' ? studentData.find(s => s.no == sid) : null;
             const sname   = student ? student.adSoyad : '';
-            const link    = `${base}/veli-form.html?uid=${window.currentUser.uid}&sid=${sid}&sname=${encodeURIComponent(sname)}`;
+            const link    = `${baseUrl}/veli-form.html?uid=${window.currentUser.uid}&sid=${sid}&sname=${encodeURIComponent(sname)}`;
             if (this.linkOutput) this.linkOutput.value = link;
         },
 
@@ -257,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.currentData = [];
 
             if (!data) {
-                this.tableBody.innerHTML = '<tr><td colspan="9">Henüz veri girişi yapılmamış.</td></tr>';
+                this.tableBody.innerHTML = '<tr><td colspan="10">Henüz veri girişi yapılmamış.</td></tr>';
                 this.destroyCharts();
                 return;
             }
@@ -305,6 +310,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 style="font-size:10px;padding:3px 7px;background:#F97316;color:#fff;border:none;border-radius:5px;cursor:pointer;margin-left:4px;">
                                 Fotoğrafı Gör</button>`
                             : ''}
+                    </td>
+                    <td style="text-align:center;">
+                        <button onclick="window.SoruTakipUI.deleteEntry('${entry.id}')" style="background: none; border: none; color: var(--red); cursor: pointer; padding: 4px;" title="Bu kaydı sil">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </td>`;
                 this.tableBody.appendChild(tr);
             });
@@ -318,6 +328,20 @@ document.addEventListener('DOMContentLoaded', () => {
             win.document.write(`<html><body style="margin:0;background:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;">
                 <img src="${entry.fotoBase64}" style="max-width:100%;max-height:100vh;border-radius:8px;">
                 </body></html>`);
+        },
+
+        deleteEntry(entryId) {
+            if (!window.currentUser?.uid || !this.studentSelect.value) return;
+            if (!confirm('Bu kayıt tamamen silinecek. Öğrenci tablosuna otomatik olarak eklenmiş XP varsa manuel düşmeniz gerekebilir, devam etmek istiyor musunuz?')) return;
+            const sid = this.studentSelect.value;
+            firebase.database().ref(`soru_takip_forms/${window.currentUser.uid}/${sid}/${entryId}`).remove()
+                .then(() => {
+                    if (typeof window.showStatus === 'function') window.showStatus('Kayıt başarıyla silindi.', false);
+                })
+                .catch(err => {
+                    console.error("Silme hatası:", err);
+                    alert("Kayıt silinemedi!");
+                });
         },
 
         // ─────────────────────────────────────────────

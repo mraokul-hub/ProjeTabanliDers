@@ -1,14 +1,14 @@
-﻿// ============================================================
+// ============================================================
 // ui-schedule.js
 // Ders programı yönetimi
 // ============================================================
 
         function renderSchedule() {
             const body = document.getElementById('schedule-body'); if (!body) return; body.innerHTML = '';
-            const times = [...new Set(scheduleData.map(s => s.time))].sort(); const days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
+            const times = [...new Set(scheduleData.map(s => s.time))].sort(); const days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
             // Renk paleti ve derse göre renk eşleştirme
-            const uniqueLessons = [...new Set(scheduleData.map(s => s.lesson.trim()))];
+            const uniqueLessons = [...new Set(scheduleData.map(s => (s.lesson ? s.lesson.trim() : '')))].filter(Boolean);
             const colorPalette = [
                 '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444',
                 '#06b6d4', '#d946ef', '#f97316', '#14b8a6', '#6366f1',
@@ -28,7 +28,8 @@
                         .filter(s => s.day === day && s.time === time);
                     entries.forEach(e => {
                         const div = document.createElement('div');
-                        const bgColor = colorMap[e.lesson.trim()] || 'var(--secondary)';
+                        const lessonClean = (e.lesson ? e.lesson.trim() : '');
+                        const bgColor = colorMap[lessonClean] || 'var(--secondary)';
                         div.style.cssText = `background:${bgColor}; color:white; padding:5px 8px; border-radius:8px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between; align-items:center;`;
                         div.innerHTML = `<span>${e.lesson}</span>`;
                         const btn = document.createElement('button');
@@ -63,7 +64,7 @@
                             const mm = String(totalMinutes % 60).padStart(2, '0');
                             time = hh + ':' + mm;
                         }
-                        if (day && time && lesson) { const valid = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"]; const clean = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase(); if (valid.includes(clean)) scheduleData.push({ day: clean, time, lesson }); }
+                        if (day && time && lesson) { const valid = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]; const clean = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase(); if (valid.includes(clean)) scheduleData.push({ day: clean, time, lesson }); }
                     });
                     scheduleData.sort((a, b) => a.time.localeCompare(b.time)); renderSchedule(); saveData(); alert("Program yüklendi."); fileInput.value = '';
                 }

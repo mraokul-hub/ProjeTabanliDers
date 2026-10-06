@@ -113,7 +113,7 @@ function generateGroups() {
         });
     }
 
-    const filteredStudents = studentData.filter(s => s.sinif === selectedClass && !advancedStudentNames.includes(s.adSoyad));
+    const filteredStudents = studentData.filter(s => (s.sinif === selectedClass || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(selectedClass))) && !advancedStudentNames.includes(s.adSoyad));
     if (filteredStudents.length === 0) return alert('Bu sınıfa ait (proje/ileri düzey gruplar haricinde) öğrenci bulunamadı!');
 
     let groupSize = filteredStudents.length > 30 ? 6 : (filteredStudents.length > 20 ? 5 : 4);
@@ -426,7 +426,7 @@ function updatePickerLabel(dropdown) {
 
 function updateStudentPickers() {
     const selectedClass = document.getElementById('class-filter').value;
-    const allStudentsInClass = studentData.filter(s => s.sinif === selectedClass);
+    const allStudentsInClass = studentData.filter(s => s.sinif === selectedClass || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(selectedClass)));
     
     // Proje gruplarındaki (İleri Çalışma / Kulüp) öğrencileri filtrele
     let advancedStudentNames = [];

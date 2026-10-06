@@ -629,8 +629,9 @@
                     const raw = localStorage.getItem(STORAGE_KEY);
                     if (raw) {
                         const parsed = JSON.parse(raw);
-                        if (parsed && Array.isArray(parsed.studentData)) {
-                            allStudents = parsed.studentData;
+                        const list = (parsed && (parsed.students || parsed.studentData)) ? (parsed.students || parsed.studentData) : [];
+                        if (Array.isArray(list) && list.length > 0) {
+                            allStudents = list;
                         }
                     }
                 } catch (e) {}

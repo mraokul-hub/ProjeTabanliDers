@@ -188,7 +188,7 @@
             const kritSinav = document.getElementById('krit-sinav').checked;
             const kritKatilim = document.getElementById('krit-katilim').checked;
 
-            const hedefOgrenciler = studentData.filter(s => sinifFiltre ? s.sinif === sinifFiltre : true);
+            const hedefOgrenciler = studentData.filter(s => sinifFiltre ? (s.sinif === sinifFiltre || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinifFiltre))) : true);
             if (hedefOgrenciler.length < 2) {
                 document.getElementById('ileri-result-panel').innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted);">Bu sınıfta yeterli öğrenci bulunamadı.</div>';
                 return;
@@ -539,7 +539,7 @@
             const nameEl = document.getElementById('chart-student-name');
             if (nameEl) nameEl.textContent = (classFilter || 'Tüm Sınıflar') + ' — Öğrenme Stilleri Analizi';
 
-            let filteredStudents = studentData.filter(s => classFilter ? s.sinif === classFilter : true);
+            let filteredStudents = studentData.filter(s => classFilter ? (s.sinif === classFilter || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(classFilter))) : true);
             if (filteredStudents.length === 0) { renderEmptyChart('Öğrenci bulunamadı.'); return; }
 
             let vCount = 0, aCount = 0, kCount = 0, uCount = 0;
@@ -643,7 +643,7 @@
             const lastExam = [...examData].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
             if (!lastExam || !lastExam.results) { renderEmptyChart('Sınav sonucu bulunamadı.'); return; }
 
-            let filteredStudents = studentData.filter(s => classFilter ? s.sinif === classFilter : true);
+            let filteredStudents = studentData.filter(s => classFilter ? (s.sinif === classFilter || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(classFilter))) : true);
 
             const labels = [];
             const data = [];
@@ -930,7 +930,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 return;
             }
 
-            const studentsInClass = studentData.filter(s => s.sinif === sinif).sort((a, b) => a.no - b.no);
+            const studentsInClass = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => a.no - b.no);
 
             if (studentsInClass.length === 0) {
                 container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Bu sınıfta öğrenci bulunamadı.</p>';
@@ -990,7 +990,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             const sinif = document.getElementById('eval-class-select').value;
             if (!sinif) return alert('Lütfen önce PDF olarak indirmek/yazdırmak istediğiniz sınıfı seçin.');
 
-            const studentsInClass = studentData.filter(s => s.sinif === sinif).sort((a, b) => a.no - b.no);
+            const studentsInClass = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => a.no - b.no);
             if (studentsInClass.length === 0) return alert('Bu sınıfta yazdırılacak öğrenci bulunamadı.');
 
             const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));

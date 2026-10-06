@@ -56,17 +56,23 @@ async function _executeSaveData() {
         
         // --- A. STUDENTS ---
         let currentStudents = {};
-        studentData.forEach(s => { if (s && s.no) currentStudents[s.no] = s; });
+        studentData.forEach((s, idx) => {
+            if (s) {
+                const rawKey = s.no ? String(s.no) : ('st_' + (s.sira || idx));
+                const safeKey = rawKey.replace(/[\/\.\#\$\/\[\]]/g, '_');
+                currentStudents[safeKey] = s;
+            }
+        });
         
         // Eklenenler / Değişenler
-        for (let no in currentStudents) {
-            if (JSON.stringify(currentStudents[no]) !== JSON.stringify(_lastSavedRefs.students[no])) {
-                updates[`app_data/${uid}/students/${no}`] = currentStudents[no];
+        for (let safeKey in currentStudents) {
+            if (JSON.stringify(currentStudents[safeKey]) !== JSON.stringify(_lastSavedRefs.students[safeKey])) {
+                updates[`app_data/${uid}/students/${safeKey}`] = currentStudents[safeKey];
             }
         }
         // Silinenler
-        for (let no in _lastSavedRefs.students) {
-            if (!currentStudents[no]) updates[`app_data/${uid}/students/${no}`] = null;
+        for (let safeKey in _lastSavedRefs.students) {
+            if (!currentStudents[safeKey]) updates[`app_data/${uid}/students/${safeKey}`] = null;
         }
         _lastSavedRefs.students = JSON.parse(JSON.stringify(currentStudents)); // Deep clone
         
@@ -231,17 +237,61 @@ async function loadFromLocalStorage() {
         }
 
         // 2. İlk Yükleme (once 'value') - Hızlı başlangıç
+        let studentsFound = false;
         const snap = await window.db.ref().child('app_data/' + uid + '/students').once('value');
-        if(snap.exists()) {
+        if (snap.exists()) {
             const val = snap.val();
-            studentData = Object.values(val);
-            _lastSavedRefs.students = val;
-            fullUIRender();
-        } else {
-            // Firebase'de öğrenci kaydı yoksa eski oturumdan kalan yerel hayalet verileri temizle
-            studentData = [];
-            _lastSavedRefs.students = {};
-            fullUIRender();
+            let loadedStudents = [];
+            let normalizedRefs = {};
+            if (Array.isArray(val)) {
+                loadedStudents = val.filter(Boolean);
+                loadedStudents.forEach((s, idx) => {
+                    const safeKey = s.no ? String(s.no).replace(/[\/\.\#\$\/\[\]]/g, '_') : ('st_' + idx);
+                    normalizedRefs[safeKey] = s;
+                });
+            } else if (typeof val === 'object' && val !== null) {
+                loadedStudents = Object.values(val);
+                normalizedRefs = val;
+            }
+            if (loadedStudents.length > 0) {
+                studentData = loadedStudents;
+                _lastSavedRefs.students = normalizedRefs;
+                studentsFound = true;
+                fullUIRender();
+            }
+        }
+
+        // Göç (Migration) Kontrolü: Eğer öğretmenin klasörü boşsa ve yönetici ise app_data/main_data'ya bak
+        if (!studentsFound && currentUser.email === 'mremzi@gmail.com') {
+            try {
+                const adminSnap = await window.db.ref('app_data/main_data/students').once('value');
+                if (adminSnap.exists()) {
+                    const adminVal = adminSnap.val();
+                    const adminStudents = Array.isArray(adminVal) ? adminVal.filter(Boolean) : Object.values(adminVal || {});
+                    if (adminStudents.length > 0) {
+                        console.log("[Göç] Yönetici verileri main_data üzerinden içe aktarılıyor...");
+                        studentData = adminStudents;
+                        _lastSavedRefs.students = Array.isArray(adminVal) ? {} : adminVal;
+                        studentsFound = true;
+                        fullUIRender();
+                        saveData();
+                    }
+                }
+            } catch (err) {
+                console.warn("Admin migration check hatası:", err);
+            }
+        }
+
+        // Eğer Firebase'de öğrenci yoksa ama yerel önbellekte öğrenci varsa, veriyi SİLME; Firebase'e senkronize et!
+        if (!studentsFound) {
+            if (studentData && studentData.length > 0) {
+                console.log("[Veri] Yerel depolamadaki öğrenciler Firebase'e aktarılıyor...");
+                saveData();
+            } else {
+                studentData = [];
+                _lastSavedRefs.students = {};
+                fullUIRender();
+            }
         }
 
         // 3. Child dinleyicileri (Sadece değişeni indir - Minimum Bandwidth)
@@ -264,33 +314,58 @@ function attachListeners(uid) {
     // --- STUDENTS ---
     db.ref(`app_data/${uid}/students`).on('child_changed', snap => {
         const student = snap.val();
-        const idx = studentData.findIndex(s => s.no === student.no);
-        if (idx > -1) studentData[idx] = student;
-        _lastSavedRefs.students[student.no] = student;
+        if (!student) return;
+        const targetNo = String(student.no || snap.key);
+        const idx = studentData.findIndex(s => String(s.no) === targetNo);
+        if (idx > -1) {
+            studentData[idx] = student;
+        } else {
+            studentData.push(student);
+        }
+        _lastSavedRefs.students[snap.key] = student;
         if (!isUIActive()) {
             renderStudentTable();
             if (typeof updateStudentPickers === 'function') updateStudentPickers();
         }
     });
+
     db.ref(`app_data/${uid}/students`).on('child_added', snap => {
         const student = snap.val();
-        if (!studentData.find(s => s.no === student.no)) {
+        if (!student) return;
+        const targetNo = String(student.no || snap.key);
+        const exists = studentData.some(s => String(s.no) === targetNo);
+        if (!exists) {
             studentData.push(student);
-            _lastSavedRefs.students[student.no] = student;
+            _lastSavedRefs.students[snap.key] = student;
             if (!isUIActive() && initialLoadComplete) renderStudentTable();
         }
     });
+
     db.ref(`app_data/${uid}/students`).on('child_removed', snap => {
+        const key = snap.key;
         const student = snap.val();
-        studentData = studentData.filter(s => s.no !== student.no);
-        delete _lastSavedRefs.students[student.no];
-        if (!isUIActive()) renderStudentTable();
+        const targetNo = (student && student.no) ? String(student.no) : String(key);
+
+        // Key migration koruması: Eğer öğrenci hala geçerli bir no ile listede/referansta varsa silme
+        const stillInRefs = Object.values(_lastSavedRefs.students || {}).some(s => s && String(s.no) === targetNo);
+        if (!stillInRefs) {
+            studentData = studentData.filter(s => String(s.no) !== targetNo);
+            delete _lastSavedRefs.students[key];
+            if (!isUIActive()) renderStudentTable();
+        }
     });
 
     // Diğer koleksiyonlar genellikle çok büyük olmadığı için on('value') ile kolayca dinlenebilir
     db.ref(`app_data/${uid}/projects`).on('value', snap => {
         const val = snap.val() || {};
-        if (typeof projeGruplariData !== 'undefined') projeGruplariData = Object.values(val);
+        const projects = Object.values(val).map(p => ({
+            ...p,
+            members: p.members || [],
+            asamalar: p.asamalar || [],
+            odevLinks: p.odevLinks || [],
+            mesajlar: p.mesajlar || []
+        }));
+        if (typeof projeGruplariData !== 'undefined') projeGruplariData = projects;
         _lastSavedRefs.projects = val;
         if (!isUIActive() && initialLoadComplete && typeof pgRenderList === 'function') pgRenderList();
     });
