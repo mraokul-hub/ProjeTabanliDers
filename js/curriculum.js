@@ -1,13 +1,13 @@
 // ============================================================
 // curriculum.js
-// MEB Türkiye Yüzyılı Maarif Modeli & Karma Yapı
-// Kaynak: MEB 2024-2025 Ders Kitapları (Gerçek Tema/Ünite İsimleri)
-// YENİ MODEL (Tema/Öğrenim Çıktısı): 1,2,3,5,6,7,9,10,11
-// ESKİ MODEL (Ünite/Kazanım): 4,8,12
-// Son güncelleme: Yeni Model sınıfların "Öğrenim Çıktıları" detaylandırılarak tamamlandı (4-5 maddeye çıkarıldı).
+// MEB Türkiye Yüzyılı Maarif Modeli & Karma Yapı (Master Veritabanı)
+// Kaynak: MEB 2024-2025 Ders Kitapları & TTKB Resmi Müfredat
+// YENİ MODEL (Tema / Öğrenim Çıktısı): 1, 2, 3, 5, 6, 7, 9, 10, 11. Sınıflar
+// ESKİ MODEL (Ünite / Kazanım): 4, 8, 12. Sınıflar (LGS, YKS ve İlkokul Geçiş)
+// Güncelleme Tarihi: 2026-10-06
 // ============================================================
 
-        const curriculumData = {
+const curriculumData = {
     "1. Sınıf": {
         "Türkçe": {
             "Güzel Davranışlarımız (Tema 1)": [
@@ -638,190 +638,304 @@
     "4. Sınıf": {
         "Türkçe": {
             "1. Tema: Okuma Kültürü": [
-                "Okuduğu metnin konusunu belirler.",
-                "Metinle ilgili soruları cevaplar."
+                "Okuduğu metnin konusunu ve ana fikrini belirler.",
+                "Metinle ilgili soruları cevaplar ve metne farklı başlıklar önerir.",
+                "Sözcüklerin anlamlarını tahmin etmek için görsel ve bağlamsal ipuçlarını kullanır.",
+                "Noktalama işaretlerini (nokta, virgül, soru, ünlem) işlevine uygun kullanır."
             ],
             "2. Tema: Millî Mücadele ve Atatürk": [
-                "Millî Mücadele kahramanlarını anlatan metinleri okur."
+                "Millî Mücadele kahramanlarını ve Atatürk'ün hayatını anlatan metinleri kavrar.",
+                "Metindeki olayların gelişimini ve neden-sonuç ilişkilerini açıklar.",
+                "Dinlediklerini ve okuduklarını kendi cümleleriyle özetler.",
+                "Vatan sevgisi ve bağımsızlık bilincini metin üzerinden yorumlar."
             ],
             "3. Tema: Erdemler": [
-                "Erdemlerle ilgili metinlerin ana fikrini bulur."
+                "Erdemlerle (doğruluk, dürüstlük, sabır, vefa) ilgili metinlerin ana fikrini bulur.",
+                "Metindeki kahramanların özelliklerini karşılaştırır ve karakter tahlili yapar.",
+                "Nezaket, saygı ve sevgi dilini yansıtan özgün hikâyeler yazar.",
+                "Deyim ve atasözlerinin metne kattığı anlamı kavrar."
             ],
             "4. Tema: Millî Kültürümüz": [
-                "Kültürel ögelerimizi yansıtan metinleri yorumlar."
+                "Millî kültür ögelerimizi (gelenekler, bayramlar, masallar, mimari) yansıtan metinleri yorumlar.",
+                "Metinlerde geçen kültürel kavramların anlamını açıklar ve söz varlığını zenginleştirir.",
+                "Kültürel mirasımızın korunmasına yönelik görüş bildirir ve sunum yapar.",
+                "Şiir ve düzyazı arasındaki biçimsel ve anlamsal farkları ayırt eder."
             ],
             "5. Tema: Doğa ve Evren": [
-                "Doğa olaylarını konu alan metinleri anlar."
+                "Doğa olaylarını ve çevre bilincini konu alan bilgilendirici metinleri anlar.",
+                "Metindeki gerçek ve hayal ürünü unsurları ayırt eder.",
+                "Canlılar ve çevre arasındaki etkileşimi anlatan gözlem metni yazar.",
+                "Görsellerden hareketle doğa olaylarını ve mevsim döngülerini betimler."
             ],
             "6. Tema: Sanat": [
-                "Sanatın önemini vurgulayan şiirler okur."
+                "Sanatın (müzik, resim, tiyatro, heykel) önemini vurgulayan metinleri okur.",
+                "Şiirlerdeki ritim, kafiye ve ana duyguyu keşfeder.",
+                "Sanatsal bir etkinlikle ilgili duygu ve düşüncelerini sözlü ve yazılı ifade eder.",
+                "Metindeki ana düşünceyi destekleyen yardımcı düşünceleri belirler."
             ],
             "7. Tema: Birey ve Toplum": [
-                "Bireysel farklılıklara saygı duymayı anlatan metinleri okur."
+                "Bireysel farklılıklara ve insan haklarına saygıyı anlatan metinleri okur.",
+                "Empati kurarak metindeki karakterlerin davranışlarını yorumlar.",
+                "Toplumsal kuralların ve iş birliğinin önemini açıklayan düşünce yazısı yazar.",
+                "Dinleme ve konuşma kurallarına uygun olarak sınıf tartışmalarına katılır."
             ],
             "8. Tema: Bilim ve Teknoloji": [
-                "Bilimsel metinlerden bilgi çıkarır."
+                "Bilimsel buluşları ve teknolojik yenilikleri anlatan metinlerden bilgi çıkarır.",
+                "Bilgilendirici metinlerdeki grafik, tablo ve şemaları yorumlar.",
+                "Teknolojinin güvenli ve bilinçli kullanımı konusunda ilkeler belirler.",
+                "Büyük harflerin ve kısaltmaların yazım kurallarına dikkat ederek metin yazar."
             ]
         },
         "Matematik": {
             "1. Ünite: Doğal Sayılar ve Toplama/Çıkarma": [
-                "4, 5, 6 basamaklı doğal sayıları okur ve yazar.",
-                "Doğal sayılarla toplama ve çıkarma işlemi yapar."
+                "4, 5 ve 6 basamaklı doğal sayıları okur, yazar ve basamak değerlerini belirler.",
+                "Doğal sayıları en yakın onluğa veya yüzlüğe yuvarlar.",
+                "En çok dört basamaklı doğal sayılarla toplama ve çıkarma işlemi yapar.",
+                "Toplama ve çıkarma işlemlerinde tahmin stratejilerini kullanır ve zihinden işlem yapar."
             ],
             "2. Ünite: Doğal Sayılarla Çarpma ve Bölme": [
-                "Doğal sayılarla çarpma işlemi yapar.",
-                "Doğal sayılarla bölme işlemi yapar."
+                "En çok üç basamaklı doğal sayıları iki basamaklı doğal sayılarla çarpar.",
+                "En çok dört basamaklı doğal sayıları en çok iki basamaklı doğal sayılara böler.",
+                "10, 100 ve 1000 ile zihinden çarpma ve bölme işlemleri yapar.",
+                "Çarpma ve bölme işlemlerini içeren günlük hayat problemlerini çözer ve kurar."
             ],
             "3. Ünite: Kesirler ve Zaman Ölçme": [
-                "Basit, bileşik ve tam sayılı kesirleri tanır.",
-                "Zaman ölçme birimleri arasındaki ilişkiyi açıklar."
+                "Basit, bileşik ve tam sayılı kesirleri tanır, modellerle gösterir ve sayı doğrusunda sıralar.",
+                "Bir çokluğun belirtilen basit kesir kadarını hesaplar.",
+                "Paydaları eşit kesirlerle toplama ve çıkarma işlemi yapar.",
+                "Zaman ölçme birimleri (saat, dakika, saniye, yıl, ay, hafta, gün) arasındaki ilişkileri dönüştürür."
             ],
             "4. Ünite: Geometrik Cisimler ve Şekiller": [
-                "Üçgen, kare ve dikdörtgeni isimlendirir.",
-                "Küp, kare prizma ve dikdörtgenler prizmasını tanır."
+                "Üçgen, kare ve dikdörtgenin kenar ve köşe özelliklerini inceler ve isimlendirir.",
+                "Kenar uzunluklarına göre üçgen çeşitlerini (eşkenar, ikizkenar, çeşitkenar) sınıflandırır.",
+                "Küp, kare prizma, dikdörtgenler prizması ve silindirin temel özelliklerini inceler.",
+                "Geometrik şekil ve cisimlerle örüntüler oluşturur ve kuralını açıklar."
             ],
             "5. Ünite: Geometride Temel Kavramlar ve Uzunluk Ölçme": [
-                "Açı çeşitlerini belirler.",
-                "Uzunluk ölçme birimlerini kullanır."
+                "Doğru, doğru parçası, ışın ve açı kavramlarını tanır ve modellerini çizer.",
+                "Açıları dar, dik, geniş ve doğru açı olarak sınıflandırır ve iletki ile ölçer.",
+                "Standart uzunluk ölçme birimlerini (milimetre, santimetre, metre, kilometre) birbirine dönüştürür.",
+                "Uzunluk ölçme ile ilgili günlük hayat problemlerini çözer."
             ],
             "6. Ünite: Çevre ve Alan Ölçme, Tartma, Sıvıları Ölçme": [
-                "Kare ve dikdörtgenin çevre uzunluğunu hesaplar.",
-                "Litre ve mililitre kavramlarını kullanır."
+                "Kare ve dikdörtgenin çevre uzunluklarını hesaplar.",
+                "Kare ve dikdörtgenin alanını birim kareler kullanarak modeller ve belirler.",
+                "Kilogram ve gram ilişkisini açıklar, tartma problemleri çözer.",
+                "Litre ve mililitre birimlerini kavrar, sıvı ölçüleri ile ilgili problem çözer."
             ]
         },
         "Fen Bilimleri": {
             "1. Ünite: Yer Kabuğu ve Dünya'mızın Hareketleri": [
-                "Yer kabuğunun yapısını açıklar.",
-                "Dünya'nın dönme ve dolanma hareketlerinin sonuçlarını kavrar."
+                "Yer kabuğunun kayaçlar, mineraller ve fosillerden oluşan yapısını açıklar.",
+                "Fosillerin oluşum süreçlerini ve geçmiş canlılar hakkındaki önemini kavrar.",
+                "Dünya'nın kendi etrafında dönme hareketini ve gece-gündüz oluşumunu açıklar.",
+                "Dünya'nın Güneş etrafında dolanma hareketini ve mevsimlerin oluşumundaki rolünü kavrar."
             ],
             "2. Ünite: Besinlerimiz": [
-                "Sağlıklı beslenme ve besin içeriklerini açıklar."
+                "Canlıların yaşamını sürdürmesi için besinlerin gerekliliğini açıklar.",
+                "Besin içeriklerini (karbonhidrat, protein, yağ, vitamin, su, mineral) ve görevlerini kavrar.",
+                "Dengeli ve sağlıklı beslenmenin vücut sağlığı açısından önemini değerlendirir.",
+                "Alkol ve sigaranın insan sağlığına ve organlara zararlarını tartışır."
             ],
             "3. Ünite: Kuvvetin Etkileri": [
-                "Kuvvetin cisimler üzerindeki hızlandırıcı, yavaşlatıcı ve şekil değiştirici etkilerini kavrar."
+                "Kuvvetin cisimlerin hareket yönünü, hızını değiştirici ve durdurucu etkilerini açıklar.",
+                "Kuvvetin cisimler üzerindeki şekil değiştirici etkisini deneylerle gözlemler.",
+                "Mıknatısların kutuplarını, itme-çekme özelliklerini ve manyetik etkisini keşfeder.",
+                "Mıknatısların günlük yaşamda ve teknolojideki kullanım alanlarına örnekler verir."
             ],
             "4. Ünite: Maddenin Özellikleri": [
-                "Maddenin hallerini ve kütle, hacim özelliklerini açıklar."
+                "Maddelerin duyu organlarıyla fark edilen özelliklerini (sertlik, esneklik vb.) betimler.",
+                "Maddenin kütle ve hacim özelliklerini ölçerek açıklar.",
+                "Maddenin katı, sıvı ve gaz hâllerini tanır ve ayırt eder.",
+                "Isınma ve soğuma sonucu meydana gelen hâl değişimlerini (erime, donma, buharlaşma) deneyle gösterir."
             ],
             "5. Ünite: Aydınlatma ve Ses Teknolojileri": [
-                "Geçmişten günümüze aydınlatma ve ses teknolojilerini tartışır."
+                "Geçmişten günümüze aydınlatma teknolojilerinin gelişimini ve insan yaşamına katkılarını tartışır.",
+                "Uygun aydınlatmanın göz sağlığı ve enerji tasarrufu açısından önemini kavrar.",
+                "Işık kirliliğinin doğal yaşama ve çevreye olumsuz etkilerini açıklar.",
+                "Geçmişten günümüze ses teknolojilerini inceler ve ses kirliliğinin zararlarını tartışır."
             ],
             "6. Ünite: İnsan ve Çevre": [
-                "Bilinçli tüketici olmayı ve kaynakların tasarruflu kullanımını kavrar."
+                "Çevreyi temiz tutmanın ve kaynakları tasarruflu kullanmanın önemini kavrar.",
+                "Geri dönüşümün doğal kaynakların korunmasına ve çevre temizliğine katkısını değerlendirir.",
+                "Bilinçli bir tüketici olarak çevre sorunlarına karşı duyarlı davranışlar sergiler.",
+                "Yerel ve küresel çevre sorunlarının nedenlerini ve çözüm önerilerini araştırır."
             ],
             "7. Ünite: Basit Elektrik Devreleri": [
-                "Basit elektrik devresi kurar ve elemanlarını tanır."
+                "Basit bir elektrik devresini oluşturan elemanları (pil, ampul, anahtar, kablo) tanır ve açıklar.",
+                "Çalışan bir elektrik devresi kurar ve devre elemanlarını test eder.",
+                "Evlerdeki elektrik düğmelerinin ve prizlerin devredeki anahtar görevi gördüğünü kavrar.",
+                "Devrede ampul parlaklığını etkileyen faktörleri keşfeder."
             ]
         },
         "Sosyal Bilgiler": {
             "1. Ünite: Birey ve Toplum": [
-                "Resmî kimlik belgesini inceler.",
-                "Bireysel farklılıklara saygı duyar."
+                "Türkiye Cumhuriyeti kimlik kartındaki bilgileri inceler ve kimlik belgesinin önemini açıklar.",
+                "Yaşamına ilişkin olayları kronolojik sıraya koyar.",
+                "Bireysel farklılıklara saygı duyar ve empati becerisi geliştirir.",
+                "Duygusal, fiziksel ve zihinsel özelliklerinin farkında olarak kendini ifade eder."
             ],
             "2. Ünite: Kültür ve Miras": [
-                "Millî kültür ögelerimizi tanır.",
-                "Millî Mücadele kahramanlarını bilir."
+                "Ailesinin ve çevresinin sözlü tarih araştırmasını yaparak millî kültürü tanır.",
+                "Geleneksel çocuk oyunları ile günümüz oyunlarını karşılaştırır.",
+                "Millî kültür ögelerini (mimari, el sanatları, yemekler) yansıtan eserleri inceler.",
+                "Millî Mücadele kahramanlarının fedakârlıklarını ve bağımsızlık ruhunu kavrar."
             ],
             "3. Ünite: İnsanlar, Yerler ve Çevreler": [
-                "Yönleri bulur ve basit kroki çizer.",
-                "Çevresindeki doğal ve beşerî unsurları ayırt eder."
+                "Doğal ve beşerî yön bulma yöntemlerini kullanarak yönünü belirler.",
+                "Çevresindeki yerleri gösteren basit bir kroki çizer.",
+                "Yaşadığı çevredeki doğal ve beşerî unsurları ayırt eder.",
+                "Hava durumu gözlemleri yapar ve hava olaylarını açıklar.",
+                "Doğal afetlere karşı hazırlıklı olmanın yollarını araştırır."
             ],
             "4. Ünite: Bilim, Teknoloji ve Toplum": [
-                "Teknolojik ürünlerin hayatımızdaki yerini tartışır.",
-                "Buluş yapanların ortak özelliklerini kavrar."
+                "Günlük yaşamında kullandığı teknolojik ürünlerin zaman içindeki gelişimini inceler.",
+                "Teknolojik ürünlerin hayatımızdaki faydalarını ve olası zararlarını tartışır.",
+                "Teknolojik ürünleri amacına uygun ve güvenli şekilde kullanma kurallarını uygular.",
+                "Mucit ve bilim insanlarının ortak özelliklerini fark eder, özgün fikirler üretir."
             ],
             "5. Ünite: Üretim, Dağıtım ve Tüketim": [
-                "Ekonomik faaliyetleri ve meslekleri ilişkilendirir.",
-                "Bilinçli tüketici davranışları sergiler."
+                "İstek ve ihtiyaçlarını ayırt ederek bütçe hazırlama bilinci kazanır.",
+                "Çevresindeki ekonomik faaliyetleri ve meslekleri inceler.",
+                "Bilinçli bir tüketici olarak alışverişte dikkat edilmesi gereken kuralları (TSE, son kullanma vb.) uygular.",
+                "İsrafı önleme ve kaynakları tasarruflu kullanma alışkanlığı geliştirir."
             ],
             "6. Ünite: Etkin Vatandaşlık": [
-                "Çocuk olarak haklarını bilir.",
-                "Sorumluluklarını yerine getirir."
+                "Bir çocuk olarak haklarını bilir ve çocuk haklarının korunmasının önemini kavrar.",
+                "Ailede, okulda ve toplumda üzerine düşen sorumlulukları yerine getirir.",
+                "Eğitsel ve sosyal kulüp faaliyetlerine gönüllü olarak katılır.",
+                "Bağımsızlığımızın sembolleri olan bayrak ve İstiklal Marşı'na saygı duyar."
             ],
             "7. Ünite: Küresel Bağlantılar": [
-                "Dünya üzerindeki çeşitli ülkeleri tanır."
+                "Dünya üzerindeki farklı ülkelerin kültürel özelliklerini araştırır.",
+                "Türkiye'nin komşularını ve Türk cumhuriyetlerini harita üzerinde tanır.",
+                "Farklı kültürlere karşı önyargısız ve hoşgörülü yaklaşım sergiler.",
+                "Küresel sorunlara (çevre, açlık, yoksulluk) duyarlılık geliştirir."
             ]
         },
         "Din Kültürü ve Ahlak Bilgisi": {
             "1. Ünite: Günlük Hayattaki Dini İfadeler": [
-                "Dini ifadeleri günlük hayatta doğru yerde kullanır."
+                "Günlük hayatta kullanılan besmele, selam, hamd, şükür, tekbir gibi dini ifadeleri açıklar.",
+                "Dilek ve dualarda geçen dini ifadeleri doğru yerde kullanır.",
+                "Sübhaneke duasını ezbere okur ve anlamını açıklar."
             ],
             "2. Ünite: İslam'ı Tanıyalım": [
-                "İslam'ın inanç esaslarını ve şartlarını sayar."
+                "İslam'ın inanç esaslarını ve imanın şartlarını kavrar.",
+                "İslam'ın temel ibadetlerini (namaz, oruç, zekat, hac, kelime-i şehadet) tanır.",
+                "Amentü duasını ezbere okur ve anlamını açıklar."
             ],
             "3. Ünite: Güzel Ahlak": [
-                "İslam'ın güzel ahlaka verdiği önemi kavrar."
+                "İslam dininin güzel ahlaka verdiği önemi ayet ve hadislerle açıklar.",
+                "Anne, baba, akraba ve komşulara karşı iyi davranmanın önemini kavrar.",
+                "Fatiha suresini ezbere okur ve anlamını açıklar."
             ],
             "4. Ünite: Hz. Muhammed'i Tanıyalım": [
-                "Hz. Muhammed'in doğumu ve çocukluğunu anlatır."
+                "Hz. Muhammed'in doğumunu, çocukluğunu ve gençliğini öğrenir.",
+                "Hz. Muhammed'in dürüstlüğünü, güvenilirliğini (el-Emin) ve ahlaki erdemlerini kavrar.",
+                "Salli ve Barik dualarını ezbere okur ve anlamlarını açıklar."
             ],
             "5. Ünite: Din ve Temizlik": [
-                "İslam'da temizliğin önemini ve çeşitlerini açıklar."
+                "İslam'ın beden, çevre ve kalp temizliğine verdiği önemi değerlendirir.",
+                "Temizliğin ibadetlerle olan ilişkisini (abdest, boy abdesti) kavrar.",
+                "İhlas suresini ezbere okur ve anlamını açıklar."
             ]
         },
         "İngilizce": {
             "Unit 1: Classroom Rules": [
-                "Sınıf içi yönergeleri ve kuralları söyler."
+                "Sınıf içi nesneleri tanır ve sayar.",
+                "Basit sınıf yönergelerini (Open the door, sit down, be quiet) anlar ve uygular.",
+                "İzin isteme ifadelerini (May I come in? May I take your pencil?) kullanır."
             ],
             "Unit 2: Nationality": [
-                "Ülkeleri ve milliyetleri söyler."
+                "Ülke ve millet adlarını söyler (Turkey - Turkish, England - English).",
+                "Nereden olduğunu ve milliyetini sorar ve söyler (Where are you from? I'm from Turkey).",
+                "Harita üzerinde ülkeleri ve bayrakları eşleştirir."
             ],
             "Unit 3: Cartoons": [
-                "Yeteneklerinden (can/can't) bahseder."
+                "Çizgi film karakterlerinin yeteneklerini anlatır (Superman can fly).",
+                "Yapabildiklerini ve yapamadıklarını ifade eder (I can swim / I can't drive).",
+                "Basit yetenek soruları sorar ve cevaplar (Can you ride a bike?)."
             ],
             "Unit 4: Free Time": [
-                "Boş zaman aktivitelerini anlatır (like/dislike)."
+                "Boş zaman aktivitelerini (playing football, reading comics, dancing) söyler.",
+                "Sevdiklerini ve sevmediklerini ifade eder (I like swimming / I dislike running).",
+                "Arkadaşlarının hobilerini ve ilgi alanlarını sorar."
             ],
             "Unit 5: My Day": [
-                "Günlük aktivitelerini ve saatleri söyler."
+                "Günlük rutinlerini ve günün bölümlerini anlatır (wake up, brush teeth, have breakfast).",
+                "Tam ve buçuk saatleri söyler (It is three o'clock / It is half past two).",
+                "Günlük aktivitelerin zamanını ifade eder."
             ],
             "Unit 6: Fun with Science": [
-                "Bilimsel deneylerle ilgili basit yönergeleri anlar."
+                "Basit bilimsel deney adımlarını anlar ve eşleştirir.",
+                "Nesnelerin yerini belirten edatları (in, on, under, in front of) kullanır.",
+                "Basit talimatlar verir (Mix the colors, pour the water)."
             ],
             "Unit 7: Jobs": [
-                "Meslekleri ve ne iş yaptıklarını söyler."
+                "Meslekleri tanır ve adlandırır (doctor, teacher, pilot, firefighter).",
+                "Kişilerin mesleklerini sorar ve söyler (What is your job? I am a doctor).",
+                "Mesleklerin çalıştıkları yerleri eşleştirir (A teacher works at school)."
             ],
             "Unit 8: My Clothes": [
-                "Kıyafetleri ve hava durumunu eşleştirir."
+                "Mevsimleri ve hava durumunu ifade eder (sunny, rainy, snowy, windy).",
+                "Hava durumuna uygun kıyafetleri söyler (wear a coat, put on boots).",
+                "İhtiyaç duyduğu kıyafetleri rica eder (Can I borrow your umbrella?)."
             ],
             "Unit 9: My Friends": [
-                "Kişilerin dış görünüşlerini tarif eder."
+                "İnsanların fiziksel özelliklerini betimler (tall, short, slim, blue eyes, curly hair).",
+                "Kişilik özelliklerini basitçe ifade eder (friendly, helpful, cheerful).",
+                "Arkadaşını fiziksel görünüşüne göre tanıtır."
             ],
             "Unit 10: Food and Drinks": [
-                "Yiyecek ve içecek tercihlerini ifade eder."
+                "Yiyecek ve içecek isimlerini söyler.",
+                "Açlık ve tokluk durumunu ifade eder (I am hungry / I am thirsty).",
+                "Yiyecek teklifinde bulunur ve cevap verir (Would you like some water? Yes, please / No, thank you)."
             ]
         },
         "Müzik": {
             "1. Ünite: Nota Bilgisi": [
-                "Nota adlarını ve değerlerini öğrenir.",
-                "Porte ve Anahtar kavramlarını kavrar."
+                "Nota adlarını ve süre değerlerini (birlik, ikilik, dörtlük, sekizlik) öğrenir.",
+                "Porte, dizek ve Sol anahtarı kavramlarını kavrar.",
+                "Ritim kalıplarını el çırparak veya çalgıyla seslendirir."
             ],
             "2. Ünite: Şarkı Repertuarı": [
-                "Türk Halk Müziği ve Türk Sanat Müziği şarkıları söyler."
+                "Türk Halk Müziği ve Türk Sanat Müziği çocuk şarkılarını doğru tonla söyler.",
+                "Marşları ve bayram şarkılarını coşkuyla seslendirir.",
+                "Şarkı söylerken nefes kontrolü ve doğru duruş sergiler."
             ],
             "3. Ünite: Çalgılar": [
-                "Türk müziği ve Batı müziği çalgılarını tanır."
+                "Geleneksel Türk müziği (bağlama, ney, kanun) ve Batı müziği çalgılarını tanır.",
+                "Çalgıları telli, yaylı, nefesli ve vurmalı olarak sınıflandırır.",
+                "Basit ritim aletleriyle ezgilere eşlik eder."
             ]
         },
         "Görsel Sanatlar": {
             "1. Ünite: Tasarım ve Kompozisyon": [
-                "Denge, ritim ve vurgu ilkelerini uygular.",
-                "Mozaik ve kolaj tekniklerini kullanır."
+                "Görsel sanatlarda denge, ritim, oran ve vurgu ilkelerini uygular.",
+                "Mozaik, kolaj ve baskı tekniklerini kullanarak özgün çalışmalar üretir.",
+                "Renk tonları ve kontrast ilişkilerini resimlerinde kullanır."
             ],
             "2. Ünite: Sanat Tarihi": [
-                "Türk-İslam sanatını tanır.",
-                "Dünya sanatından örnekler inceler."
+                "Türk-İslam sanatını (hat, tezhip, ebru, minyatür) tanır ve örnekler inceler.",
+                "Dünya sanat tarihinden ünlü ressamları ve eserlerini keşfeder.",
+                "Tarihi eserleri ve müzeleri ziyaret etme bilinci kazanır."
             ],
             "3. Ünite: Dijital Sanat": [
-                "Dijital çizim araçlarına giriş yapar."
+                "Temel dijital çizim ve tasarım araçlarını tanır.",
+                "Dijital ortamda basit grafik ve illüstrasyon çalışmaları yapar.",
+                "Görsel sanat eserlerini saygıyla ve yapıcı şekilde eleştirir."
             ]
         },
         "Beden Eğitimi ve Spor": {
             "1. Ünite: Temel Spor Becerileri": [
-                "Basketbol, voleybol ve futbolun temel kurallarını öğrenir."
+                "Basketbol, voleybol ve futbolun temel pas, top sürme ve şut kurallarını öğrenir.",
+                "Takım oyunlarında iş birliği, fair-play ve kurallara uyma davranışı sergiler.",
+                "Koordinasyon, denge ve esneklik gerektiren hareketleri uygular."
             ],
             "2. Ünite: Sağlıklı Yaşam": [
-                "Düzenli egzersizin faydalarını açıklar."
+                "Düzenli fiziksel aktivitenin beden ve ruh sağlığına faydalarını açıklar.",
+                "Spor yaparken ısınma ve soğuma hareketlerinin önemini kavrar.",
+                "Sağlıklı beslenme ve su tüketiminin spor performansına etkisini değerlendirir."
             ]
         }
     },
@@ -2008,242 +2122,334 @@
     "8. Sınıf": {
         "Türkçe": {
             "1. Tema: Erdemler": [
-                "Metindeki söz sanatlarını kavrar."
+                "Fiilimsilerin (isim-fiil, sıfat-fiil, zarf-fiil) işlevlerini ve cümledeki görevlerini kavrar.",
+                "Metindeki söz sanatlarını (teşbih, istiare, kişileştirme, tezat, konuşturma) tespit eder.",
+                "Okuduğu metnin konusunu, ana fikrini ve yardımcı fikirlerini belirler.",
+                "Erdemler ve insani değerlerle ilgili düşünce yazısı (makale, deneme) yazar."
             ],
             "2. Tema: Millî Mücadele ve Atatürk": [
-                "Fiilimsilerin metnin anlamına katkısını açıklar."
+                "Cümlenin ögelerini (özne, yüklem, nesne, yer tamlayıcısı, zarf tamlayıcısı) ayırt eder.",
+                "Metindeki anlatım biçimlerini (açıklama, tartışma, öyküleme, betimleme) ve düşünceyi geliştirme yollarını belirler.",
+                "Atatürk'ün ilkelerini ve liderlik vasıflarını yansıtan metinleri analiz eder.",
+                "Yazılarında anlatım bozukluklarını tespit eder ve düzeltir."
             ],
             "3. Tema: Bilim ve Teknoloji": [
-                "Cümlenin ögelerini bulur."
+                "Fiilde çatı (özne-yüklem ve nesne-yüklem ilişkisi) özelliklerini kavrar.",
+                "Bilgilendirici metinlerdeki grafik, tablo ve infografikleri yorumlar.",
+                "Yapay zeka ve teknolojik gelişmelerle ilgili eleştirel bir deneme yazar.",
+                "Metin türlerini (fıkra, makale, deneme, söyleşi) biçim ve içerik açısından ayırt eder."
             ],
-            "4. Tema: Millî Kültürümüz": [
-                "Paragrafta ana düşünce ve yardımcı düşünceyi bulur."
+            "4. Tema: Birey ve Toplum": [
+                "Cümle türlerini (anlamına, yüklemin türüne, yerine ve yapısına göre) analiz eder.",
+                "Metinler arası karşılaştırma yaparak ortak ve farklı bakış açılarını değerlendirir.",
+                "Toplumsal sorunlara çözüm önerisi getiren ikna edici bir konuşma yapar.",
+                "Noktalama işaretlerini ve yazım kurallarını metinlerinde kusursuz uygular."
             ],
-            "5. Tema: Doğa ve Evren": [
-                "Metindeki anlatım bozukluklarını tespit eder."
+            "5. Tema: Zaman ve Mekân": [
+                "Metindeki örtülü anlamları ve alt metinleri çıkarır.",
+                "Hikâye edici metinlerde olay örgüsü, zaman, mekân ve anlatıcı unsurlarını inceler.",
+                "Zaman yönetimi ve mekânın insan psikolojisine etkisi üzerine özgün bir hikâye kurgular.",
+                "Deyim, atasözü ve vecizelerin metnin anlamına katkısını açıklar."
             ],
-            "6. Tema: Sanat": [
-                "Görsel ve metin ilişkisini yorumlar."
+            "6. Tema: Millî Kültürümüz": [
+                "Kültürel mirasımızı yansıtan edebi metinleri dil ve üslup yönünden inceler.",
+                "Görsel okuma yaparak afiş, karikatür ve belgeselleri eleştirel gözle değerlendirir.",
+                "Geleneksel sanatlarımız ve tarihimizle ilgili araştırmaya dayalı bir rapor hazırlar.",
+                "Kelime gruplarını ve sözcükte anlam inceliklerini kavrar."
             ],
-            "7. Tema: Vatandaşlık": [
-                "Farklı türde (makale, deneme) metinler yazar."
+            "7. Tema: Doğa ve Evren": [
+                "Paragrafta yapı (giriş, gelişme, sonuç cümleleri, akışı bozan cümleler) kurallarını uygular.",
+                "Çevre kirliliği ve iklim krizi temalı metinlerde neden-sonuç, amaç-sonuç ilişkilerini kurar.",
+                "Mantık ve muhakeme sorularında çıkarım ve akıl yürütme becerilerini kullanır.",
+                "Doğanın estetiğini yansıtan betimleyici bir metin yazar."
             ],
-            "8. Tema: Sağlık ve Spor": [
-                "Dinlediklerini özetler ve tartışır."
+            "8. Tema: Sanat": [
+                "Edebi metinlerin estetik değerini takdir eder ve sanatsal mesajını kavrar.",
+                "Metindeki anlatım özelliklerini (akıcılık, duruluk, özgünlük, açıklık) değerlendirir.",
+                "Sanatın toplumsal değişimdeki rolünü tartışan panel veya münazara yürütür.",
+                "Kendine ait bir üslupla sanatsal bir eleştiri yazısı kaleme alır."
             ]
         },
         "Matematik": {
             "1. Ünite: Çarpanlar ve Katlar / Üslü İfadeler": [
-                "EBOB, EKOK hesaplar.",
-                "Üslü ifadelerle işlemler yapar."
+                "Verilen pozitif tam sayıların pozitif tam sayı çarpanlarını bulur, çarpanları üslü ifadelerin çarpımı şeklinde yazar.",
+                "İki doğal sayının en büyük ortak bölenini (EBOB) ve en küçük ortak katını (EKOK) hesaplar, ilgili problemleri çözer.",
+                "Tam sayıların tam sayı kuvvetlerini hesaplar ve üslü ifadelerle çarpma/bölme işlemlerini yapar.",
+                "Çok büyük ve çok küçük sayıları bilimsel gösterimle ifade eder ve karşılaştırır."
             ],
             "2. Ünite: Kareköklü İfadeler / Veri Analizi": [
-                "Kareköklü ifadelerde dört işlem yapar.",
-                "Sütun, daire ve çizgi grafiklerini yorumlar."
+                "Tam kare pozitif tam sayıların kareköklerini belirler ve tam kare olmayan sayıların kareköklerini tahmin eder.",
+                "Kareköklü bir ifadeyi a√b şeklinde yazar ve kareköklü ifadelerde toplama, çıkarma, çarpma, bölme yapar.",
+                "Ondalık ifadelerin kareköklerini belirler ve gerçek sayıları rasyonel-irrasyonel olarak sınıflandırır.",
+                "Verileri daire grafiği, sütun grafiği ve çizgi grafiği ile gösterir, grafikler arası dönüşümleri yorumlar."
             ],
-            "3. Ünite: Olasılık / Cebirsel İfadeler": [
-                "Basit olayların olasılığını hesaplar.",
-                "Özdeşlikleri kavrar ve cebirsel ifadeleri çarpanlara ayırır."
+            "3. Ünite: Basit Olayların Olma Olasılığı / Cebirsel İfadeler ve Özdeşlikler": [
+                "Bir olayın olma olasılığını hesaplar, kesin ve imkânsız olayları açıklar.",
+                "Olası durumların sayısını belirler ve eş olasılıklı durumları ayırt eder.",
+                "Cebirsel ifadeleri çarpar ve modelleme yapar.",
+                "Özdeşlikleri (iki kare farkı, tam kare ifadeler) modellerle açıklar ve cebirsel ifadeleri çarpanlarına ayırır."
             ],
             "4. Ünite: Doğrusal Denklemler / Eşitsizlikler": [
-                "Doğrusal denklem sistemlerini çözer.",
-                "Birinci dereceden eşitsizlikleri sayı doğrusunda gösterir."
+                "Birinci dereceden bir bilinmeyenli denklemleri çözer ve problem durumlarına uygular.",
+                "Doğrusal ilişkileri tablo ve grafikle gösterir, doğrunun eğimini modellerle açıklar ve hesaplar.",
+                "Doğru grafiklerini çizer ve eksenleri kestiği noktaları belirler.",
+                "Birinci dereceden bir bilinmeyenli eşitsizlikleri sayı doğrusunda gösterir ve çözer."
             ],
             "5. Ünite: Üçgenler / Eşlik ve Benzerlik": [
-                "Üçgen eşitsizliğini kavrar ve pisagor bağıntısını uygular."
+                "Üçgende kenarortay, açıortay ve yükseklik elemanlarını çizer ve özelliklerini belirler.",
+                "Üçgenin iki kenar uzunluğu ile bir açısının ölçüsü arasındaki bağıntıları ve üçgen eşitsizliğini kavrar.",
+                "Pisagor bağıntısını modellerle açıklar ve geometrik problemlerde uygular.",
+                "Benzer çokgenlerin benzerlik oranını belirler, üçgenlerin eşlik ve benzerlik şartlarını uygular."
             ],
             "6. Ünite: Dönüşüm Geometrisi / Geometrik Cisimler": [
-                "Öteleme, yansıma hareketlerini çizer.",
-                "Dik prizma ve silindirin alan ve hacmini hesaplar."
+                "Nokta, doğru parçası ve diğer şekillerin öteleme ve yansıma hareketlerini koordinat sisteminde yapar.",
+                "Dik prizmaların (kare, dikdörtgen, üçgen prizma) açınımlarını çizer, yüzey alanı ve hacim bağıntılarını kavrar.",
+                "Dik dairesel silindirin açınımını yapar, yüzey alanı ve hacmini hesaplar.",
+                "Dik piramit ve dik koninin temel elemanlarını tanır ve açınımlarını inceler."
             ]
         },
         "Fen Bilimleri": {
             "1. Ünite: Mevsimler ve İklim": [
-                "Mevsimlerin oluşumunu sağlayan faktörleri açıklar.",
-                "İklim ve hava olayları arasındaki farkı açıklar.",
-                "Küresel iklim değişikliklerinin nedenlerini ve sonuçlarını tartışır."
+                "Mevsimlerin oluşumunda Dünya'nın dönme ekseninin eğikliğini ve Güneş etrafındaki dolanımını açıklar.",
+                "İklim ve hava olayları arasındaki farkları belirler ve meteorolojinin çalışma alanını açıklar.",
+                "Küresel iklim değişikliklerinin nedenlerini ve olası sonuçlarını tartışır."
             ],
             "2. Ünite: DNA ve Genetik Kod": [
-                "DNA'nın yapısını ve eşlenmesini açıklar.",
-                "Kalıtım ile ilgili temel kavramları (gen, kromozom, alel) tanımlar.",
-                "Tek karakter çaprazlamaları ile ilgili problemler çözer.",
-                "Mutasyon ve modifikasyon arasındaki farkları kavrar.",
-                "Adaptasyon kavramını örneklerle açıklar."
+                "Nükleotid, gen, DNA ve kromozom kavramlarını basitten karmaşığa sıralar ve ilişkisini kavrar.",
+                "DNA'nın yapısını model üzerinde gösterir ve DNA'nın kendini eşlemesini açıklar.",
+                "Tek karakter çaprazlamaları ile genotip ve fenotip oranlarını hesaplar.",
+                "Mutasyon, modifikasyon, adaptasyon, doğal seçilim ve varyasyon kavramlarını ayırt eder.",
+                "Biyoteknolojik uygulamaların olumlu ve olumsuz etkilerini etik açıdan değerlendirir."
             ],
             "3. Ünite: Basınç": [
-                "Katı basıncını etkileyen değişkenleri keşfeder.",
-                "Sıvı basıncını etkileyen değişkenleri keşfeder.",
-                "Açık hava basıncı kavramını ve Pascal Prensibi'ni açıklar."
+                "Katı basıncını etkileyen değişkenleri (kuvvet ve yüzey alanı) deneylerle keşfeder.",
+                "Sıvı basıncını etkileyen değişkenleri (derinlik ve yoğunluk) analiz eder.",
+                "Açık hava basıncının varlığını kanıtlayan deneyleri yorumlar ve Torricelli deneyini kavrar.",
+                "Pascal prensibinin günlük hayat ve teknolojideki (hidrolik fren, su cenderesi) uygulamalarını açıklar."
             ],
             "4. Ünite: Madde ve Endüstri": [
-                "Periyodik sistemin özelliklerini açıklar.",
-                "Fiziksel ve kimyasal değişimleri ayırt eder.",
-                "Kimyasal tepkimelerin özelliklerini kavrar.",
-                "Asit ve bazların genel özelliklerini ve etkileşimlerini açıklar.",
-                "Maddenin ısıyla etkileşimi (öz ısı, hal değişimi) hesaplamaları yapar."
+                "Periyodik sistemde elementleri metal, yarı metal, ametal ve soygaz olarak sınıflandırır.",
+                "Fiziksel ve kimyasal değişimler arasındaki farkları deneylerle gözlemler.",
+                "Kimyasal tepkimeleri model üzerinde gösterir ve kütlenin korunumunu açıklar.",
+                "Asit ve bazların genel özelliklerini, pH ölçeğini ve asit yağmurlarının çevreye etkilerini inceler.",
+                "Maddenin ısı ile etkileşiminde özgül ısı, hâl değişimi ısısı ve ısınma grafiklerini yorumlar."
             ],
             "5. Ünite: Basit Makineler": [
-                "Basit makinelerin (kaldıraç, makara, eğik düzlem) çalışma prensiplerini kavrar.",
-                "Basit makinelerin sağladığı avantajları açıklar.",
-                "Günlük hayattaki basit makine örneklerini inceler."
+                "Basit makinelerin kuvvetten veya yoldan kazanç sağlama prensiplerini kavrar (işten kazanç olmadığını bilir).",
+                "Sabit makara, hareketli makara ve palanga sistemlerini karşılaştırır.",
+                "Kaldıraç çeşitlerini destek, yük ve kuvvetin konumuna göre analiz eder.",
+                "Eğik düzlem, çıkrık, dişli çarklar ve vida mekanizmalarının günlük hayattaki işlevlerini inceler."
             ],
             "6. Ünite: Enerji Dönüşümleri ve Çevre Bilimi": [
-                "Besin zinciri ve enerji akışını açıklar.",
-                "Fotosentez ve hücresel solunum süreçlerini kavrar.",
-                "Madde döngülerini (su, karbon, oksijen, azot) ve önemini açıklar.",
-                "Sürdürülebilir kalkınmanın önemini tartışır."
+                "Besin zincirinde üretici, tüketici ve ayrıştırıcı canlılar arasındaki enerji akışını açıklar.",
+                "Fotosentez hızını etkileyen faktörleri deneylerle test eder ve fotosentezin canlılar için önemini kavrar.",
+                "Hücresel solunum çeşitlerini (oksijenli ve oksijensiz solunum) karşılaştırır.",
+                "Su, karbon, azot ve oksijen döngülerini açıklar; küresel ısınmaya karşı sürdürülebilir kalkınmayı tartışır."
             ],
             "7. Ünite: Elektrik Yükleri ve Elektrik Enerjisi": [
-                "Elektrik yüklerini ve elektriklenme çeşitlerini (sürtünme, dokunma, etki) açıklar.",
-                "Elektrik yüklü cisimler arasındaki etkileşimi keşfeder.",
-                "Elektrik enerjisinin ısı, ışık ve hareket enerjisine dönüşümünü açıklar."
+                "Elektrik yüklerini ve sürtünme, dokunma, etki ile elektriklenme çeşitlerini açıklar.",
+                "Elektroskopun çalışma prensibini deneylerle gösterir.",
+                "Topraklama olayını ve günlük yaşamdaki güvenlik uygulamalarını kavrar.",
+                "Elektrik enerjisinin ısı, ışık ve hareket enerjisine dönüşümünü modellerle açıklar; elektrik faturasını hesaplar."
             ]
         },
         "T.C. İnkılap Tarihi ve Atatürkçülük": {
             "1. Ünite: Bir Kahraman Doğuyor": [
-                "Uyanan Avrupa ve sarsılan Osmanlı gerçeğini kavrar.",
-                "Mustafa Kemal'in çocukluk ve eğitim hayatını inceler.",
-                "Mustafa Kemal'in askerlik hayatındaki ilk deneyimlerini açıklar."
+                "20. yüzyıl başlarında Osmanlı Devleti'nin siyasi, sosyal ve ekonomik durumunu analiz eder.",
+                "Mustafa Kemal'in çocukluk dönemi, eğitim hayatı ve fikir hayatını etkileyen kişileri inceler.",
+                "Mustafa Kemal'in askerlik hayatındaki ilk görevlerini (Şam, 31 Mart, Trablusgarp, Balkan Savaşları) değerlendirir.",
+                "Mustafa Kemal'in kişilik özelliklerini (vatanseverlik, teşkilatçılık, kararlılık vb.) olaylarla ilişkilendirir."
             ],
-            "2. Ünite: Milli Uyanış: Bağımsızlık Yolunda Atılan Adımlar": [
-                "Birinci Dünya Savaşı'nın sebeplerini ve Osmanlı Devleti'nin durumunu analiz eder.",
-                "Mondros Ateşkes Antlaşması'nın sonuçlarını değerlendirir.",
-                "Kuvâ-yı Millîye hareketinin ve cemiyetlerin kuruluş nedenlerini açıklar.",
-                "Mustafa Kemal'in Samsun'a çıkışı ve kongreler sürecini özetler.",
-                "Misakımilli'nin kabulü ve BMM'nin açılışını değerlendirir."
+            "2. Ünite: Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar": [
+                "I. Dünya Savaşı'nın sebeplerini, Osmanlı'nın savaşa girişini ve savaştığı cepheleri değerlendirir.",
+                "Mondros Ateşkes Antlaşması'nın imzalanması ve yurdun işgaline karşı Kuvâ-yı Millîye hareketini kavrar.",
+                "Mustafa Kemal'in Samsun'a çıkışı, Havza, Amasya, Erzurum ve Sivas genelgeleriyle örgütlenme sürecini inceler.",
+                "Misak-ı Millî kararlarını, TBMM'nin açılışını, ayaklanmaları ve Sevr Barış Antlaşması'nı değerlendirir."
             ],
-            "3. Ünite: Milli Bir Destan: Ya İstiklal Ya Ölüm!": [
-                "Doğu ve Güney cephelerindeki gelişmeleri açıklar.",
-                "Batı cephesindeki savaşların (İnönü, Sakarya, Büyük Taarruz) sonuçlarını değerlendirir.",
-                "Mudanya Ateşkes Antlaşması'nın diplomatik önemini açıklar.",
-                "Lozan Barış Antlaşması'nın kazanımlarını değerlendirir."
+            "3. Ünite: Millî Bir Destan: Ya İstiklal Ya Ölüm!": [
+                "Kurtuluş Savaşı'nda Doğu ve Güney cephelerindeki mücadeleleri analiz eder.",
+                "Batı Cephesi'nde I. ve II. İnönü Savaşları, Kütahya-Eskişehir Muharebeleri sürecini açıklar.",
+                "Tekâlif-i Millîye Emirleri'nin Türk milletinin fedakârlığı açısından önemini kavrar.",
+                "Sakarya Meydan Muharebesi, Büyük Taarruz, Mudanya Ateşkesi ve Lozan Barış Antlaşması'nı analiz eder."
             ],
             "4. Ünite: Atatürkçülük ve Çağdaşlaşan Türkiye": [
-                "Atatürk ilkelerinin (Cumhuriyetçilik, Milliyetçilik vb.) amaçlarını açıklar.",
-                "Siyasi, hukuki, eğitim ve kültür alanındaki inkılapları değerlendirir.",
-                "Toplumsal ve ekonomik alanda yapılan inkılapların etkilerini analiz eder."
+                "Atatürk ilkelerini (Cumhuriyetçilik, Milliyetçilik, Halkçılık, Devletçilik, Laiklik, İnkılapçılık) kavrar.",
+                "Siyasal alanda yapılan inkılapları (Saltanatın kaldırılması, Cumhuriyetin ilanı, Halifeliğin kaldırılması) açıklar.",
+                "Hukuk, eğitim-kültür ve toplumsal alanda yapılan çağdaşlaşma adımlarını değerlendirir.",
+                "Ekonomi alanında İzmir İktisat Kongresi, Kabotaj Kanunu ve kalkınma planlarının etkilerini açıklar."
             ],
             "5. Ünite: Demokratikleşme Çabaları": [
-                "Çok partili siyasi hayata geçiş denemelerini açıklar.",
-                "Demokrasiye yönelik tehditleri (Şeyh Sait İsyanı, İzmir Suikastı) değerlendirir."
+                "Cumhuriyet Halk Fırkası, Terakkiperver Cumhuriyet Fırkası ve Serbest Cumhuriyet Fırkası'nı karşılaştırır.",
+                "Çok partili hayata geçiş denemelerini ve karşılaşılan engelleri (Şeyh Sait İsyanı, Menemen Olayı) inceler.",
+                "Mustafa Kemal'e suikast girişimini ve cumhuriyet rejimine yönelik tehditleri değerlendirir."
             ],
             "6. Ünite: Atatürk Dönemi Türk Dış Politikası": [
-                "Atatürk dönemi dış politikasının temel ilkelerini açıklar.",
-                "Dış politikada yaşanan gelişmeleri (Nüfus Mübadelesi, Montrö vb.) değerlendirir.",
-                "Hatay'ın Türkiye'ye katılım sürecini analiz eder."
+                "Atatürk dönemi Türk dış politikasının temel ilkelerini (bağımsızlık, barış, gerçekçilik) kavrar.",
+                "Yabancı okullar, Musul meselesi, nüfus mübadelesi ve Milletler Cemiyeti'ne girişi açıklar.",
+                "Balkan Antantı, Sadabat Paktı, Montrö Boğazlar Sözleşmesi ve Hatay'ın ana vatana katılışını analiz eder."
             ],
-            "7. Ünite: Atatürk’ün Ölümü ve Sonrası": [
-                "Atatürk'ün ölümünün yurt içi ve yurt dışındaki yankılarını değerlendirir.",
-                "İkinci Dünya Savaşı'nın Türkiye'ye etkilerini özetler."
+            "7. Ünite: Atatürk'ün Ölümü ve Sonrası": [
+                "Atatürk'ün vefatının yurt içinde ve dünyadaki yankılarını değerlendirir.",
+                "Mustafa Kemal Atatürk'ün bıraktığı eserleri ve fikir mirasını korumanın önemini açıklar.",
+                "II. Dünya Savaşı sürecinde Türkiye'nin uyguladığı tarafsızlık ve denge politikasını kavrar."
             ]
         },
         "Din Kültürü ve Ahlak Bilgisi": {
             "1. Ünite: Kader İnancı": [
-                "Kader ve kaza kavramlarını açıklar.",
-                "İnsanın iradesi ve sorumluluğu arasındaki ilişkiyi kurar."
+                "Kader ve kaza kavramlarını ayetlerle açıklar; evrendeki fiziksel, biyolojik ve toplumsal yasaları inceler.",
+                "İnsanın ilmi, iradesi, sorumluluğu ve kader ilişkisini açıklar.",
+                "Ömür, ecel, rızık, tevekkül, başarı, sağlık ve afet kavramlarını kaderle ilişkilendirir.",
+                "Hz. Musa'nın hayatını ve Ayet el-Kürsi'nin anlamını kavrar."
             ],
-            "2. Ünite: Zekat ve Sadaka": [
-                "İslam'ın paylaşma ve yardımlaşmaya verdiği önemi açıklar."
+            "2. Ünite: Zekât ve Sadaka": [
+                "İslam'ın paylaşma ve yardımlaşmaya verdiği önemi açıklar.",
+                "Zekât, sadaka ve infak kavramlarının şartlarını, oranlarını ve kimlere verileceğini kavrar.",
+                "Zekât ve sadakanın bireysel ve toplumsal faydalarını değerlendirir.",
+                "Hz. Şuayb'ın hayatını ve Ma'ûn suresinin anlamını inceler."
             ],
             "3. Ünite: Din ve Hayat": [
-                "Dinin birey ve toplum hayatındaki yerini kavrar."
+                "Dinin temel gayesi olan can, nesil, akıl, mal ve din emniyetini açıklar.",
+                "Dinin birey ve toplum hayatındaki ahlaki dönüştürücü etkisini değerlendirir.",
+                "Hz. Yusuf'un örnek hayatını ve Asr suresinin anlamını açıklar."
             ],
             "4. Ünite: Hz. Muhammed'in Örnekliği": [
-                "Hz. Muhammed'in doğruluğu, güvenilirliği ve merhametini örneklendirir."
+                "Hz. Muhammed'in doğruluğu, güvenilirliği, merhameti, adaleti ve hoşgörüsünü örneklerle açıklar.",
+                "Hz. Muhammed'in istişareye verdiği önemi ve kararlılığını olaylar üzerinden kavrar.",
+                "Hz. Muhammed'in hakkı gözetmedeki hassasiyetini ve Kureyş suresinin anlamını açıklar."
             ],
             "5. Ünite: Kur'an-ı Kerim ve Özellikleri": [
-                "Kur'an'ın temel özellikleri ve yol göstericiliğini açıklar."
+                "Kur'an-ı Kerim'in ana konularını (inanç, ibadet, ahlak, muamelat, kıssalar) açıklar.",
+                "Kur'an-ı Kerim'in yol gösterici, aydınlatıcı ve açıklayıcı özelliklerini kavrar.",
+                "Hz. Nuh'un hayatını ve Kur'an'dan mesajlar çıkarır."
             ]
         },
         "İngilizce": {
             "Unit 1: Friendship": [
-                "Arkadaşlık özelliklerini ve davet etme (invitation) kalıplarını kullanır."
+                "Accepting and refusing invitations and making excuses (Would you like to come? I'd love to, but I can't).",
+                "Expressing personal traits of true friends (honest, reliable, generous, loyal).",
+                "Writing a simple invitation letter and responding politely."
             ],
             "Unit 2: Teen Life": [
-                "Gençlerin günlük yaşamı ve ilgi alanları hakkında konuşur."
+                "Expressing preferences and daily routines (prefer listening to music, fond of sports).",
+                "Describing regular activities and musical genres (rap, classical, pop).",
+                "Discussing fashion and daily habits of teenagers."
             ],
             "Unit 3: In the Kitchen": [
-                "Yemek tarifleri ve pişirme yöntemlerini anlatır."
+                "Describing a process and recipe steps (First, second, then, next, finally).",
+                "Cooking methods and kitchen utensils (boil, fry, bake, chop, dice).",
+                "Expressing preferences in cooking and eating."
             ],
             "Unit 4: On the Phone": [
-                "Telefonda konuşma kalıplarını kullanarak iletişim kurar."
+                "Making phone calls, holding, taking messages (Could you hold on? Would you like to leave a message?).",
+                "Ways of communication throughout history (smoke signals, telegraph, smartphone).",
+                "Polite telephone conversations and conversational idioms."
             ],
             "Unit 5: The Internet": [
-                "İnternet kullanımı ve güvenlik kuralları hakkında fikir belirtir."
+                "Accepting and refusing requests on social platforms.",
+                "Internet vocabulary (download, upload, browser, search engine, attachment).",
+                "Internet safety rules and ethical online behavior."
             ],
             "Unit 6: Adventures": [
-                "Ekstrem sporlar ve maceralar hakkında tercihlerini söyler."
+                "Expressing preferences in extreme sports (prefer skydiving to rafting).",
+                "Comparing adventurous activities using comparative structures (more exciting, dangerous).",
+                "Giving explanations and reasons for risky sports choices."
             ],
             "Unit 7: Tourism": [
-                "Turistik mekânları tanıtır ve geçmiş deneyimlerini (Present Perfect) anlatır."
+                "Describing historical places, tourist destinations and architectural landmarks.",
+                "Comparing vacation types (cultural holiday, seaside resort, eco-tourism).",
+                "Expressing experiences and preferences about accommodations and transportation."
             ],
             "Unit 8: Chores": [
-                "Ev işleri ve sorumluluklar hakkında (have to/must) konuşur."
+                "Expressing responsibilities and obligations (must, have to, responsible for).",
+                "Household chores (dusting, doing laundry, taking out garbage, loading dishwasher).",
+                "Sharing tasks fairly in family and school life."
             ],
             "Unit 9: Science": [
-                "Bilimsel gelişmeler ve icatlar hakkında bilgi verir."
+                "Describing scientific discoveries, inventors and technological breakthroughs.",
+                "Talking about past scientific events and lab experiments.",
+                "Expressing opinions about futuristic developments and space exploration."
             ],
             "Unit 10: Natural Forces": [
-                "Doğal afetler ve çevre sorunları hakkında uyarılarda bulunur."
+                "Making predictions about natural disasters (earthquake, flood, drought, avalanche).",
+                "Expressing causes, consequences and preventive precautions of environmental threats.",
+                "Discussing global climate change and resource sustainability."
             ]
         },
         "Bilişim Teknolojileri ve Yazılım": {
-            "1. Ünite: Yapay Zeka ve Robotik": [
-                "Yapay zeka kavramını açıklar.",
-                "Robotik uygulamalarını tanır.",
-                "Algoritma tasarımı yapar."
+            "1. Ünite: Bilişim Okuryazarlığı ve İletişim": [
+                "İnternet etiği, telif hakları ve açık kaynak lisanslarını kavrar.",
+                "Siber zorbalık, dijital ayak izi ve bilgi güvenliği ilkelerini açıklar.",
+                "Bulut bilişim ve işbirlikli çalışma araçlarını etkin kullanır."
             ],
-            "2. Ünite: Proje Geliştirme": [
-                "Tasarım süreci uygular.",
-                "Takım çalışmasıyla proje geliştirir."
+            "2. Ünite: Algoritma ve Blok Tabanlı Programlama": [
+                "Karmaşık problemleri alt problemlere ayrıştırarak akış şemaları tasarlar.",
+                "Döngüler, koşul yapıları, değişkenler ve fonksiyonları içeren programlar kodlar.",
+                "Yazdığı kodlardaki mantıksal hataları (debugging) tespit eder ve düzeltir."
             ],
-            "3. Ünite: Dijital Vatandaşlık": [
-                "Dijital kimlik ve mahremiyet kavramlarını açıklar.",
-                "Siber zorbalığa karşı önlemler geliştirir."
+            "3. Ünite: Robotik Kodlama ve Yapay Zeka Temelleri": [
+                "Sensörler, mikrodenetleyiciler ve motorlar kullanarak basit robotik prototip geliştirir.",
+                "Yapay zekanın ve makine öğrenmesinin temel mantığını açıklar.",
+                "Geleceğin teknolojileri (IoT, blokzincir, sanal gerçeklik) hakkında farkındalık kazanır."
             ]
         },
         "Müzik": {
-            "1. Ünite: Müzik Teorisi": [
-                "Majör ve minör gamları öğrenir.",
-                "Akor kavramını kavrar."
+            "1. Ünite: Müzik Kültürü ve Eser Çözümleme": [
+                "Türk müziği makamlarını (Hicaz, Nihavent, Rast) ve ritmik yapılarını inceler.",
+                "İstiklal Marşı'nı ve millî marşları doğru nefes ve diksiyonla seslendirir.",
+                "Farklı müzik türlerini (Klasik, Caz, Halk Müziği) karşılaştırarak dinler."
             ],
-            "2. Ünite: Müzik Kültürü": [
-                "Türk ve Batı klasik müziğini karşılaştırır.",
-                "Önemli bestecileri araştırır."
+            "2. Ünite: Toplu Çalma ve Söyleme": [
+                "Ritim çalgıları veya melodika/flüt ile toplu icra kurallarına uyar.",
+                "Müziğin insan psikolojisi ve toplum üzerindeki iyileştirici gücünü değerlendirir.",
+                "Özgün ritim ve melodi kalıpları üreterek kaydeder."
             ]
         },
         "Görsel Sanatlar": {
-            "1. Ünite: Fotoğraf ve Dijital Sanat": [
-                "Fotoğraf kompozisyon kurallarını uygular.",
-                "Dijital sanat çalışmaları oluşturur."
+            "1. Ünite: Görsel İletişim ve Tasarım": [
+                "Perspektif kurallarını (tek ve çift kaçışlı) çizimlerinde uygular.",
+                "Tipografi, afiş ve logo tasarımı ilkelerini kullanarak görsel mesaj oluşturur.",
+                "Işık-gölge ve leke dengesiyle hacim hissi veren resimler yapar."
             ],
-            "2. Ünite: Mimari ve Tasarım": [
-                "Türk ve dünya mimarisi örneklerini inceler."
+            "2. Ünite: Sanat Eleştirisi ve Kültürel Miras": [
+                "Çağdaş ve geleneksel sanat eserlerini form, içerik ve bağlam yönünden eleştirir.",
+                "Geleneksel motiflerimizi modern tasarım ögeleriyle harmanlar.",
+                "Görsel sanatların çevre ve mimariyle ilişkisini inceler."
             ]
         },
         "Beden Eğitimi ve Spor": {
-            "1. Ünite: Sağlıklı Yaşam": [
-                "Spor yaralanmalarından korunmayı açıklar.",
-                "Egzersiz programı hazırlar."
+            "1. Ünite: Takım Sporları ve Strateji": [
+                "Voleybol, basketbol veya hentbolda hücum ve savunma taktiklerini uygular.",
+                "Spor ahlakı (fair-play), liderlik ve rakibe saygı değerlerini içselleştirir.",
+                "Fiziksel uygunluk testlerini (esneklik, dayanıklılık, kuvvet) uygular ve kaydeder."
             ],
-            "2. Ünite: Spor Dalları": [
-                "Seçmeli spor dalında temel becerileri geliştirir."
+            "2. Ünite: Yaşam Boyu Spor ve İlk Yardım": [
+                "Sedanter yaşamın zararlarını ve düzenli egzersiz programı hazırlamayı öğrenir.",
+                "Spor yaralanmalarında temel ilk yardım prensiplerini kavrar.",
+                "Doğa sporları ve açık hava aktivitelerinde çevreye duyarlı davranır."
             ]
         },
         "Seçmeli Zeka Oyunları": {
-            "1. Ünite: Zeka Oyunları Stratejileri": [
-                "Oyun sonu analizleri yapar."
+            "1. Ünite: Akıl Yürütme ve İşlem Oyunları": [
+                "Sudoku, kendoku ve kakuro gibi matematiksel mantık oyunlarını çözer.",
+                "Hızlı düşünme, karar verme ve alternatif stratejiler üretme becerisi geliştirir.",
+                "Kriptoloji ve şifreleme mantığını çözer."
             ],
-            "2. Ünite: Turnuva Yönetimi": [
-                "Oyun kurallarını ve turnuva etiğini uygular."
+            "2. Ünite: Strateji ve Kutu Oyunları": [
+                "Satranç, mangala ve reversi gibi strateji oyunlarında ileri hamle planlar.",
+                "Oyun analizi yaparak rakibin stratejisini öngörür ve karşı hamle geliştirir.",
+                "Kaybetmeyi olgunlukla karşılama ve centilmenlik bilinci kazanır."
             ]
         },
         "Seçmeli Yabancı Dil (İngilizce vb.)": {
-            "1. Ünite: Science and Nature": [
-                "Bilim ve doğa terimlerini kullanır."
+            "1. Ünite: Global Communication": [
+                "Farklı kültürlerdeki günlük iletişim kalıplarını ve beden dilini inceler.",
+                "İngilizce kısa hikâyeleri analiz eder ve kendi kelimeleriyle anlatır.",
+                "Uluslararası güncel olaylar hakkında kısa sunum yapar."
             ],
-            "2. Ünite: Future Dreams": [
-                "Gelecek planlarını anlatır."
+            "2. Ünite: Creative Writing & Debate": [
+                "İngilizce münazara kurallarına uygun olarak fikirlerini savunur.",
+                "Özgün şiir, blog yazısı veya kısa senaryo yazar.",
+                "Gelişmiş dinleme metinlerindeki ana ve yan fikirleri tespit eder."
             ]
         }
     },
@@ -3402,245 +3608,356 @@
     },
     "12. Sınıf": {
         "Türk Dili ve Edebiyatı": {
-            "1. Ünite: Giriş": [
-                "Edebiyat ile felsefe/psikoloji ilişkisini kavrar."
+            "1. Ünite: Giriş (Felsefe ve Psikolojiyle İlişki)": [
+                "Edebiyat ile felsefe ve psikoloji arasındaki ilişkiyi metinler üzerinden açıklar.",
+                "Dilin tarihi süreçteki değişimini etkileyen sebepleri (kültür, din, coğrafya, teknoloji) analiz eder.",
+                "İlk örneklerden günümüze Türkçenin sözlüklerini (Divanü Lugati't-Türk, Kamus-ı Türki vb.) inceler.",
+                "Metinlerdeki yazım ve noktalama kurallarını eleştirel gözle değerlendirir."
             ],
-            "2. Ünite: Hikâye": [
-                "1960 sonrası Türk hikâyesinin özelliklerini açıklar."
+            "2. Ünite: Hikâye (1960 Sonrası ve Küçürek Hikâye)": [
+                "1960 sonrası Türk hikâyesinin temalarını, anlatım tekniklerini ve yönelimlerini çözümler.",
+                "Küçürek (minimal) hikâyenin özelliklerini kavrar ve örnek metinleri tahlil eder.",
+                "Modernist ve postmodernist hikâyelerde kullanılan teknikleri (bilinç akışı, iç monolog, pastiş) belirler.",
+                "Özgün bir küçürek hikâye metni kaleme alır ve edebi estetiğini tartışır."
             ],
-            "3. Ünite: Şiir": [
-                "Cumhuriyet Dönemi saf şiir, toplumcu şiir ve Garip akımını değerlendirir."
+            "3. Ünite: Şiir (Cumhuriyet Dönemi Türk Şiiri)": [
+                "Cumhuriyet Dönemi saf şiir, toplumcu şiir, Garip akımı, İkinci Yeni ve dini değerleri öne çıkaran şiir anlayışlarını karşılaştırır.",
+                "1980 sonrası Türk şiirinin genel özelliklerini ve eğilimlerini belirler.",
+                "Şiirlerdeki imge, ahenk, ritim, edebi sanatlar ve açık/örtük iletileri çözümler.",
+                "Cumhuriyet devri şairlerinin şiir anlayışlarını yansıtan poetikaları inceler."
             ],
-            "4. Ünite: Roman": [
-                "Cumhuriyet Dönemi'nde modernist ve postmodernist romanları inceler."
+            "4. Ünite: Roman (1980 Sonrası ve Postmodern Roman)": [
+                "1980 sonrası Türk romanının toplumsal ve bireysel konularını inceler.",
+                "Postmodern romanda üstkurmaca, metinlerarasılık, parodi ve ironi tekniklerini çözümler.",
+                "Romandaki şahıs kadrosunun psikolojik ve sosyal tahlilini yapar.",
+                "Roman ile sinema/dijital medya uyarlamaları arasındaki farkları tartışır."
             ],
-            "5. Ünite: Tiyatro": [
-                "1950 sonrası Türk tiyatrosunun özelliklerini kavrar."
+            "5. Ünite: Tiyatro (Cumhuriyet Dönemi Türk Tiyatrosu)": [
+                "Cumhuriyet Dönemi Türk tiyatrosundaki gelişmeleri, türleri ve tematik eğilimleri inceler.",
+                "Epik tiyatro ve absürt tiyatronun özelliklerini metinler üzerinden açıklar.",
+                "Tiyatro metnindeki çatışmaları, sahneleme tekniklerini ve diyalog yapılarını çözümler.",
+                "Bir tiyatro sahnesini canlandırarak sözlü ve bedensel iletişim becerisini sergiler."
             ],
-            "6. Ünite: Deneme": [
-                "Dünya ve Türk edebiyatında deneme türünü değerlendirir."
+            "6. Ünite: Deneme / Söylev": [
+                "Cumhuriyet Dönemi deneme yazarlarını ve eserlerini konu, dil ve üslup yönünden inceler.",
+                "Söylev (hitabet) türünün özelliklerini ve tarihi-toplumsal işlevini kavrar.",
+                "Atatürk'ün Nutuk başta olmak üzere önemli söylev metinlerini analiz eder.",
+                "Güncel bir konuda düşüncelerini etkili bir üslupla aktaran özgün bir deneme yazar."
             ],
-            "7. Ünite: Söylev (Nutuk)": [
-                "Cumhuriyet Dönemi söylevlerini ve hitabet sanatını inceler."
+            "7. Ünite: Mülakat / Röportaj": [
+                "Mülakat ve röportaj türlerinin özelliklerini, farklarını ve gelişimini inceler.",
+                "Bir alanın uzmanıyla mülakat planlar, sorular hazırlar ve uygular.",
+                "Görsel ve işitsel unsurlarla zenginleştirilmiş bir röportaj metni hazırlar.",
+                "Medya etiği ve doğru bilgi aktarımı ilkelerini kavrar."
             ]
         },
         "Matematik": {
             "1. Ünite: Üstel ve Logaritmik Fonksiyonlar": [
-                "Üstel fonksiyonu tanımlar ve grafiğini çizer.",
-                "Logaritma tanımını ve özelliklerini uygular.",
-                "Logaritmik denklem ve eşitsizlikleri çözer."
+                "Üstel fonksiyonu açıklar ve grafiğini çizer; üstel büyüme ve bozunma problemlerini modeller.",
+                "Logaritma fonksiyonunu üstel fonksiyonun tersi olarak tanımlar ve özelliklerini kavrar.",
+                "Taban değiştirme kuralı ve logaritmanın temel özelliklerini kullanarak işlem yapar.",
+                "Üstel ve logaritmik denklemler ile eşitsizliklerin çözüm kümelerini bulur; günlük hayat problemlerine (deprem büyüklüğü, ses şiddeti, pH) uygular."
             ],
             "2. Ünite: Diziler": [
-                "Aritmetik dizinin genel terimini ve toplamını hesaplar.",
-                "Geometrik dizinin genel terimini ve toplamını hesaplar."
+                "Gerçek sayı dizilerini tanımlar, genel terimini ve sonlu dizi kavramını açıklar.",
+                "Aritmetik dizinin özelliklerini, genel terimini ve ilk n terim toplamı formülünü türetir ve uygular.",
+                "Geometrik dizinin özelliklerini, genel terimini ve ilk n terim toplamını hesaplar.",
+                "Dizileri günlük hayat finansal modellemelerinde (faiz, nüfus artışı vb.) kullanır."
             ],
-            "3. Ünite: Trigonometri (İleri)": [
-                "Toplam ve fark formüllerini kullanır.",
-                "Trigonometrik denklemleri çözer."
+            "3. Ünite: Trigonometri": [
+                "İki açının toplam ve farkının trigonometrik değerlerine ait formülleri türetir ve kullanır.",
+                "İki kat açı (yarım açı) formüllerini oluşturur ve trigonometrik sadeleştirmelerde uygular.",
+                "sin x = a, cos x = a ve tan x = a biçimindeki trigonometrik denklemleri çözer.",
+                "Trigonometrik modelleme ile fiziksel dalga ve periyodik hareket problemlerini analiz eder."
             ],
-            "4. Ünite: Çember ve Analitik İnceleme": [
-                "Çemberin denklemini yazar.",
-                "Çember ve doğru ilişkisini inceler."
+            "4. Ünite: Türev": [
+                "Bir fonksiyonun bir noktadaki limitini ve süreklilik şartlarını inceler; belirsizlik durumlarını çözer.",
+                "Anlık değişim oranını ve türevin limit tanımını açıklar.",
+                "Türev alma kurallarını (çarpım, bölüm, bileşke ve zincir kuralı) fonksiyonlara uygular.",
+                "Türevin geometrik yorumunu (teğet ve normal denklemleri) kavrar; artan-azalan aralıkları ve yerel ekstremum noktalarını belirler; maksimum-minimum problemlerini çözer."
             ],
-            "5. Ünite: Limit ve Türev": [
-                "Limit kavramını ve özelliklerini açıklar.",
-                "Türev tanımını ve kurallarını uygular.",
-                "Türevin uygulamalarını (ekstremum, grafik) yapar."
+            "5. Ünite: İntegral": [
+                "Belirsiz integrali diferansiyel kavramı ve türevin ters işlemi olarak açıklar; temel integral alma kurallarını uygular.",
+                "Değişken değiştirme yöntemini kullanarak integral hesaplar.",
+                "Riemann toplamını ve belirli integrali açıklar; belirli integralin temel teoremini kavrar.",
+                "Belirli integral yardımıyla eğrilerin altında kalan alanı ve iki eğri arasındaki alanı hesaplar."
             ],
-            "6. Ünite: İntegral": [
-                "Belirsiz integrali ve kurallarını uygular.",
-                "Belirli integrali hesaplar.",
-                "İntegralle alan hesabı yapar."
+            "6. Ünite: Çemberin Analitik İncelenmesi": [
+                "Merkezi ve yarıçapı verilen çemberin standart ve genel denklemini yazar.",
+                "Genel denklemi verilen çemberin merkezini ve yarıçapını belirler; grafiklerini çizer.",
+                "Bir doğru ile bir çemberin birbirine göre durumlarını inceler (teğet, kesen, kesişmeyen).",
+                "Çember denklemlerini günlük hayat tasarım ve mühendislik problemlerinde modeller."
             ]
         },
         "Fizik": {
             "1. Ünite: Çembersel Hareket": [
-                "Düzgün çembersel hareket yapan cisimlerin hareketlerini inceler."
+                "Düzgün çembersel harekette periyot, frekans, çizgisel hız, açısal hız, merkezcil ivme ve merkezcil kuvvet kavramlarını açıklar.",
+                "Yatay, düşey ve eğimli virajlarda çembersel hareket dinamiklerini çözer.",
+                "Dönerek öteleme hareketinde toplam kinetik enerjiyi ve eylemsizlik momentini kavrar.",
+                "Açısal momentumun tanımını ve dış tork sıfır olduğunda açısal momentumun korunumunu modellerle açıklar.",
+                "Kepler kanunlarını ve kütle çekim kuvvetinin gezegen hareketlerindeki rolünü analiz eder."
             ],
             "2. Ünite: Basit Harmonik Hareket": [
-                "Yay Sarkacı ve Basit Sarkaç sistemlerinde periyodu hesaplar."
+                "Basit harmonik hareketi düzgün çembersel hareketin izdüşümü olarak modeller.",
+                "Harmonik harekette konum, hız, ivme ve kuvvetin zamana bağlı değişim denklemlerini açıklar.",
+                "Yaylı sarkaç ve basit sarkacın periyodunu etkileyen değişkenleri inceler ve hesaplar.",
+                "Harmonik harekette mekanik enerjinin korunumunu ve rezonans olayını tartışır."
             ],
             "3. Ünite: Dalga Mekaniği": [
-                "Su dalgalarında kırınım ve girişimi açıklar.",
-                "Işığın çift yarıkta ve tek yarıkta girişimini inceler."
+                "Su dalgalarında kırınım ve girişim olaylarını modellerle açıklar.",
+                "Işıkta çift yarıkta girişim (Young deneyi) ve tek yarıkta kırınım olaylarını karşılaştırır.",
+                "Işığın dalga doğasını, saçak aralığını ve yol farkını hesaplar.",
+                "Doppler olayının mekanik ve elektromanyetik dalgalardaki oluşumunu ve astronomideki kullanımını açıklar; elektromanyetik spektrumu sınıflandırır."
             ],
             "4. Ünite: Atom Fiziğine Giriş ve Radyoaktivite": [
-                "Atom modellerini ve radyoaktif bozunma türlerini açıklar."
+                "Tarihsel süreçte atom modellerini (Dalton, Thomson, Rutherford, Bohr) inceler; Bohr atom modelinin başarılarını ve eksiklerini kavrar.",
+                "Atomların uyarılma yollarını (çarpışma, foton, ısı) ve spektrum çizgilerini açıklar; Franck-Hertz deneyini yorumlar.",
+                "Kararsız çekirdeklerin radyoaktif bozunmalarını (alfa, beta, gama) ve yarılanma ömrünü hesaplar.",
+                "Nükleer fisyon ve füzyon reaksiyonlarını, kütle-enerji eşdeğerliğini (E=mc²) ve nükleer enerji santrallerini değerlendirir."
             ],
             "5. Ünite: Modern Fizik": [
-                "Özel görelilik ve kara cisim ışımasını kavrar.",
-                "Fotoelektrik ve Compton olayını analiz eder."
+                "Özel görelilik teorisinin iki temel postulatını kavrar; zamanın genişlemesi ve uzunluğun büzülmesini açıklar.",
+                "Siyah cisim ışımasını ve Planck'ın kuantum hipotezini modeller.",
+                "Fotoelektrik olayı ve Einstein'ın fotoelektrik denklemini deney verileriyle analiz eder; eşik enerjisi ve durdurma gerilimini hesaplar.",
+                "Compton saçılmasını ve De Broglie dalga boyunu (dalga-parçacık ikiliği) kavrar."
             ],
             "6. Ünite: Modern Fiziğin Teknolojideki Uygulamaları": [
-                "Yarı iletken teknolojisi, süper iletkenler ve nanoteknolojiyi açıklar."
+                "Tıbbi görüntüleme cihazlarının (Röntgen, MR, Tomografi, PET, Ultrason) temel fiziksel çalışma prensiplerini karşılaştırır.",
+                "Yarı iletken maddelerin özelliklerini, diyot, transistör ve güneş pillerinin işlevlerini açıklar.",
+                "Süper iletkenlik durumunu, Meissner etkisini ve maglev trenlerindeki kullanımını inceler.",
+                "Nanoteknolojinin kullanım alanlarını ve LASER ışınlarının elde edilişini/özelliklerini açıklar."
             ]
         },
         "Kimya": {
             "1. Ünite: Kimya ve Elektrik": [
-                "Redoks tepkimelerini denkleştirir.",
-                "Elektrokimyasal pillerin ve elektrolizin çalışma prensibini açıklar."
+                "İndirgenme-yükseltgenme (redoks) tepkimelerini yarı tepkime yöntemiyle denkleştirir.",
+                "Standart elektrot potansiyellerini kullanarak galvanik hücrelerin (piller) potansiyelini ve kendiliğindenliğini belirler.",
+                "Nernst eşitliğini derişim pillerine ve standart olmayan koşullara uygular; lityum iyon pillerini açıklar.",
+                "Elektroliz olayını, Faraday yasalarını, suyun elektrolizini ve korozyondan korunma (katodik koruma) yöntemlerini kavrar."
             ],
             "2. Ünite: Karbon Kimyasına Giriş": [
-                "İnorganik ve organik bileşikleri ayırt eder.",
-                "Hibritleşme ve molekül geometrilerini açıklar."
+                "Organik ve anorganik bileşiklerin özelliklerini ve aralarındaki farkları belirler.",
+                "Karbon elementinin çok bağ yapabilme özelliğini ve allotroplarını (elmas, grafit, grafen, fulleren, nanotüp) açıklar.",
+                "Kovalent bağlı moleküllerin Lewis formüllerini yazar; hibritleşme türlerini (sp, sp², sp³) belirler.",
+                "VSEPR teorisini kullanarak molekül geometrisini (doğrusal, kırık doğru, düzlem üçgen, düzgün dörtyüzlü, üçgen piramit) ve bağ açılarını açıklar."
             ],
             "3. Ünite: Organik Bileşikler": [
-                "Hidrokarbonların (alkan, alken, alkin) adlandırmasını ve özelliklerini açıklar.",
-                "Alkol, eter, aldehit ve ketonları sınıflandırır."
+                "Hidrokarbonları (alkanlar, alkenler, alkinler ve aromatik bileşikler) adlandırır (IUPAC kuralları), tepkimelerini ve izomerlik türlerini inceler.",
+                "Fonksiyonel grupları tanır; alkolleri ve eterleri sınıflandırır, adlandırır ve fiziksel/kimyasal özelliklerini açıklar.",
+                "Aldehit ve ketonların özelliklerini, Tollens ve Fehling belirteçleriyle indirgenme-yükseltgenme tepkimelerini kavrar.",
+                "Karboksilik asitleri ve esterleri adlandırır; sabunlaşma, esterleşme tepkimelerini ve günlük yaşamdaki kullanım alanlarını açıklar."
             ],
             "4. Ünite: Enerji Kaynakları ve Bilimsel Gelişmeler": [
-                "Fosil yakıtları ve alternatif enerji kaynaklarını değerlendirir."
+                "Fosil yakıtların (kömür, petrol, doğal gaz) çevreye etkilerini ve sera gazı salınımını değerlendirir.",
+                "Yenilenebilir ve temiz enerji kaynaklarını (biyokütle, hidrojen enerjisi, bor mineralleri) karşılaştırır.",
+                "Yeşil kimya ilkelerini ve sürdürülebilir üretim süreçlerini tartışır."
             ]
         },
         "Biyoloji": {
             "1. Ünite: Genden Proteine": [
-                "Nükleik asitlerin yapısını, DNA eşlenmesini ve protein sentezini (santral dogma) açıklar."
+                "Nükleik asitlerin (DNA ve RNA) yapısını, nükleotid dizilimlerini ve hücredeki işlevlerini açıklar.",
+                "DNA'nın yarı korunumlu eşlenmesini (Meselson-Stahl deneyi) ve replikasyon enzimlerini (helikaz, DNA polimeraz, ligaz) kavrar.",
+                "Genetik şifreyi, kodon-antikodon ilişkisini ve santral doğma (replikasyon, transkripsiyon, translasyon) sürecini modeller.",
+                "Gen klonlaması, CRISPR teknolojisi ve genetik mühendisliğinin etik boyutlarını değerlendirir."
             ],
             "2. Ünite: Canlılarda Enerji Dönüşümleri": [
-                "Fotosentez, kemosentez ve hücresel solunum süreçlerini analiz eder."
+                "ATP'nin yapısını ve fosforilasyon çeşitlerini (substrat düzeyinde, oksidatif, fotofosforilasyon) açıklar.",
+                "Fotosentezin ışığa bağımlı ve ışıktan bağımsız (Calvin döngüsü) reaksiyonlarını, fotoliz olayını ve kloroplastın yapısını kavrar; kemosentezi fotosentezle karşılaştırır.",
+                "Hücresel solunum basamaklarını (glikoliz, pirüvat oksidasyonu, Krebs döngüsü, ETS) ve ATP kazancını analiz eder.",
+                "Oksijensiz solunum ve fermantasyon (laktik asit ve etil alkol) çeşitlerini hücresel solunumla karşılaştırır."
             ],
             "3. Ünite: Bitki Biyolojisi": [
-                "Bitkisel dokuları, organları ve bitkilerde üreme ve büyüme süreçlerini kavrar."
+                "Bitkisel dokuları (meristem, temel, iletim, örtü doku) ve görevlerini modeller üzerinde gösterir.",
+                "Bitkisel organların (kök, gövde, yaprak) anatomik yapısını inceler.",
+                "Bitkilerde su ve mineral taşınımını (kök basıncı, kohezyon-gerilim teorisi) ve organik madde taşınımını (basınç-akış teorisi) açıklar; stomanın açılıp kapanma mekanizmasını kavrar.",
+                "Bitkisel hormonları (oksin, giberellin, sitokinin, absisik asit, etilen) ve bitkilerde hareket çeşitlerini (tropizma, nasti) inceler; çiçekli bitkilerde üreme ve çimlenmeyi açıklar."
             ],
             "4. Ünite: Canlılar ve Çevre": [
-                "Canlıların çevreyle etkileşimini ve popülasyon dinamiğini açıklar."
+                "Popülasyon genetiğinde Hardy-Weinberg kuralını ve gen havuzunu değiştiren faktörleri açıklar.",
+                "Çevre koşullarının genlerin işleyişine ve fenotipe etkisini (epigenetik) değerlendirir.",
+                "Biyoçeşitliliğin korunması ve küresel çevre felaketlerine karşı sürdürülebilir biyo-stratejiler geliştirir."
             ]
         },
         "Coğrafya": {
-            "1. Ünite: Türkiye Ekonomisi": [
-                "Türkiye'nin tarımsal ve sanayi üretimini açıklar.",
-                "Türkiye'nin dış ticaretini açıklar."
+            "1. Ünite: Ekstrem Doğa Olayları ve Doğal Sistemler": [
+                "Ekstrem doğa olaylarının (meteorolojik, jeolojik, hidrolojik) oluşum nedenlerini ve küresel etkilerini değerlendirir.",
+                "Geleceğe yönelik iklim senaryolarını ve ekosistemlerin bu değişimlere tepkisini açıklar.",
+                "Doğadaki karbon ve hidrolojik döngüdeki insan müdahalelerini analiz eder."
             ],
-            "2. Ünite: Küresel Ticaret": [
-                "Küresel ticaret akışlarını açıklar.",
-                "Türkiye'nin küresel ekonomideki yerini açıklar."
+            "2. Ünite: Küresel Ticaret ve Bölgesel Kalkınma Projeleri": [
+                "Dünyadaki önemli sanayi, hammadde ve üretim bölgelerini harita üzerinde çözümler.",
+                "Türkiye'nin bölgesel kalkınma projelerini (GAP, DAP, DOKAP, ZBK, KOP) hedefleri ve etkileri yönünden inceler.",
+                "Uluslararası ulaşım hatlarının (boğazlar, kanallar, boru hatları) jeopolitik önemini kavrar."
             ],
-            "3. Ünite: Güncel Çevre Sorunları": [
-                "Küresel iklim değişikliğinin etkilerini tartışır.",
-                "Türkiye'nin sürdürülebilirlik politikalarını değerlendirir."
+            "3. Ünite: Çevre ve Toplum (Küresel Sorunlar)": [
+                "Çevre kirliliğinin küresel boyutlarını (asit yağmurları, radyoaktif atıklar, ozon tabakası) ve uluslararası çevre sözleşmelerini tartışır.",
+                "Doğal kaynakların sürdürülebilir kullanımı ve gelecek nesillere aktarımı için çevre etiğini savunur."
             ]
         },
         "Felsefe": {
-            "1. Ünite: Aydınlanma Felsefesi": [
-                "Aydınlanma düşünürlerini (Kant, Rousseau, Voltaire) açıklar.",
-                "Akıl ve özgürlük kavramlarını tartışır."
+            "1. Ünite: 20. Yüzyıl Felsefesi": [
+                "20. yüzyıl felsefesinin tarihsel ve toplumsal arka planını inceler.",
+                "Dönemin temel akımlarını (fenomenoloji, mantıkçı pozitivizm, varoluşçuluk, hermeneutik, diyalektik materyalizm) ayırt eder.",
+                "Dönem filozoflarının (Husserl, Sartre, Nietzsche, Wittgenstein, Heidegger) görüşlerini metinlerle tahlil eder."
             ],
-            "2. Ünite: 19. Yüzyıl Felsefesi": [
-                "Alman idealizmini (Hegel) açıklar.",
-                "Marksizm ve materyalizmi açıklar."
+            "2. Ünite: Felsefi Metin Analizi ve Akıl Yürütme": [
+                "Felsefi argümanları, tutarlılık, geçerlilik ve temellendirme ilkelerine göre değerlendirir.",
+                "Varoluş, özgürlük, yabancılaşma ve insan hakları kavramlarını felsefi metinler üzerinden tartışır."
             ],
-            "3. Ünite: Çağdaş Felsefe": [
-                "Analitik felsefe ve dil felsefesini açıklar.",
-                "Varoluşçuluğu (Sartre, Camus) açıklar.",
-                "Postmodern felsefeyi açıklar."
+            "3. Ünite: Felsefenin Güncel Hayattaki Rolü": [
+                "Yapay zeka etiği, çevre etiği ve biyoetik gibi çağdaş sorunlara felsefi bakış açısı getirir.",
+                "Kritik düşünme becerisinin dezenformasyon ve manipülasyonla mücadeledeki önemini kavrar."
             ]
         },
         "İngilizce": {
-            "1. Ünite: Academic Reading": [
-                "Akademik metinleri anlar ve özetler.",
-                "Kritik okuma stratejileri uygular."
+            "Unit 1: Music": [
+                "Expressing personal opinions about musical genres, singers and rhythm.",
+                "Stating past habits and preferences using 'used to' and past simple.",
+                "Writing a review of a concert or music album."
             ],
-            "2. Ünite: Academic Writing": [
-                "Akademik deneme yazar.",
-                "APA ve MLA kaynak gösterme yöntemlerini kullanır."
+            "Unit 2: Friendship": [
+                "Analyzing interpersonal relationships, conflict resolution and empathy.",
+                "Expressing regrets and hypothetical wishes using conditional forms (Type 2/3, wish clauses).",
+                "Writing an advice column for relationship problems."
             ],
-            "3. Ünite: Speaking and Presentation": [
-                "Akademik sunum hazırlar.",
-                "Görüşünü savunur."
+            "Unit 3: Human Rights": [
+                "Discussing universal human rights, equality and social justice.",
+                "Reporting speech and thoughts accurately (reported speech).",
+                "Delivering a persuasive speech on equality and freedom."
             ],
-            "4. Ünite: Literature in English": [
-                "İngilizce edebi metinleri okur ve analiz eder."
+            "Unit 4: Coming Soon": [
+                "Talking about futuristic predictions, space colonization and cybernetic advancements.",
+                "Using future perfect and future continuous tenses appropriately.",
+                "Writing a sci-fi movie pitch or technological foresight essay."
             ],
-            "5. Ünite: The World Today": [
-                "Küresel gündem konularını tartışır.",
-                "Eleştirel düşünce geliştirir."
+            "Unit 5: Alternative Energy": [
+                "Discussing renewable energy resources and ecological footprints.",
+                "Expressing causes and effects of industrial pollution using passive voice.",
+                "Designing an eco-friendly project presentation in English."
             ]
         },
         "Din Kültürü ve Ahlak Bilgisi": {
             "1. Ünite: İslam ve Bilim": [
-                "İslam medeniyetinde bilimin gelişimini açıklar."
+                "İslam medeniyetinde bilim ve düşüncenin gelişimini (Beytü'l-Hikme, rasathaneler) inceler.",
+                "Müslüman bilim insanlarının (İbn-i Sina, Harezmi, Ali Kuşçu, Biruni, Katip Çelebi vb.) dünya bilimine katkılarını açıklar.",
+                "Kur'an'ın akla, araştırmaya ve evreni incelemeye verdiği önemi ayetlerle değerlendirir."
             ],
-            "2. Ünite: Anadolu'da İslam": [
-                "Anadolu'nun İslamlaşmasında etkili olan şahsiyetleri tanır."
+            "2. Ünite: Anadolu'da İslam ve Tasavvuf": [
+                "Anadolu'nun İslamlaşmasında Horasan erenlerinin ve mutasavvıfların rolünü kavrar.",
+                "Ahilik teşkilatının ahlaki ve iktisadi ilkelerini analiz eder.",
+                "Hacı Bektaş Veli, Yunus Emre, Mevlana ve Ahi Evran'ın evrensel sevgi, hoşgörü ve barış mesajlarını değerlendirir."
             ]
         },
         "İkinci Yabancı Dil (Almanca/Fransızca)": {
-            "1. Ünite: Gelecek Planları": [
-                "Meslekler ve kariyer planları hakkında konuşur."
+            "1. Ünite: Alltag und Medien / La vie quotidienne": [
+                "Günlük rutinleri, medya kullanımını ve dijital alışkanlıkları ikinci yabancı dilde ifade eder.",
+                "Karmaşık cümle yapılarıyla geçmişte yapılan etkinlikleri anlatır.",
+                "Kısa haber metinlerini ve duyuruları anlar."
             ],
-            "2. Ünite: Çevre ve Toplum": [
-                "Çevre sorunlarına ilişkin tartışmalara katılır."
+            "2. Ünite: Zukunft und Beruf / L'avenir et la carrière": [
+                "Gelecek planları, üniversite tercihleri ve mesleki ideallerini ifade eder.",
+                "İş başvurusu, özgeçmiş hazırlama ve e-posta yazışma kalıplarını uygular.",
+                "Kültürlerarası iletişimde nezaket kurallarını gözetir."
             ]
         },
         "Beden Eğitimi ve Spor": {
-            "1. Ünite: İleri Düzey Antrenman": [
-                "Kişiye özgü antrenman programı uygular."
+            "1. Ünite: İleri Spor Becerileri ve Liderlik": [
+                "Seçilen bir spor branşında ileri seviye teknik ve taktikleri uygular.",
+                "Müsabaka yönetimi, hakemlik kuralları ve organizasyon becerilerini deneyimler.",
+                "Spor psikolojisini ve stres yönetimini müsabakalarda kullanır."
             ],
-            "2. Ünite: Spor Etiği": [
-                "Sporda fair play ve centilmenlik örneklerini tartışır."
+            "2. Ünite: Yaşam Boyu Sağlık ve Antrenman İlkeleri": [
+                "Kişisel antrenman programı tasarlar ve dönemsel gelişimini takip eder.",
+                "Ergonomi, omurga sağlığı ve masa başı egzersizlerini günlük hayatına entegre eder."
             ]
         },
         "Görsel Sanatlar / Müzik": {
-            "1. Ünite: Sanat Eleştirisi": [
-                "Sanat eserlerini eleştirel bir bakışla değerlendirir."
+            "1. Ünite: Sanatsal İfade ve Bireysel Üslup": [
+                "Kendi sanatsal vizyonunu yansıtan özgün bir portfolyo oluşturur.",
+                "Geleneksel ve çağdaş teknikleri bir arada kullanarak melez eserler tasarlar.",
+                "Sanat eserini sergileme ve küratörlük süreçlerini kavrar."
             ],
-            "2. Ünite: Özgün Tasarım": [
-                "Özgün sanatsal performans veya tasarım sergiler."
+            "2. Ünite: Sanat, Estetik ve Toplumsal Yansıma": [
+                "Sanatın toplumsal hafızayı diri tutma işlevini tarihi örneklerle açıklar.",
+                "Estetik felsefesi ilkelerine göre sanat eserlerini derinlemesine çözümler."
             ]
         },
         "Seçmeli Psikoloji / Sosyoloji": {
-            "1. Ünite: Sosyal Psikoloji": [
-                "Grup dinamiği ve tutumları açıklar."
+            "1. Ünite: Sosyal Psikoloji ve Birey": [
+                "Tutumlar, ön yargılar, grup dinamikleri ve sosyal etki kavramlarını açıklar.",
+                "Bireyin toplum içindeki rolünü ve sosyal kimlik kuramını inceler.",
+                "İletişim çatışmalarının psikolojik dinamiklerini ve empatiyi değerlendirir."
             ],
-            "2. Ünite: Kültür ve Toplum": [
-                "Toplumsal değişme ve küreselleşmenin etkilerini tartışır."
+            "2. Ünite: Kültür, Toplum ve Değişme": [
+                "Toplumsal tabakalaşma, hareketlilik ve küreselleşmenin etkilerini tartışır.",
+                "Toplumsal kurumları (aile, eğitim, ekonomi, din) ve işlevlerini sosyolojik açıdan tahlil eder.",
+                "Çağdaş sosyolojik araştırmaların yöntem ve tekniklerini kavrar."
             ]
         },
         "Seçmeli Bilgisayar Bilimi": {
-            "1. Ünite: Proje Geliştirme": [
-                "Baştan sona bir yazılım projesi yürütür."
+            "1. Ünite: İleri Yazılım ve Proje Geliştirme": [
+                "Nesne yönelimli programlama (OOP) ve modern yazılım mimarilerini uygular.",
+                "Veritabanı tasarımı (SQL/NoSQL) ve API entegrasyonu gerçekleştirir.",
+                "Yazılım yaşam döngüsüne (SDLC) uygun bir dönem sonu projesi geliştirir."
             ],
-            "2. Ünite: İleri Teknolojiler": [
-                "Nesnelerin İnterneti (IoT) kavramını araştırır."
+            "2. Ünite: Yeni Nesil Teknolojiler ve Güvenlik": [
+                "Yapay zeka modellerini, büyük veri analitiğini ve veri görselleştirmeyi kavrar.",
+                "Siber güvenlik protokolleri, kriptografi ve güvenli kod yazma standartlarını uygular.",
+                "Yazılım etiği ve lisanslama modellerini değerlendirir."
             ]
         },
         "T.C. İnkılap Tarihi ve Atatürkçülük": {
             "1. Ünite: 20. Yüzyıl Başlarında Osmanlı Devleti ve Dünya": [
-                "I. Dünya Savaşı'nın nedenlerini ve Osmanlı'nın durumunu değerlendirir."
+                "20. yüzyıl başlarında Osmanlı Devleti'nin siyasi buhranlarını, Trablusgarp ve Balkan Savaşları'nı analiz eder.",
+                "I. Dünya Savaşı'nın genel ve özel sebeplerini, Osmanlı'nın savaşa giriş gerekçelerini inceler.",
+                "I. Dünya Savaşı'nda Osmanlı ordusunun savaştığı cepheleri ve Çanakkale Zaferi'nin küresel etkilerini değerlendirir.",
+                "Mustafa Kemal'in askerlik dehasını sergilediği görevleri ve Millî Mücadele'ye hazırlık evresini kavrar."
             ],
             "2. Ünite: Millî Mücadele": [
-                "Kuvâ-yı Millîye'nin oluşumu ve Kurtuluş Savaşı cephelerini analiz eder."
+                "Mondros Ateşkesi sonrası işgallere karşı oluşan yerel cemiyetleri ve Kuvâ-yı Millîye hareketini açıklar.",
+                "Amasya Genelgesi, Erzurum ve Sivas Kongreleri ile ulusal egemenlik ve tam bağımsızlık fikrinin olgunlaşmasını analiz eder.",
+                "Misak-ı Millî kararlarını, TBMM'nin açılışını ve TBMM'ye karşı çıkarılan isyanları değerlendirir.",
+                "Doğu, Güney ve Batı cephelerindeki askeri mücadeleleri, Sakarya Zaferi'ni ve Büyük Taarruz'u tahlil eder; Lozan Barış Antlaşması'nı siyasi zafer olarak değerlendirir."
             ],
             "3. Ünite: Atatürkçülük ve Türk İnkılabı": [
-                "Atatürk ilkelerini ve siyasi, toplumsal, ekonomik inkılapları açıklar."
+                "Atatürk ilkelerini (Cumhuriyetçilik, Milliyetçilik, Halkçılık, Devletçilik, Laiklik, İnkılapçılık) bütüncül olarak kavrar.",
+                "Siyasal alanda saltanatın ve halifeliğin kaldırılmasını, cumhuriyetin ilanını açıklar.",
+                "Hukuk alanında Türk Medeni Kanunu'nun ve anayasaların kabulünü toplumsal eşitlik açısından değerlendirir.",
+                "Eğitim, kültür ve ekonomi alanlarında yapılan inkılapların çağdaş Türk toplumunun inşasındaki rolünü açıklar."
             ],
             "4. Ünite: İki Savaş Arasındaki Dönemde Türkiye ve Dünya": [
-                "Atatürk dönemi dış politikayı değerlendirir."
+                "Atatürk dönemi dış politikasının barışçıl ve gerçekçi ilkelerini ('Yurtta sulh, cihanda sulh') analiz eder.",
+                "Balkan Antantı ve Sadabat Paktı'nın bölgesel barışa katkısını açıklar.",
+                "Montrö Boğazlar Sözleşmesi ile Boğazlar üzerinde tam Türk hâkimiyetinin kurulmasını ve Hatay'ın ana vatana katılması sürecini kavrar.",
+                "1929 Dünya Ekonomik Buhranı'nın Türkiye ve dünya ekonomisine etkilerini değerlendirir."
             ],
             "5. Ünite: II. Dünya Savaşı Sürecinde Türkiye ve Dünya": [
-                "II. Dünya Savaşı'nın Türkiye'ye etkilerini kavrar."
+                "II. Dünya Savaşı'nın nedenlerini, Mihver ve Müttefik devletler bloklarını ve savaşın gidişatını inceler.",
+                "Türkiye'nin savaş boyunca uyguladığı çok yönlü aktif tarafsızlık ve diplomasi politikasını değerlendirir.",
+                "Savaş yıllarında Türkiye'deki ekonomik sıkıntıları, Varlık Vergisi ve Millî Korunma Kanunu uygulamalarını açıklar.",
+                "Savaşın küresel sonuçlarını, Birleşmiş Milletler'in kuruluşunu ve insan hakları ihlallerini tartışır."
             ],
             "6. Ünite: II. Dünya Savaşı Sonrasında Türkiye ve Dünya": [
-                "Soğuk Savaş dönemi ve Demokrat Parti iktidarını değerlendirir."
+                "Soğuk Savaş döneminin başlamasını, Doğu ve Batı bloklarının oluşumunu (NATO ve Varşova Paktı) kavrar.",
+                "Türkiye'nin NATO'ya giriş sürecini ve Kore Savaşı'na katılımını değerlendirir.",
+                "Türkiye'de çok partili hayata geçişi ve 1950 seçimleriyle Demokrat Parti döneminin başlamasını analiz eder.",
+                "1950'li yıllarda Türkiye'deki ekonomik, sosyal ve kültürel dönüşümleri inceler."
             ],
             "7. Ünite: Toplumsal Devrim Çağında Dünya ve Türkiye": [
-                "1960-1990 arası Türkiye'deki siyasi gelişmeleri açıklar."
+                "1960-1990 arası dönemde Türkiye'deki siyasi dalgalanmaları ve 1961/1982 anayasalarını karşılaştırır.",
+                "Kıbrıs Barış Harekâtı'nın (1974) nedenlerini, seyrini ve Türk dış politikasındaki yerini değerlendirir.",
+                "Bağlantısızlar Hareketi ve nükleer silahlanma yarışının uluslararası ilişkilere etkilerini kavrar.",
+                "Türkiye'de sanayileşme, iç göç, gecekondu kültürü ve edebiyat/sanat hayatındaki gelişmeleri inceler."
             ],
             "8. Ünite: 21. Yüzyılın Eşiğinde Türkiye ve Dünya": [
-                "Küreselleşme ve 1990 sonrası Türkiye'nin jeopolitik konumunu değerlendirir."
+                "Sovyetler Birliği'nin dağılması, Türk cumhuriyetlerinin bağımsızlığını kazanması ve Türkiye ile ilişkilerini analiz eder.",
+                "Balkanlar ve Orta Doğu'daki krizleri (Bosna Savaşı, Körfez Savaşları) ve Türkiye'nin bölgesel rolünü kavrar.",
+                "Küreselleşme, bilgi ve iletişim teknolojileri devrimi ile yapay zekanın 21. yüzyıla etkilerini açıklar.",
+                "Türkiye'nin jeopolitik konumunun önemini, vizyoner atılımlarını ve uluslararası arenadaki misyonunu değerlendirir."
             ]
         }
     }
 };
-
-
-
-
-
-
-
-
-
 
 function toggleInputMode() {
             const mode = document.querySelector('input[name="input-mode"]:checked').value;
@@ -3662,25 +3979,77 @@ function toggleInputMode() {
             });
         }
 
+        function getNewModelNaming() {
+            const selectedRadio = document.querySelector('input[name="new-model-naming"]:checked');
+            return selectedRadio ? selectedRadio.value : (localStorage.getItem('preferredNewModelNaming') || 'tema');
+        }
+
+        function isNewModelClass(classVal) {
+            if (!classVal) return false;
+            return ["1. ", "2. ", "3. ", "5. ", "6. ", "7. ", "9. ", "10. ", "11. "].some(prefix => classVal.startsWith(prefix));
+        }
+
+        function updateMufredatTerminology() {
+            const classVal = document.getElementById('mufredat-class').value;
+            if (!isNewModelClass(classVal)) return;
+
+            const naming = getNewModelNaming();
+            try { localStorage.setItem('preferredNewModelNaming', naming); } catch (e) {}
+
+            const uniteSelect = document.getElementById('mufredat-unite');
+            const konuSelect = document.getElementById('mufredat-konu');
+            const dersVal = document.getElementById('mufredat-ders').value;
+            const currentUniteVal = uniteSelect.value;
+
+            const uniteLabel = naming === 'tema' ? 'Tema / Alan Becerisi:' : 'Ünite / Alan Becerisi:';
+            if (uniteSelect.previousElementSibling) uniteSelect.previousElementSibling.innerHTML = uniteLabel;
+            if (konuSelect.previousElementSibling) konuSelect.previousElementSibling.innerHTML = 'Öğrenim Çıktısı:';
+
+            if (dersVal && curriculumData[classVal] && curriculumData[classVal][dersVal]) {
+                const unitePlaceholder = naming === 'tema' ? 'Tema Seçin...' : 'Ünite Seçin...';
+                uniteSelect.innerHTML = '<option value="">' + unitePlaceholder + '</option>';
+                Object.keys(curriculumData[classVal][dersVal]).forEach(function (uKey) {
+                    let displayText = uKey;
+                    if (naming === 'unite') {
+                        displayText = uKey.replace(/Tema/g, 'Ünite').replace(/tema/g, 'ünite');
+                    }
+                    uniteSelect.innerHTML += '<option value="' + uKey + '">' + displayText + '</option>';
+                });
+                uniteSelect.value = currentUniteVal;
+            }
+        }
+
         function updateMufredatDers() {
             const classVal = document.getElementById('mufredat-class').value;
             const dersSelect = document.getElementById('mufredat-ders');
             const uniteSelect = document.getElementById('mufredat-unite');
             const konuSelect = document.getElementById('mufredat-konu');
+            const toggleDiv = document.getElementById('new-model-terminology-toggle');
 
-            const isNewModel = ["1. ", "2. ", "3. ", "5. ", "6. ", "7. ", "9. ", "10. ", "11. "].some(prefix => classVal.startsWith(prefix));
-            if (uniteSelect.previousElementSibling) uniteSelect.previousElementSibling.innerHTML = isNewModel ? 'Tema / Alan Becerisi:' : 'Ünite:';
-            if (konuSelect.previousElementSibling) konuSelect.previousElementSibling.innerHTML = isNewModel ? 'Öğrenim Çıktısı:' : 'Konu:';
+            const isNewModel = isNewModelClass(classVal);
+            if (toggleDiv) {
+                toggleDiv.style.display = isNewModel ? 'flex' : 'none';
+                const savedNaming = localStorage.getItem('preferredNewModelNaming') || 'tema';
+                const targetRadio = document.querySelector(`input[name="new-model-naming"][value="${savedNaming}"]`);
+                if (targetRadio) targetRadio.checked = true;
+            }
+
+            const naming = isNewModel ? getNewModelNaming() : 'unite';
+            const uniteLabel = isNewModel ? (naming === 'tema' ? 'Tema / Alan Becerisi:' : 'Ünite / Alan Becerisi:') : 'Ünite:';
+            const konuLabel = isNewModel ? 'Öğrenim Çıktısı:' : 'Konu:';
+
+            if (uniteSelect.previousElementSibling) uniteSelect.previousElementSibling.innerHTML = uniteLabel;
+            if (konuSelect.previousElementSibling) konuSelect.previousElementSibling.innerHTML = konuLabel;
 
             dersSelect.innerHTML = '<option value="">Ders Seçin...</option>';
             uniteSelect.innerHTML = '<option value="">Önce Ders Seçin...</option>';
-            konuSelect.innerHTML = isNewModel ? '<option value="">Önce Tema Seçin...</option>' : '<option value="">Önce Ünite Seçin...</option>';
+            konuSelect.innerHTML = isNewModel ? (naming === 'tema' ? '<option value="">Önce Tema Seçin...</option>' : '<option value="">Önce Ünite Seçin...</option>') : '<option value="">Önce Ünite Seçin...</option>';
 
             dersSelect.disabled = !classVal;
             uniteSelect.disabled = true;
             konuSelect.disabled = true;
 
-            if (classVal) {
+            if (classVal && curriculumData[classVal]) {
                 Object.keys(curriculumData[classVal]).forEach(function (d) {
                     dersSelect.innerHTML += '<option value="' + d + '">' + d + '</option>';
                 });
@@ -3693,17 +4062,25 @@ function toggleInputMode() {
             const uniteSelect = document.getElementById('mufredat-unite');
             const konuSelect = document.getElementById('mufredat-konu');
 
-            const isNewModel = ["1", "2", "3", "5", "6", "7", "9", "10", "11"].some(prefix => classVal.startsWith(prefix + "."));
+            const isNewModel = isNewModelClass(classVal);
+            const naming = isNewModel ? getNewModelNaming() : 'unite';
 
-            uniteSelect.innerHTML = isNewModel ? '<option value="">Tema Seçin...</option>' : '<option value="">Ünite Seçin...</option>';
-            konuSelect.innerHTML = isNewModel ? '<option value="">Önce Tema Seçin...</option>' : '<option value="">Önce Ünite Seçin...</option>';
+            const unitePlaceholder = isNewModel ? (naming === 'tema' ? 'Tema Seçin...' : 'Ünite Seçin...') : 'Ünite Seçin...';
+            const konuPlaceholder = isNewModel ? (naming === 'tema' ? 'Önce Tema Seçin...' : 'Önce Ünite Seçin...') : 'Önce Ünite Seçin...';
+
+            uniteSelect.innerHTML = '<option value="">' + unitePlaceholder + '</option>';
+            konuSelect.innerHTML = '<option value="">' + konuPlaceholder + '</option>';
 
             uniteSelect.disabled = !dersVal;
             konuSelect.disabled = true;
 
-            if (dersVal) {
-                Object.keys(curriculumData[classVal][dersVal]).forEach(function (u) {
-                    uniteSelect.innerHTML += '<option value="' + u + '">' + u + '</option>';
+            if (dersVal && curriculumData[classVal] && curriculumData[classVal][dersVal]) {
+                Object.keys(curriculumData[classVal][dersVal]).forEach(function (uKey) {
+                    let displayText = uKey;
+                    if (isNewModel && naming === 'unite') {
+                        displayText = uKey.replace(/Tema/g, 'Ünite').replace(/tema/g, 'ünite');
+                    }
+                    uniteSelect.innerHTML += '<option value="' + uKey + '">' + displayText + '</option>';
                 });
             }
         }
@@ -3714,7 +4091,7 @@ function toggleInputMode() {
             const uniteVal = document.getElementById('mufredat-unite').value;
             const konuSelect = document.getElementById('mufredat-konu');
 
-            const isNewModel = ["1", "2", "3", "5", "6", "7", "9", "10", "11"].some(prefix => classVal.startsWith(prefix + "."));
+            const isNewModel = isNewModelClass(classVal);
 
             if (isNewModel) {
                 konuSelect.multiple = true;
@@ -3723,28 +4100,28 @@ function toggleInputMode() {
             } else {
                 konuSelect.multiple = false;
                 konuSelect.style.height = 'auto';
+                Array.from(konuSelect.options).forEach(opt => opt.selected = false);
                 konuSelect.innerHTML = '<option value="">Kazanım Seçin...</option>';
             }
             
             konuSelect.disabled = !uniteVal;
 
-            if (uniteVal) {
-                if (isNewModel) {
-                    konuSelect.multiple = true;
-                    konuSelect.style.height = '120px';
-                    konuSelect.innerHTML = '<option value="" disabled>Birden fazla seçim yapabilirsiniz (Ctrl / Cmd ile)...</option>';
-                } else {
-                    konuSelect.multiple = false;
-                    konuSelect.style.height = 'auto';
-                    // Önceki multiple seçimlerini temizle
-                    Array.from(konuSelect.options).forEach(opt => opt.selected = false);
-                    konuSelect.innerHTML = '<option value="">Kazanım Seçin...</option>';
-                }
+            if (uniteVal && curriculumData[classVal] && curriculumData[classVal][dersVal] && curriculumData[classVal][dersVal][uniteVal]) {
                 curriculumData[classVal][dersVal][uniteVal].forEach(function (k) {
                     konuSelect.innerHTML += '<option value="' + k + '">' + k + '</option>';
                 });
             }
         }
+
+        window.curriculumData = curriculumData;
+        window.getNewModelNaming = getNewModelNaming;
+        window.isNewModelClass = isNewModelClass;
+        window.updateMufredatTerminology = updateMufredatTerminology;
+        window.updateMufredatDers = updateMufredatDers;
+        window.updateMufredatUnite = updateMufredatUnite;
+        window.updateMufredatKonu = updateMufredatKonu;
+        window.toggleInputMode = toggleInputMode;
+        window.initMufredat = initMufredat;
 
         document.addEventListener('DOMContentLoaded', initMufredat);
 

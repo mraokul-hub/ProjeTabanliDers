@@ -264,15 +264,16 @@
                     xpText = `<span style="color:${sub.done ? 'var(--accent)' : 'var(--red)'}; font-weight:700;">${sub.done ? '+' : '-'}${sub.done ? (sub.xp || item.xp) : (sub.penalty || item.penaltyXp)}</span>`;
                 }
 
+                const safeAdSoyad = s.adSoyad.replace(/'/g, "\\'");
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td>${s.no} - ${s.adSoyad}</td>
-                <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''} onchange="updateSubmissionStatus('${s.adSoyad}', 'done', this.checked)"> Yapıldı</label></td>
-                <td><label><input type="checkbox" ${sub.absent ? 'checked' : ''} onchange="updateSubmissionStatus('${s.adSoyad}', 'absent', this.checked)"> Gelmedi</label></td>
+                <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''} onchange="updateSubmissionStatus('${safeAdSoyad}', 'done', this.checked)"> Yapıldı</label></td>
+                <td><label><input type="checkbox" ${sub.absent ? 'checked' : ''} onchange="updateSubmissionStatus('${safeAdSoyad}', 'absent', this.checked)"> Gelmedi</label></td>
                 <td><span style="font-size:11px;">${sub.date || '-'}</span></td>
                 <td>${xpText}</td>
                 <td style="display:flex;gap:4px;align-items:center;">
-                    <button class="action-btn" onclick="shareStudentResult(${id}, '${s.adSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                    <button class="action-btn" onclick="shareStudentResultBip(${id}, '${s.adSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                    <button class="action-btn" onclick="shareStudentResult(${id}, '${safeAdSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button class="action-btn" onclick="shareStudentResultBip(${id}, '${safeAdSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
                 </td>`;
                 body.appendChild(tr);
             });

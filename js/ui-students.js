@@ -491,16 +491,17 @@ function addStudentToGroupUI(btn) {
 
     checkedBoxes.forEach(cb => {
         const studentName = cb.value;
+        const safeStudentName = studentName.replace(/'/g, "\\'");
         const student = studentData.find(s => s.adSoyad === studentName);
         const xp = student ? (student.xp || 0) : 0;
         const displayNo = student ? student.no : '';
         const li = document.createElement('li');
         li.style = 'margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;';
-        li.innerHTML = `<div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${studentName}" style="font-weight: 600; font-size: 14px;">${displayNo} - ${studentName}</span>
+        li.innerHTML = `<div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${studentName.replace(/"/g, '&quot;')}" style="font-weight: 600; font-size: 14px;">${displayNo} - ${studentName}</span>
                     <div style="display:flex; align-items:center; gap:5px;"><span class="xp-badge" style="font-size:10px; padding:1px 5px;">${xp} XP</span>
-                        <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${studentName}', 1)">+</button>
-                        <button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${studentName}', -1)">-</button>
-                        <button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${studentName}', 5)"><i class="fas fa-question"></i></button>
+                        <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${safeStudentName}', 1)">+</button>
+                        <button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${safeStudentName}', -1)">-</button>
+                        <button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${safeStudentName}', 5)"><i class="fas fa-question"></i></button>
                     </div></div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <select class="role-select" onchange="updateRoleColor(this)"><option value="">Görev...</option><option value="Proje Koordinatörü">Proje Koordinatörü</option><option value="Veri Analisti">Veri Analisti</option><option value="Ar-Ge Sorumlusu">Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler">Halkla İlişkiler</option><option value="Üye">Üye</option></select>
@@ -524,14 +525,19 @@ function addStudentToGroupUI(btn) {
 function addXPByName(name, amount) {
     const idx = studentData.findIndex(s => s.adSoyad === name);
     if (idx !== -1) {
-        if (!studentData[idx].xp) studentData[idx].xp = 0;
-        studentData[idx].xp += amount;
+        const cur = parseInt(studentData[idx].xp, 10);
+        const amt = parseInt(amount, 10) || 0;
+        studentData[idx].xp = (isNaN(cur) ? 0 : cur) + amt;
         if (!studentData[idx].xpLogs) studentData[idx].xpLogs = [];
-        studentData[idx].xpLogs.push({ reason: 'Küme / Grup Etkinliği', amount: amount, date: new Date().toISOString() });
+        studentData[idx].xpLogs.push({ reason: 'Küme / Grup Etkinliği', amount: amt, date: new Date().toISOString() });
 
         renderStudentTable();
         document.querySelectorAll('.group-card li').forEach(li => {
-            const nameSpan = li.querySelector('.student-name-text'); if (nameSpan && (nameSpan.getAttribute('data-name') === name)) li.querySelector('.xp-badge').textContent = studentData[idx].xp + ' XP';
+            const nameSpan = li.querySelector('.student-name-text');
+            if (nameSpan && (nameSpan.getAttribute('data-name') === name)) {
+                const badge = li.querySelector('.xp-badge');
+                if (badge) badge.textContent = studentData[idx].xp + ' XP';
+            }
         });
         saveData();
     }

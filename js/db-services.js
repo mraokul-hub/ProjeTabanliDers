@@ -425,9 +425,13 @@ function fullUIRender() {
         if (typeof updateStudentPickers === 'function') updateStudentPickers();
     }
     if (typeof pgFillSinifDropdowns === 'function') pgFillSinifDropdowns();
-    if (typeof pgRenderList === 'function') pgRenderList();
-    if (window.SoruTakipUI && typeof window.SoruTakipUI.populateStudentDropdown === 'function') {
-        window.SoruTakipUI.populateStudentDropdown();
+    if (window.SoruTakipUI) {
+        if (typeof window.SoruTakipUI.populateClassDropdown === 'function') {
+            window.SoruTakipUI.populateClassDropdown();
+        }
+        if (typeof window.SoruTakipUI.populateStudentDropdown === 'function') {
+            window.SoruTakipUI.populateStudentDropdown();
+        }
     }
 }
 
@@ -578,6 +582,7 @@ function importFromJson(input) {
                     examData = parsed.exams || [];
                     
                     saveData(); // Atomik olarak Firebase'e iter
+                    fullUIRender();
                     alert('Veriler başarıyla yüklendi.');
                 }
             } else { alert('Geçersiz yedek dosyası formatı!'); }
@@ -597,9 +602,11 @@ function resetAllData() {
             if (typeof projeGruplariData !== 'undefined') projeGruplariData = [];
             if (typeof advancedGroupData !== 'undefined') advancedGroupData = [];
             groupData = {};
-            document.getElementById('groups-container').innerHTML = '';
+            const grpCont = document.getElementById('groups-container');
+            if (grpCont) grpCont.innerHTML = '';
             
             saveData(); // Firebase'deki ilgili ağaçları null yapar (siler)
+            fullUIRender();
             alert('Sistem sıfırlandı.');
         }
     }

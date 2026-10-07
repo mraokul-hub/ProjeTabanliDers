@@ -600,10 +600,11 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             }
 
             targetIndexes.forEach(index => {
-                if (!studentData[index].xp) studentData[index].xp = 0;
-                studentData[index].xp += amount;
+                const cur = parseInt(studentData[index].xp, 10);
+                const amt = parseInt(amount, 10) || 0;
+                studentData[index].xp = (isNaN(cur) ? 0 : cur) + amt;
                 if (!studentData[index].xpLogs) studentData[index].xpLogs = [];
-                studentData[index].xpLogs.push({ reason: reason + ' (Toplu)', amount: amount, date: new Date().toISOString() });
+                studentData[index].xpLogs.push({ reason: reason + ' (Toplu)', amount: amt, date: new Date().toISOString() });
             });
 
             renderStudentTable();
@@ -625,12 +626,13 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
         function addXP(index, amount, reason = 'Genel') {
             if (index < 0 || index >= studentData.length || !studentData[index]) return;
 
-            if (!studentData[index].xp) studentData[index].xp = 0;
-            studentData[index].xp += amount;
+            const cur = parseInt(studentData[index].xp, 10);
+            const amt = parseInt(amount, 10) || 0;
+            studentData[index].xp = (isNaN(cur) ? 0 : cur) + amt;
 
             // Şeffaflık Raporlaması için Log Tutma
             if (!studentData[index].xpLogs) studentData[index].xpLogs = [];
-            studentData[index].xpLogs.push({ reason: reason, amount: amount, date: new Date().toISOString() });
+            studentData[index].xpLogs.push({ reason: reason, amount: amt, date: new Date().toISOString() });
 
             renderStudentTable();
             saveData();

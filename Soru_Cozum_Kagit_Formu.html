@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soru Çözüm Takip Formu (A4 - OCR & Optik Uyumlu)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -145,7 +146,7 @@
             height: 297mm;
             background: #ffffff;
             margin: 0 auto 25px auto;
-            padding: 6.5mm;
+            padding: 14mm 8mm 13mm 8mm;
             box-shadow: 0 15px 35px rgba(0,0,0,0.12);
             position: relative;
             overflow: hidden;
@@ -155,21 +156,22 @@
         }
 
         /* ── OPTİK REGİSTRASYON & HİZALAMA İŞARETLERİ (FIDUCIAL MARKERS) ── */
+        /* 4 köşede kenar paylarında (margin) yer alır, form başlık ve barkoduna asla temas etmez */
         .fiducial-target {
             position: absolute;
-            width: 11mm;
-            height: 11mm;
+            width: 8mm;
+            height: 8mm;
             background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 50;
+            z-index: 5;
         }
 
         .fiducial-target::before {
             content: '';
-            width: 5mm;
-            height: 5mm;
+            width: 3.8mm;
+            height: 3.8mm;
             background: #fff;
             border-radius: 50%;
             position: absolute;
@@ -177,49 +179,62 @@
 
         .fiducial-target::after {
             content: '';
-            width: 2.2mm;
-            height: 2.2mm;
+            width: 1.6mm;
+            height: 1.6mm;
             background: #000;
             border-radius: 50%;
             position: absolute;
         }
 
-        .fiducial-tl { top: 4mm; left: 4mm; }
-        .fiducial-tr { top: 4mm; right: 4mm; }
-        .fiducial-bl { bottom: 4mm; left: 4mm; }
-        .fiducial-br { bottom: 4mm; right: 4mm; }
+        .fiducial-tl { top: 3.5mm; left: 3.5mm; }
+        .fiducial-tr { top: 3.5mm; right: 3.5mm; }
+        .fiducial-bl { bottom: 3.5mm; left: 3.5mm; }
+        .fiducial-br { bottom: 3.5mm; right: 3.5mm; }
 
         /* Ara Kalibrasyon Çentikleri (Timing Ticks) */
         .tick-h {
             position: absolute;
-            width: 4mm;
-            height: 2.2mm;
+            width: 3.5mm;
+            height: 1.8mm;
             background: #000;
-            z-index: 40;
+            z-index: 4;
         }
         .tick-v {
             position: absolute;
-            width: 2.2mm;
-            height: 4mm;
+            width: 1.8mm;
+            height: 3.5mm;
             background: #000;
-            z-index: 40;
+            z-index: 4;
         }
 
-        .tick-top-1 { top: 4mm; left: 33%; }
-        .tick-top-2 { top: 4mm; left: 66%; }
-        .tick-bottom-1 { bottom: 4mm; left: 33%; }
-        .tick-bottom-2 { bottom: 4mm; left: 66%; }
-        .tick-left-1 { left: 4mm; top: 35%; }
-        .tick-left-2 { left: 4mm; top: 68%; }
-        .tick-right-1 { right: 4mm; top: 35%; }
-        .tick-right-2 { right: 4mm; top: 68%; }
+        .tick-top-1 { top: 3.5mm; left: 33%; }
+        .tick-top-2 { top: 3.5mm; left: 66%; }
+        .tick-bottom-1 { bottom: 3.5mm; left: 33%; }
+        .tick-bottom-2 { bottom: 3.5mm; left: 66%; }
+        .tick-left-1 { left: 3.5mm; top: 35%; }
+        .tick-left-2 { left: 3.5mm; top: 68%; }
+        .tick-right-1 { right: 3.5mm; top: 35%; }
+        .tick-right-2 { right: 3.5mm; top: 68%; }
 
-        /* ── BAŞLIK & METADATA BÖLÜMÜ ── */
+        /* ── BAŞLIK & METADATA BÖLÜMÜ (QR BARKOD & DÖNEM ENTEGRELİ) ── */
         .header-section {
             border: 2px solid #000;
-            padding: 5px 8px;
-            margin-bottom: 3.5mm;
+            padding: 4px 6px;
+            margin-bottom: 2.5mm;
             background: #fff;
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-main-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
         }
 
         .header-top {
@@ -227,13 +242,13 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1.5px solid #000;
-            padding-bottom: 4px;
+            padding-bottom: 3px;
             margin-bottom: 4px;
         }
 
         .header-titles h1 {
             margin: 0;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             letter-spacing: 0.3px;
             text-transform: uppercase;
@@ -241,48 +256,85 @@
 
         .header-titles h2 {
             margin: 1px 0 0 0;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
             color: #374151;
         }
 
-        .machine-code-box {
-            display: flex;
+        .header-period-badge {
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .doc-barcode {
-            display: flex;
-            align-items: center;
-            height: 16px;
-            gap: 1.5px;
-            background: #fff;
-            padding: 2px 3px;
-            border: 1px solid #000;
-        }
-
-        .bar-b { background: #000; height: 12px; }
-        .w1 { width: 1.5px; }
-        .w2 { width: 3px; }
-        .w3 { width: 4.5px; }
-        .bar-w { background: #fff; height: 12px; }
-
-        .doc-tag {
-            font-size: 8.5px;
-            font-weight: 700;
-            border: 1.5px solid #000;
-            padding: 1.5px 4px;
+            gap: 4px;
+            border: 1.2px solid #000;
+            padding: 2px 6px;
             background: #f8fafc;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .header-period-badge .p-lbl {
+            font-size: 8px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .header-period-badge .p-val {
+            font-size: 8.5px;
+            font-weight: 800;
+            color: #000;
+        }
+
+        /* QR Kod & Barkod Kolonu (Sağ Kolon) */
+        .header-qr-col {
+            width: 76px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-left: 1.5px solid #000;
+            padding-left: 6px;
+            background: #fff;
+            text-align: center;
+        }
+
+        .qr-code-box {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+        }
+
+        .qr-code-box img, .qr-code-box canvas {
+            width: 52px !important;
+            height: 52px !important;
+            display: block;
+        }
+
+        .qr-code-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            font-weight: 800;
+            margin-top: 2px;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+        }
+
+        .qr-code-hint {
+            font-size: 6px;
+            font-weight: 700;
+            color: #374151;
+            letter-spacing: -0.2px;
+            text-transform: uppercase;
             white-space: nowrap;
         }
 
         /* Form Üst Bilgi Kutuları */
         .header-fields {
             display: grid;
-            grid-template-columns: 1.8fr 1fr 1fr 0.9fr;
-            gap: 8px;
+            grid-template-columns: 2fr 1fr 1fr 0.9fr;
+            gap: 6px;
             align-items: center;
             font-size: 11px;
         }
@@ -334,11 +386,13 @@
         /* ── OPTİK SORU ÇÖZÜM TABLOSU ── */
         .table-wrap {
             flex: 1;
-            margin-bottom: 3.5mm;
+            margin-bottom: 2.5mm;
             border: 2px solid #000;
             background: #fff;
             display: flex;
             flex-direction: column;
+            position: relative;
+            z-index: 10;
         }
 
         .tracking-table {
@@ -370,11 +424,42 @@
         /* Sütun Genişlikleri: Tarih alanı tam sığacak şekilde 68px'e genişletildi */
         .col-sira { width: 24px; text-align: center !important; font-weight: 700; background: #fafafa; font-size: 9px; }
         .col-tarih { width: 68px; text-align: center !important; padding: 0 2px !important; }
-        .col-ders { width: 72px; font-weight: 600; font-size: 9px; padding-left: 4px !important; }
+        .col-ders { width: 72px; font-weight: 600; font-size: 9px; padding: 0 2px !important; }
         .col-kaynak { width: auto; font-size: 9px; padding-left: 4px !important; }
         .col-tip { width: 64px; text-align: center !important; }
         .col-dyb { width: 38px; text-align: center !important; }
         .col-os { width: 36px; text-align: center !important; }
+
+        /* Tek Ders Modunda Ders Adı Hücresi */
+        .prefilled-ders-name {
+            font-size: 8.5px;
+            font-weight: 800;
+            color: #0f172a;
+            display: block;
+            text-align: center;
+            line-height: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Form Üstü Ders Kutucuğu */
+        .header-ders-field {
+            border: 1px solid #000;
+            background: #fafafa;
+            font-weight: 800;
+            font-size: 8.5px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            letter-spacing: 0.2px;
+            padding: 0 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* 21 Satır Yüksekliği: Tam A4 sayfasına eşit dağıtılır */
         .tracking-table tbody tr {
@@ -450,11 +535,13 @@
         .footer-section {
             border: 1.5px solid #000;
             background: #fff;
-            padding: 3.5px 7px;
+            padding: 3px 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 8px;
+            position: relative;
+            z-index: 10;
         }
 
         .footer-left {
@@ -529,7 +616,7 @@
             .a4-page {
                 box-shadow: none !important;
                 margin: 0 !important;
-                padding: 6.5mm !important;
+                padding: 14mm 8mm 13mm 8mm !important;
                 width: 210mm !important;
                 height: 297mm !important;
                 page-break-after: always !important;
@@ -552,7 +639,7 @@
             <i class="fas fa-tasks" style="font-size:24px; color:#38bdf8;"></i>
             <div>
                 <h3>Soru Çözüm Takip Formu (A4)</h3>
-                <p>21 Satırlı Optik & El Yazısı Formu &middot; Sınıf Bazlı Toplu Baskı</p>
+                <p>21 Satırlı Optik &middot; Öğrenciye Özel QR/Barkod &middot; Tarih Kilitli Takip</p>
             </div>
         </div>
 
@@ -567,6 +654,37 @@
                 <option value="__ALL__">👥 Tüm Sınıf (Toplu Formlar)</option>
                 <option value="">📄 Boş Şablon (Öğrencisiz)</option>
             </select>
+
+            <!-- Ders Seçimi (Seçimli ve Değiştirilebilir) -->
+            <select id="ders-secici" class="toolbar-select" onchange="onDersChange(this.value)" style="font-weight:700; color:#fbbf24; border:1px solid #d97706; background:#1e293b;">
+                <option value="">📚 Tüm Dersler (Karma / 7 Gün)</option>
+                <option value="Matematik">📘 Matematik (Tek Ders / 21 Gün)</option>
+                <option value="Türkçe">📕 Türkçe (Tek Ders / 21 Gün)</option>
+                <option value="Fen Bilimleri">🔬 Fen Bilimleri (Tek Ders / 21 Gün)</option>
+                <option value="Sosyal Bilgiler">🌍 Sosyal Bilgiler (Tek Ders / 21 Gün)</option>
+                <option value="İngilizce">🇬🇧 İngilizce (Tek Ders / 21 Gün)</option>
+                <option value="Din Kültürü">🕌 Din Kültürü (Tek Ders / 21 Gün)</option>
+                <option value="T.C. İnkılap Tarihi">🇹🇷 T.C. İnkılap Tarihi (Tek Ders / 21 Gün)</option>
+            </select>
+
+            <!-- Hafta ve Tarih Aralığı Seçici -->
+            <div style="display:flex; align-items:center; gap:5px; background:#0f172a; padding:4px 8px; border-radius:6px; border:1px solid #475569;">
+                <span style="font-size:11px; color:#94a3b8; font-weight:700;"><i class="fas fa-calendar-alt"></i> Hf:</span>
+                <input type="number" id="hafta-no-input" min="1" max="40" value="1" style="width:42px; background:#1e293b; color:#fff; border:1px solid #64748b; padding:3px 5px; border-radius:4px; font-size:11.5px; font-weight:700; text-align:center;" title="Takip Haftası Numarası" onchange="onPeriodChange()">
+                <span style="font-size:11px; color:#94a3b8; font-weight:600;">Dönem:</span>
+                <input type="date" id="tarih-start-input" class="toolbar-select" style="padding:3px 5px; font-size:11px;" onchange="onPeriodChange()">
+                <span style="color:#64748b;">-</span>
+                <input type="date" id="tarih-end-input" class="toolbar-select" style="padding:3px 5px; font-size:11px;" onchange="onPeriodChange()">
+                <button type="button" class="toolbar-btn toolbar-btn-secondary" style="padding:3px 7px; font-size:10.5px;" onclick="setToolbarPeriodThisWeek()" title="İçinde bulunulan haftayı seç">Bu Hf.</button>
+                <button type="button" class="toolbar-btn toolbar-btn-secondary" style="padding:3px 7px; font-size:10.5px;" onclick="setToolbarPeriodNextWeek()" title="Gelecek haftayı seç">Gelecek Hf.</button>
+                <button type="button" class="toolbar-btn toolbar-btn-secondary" style="padding:3px 7px; font-size:10.5px; background:#4f46e5; color:#fff;" onclick="setToolbarPeriod21Days()" title="21 Günlük (3 Haftalık) Dönem Belirle">21 Gün</button>
+            </div>
+
+            <!-- Tabloya Tarihleri Otomatik Basma Seçeneği -->
+            <label style="display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#e2e8f0; cursor:pointer;" title="7 gün x 3 satır = 21 satıra günleri otomatik dağıt">
+                <input type="checkbox" id="chk-auto-distribute" checked onchange="renderPages()">
+                <span>Tabloya Tarihleri Bas</span>
+            </label>
 
             <!-- Yazdır Butonu -->
             <button class="toolbar-btn" id="btn-print-main" onclick="window.print()">
@@ -601,10 +719,16 @@
         let allStudents = [];
         let selectedClass = '';
         let selectedStudentNo = '';
+        let selectedDers = '';
+        let selectedStartDate = '';
+        let selectedEndDate = '';
+        let selectedWeek = 1;
+        let teacherUid = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadStudentData();
             initURLAndSession();
+            initPeriodControls();
             populateClassDropdown();
             populateStudentDropdown();
             renderPages();
@@ -638,6 +762,47 @@
             }
         }
 
+        // Pazartesi ve Pazar Tarihlerini Hesapla (ISO YYYY-MM-DD)
+        function getMondayAndSunday(d = new Date()) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            const mon = new Date(date.setDate(diff));
+            const sun = new Date(mon);
+            sun.setDate(mon.getDate() + 6);
+            return {
+                mon: mon.toISOString().split('T')[0],
+                sun: sun.toISOString().split('T')[0]
+            };
+        }
+
+        // MEB Eğitim Öğretim Takvimine Göre Hafta No Hesapla
+        function calculateSchoolWeek(d = new Date()) {
+            try {
+                const now = new Date(d);
+                let sepStart = new Date(now.getFullYear(), 8, 8); // 8 Eylül civarı
+                if (now < sepStart && now.getMonth() < 6) {
+                    sepStart = new Date(now.getFullYear() - 1, 8, 8);
+                }
+                const diffTime = now.getTime() - sepStart.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const week = Math.max(1, Math.min(40, Math.floor(diffDays / 7) + 1));
+                return week;
+            } catch(e) {
+                return 1;
+            }
+        }
+
+        // Tarihi Türkçe Formatla: DD.MM.YYYY
+        function formatDateTR(isoStr) {
+            if (!isoStr) return '';
+            const parts = isoStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}.${parts[1]}.${parts[0]}`;
+            }
+            return isoStr;
+        }
+
         // URL ve Session Parametrelerini Çözümle
         function initURLAndSession() {
             const params = new URLSearchParams(window.location.search);
@@ -647,11 +812,136 @@
             selectedClass = classParam ? decodeURIComponent(classParam) : '';
             selectedStudentNo = noParam ? decodeURIComponent(noParam) : '';
 
+            const dersParam = params.get('ders') || sessionStorage.getItem('soru_takip_print_ders') || '';
+            selectedDers = dersParam ? decodeURIComponent(dersParam) : '';
+
+            teacherUid = params.get('uid') || sessionStorage.getItem('soru_takip_print_uid') || '';
+            
+            selectedStartDate = params.get('start') || sessionStorage.getItem('soru_takip_print_start_date') || '';
+            selectedEndDate = params.get('end') || sessionStorage.getItem('soru_takip_print_end_date') || '';
+            
+            const weekParam = params.get('week') || sessionStorage.getItem('soru_takip_print_week');
+            selectedWeek = weekParam ? parseInt(weekParam, 10) : calculateSchoolWeek();
+
+            // Varsayılan tarihler boşsa bu haftayı ata
+            if (!selectedStartDate || !selectedEndDate) {
+                const cur = getMondayAndSunday();
+                selectedStartDate = cur.mon;
+                selectedEndDate = cur.sun;
+            }
+
+            // Eğer tek ders seçildiyse ve bitiş tarihi 21 güne ayarlanmadıysa 21 güne tamamla
+            if (selectedDers && selectedStartDate) {
+                const parts = selectedStartDate.split('-');
+                if (parts.length === 3) {
+                    const s = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                    const e = new Date(s);
+                    e.setDate(s.getDate() + 20); // 21 gün
+                    selectedEndDate = e.toISOString().split('T')[0];
+                }
+            }
+
             // Eğer öğrenci parametresi varsa ve sınıf boşsa, öğrencinin sınıfını bul
             if (selectedStudentNo && !selectedClass) {
                 const st = allStudents.find(s => String(s.no) === String(selectedStudentNo));
                 if (st && st.sinif) selectedClass = st.sinif;
             }
+        }
+
+        // Dönem Araç Çubuğunu Başlat
+        function initPeriodControls() {
+            const dersSelect = document.getElementById('ders-secici');
+            const weekInput = document.getElementById('hafta-no-input');
+            const startInput = document.getElementById('tarih-start-input');
+            const endInput = document.getElementById('tarih-end-input');
+
+            if (dersSelect) dersSelect.value = selectedDers || '';
+            if (weekInput) weekInput.value = selectedWeek || 1;
+            if (startInput) startInput.value = selectedStartDate || '';
+            if (endInput) endInput.value = selectedEndDate || '';
+        }
+
+        // Araç Çubuğunda Tarih veya Hafta Değiştiğinde
+        function onPeriodChange() {
+            const weekInput = document.getElementById('hafta-no-input');
+            const startInput = document.getElementById('tarih-start-input');
+            const endInput = document.getElementById('tarih-end-input');
+
+            if (weekInput) selectedWeek = parseInt(weekInput.value, 10) || 1;
+            if (startInput) selectedStartDate = startInput.value || '';
+            if (endInput) selectedEndDate = endInput.value || '';
+
+            renderPages();
+        }
+
+        // Ders Seçimi Değiştiğinde (Seçimli ve Değiştirilebilir)
+        function onDersChange(val) {
+            selectedDers = val;
+            if (selectedDers) {
+                // Tek ders seçildiğinde 21 günlük dönemi otomatik belirle
+                setToolbarPeriod21Days(false);
+            }
+            renderPages();
+        }
+
+        // Hızlı "21 Günlük Dönem" Seçimi (Başlangıçtan itibaren 21 Gün)
+        function setToolbarPeriod21Days(doRender = true) {
+            let startVal = selectedStartDate;
+            if (!startVal) {
+                const cur = getMondayAndSunday(new Date());
+                startVal = cur.mon;
+                selectedStartDate = startVal;
+            }
+            const parts = startVal.split('-');
+            if (parts.length === 3) {
+                const sDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                const eDate = new Date(sDate);
+                eDate.setDate(sDate.getDate() + 20); // 21 gün (0..20)
+                selectedEndDate = eDate.toISOString().split('T')[0];
+            }
+
+            const startInput = document.getElementById('tarih-start-input');
+            const endInput = document.getElementById('tarih-end-input');
+            if (startInput) startInput.value = selectedStartDate;
+            if (endInput) endInput.value = selectedEndDate;
+
+            if (doRender) renderPages();
+        }
+
+        // Hızlı "Bu Hafta" Seçimi
+        function setToolbarPeriodThisWeek() {
+            const cur = getMondayAndSunday(new Date());
+            selectedStartDate = cur.mon;
+            selectedEndDate = cur.sun;
+            selectedWeek = calculateSchoolWeek(new Date());
+
+            const weekInput = document.getElementById('hafta-no-input');
+            const startInput = document.getElementById('tarih-start-input');
+            const endInput = document.getElementById('tarih-end-input');
+            if (weekInput) weekInput.value = selectedWeek;
+            if (startInput) startInput.value = selectedStartDate;
+            if (endInput) endInput.value = selectedEndDate;
+
+            renderPages();
+        }
+
+        // Hızlı "Gelecek Hafta" Seçimi
+        function setToolbarPeriodNextWeek() {
+            const nextWeekDate = new Date();
+            nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+            const cur = getMondayAndSunday(nextWeekDate);
+            selectedStartDate = cur.mon;
+            selectedEndDate = cur.sun;
+            selectedWeek = (parseInt(selectedWeek, 10) || calculateSchoolWeek()) + 1;
+
+            const weekInput = document.getElementById('hafta-no-input');
+            const startInput = document.getElementById('tarih-start-input');
+            const endInput = document.getElementById('tarih-end-input');
+            if (weekInput) weekInput.value = selectedWeek;
+            if (startInput) startInput.value = selectedStartDate;
+            if (endInput) endInput.value = selectedEndDate;
+
+            renderPages();
         }
 
         // Sınıf Açılır Kutusunu Doldur
@@ -671,7 +961,6 @@
             if (selectedClass && classes.includes(selectedClass)) {
                 classSelect.value = selectedClass;
             } else if (classes.length > 0 && !selectedClass && !selectedStudentNo) {
-                // Varsayılan ilk sınıfı seç
                 selectedClass = classes[0];
                 classSelect.value = selectedClass;
             }
@@ -756,13 +1045,16 @@
             const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
             let targetStudents = [];
 
+            const dersDesc = selectedDers ? ` &middot; 📘 Ders: ${selectedDers} (21 Günlük Form)` : ' &middot; 📚 Tüm Dersler (Karma / 7 Gün)';
+            const periodDesc = (selectedStartDate && selectedEndDate) 
+                ? `${formatDateTR(selectedStartDate)} - ${formatDateTR(selectedEndDate)} (${selectedWeek}. Hf)${dersDesc}`
+                : `${selectedWeek}. Hafta${dersDesc}`;
+
             if (mode === '' || forceBlank) {
-                // Tek boş form
                 targetStudents = [null];
-                if (bannerText) bannerText.innerHTML = '<i class="fas fa-file"></i> 1 Adet Boş Soru Takip Şablonu (El ile doldurulabilir)';
+                if (bannerText) bannerText.innerHTML = `<i class="fas fa-file"></i> 1 Adet Boş Şablon &middot; 📅 ${periodDesc}`;
                 if (printBtn) printBtn.innerHTML = '<i class="fas fa-print"></i> Boş Formu Yazdır (1 Sayfa)';
             } else if (mode === '__ALL__') {
-                // Tüm sınıf için toplu formlar
                 if (selectedClass) {
                     targetStudents = allStudents.filter(s => s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass));
                 } else {
@@ -771,42 +1063,135 @@
                 targetStudents.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
 
                 if (targetStudents.length === 0) {
-                    targetStudents = [null]; // Öğrenci yoksa en azından 1 boş form göster
+                    targetStudents = [null];
                     if (bannerText) bannerText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Bu sınıfta kayıtlı öğrenci bulunamadı (Boş şablon açıldı)';
                     if (printBtn) printBtn.innerHTML = '<i class="fas fa-print"></i> Formu Yazdır (1 Sayfa)';
                 } else {
-                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-layer-group"></i> <strong>${selectedClass || 'Tüm'} Sınıfı:</strong> ${targetStudents.length} A4 Sayfası Hazır (Her öğrenci için 1 sayfa)`;
+                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-layer-group"></i> <strong>${selectedClass || 'Tüm'} Sınıfı:</strong> ${targetStudents.length} A4 Sayfası Hazır &middot; 📅 ${periodDesc}`;
                     if (printBtn) printBtn.innerHTML = `<i class="fas fa-print"></i> Formları Yazdır (${targetStudents.length} Sayfa)`;
                 }
             } else {
-                // Tek bir öğrenci seçildi
                 const singleStudent = allStudents.find(s => String(s.no) === String(mode));
                 targetStudents = singleStudent ? [singleStudent] : [null];
 
                 if (singleStudent) {
-                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-user-check"></i> <strong>${singleStudent.adSoyad}</strong> (${singleStudent.sinif || ''}) - 1 A4 Sayfası Hazır`;
+                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-user-check"></i> <strong>${singleStudent.adSoyad}</strong> (${singleStudent.sinif || ''}) - 1 A4 Sayfası Hazır &middot; 📅 ${periodDesc}`;
                     if (printBtn) printBtn.innerHTML = `<i class="fas fa-print"></i> Formu Yazdır (1 Sayfa)`;
                 }
             }
 
             // HTML Üretimi
-            targetStudents.forEach(st => {
-                container.insertAdjacentHTML('beforeend', generateSinglePageHTML(st));
+            targetStudents.forEach((st, idx) => {
+                container.insertAdjacentHTML('beforeend', generateSinglePageHTML(st, idx));
+            });
+
+            // Dinamik QR Kodlarını Üret
+            targetStudents.forEach((st, idx) => {
+                const qrBox = document.getElementById(`qr-box-${idx}`);
+                if (!qrBox) return;
+                qrBox.innerHTML = '';
+
+                let baseUrl = "https://mraokul-hub.github.io/ProjeTabanliDersIsleme";
+                if (window.location.origin && window.location.origin.startsWith('http')) {
+                    baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+                }
+
+                const dersQuery = selectedDers ? `&ders=${encodeURIComponent(selectedDers)}` : '';
+                let targetUrl = '';
+                if (st && st.no) {
+                    targetUrl = `${baseUrl}/veli-form.html?uid=${encodeURIComponent(teacherUid)}&sid=${encodeURIComponent(st.no)}&sname=${encodeURIComponent(st.adSoyad || '')}&start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&week=${encodeURIComponent(selectedWeek)}${dersQuery}`;
+                } else {
+                    targetUrl = `${baseUrl}/veli-form.html?uid=${encodeURIComponent(teacherUid)}&start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&week=${encodeURIComponent(selectedWeek)}${dersQuery}`;
+                }
+
+                if (typeof QRCode !== 'undefined') {
+                    try {
+                        new QRCode(qrBox, {
+                            text: targetUrl,
+                            width: 52,
+                            height: 52,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    } catch (err) {
+                        renderFallbackBarcode(qrBox, st ? st.no : '00');
+                    }
+                } else {
+                    renderFallbackBarcode(qrBox, st ? st.no : '00');
+                }
             });
         }
 
-        // 21 Satırlık Tablo Gövdesi Üretici
+        // Çevrimdışı / Kütüphane Yüklenememe Durumu İçin Görsel Kod
+        function renderFallbackBarcode(container, sid) {
+            container.innerHTML = `
+                <div style="font-family:'JetBrains Mono', monospace; font-size:9px; border:1px solid #000; padding:2px; text-align:center; background:#fff; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                    <div style="font-weight:900; font-size:10px;">[QR]</div>
+                    <div style="font-size:7.5px; font-weight:700;">NO:${sid}</div>
+                </div>
+            `;
+        }
+
+        // 21 Satırlık Tablo Gövdesi Üretici (Tarih Dağıtımı Destekli)
         function generateTableRowsHTML() {
+            const autoDist = document.getElementById('chk-auto-distribute')?.checked ?? true;
+            let dates = [];
+
+            if (autoDist && selectedStartDate) {
+                const dayNames = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+                const parts = selectedStartDate.split('-');
+                if (parts.length === 3) {
+                    const startYear = parseInt(parts[0], 10);
+                    const startMonth = parseInt(parts[1], 10) - 1;
+                    const startDay = parseInt(parts[2], 10);
+                    
+                    if (selectedDers) {
+                        // ══════════════════════════════════════════════════════════
+                        // TEK DERS MODU: 21 GÜNLÜK SATIR (Her Satır 1 Gün!)
+                        // ══════════════════════════════════════════════════════════
+                        for (let d = 0; d < 21; d++) {
+                            const current = new Date(startYear, startMonth, startDay + d);
+                            const dd = String(current.getDate()).padStart(2, '0');
+                            const mm = String(current.getMonth() + 1).padStart(2, '0');
+                            const dayName = dayNames[current.getDay()];
+                            dates.push(`${dd}.${mm} ${dayName}`);
+                        }
+                    } else {
+                        // ══════════════════════════════════════════════════════════
+                        // TÜM DERSLER / KARMA MOD: 7 GÜN x 3 SATIR = 21 SATIR
+                        // ══════════════════════════════════════════════════════════
+                        for (let d = 0; d < 7; d++) {
+                            const current = new Date(startYear, startMonth, startDay + d);
+                            const dd = String(current.getDate()).padStart(2, '0');
+                            const mm = String(current.getMonth() + 1).padStart(2, '0');
+                            const dayName = dayNames[current.getDay()];
+                            const str = `${dd}.${mm} ${dayName}`;
+                            // Her gün için 3 satır
+                            dates.push(str, str, str);
+                        }
+                    }
+                }
+            }
+
             let html = '';
             for (let i = 1; i <= 21; i++) {
+                const dateContent = (dates[i - 1])
+                    ? `<span class="date-box" style="font-weight:700; color:#000;">${dates[i - 1]}</span>`
+                    : `<span class="date-box">__.__.202_</span>`;
+
+                const dersCellContent = selectedDers
+                    ? `<span class="prefilled-ders-name">${selectedDers}</span>`
+                    : `<span class="line-guide"></span>`;
+
                 html += `
                     <tr>
                         <td class="col-sira">${i}</td>
                         <td class="col-tarih">
-                            <span class="date-box">__.__.202_</span>
+                            ${dateContent}
                         </td>
                         <td class="col-ders">
-                            <span class="line-guide"></span>
+                            ${dersCellContent}
                         </td>
                         <td class="col-kaynak">
                             <span class="line-guide"></span>
@@ -849,7 +1234,7 @@
         }
 
         // Tek Bir A4 Sayfasının Eksiksiz HTML'i
-        function generateSinglePageHTML(student) {
+        function generateSinglePageHTML(student, pageIndex = 0) {
             const isPrefilled = !!student;
             const nameText = isPrefilled ? (student.adSoyad || '') : '';
             
@@ -864,7 +1249,7 @@
                 noCombsHTML = '<span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span>';
             }
 
-            // Sınıf Combs (4 cells e.g. 8 / A)
+            // Sınıf Combs (4 cells e.g. 7 / D)
             let sinifCombsHTML = '';
             if (isPrefilled && student.sinif) {
                 const sinifStr = String(student.sinif).trim();
@@ -887,6 +1272,34 @@
                 sinifCombsHTML = '<span class="comb-cell">&nbsp;</span><span class="comb-cell">&nbsp;</span><span class="comb-cell">/</span><span class="comb-cell">&nbsp;</span>';
             }
 
+            // Hafta Combs (2 cells)
+            const wStr = String(selectedWeek || '1').padStart(2, '0');
+            let weekCombsHTML = '';
+            wStr.split('').forEach(c => {
+                weekCombsHTML += `<span class="comb-cell">${c}</span>`;
+            });
+            weekCombsHTML += `<span style="font-size:8.5px; font-weight:700; margin-left:1px;">.HF</span>`;
+
+            // Dönem Metni
+            const periodText = (selectedStartDate && selectedEndDate)
+                ? `${formatDateTR(selectedStartDate)} - ${formatDateTR(selectedEndDate)}`
+                : `${selectedWeek}. Hafta Takip`;
+
+            const studentCode = student && student.no ? student.no : '00';
+            const dersTag = selectedDers ? `-${selectedDers.substring(0, 3).toUpperCase()}` : '';
+
+            // Form Başlıkları ve Dönem Alanı
+            const formH1 = selectedDers 
+                ? `${selectedDers.toUpperCase()} DERSİ SORU ÇÖZÜM TAKİP FORMU` 
+                : 'SORU ÇÖZÜM TAKİP FORMU (BİREYSEL GELİŞİM)';
+            const formH2 = selectedDers 
+                ? '21 Günlük Düzenli Soru Takip Çizelgesi &middot; Optik Form ve El Yazısı Veri Girişi' 
+                : 'Proje Tabanlı Ders İşleme Sistemi &middot; Optik Form ve El Yazısı Veri Girişi';
+            
+            const badgeContent = selectedDers
+                ? `<span class="p-lbl">📘 DERS & DÖNEM:</span><span class="p-val">${selectedDers} | ${periodText} (21 Gün)</span>`
+                : `<span class="p-lbl">📅 DÖNEM:</span><span class="p-val">${periodText}</span>`;
+
             return `
             <div class="a4-page">
                 <!-- 4 KÖŞE OPTİK REGİSTRASYON HEDEFLERİ (FIDUCIAL TARGETS) -->
@@ -905,55 +1318,60 @@
                 <div class="tick-v tick-right-1"></div>
                 <div class="tick-v tick-right-2"></div>
 
-                <!-- ── FORM ÜST BİLGİ & METADATA ALANI ── -->
+                <!-- ── FORM ÜST BİLGİ & METADATA ALANI (QR VE TARİH ENTEGRELİ) ── -->
                 <div class="header-section">
-                    <div class="header-top">
-                        <div class="header-titles">
-                            <h1>SORU ÇÖZÜM TAKİP FORMU (BİREYSEL GELİŞİM)</h1>
-                            <h2>Proje Tabanlı Ders İşleme Sistemi &middot; Optik Form ve El Yazısı Veri Girişi</h2>
-                        </div>
-                        <div class="machine-code-box">
-                            <div class="doc-barcode" title="OCR Kalibrasyon Kodu">
-                                <div class="bar-b w2"></div><div class="bar-w w1"></div>
-                                <div class="bar-b w1"></div><div class="bar-w w1"></div>
-                                <div class="bar-b w3"></div><div class="bar-w w2"></div>
-                                <div class="bar-b w2"></div><div class="bar-w w1"></div>
-                                <div class="bar-b w1"></div><div class="bar-w w2"></div>
-                                <div class="bar-b w3"></div><div class="bar-w w1"></div>
-                                <div class="bar-b w2"></div>
+                    <div class="header-main-col">
+                        <div class="header-top">
+                            <div class="header-titles">
+                                <h1>${formH1}</h1>
+                                <h2>${formH2}</h2>
                             </div>
-                            <div class="doc-tag">FORM-ID: SORU-TAKIP-A4</div>
+                            <div class="header-period-badge" title="Veri Girişi Takip Dönemi">
+                                ${badgeContent}
+                            </div>
+                        </div>
+
+                        <div class="header-fields">
+                            <div class="field-group" style="flex: 1.4;">
+                                <span class="field-lbl">ÖĞRENCİ ADI SOYADI:</span>
+                                <div class="field-line">${nameText ? nameText : '&nbsp;'}</div>
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-lbl">ÖĞRENCİ NO:</span>
+                                <div class="field-comb">
+                                    ${noCombsHTML}
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-lbl">SINIF / ŞUBE:</span>
+                                <div class="field-comb">
+                                    ${sinifCombsHTML}
+                                </div>
+                            </div>
+
+                            <div class="field-group" style="flex: 0.9;">
+                                <span class="field-lbl">DERS:</span>
+                                <div class="header-ders-field">
+                                    ${selectedDers ? selectedDers.toUpperCase() : 'TÜM DERSLER'}
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-lbl">TAKİP HAFTASI:</span>
+                                <div class="field-comb">
+                                    ${weekCombsHTML}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="header-fields">
-                        <div class="field-group">
-                            <span class="field-lbl">ÖĞRENCİ ADI SOYADI:</span>
-                            <div class="field-line">${nameText ? nameText : '&nbsp;'}</div>
-                        </div>
-
-                        <div class="field-group">
-                            <span class="field-lbl">ÖĞRENCİ NO:</span>
-                            <div class="field-comb">
-                                ${noCombsHTML}
-                            </div>
-                        </div>
-
-                        <div class="field-group">
-                            <span class="field-lbl">SINIF / ŞUBE:</span>
-                            <div class="field-comb">
-                                ${sinifCombsHTML}
-                            </div>
-                        </div>
-
-                        <div class="field-group">
-                            <span class="field-lbl">TAKİP HAFTASI:</span>
-                            <div class="field-comb">
-                                <span class="comb-cell">&nbsp;</span>
-                                <span class="comb-cell">&nbsp;</span>
-                                <span style="font-size:9px; font-weight:700; margin-left:2px;">.HF</span>
-                            </div>
-                        </div>
+                    <!-- SAĞ KOLON: DİNAMİK QR KOD & BARKOD ETİKETİ -->
+                    <div class="header-qr-col">
+                        <div class="qr-code-box" id="qr-box-${pageIndex}" title="Kameraya okutarak doğrudan öğrenci sayfasına gidin"></div>
+                        <div class="qr-code-tag">ST-${studentCode}-W${String(selectedWeek).padStart(2,'0')}${dersTag}</div>
+                        <div class="qr-code-hint">TARATIP VERİ GİR</div>
                     </div>
                 </div>
 
@@ -986,7 +1404,7 @@
                             📌 <strong>OCR & Veli Bilgilendirme:</strong> Rakamları 2 haneli kutucuklara net yazınız (Örn: 05, 18). Soru tipini <strong>[T]</strong> Temel, <strong>[YN]</strong> Yeni Nesil veya <strong>[K]</strong> Karışık yuvarlak içine alınız.
                         </div>
                         <div class="footer-sub">
-                            * Sayfayı düz zeminde, 4 köşedeki siyah hedef işaretleri (■) kadraja tam sığacak ve dik açıdan fotoğraflayıp sisteme yükleyiniz.
+                            * Sağ üstteki QR kodu telefon kamerasıyla taratarak haftalık verileri doğrudan girebilirsiniz. WhatsApp paylaşımı gerektirmez.
                         </div>
                     </div>
 

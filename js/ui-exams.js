@@ -101,8 +101,19 @@
         function processMappedExcel() {
             const examId = parseInt(document.getElementById('active-exam-upload-select').value); const exam = examData.find(e => e.id === examId);
             if (!exam) return alert("Hedef sınav bulunamadı.");
-            const examClasses = exam.classes || (exam.sinif ? [exam.sinif] : []);
-            const maps = { studentNo: document.getElementById('map-studentNo').value, studentName: document.getElementById('map-studentName').value, studentClass: document.getElementById('map-studentClass').value, turkceNet: document.getElementById('map-turkceNet').value, matNet: document.getElementById('map-matNet').value, sosyalNet: document.getElementById('map-sosyalNet').value, fenNet: document.getElementById('map-fenNet').value, dinNet: document.getElementById('map-dinNet').value, ingNet: document.getElementById('map-ingNet').value, totalNet: document.getElementById('map-totalNet').value, rank: document.getElementById('map-rank').value };
+            const maps = {
+                studentNo: document.getElementById('map-studentNo')?.value || '',
+                studentName: document.getElementById('map-studentName')?.value || '',
+                studentClass: document.getElementById('map-studentClass')?.value || '',
+                turkceNet: document.getElementById('map-turkceNet')?.value || '',
+                matNet: document.getElementById('map-matNet')?.value || '',
+                sosyalNet: document.getElementById('map-sosyalNet')?.value || '',
+                fenNet: document.getElementById('map-fenNet')?.value || '',
+                dinNet: document.getElementById('map-dinNet')?.value || '',
+                ingNet: document.getElementById('map-ingNet')?.value || '',
+                totalNet: document.getElementById('map-totalNet')?.value || '',
+                rank: document.getElementById('map-rank')?.value || ''
+            };
             if (maps.studentName === "") return alert("En azından 'Ad Soyad' sütununu seçmelisiniz.");
 
             let count = 0;
@@ -865,22 +876,62 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(mesaj), '_blank');
         }
         function sendExamResultToBip() {
-            const select = document.getElementById('exam-share-student-select');
-            const examId = document.getElementById('exam-share-exam-select')?.value;
-            if (!select || !examId) return alert('Lütfen sınav ve öğrenci seçiniz.');
-            const studentName = select.value;
-            const exam = examData.find(e => String(e.id) === String(examId)); if (!exam) return;
-            const r = exam.results?.[studentName]; if (!r) return alert('Bu öğrenci için sonuç bulunamadı.');
-            const sinifNets = Object.values(exam.results || {});
-            const sinifOrta = sinifNets.length ? (sinifNets.reduce((a, b) => a + (b.totalNet || 0), 0) / sinifNets.length).toFixed(1) : '-';
-            const trendEmoji = r.trend > 0 ? '📈' : r.trend < 0 ? '📉' : '➡️';
-            const sinifOrtaText = sinifOrta !== '-' ? `\n🏫 Sınıf Orta: *${sinifOrta}*` : '';
-            const trendText = r.trend !== undefined && r.trend !== 0 ? `\n${trendEmoji} Değişim: *${r.trend > 0 ? '+' : ''}${r.trend}*` : '';
-            let yorum = r.totalNet >= 80 ? '🌟 Harika bir performans!' : r.totalNet >= 60 ? '👍 İyi gidiyorsun!' : r.totalNet >= 40 ? '⚠️ Biraz daha çalışman gerekiyor.' : '🔴 Ciddi çalışma gerekiyor!';
-            let mesaj = `📊 *SINAV SONUÇ RAPORU*\n📚 *Sınav:* ${exam.title}\n👤 *Öğrenci:* ${studentName}\n📅 *Tarih:* ${new Date(exam.date).toLocaleDateString('tr-TR')}\n\n📝 *DERS NETLERI:*\n📐 Mat: *${r.Matematik || 0}*\n📖 Türkçe: *${r.Turkce || 0}*\n🔬 Fen: *${r.Fen || 0}*\n🌍 Sosyal: *${r.Sosyal || 0}*\n☪️ Din Kültürü: *${r.DinKulturu || 0}*\n🇬🇧 İngilizce: *${r.Ingilizce || 0}*\n\n🎯 *TOPLAM NET:* *${r.totalNet || 0}*  |  Sıra: *${r.rank || '-'}*${sinifOrtaText}${trendText}\n\n${yorum}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+            let targetStudent = null;
+            let lastExam = null;
+            let r = null;
+            let studentName = '';
+
+            if (activeChartStudentName) {
+                studentName = activeChartStudentName;
+                targetStudent = studentData.find(s => s.adSoyad === activeChartStudentName);
+                const sortedExams = [...examData].filter(e => e.results && e.results[activeChartStudentName])
+                    .sort((a, b) => new Date(a.date) - new Date(b.date));
+                if (sortedExams.length === 0) return alert("Bu öğrencinin gönderilecek sınav verisi yok.");
+                lastExam = sortedExams[sortedExams.length - 1];
+                r = lastExam.results[activeChartStudentName];
+            } else {
+                const select = document.getElementById('exam-share-student-select');
+                const examId = document.getElementById('exam-share-exam-select')?.value;
+                if (!select || !select.value || !examId) return alert('Lütfen önce bir öğrencinin gelişim grafiğini açınız veya sınav ve öğrenci seçiniz.');
+                studentName = select.value;
+                targetStudent = studentData.find(s => s.adSoyad === studentName);
+                lastExam = examData.find(e => String(e.id) === String(examId));
+                if (!lastExam) return alert('Hedef sınav bulunamadı.');
+                r = lastExam.results?.[studentName];
+            }
+
+            if (!r) return alert('Bu öğrenci için sınav sonucu bulunamadı.');
+
+            // Sınıf ortalaması
+            let sinifOrtaText = '';
+            if (targetStudent && targetStudent.sinif && lastExam.results) {
+                const sinifSonuclar = Object.values(lastExam.results).filter(x => x.sinif === targetStudent.sinif);
+                if (sinifSonuclar.length > 1) {
+                    const sinifOrt = (sinifSonuclar.reduce((s, x) => s + (parseFloat(x.totalNet) || 0), 0) / sinifSonuclar.length).toFixed(2);
+                    sinifOrtaText = `\n📊 *Sınıf (${targetStudent.sinif}) Ortalaması:* ${sinifOrt}`;
+                }
+            }
+
+            // Trend & Yorum
+            let trendText = '';
+            const sortedExams = [...examData].filter(e => e.results && e.results[studentName])
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            if (sortedExams.length > 1) {
+                const prev = sortedExams[sortedExams.length - 2].results[studentName];
+                const diff = +((r.totalNet || 0) - (prev.totalNet || 0)).toFixed(2);
+                if (diff > 0) trendText = `\n📈 Bir önceki sınava göre *+${diff} net* artış. Tebrikler!`;
+                else if (diff < 0) trendText = `\n📉 Bir önceki sınava göre *${diff} net* düşüş. Eksik konular tekrar edilmeli.`;
+                else trendText = `\n➖ Bir önceki sınavla aynı net.`;
+            }
+
+            let yorum = (r.totalNet || 0) >= 80 ? '🌟 Harika bir performans!' : (r.totalNet || 0) >= 60 ? '👍 İyi gidiyorsun!' : (r.totalNet || 0) >= 40 ? '⚠️ Biraz daha çalışman gerekiyor.' : '🔴 Ciddi çalışma gerekiyor!';
+
+            const mesaj = `📊 *DENEME SINAVI SONUCU (BiP)*\n👤 *Öğrenci:* ${targetStudent ? targetStudent.no + ' - ' + targetStudent.adSoyad : studentName}\n🏫 *Sınıf:* ${targetStudent ? targetStudent.sinif : '-'}\n📋 *Sınav:* ${lastExam.title}${lastExam.date ? ' (' + new Date(lastExam.date).toLocaleDateString('tr-TR') + ')' : ''}\n\n📝 *DERS BAZLI NETLER:*\n🇹🇷 Türkçe: *${r.Turkce || 0}*\n🧮 Matematik: *${r.Matematik || 0}*\n🔬 Fen: *${r.Fen || 0}*\n🌍 Sosyal: *${r.Sosyal || 0}*\n☪️ Din Kültürü: *${r.DinKulturu || 0}*\n🇬🇧 İngilizce: *${r.Ingilizce || 0}*\n\n🎯 *TOPLAM NET:* *${r.totalNet || 0}*  |  Sıra: *${r.rank || '-'}*${sinifOrtaText}${trendText}\n\n💡 ${yorum}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+
             if (typeof window.shareViaBip === 'function') {
                 window.shareViaBip(mesaj, `${studentName} - Sınav Sonucu`);
             } else {
+                if (typeof window.copyTextToClipboard === 'function') window.copyTextToClipboard(mesaj);
                 window.open('https://web.bip.com/', '_blank');
             }
         }
@@ -900,8 +951,12 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             const currentLesson = scheduleData.find(s => s.day === currentDay && s.time === currentTime);
             if (currentLesson && lastNotified !== (currentDay + currentTime)) {
                 lastNotified = currentDay + currentTime;
-                if (Notification.permission === "granted") { new Notification("Ders Saati!", { body: `${currentLesson.lesson} başlıyor.` }); } else { alert(`${currentLesson.lesson} başlıyor.`); }
-                try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch (e) { }
+                if (window.Notification && Notification.permission === "granted") {
+                    new Notification("Ders Saati!", { body: `${currentLesson.lesson} başlıyor.` });
+                }
+                try {
+                    if (window.Audio) new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+                } catch (e) { }
             }
         }, 30000);
 

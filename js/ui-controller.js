@@ -61,9 +61,24 @@ function openTab(tabId) {
     const mobBtn = document.getElementById('mob-btn-' + tabId);
     if (mobBtn) mobBtn.classList.add('active');
 
+    if (tabId === 'tab2') {
+        if (typeof updateStudentPickers === 'function') updateStudentPickers();
+    }
+
+    if (tabId === 'tab6') {
+        if (typeof renderExams === 'function') renderExams();
+    }
+
     if (tabId === 'tab9') {
         if (typeof pgLoad === 'function') pgLoad();
         if (typeof pgRenderList === 'function') pgRenderList();
+    }
+
+    if (tabId === 'tab11') {
+        if (window.SoruTakipUI) {
+            if (typeof window.SoruTakipUI.populateClassDropdown === 'function') window.SoruTakipUI.populateClassDropdown();
+            if (typeof window.SoruTakipUI.populateStudentDropdown === 'function') window.SoruTakipUI.populateStudentDropdown();
+        }
     }
 
     if (tabId === 'tab-admin') {

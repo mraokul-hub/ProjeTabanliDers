@@ -6,7 +6,7 @@
 // ── YÖNETİCİ PANELİ İŞLEMLERİ ──
 function loadUsersAdmin() {
     const adminUsersList = document.getElementById('admin-users-list');
-    if (!adminUsersList) return;
+    if (!adminUsersList || !window.db) return;
 
     window.db.ref('kullanicilar').off('value'); // Remove old listeners to prevent duplicates
     window.db.ref('kullanicilar').on('value', snapshot => {

@@ -28,14 +28,21 @@ let currentTheme = localStorage.getItem('theme') || 'auto';
 function setTheme(theme) { currentTheme = theme; localStorage.setItem('theme', theme); applyTheme(); }
 function applyTheme() {
     let themeToApply = currentTheme;
-    if (currentTheme === 'auto') themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (currentTheme === 'auto') {
+        themeToApply = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
     document.documentElement.setAttribute('data-theme', themeToApply);
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('onclick').includes(currentTheme)) btn.classList.add('active');
+        const onclk = btn.getAttribute('onclick') || '';
+        if (onclk.includes(currentTheme)) btn.classList.add('active');
     });
 }
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (currentTheme === 'auto') applyTheme(); });
+if (window.matchMedia) {
+    try {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (currentTheme === 'auto') applyTheme(); });
+    } catch (e) {}
+}
 
 function updateDbStatusIcon() {
     const icon = document.getElementById('db-status');
@@ -224,5 +231,16 @@ window.shareViaBip = function(text, title) {
     // 3. Masaüstü / Web: BiP Web'i aç ve kullanıcıya panoya kopyalandığını bildir
     window.open('https://web.bip.com/', '_blank');
     window.showBipShareToast(text, title);
+};
+
+// Global Güvenli HTML Kaçış Yardımcısı
+window.escapeHTML = function(str) {
+    if (str === null || str === undefined) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 };
 

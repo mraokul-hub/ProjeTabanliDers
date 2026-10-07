@@ -2720,6 +2720,25 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     </label>
                 </div>
 
+                <!-- YENİ MODEL TERMİNOLOJİ SEÇİMİ (1, 2, 3, 5, 6, 7, 9, 10, 11. Sınıflar İçin) -->
+                <div id="new-model-terminology-toggle"
+                    style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding: 10px 14px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: var(--radius); font-size: 13.5px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--secondary);">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Yeni Model Terminoloji Tercihi:</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600; margin-bottom: 0;">
+                            <input type="radio" name="new-model-naming" value="tema" checked onchange="updateMufredatTerminology()"
+                                style="width: auto; accent-color: var(--secondary);"> Tema / Öğrenim Çıktısı
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600; margin-bottom: 0;">
+                            <input type="radio" name="new-model-naming" value="unite" onchange="updateMufredatTerminology()"
+                                style="width: auto; accent-color: var(--secondary);"> Ünite / Öğrenim Çıktısı
+                        </label>
+                    </div>
+                </div>
+
                 <!-- MÜFREDAT SEÇİM ALANI -->
                 <div id="mufredat-container"
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
@@ -4066,7 +4085,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             <!-- SOL PANEL: Sınıf & Öğrenci Seçim + Link + AI -->
             <div class="left-panel">
                 <div class="form-box">
-                    <div class="form-group" style="margin-bottom: 12px;">
+                    <div class="form-group" style="margin-bottom: 10px;">
                         <label style="font-weight:700; font-size:12px; display:flex; align-items:center; gap:6px;">
                             <i class="fas fa-school" style="color:var(--secondary);"></i> SINIF SEÇİN:
                         </label>
@@ -4074,7 +4093,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <option value="">Tüm Sınıflar</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom: 12px;">
                         <label style="font-weight:700; font-size:12px; display:flex; align-items:center; gap:6px;">
                             <i class="fas fa-user-graduate" style="color:var(--accent);"></i> ÖĞRENCİ SEÇİN:
                         </label>
@@ -4082,15 +4101,87 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <option value="">-- Tüm Sınıf (Toplu Form) --</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>VELİ VERİ GİRİŞ LİNKİ:</label>
-                        <input type="text" id="soru-takip-link-output" readonly placeholder="Öğrenci seçince link üretilir..." style="margin-bottom: 10px;">
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-purple" id="soru-takip-whatsapp-btn" style="flex: 1;">
-                                <i class="fab fa-whatsapp"></i> WhatsApp'tan Gönder
+
+                    <!-- DERS SEÇİMİ (SEÇİMLİ VE DEĞİŞTİRİLEBİLİR) -->
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-weight:700; font-size:12px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-book-open" style="color:#d97706;"></i> DERS SEÇİN:
+                        </label>
+                        <select id="soru-takip-ders-select" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); font-size:12.5px; font-weight:600;">
+                            <option value="">-- Tüm Dersler (Karma / 7 Günlük) --</option>
+                            <option value="Matematik">📘 Matematik (Tek Ders / 21 Gün)</option>
+                            <option value="Türkçe">📕 Türkçe (Tek Ders / 21 Gün)</option>
+                            <option value="Fen Bilimleri">🔬 Fen Bilimleri (Tek Ders / 21 Gün)</option>
+                            <option value="Sosyal Bilgiler">🌍 Sosyal Bilgiler (Tek Ders / 21 Gün)</option>
+                            <option value="İngilizce">🇬🇧 İngilizce (Tek Ders / 21 Gün)</option>
+                            <option value="Din Kültürü">🕌 Din Kültürü (Tek Ders / 21 Gün)</option>
+                            <option value="T.C. İnkılap Tarihi">🇹🇷 T.C. İnkılap Tarihi (Tek Ders / 21 Gün)</option>
+                        </select>
+                    </div>
+
+                    <!-- YENİ: VERİ GİRİŞİ TARİH ARALIĞI & HAFTA SEÇİCİ -->
+                    <div class="form-group" style="margin-bottom: 12px; background: rgba(79,70,229,0.04); padding: 10px 12px; border-radius: 8px; border: 1.5px dashed rgba(79,70,229,0.3);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="font-weight:700; font-size:11.5px; margin:0; display:flex; align-items:center; gap:5px; color:var(--primary);">
+                                <i class="fas fa-calendar-alt"></i> VERİ GİRİŞİ DÖNEMİ:
+                            </label>
+                            <span id="soru-takip-week-badge" style="font-size:11px; font-weight:700; background:var(--primary); color:#fff; padding:2px 7px; border-radius:4px;">
+                                1. Hafta
+                            </span>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                            <div>
+                                <span style="font-size:10px; color:var(--text-muted); display:block; font-weight:600;">Başlangıç:</span>
+                                <input type="date" id="soru-takip-start-date" style="width:100%; padding:5px 7px; font-size:11.5px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <span style="font-size:10px; color:var(--text-muted); display:block; font-weight:600;">Bitiş:</span>
+                                <input type="date" id="soru-takip-end-date" style="width:100%; padding:5px 7px; font-size:11.5px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="btn" id="btn-period-this-week" style="flex:1; padding:4px 6px; font-size:10.5px; background:#e0e7ff; color:#3730a3; border:none; border-radius:5px; font-weight:700; cursor:pointer;">
+                                Bu Hafta
                             </button>
-                            <button class="btn" style="flex: 1; background-color: var(--secondary); color: white;" onclick="if(document.getElementById('soru-takip-link-output').value) window.open(document.getElementById('soru-takip-link-output').value, '_blank')">
-                                <i class="fas fa-external-link-alt"></i> Forma Git (Veri Gir)
+                            <button type="button" class="btn" id="btn-period-next-week" style="flex:1; padding:4px 6px; font-size:10.5px; background:#f1f5f9; color:#475569; border:none; border-radius:5px; font-weight:700; cursor:pointer;">
+                                Gelecek Hafta
+                            </button>
+                            <button type="button" class="btn" id="btn-period-21-days" style="flex:1.2; padding:4px 6px; font-size:10.5px; background:#fef3c7; color:#92400e; border:none; border-radius:5px; font-weight:700; cursor:pointer;" title="21 Günlük (3 Haftalık) Dönem Belirle">
+                                21 Gün (3 Hf)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MODERNİZE EDİLEN VELİ VERİ GİRİŞ & BARKOD KARTI -->
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label style="font-size:11.5px; font-weight:700; margin:0;">
+                                🏷️ AKILLI FORM KİMLİĞİ & BAĞLANTI:
+                            </label>
+                            <span id="soru-takip-link-status" style="font-size:10px; color:#059669; font-weight:700;">
+                                ● Tarih Kilitli
+                            </span>
+                        </div>
+                        <div style="display:flex; gap:6px; margin-bottom:10px;">
+                            <input type="text" id="soru-takip-link-output" readonly placeholder="Öğrenci ve tarih seçince link üretilir..." style="flex:1; margin:0; font-size:11px; padding:6px 9px;">
+                            <button type="button" class="btn" id="btn-copy-smart-link" title="Linki Kopyala" style="padding:0 10px; background:#e2e8f0; border-radius:6px; cursor:pointer;">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+
+                        <!-- BİRİNCİL EYLEM BUTONLARI -->
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn" id="btn-scan-paper-barcode" style="flex: 1.2; background: #059669; color: white; padding: 9px 8px; font-size: 12px; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:7px; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,0.25);">
+                                    <i class="fas fa-camera"></i> Kağıt / Barkod Tara
+                                </button>
+                                <button type="button" class="btn btn-primary" id="btn-open-direct-form" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:7px; cursor:pointer;">
+                                    <i class="fas fa-external-link-alt"></i> Forma Git
+                                </button>
+                            </div>
+                            <!-- İKİNCİL YEDEK BUTON: WHATSAPP -->
+                            <button type="button" class="btn" id="soru-takip-whatsapp-btn" style="width: 100%; padding: 6px 10px; font-size: 11px; background: #25D366; color:#fff; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:6px; border:none; cursor:pointer;">
+                                <i class="fab fa-whatsapp"></i> İsteğe Bağlı: WhatsApp'tan Paylaş
                             </button>
                         </div>
                     </div>
@@ -4157,6 +4248,45 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     </table>
                 </div>
             </div>
+    </div>
+
+    <!-- BARKOD / KAĞIT TARAYICI MODALI -->
+    <div id="soru-takip-scanner-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
+        <div style="background:#fff; border-radius:14px; max-width:480px; width:100%; padding:20px; box-shadow:0 20px 40px rgba(0,0,0,0.3); position:relative; text-align:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+                <h3 style="margin:0; font-size:16px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-qrcode" style="color:var(--primary);"></i> Kağıt / Barkod Tarayıcı
+                </h3>
+                <button type="button" onclick="if(window.SoruTakipUI) window.SoruTakipUI.closeScannerModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#64748b; line-height:1;">&times;</button>
+            </div>
+            <p style="font-size:12px; color:#64748b; margin-bottom:12px;">
+                📋 Öğrencinin A4 Soru Takip Formu üzerindeki <strong>sağ üst karekodu</strong> kameraya tutunuz veya bir fotoğraf/dosya seçiniz.
+            </p>
+            <div id="soru-takip-scanner-dropzone" style="position:relative; width:100%; height:260px; background:#000; border-radius:10px; overflow:hidden; margin-bottom:12px; transition:border 0.2s;">
+                <video id="soru-takip-scanner-video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                <canvas id="soru-takip-scanner-canvas" style="display:none;"></canvas>
+                <!-- Hedefleme Çerçevesi -->
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:160px; height:160px; border:2.5px solid #10b981; border-radius:12px; box-shadow:0 0 0 4000px rgba(0,0,0,0.3); pointer-events:none;">
+                </div>
+                <!-- Hızlı Dosya Butonu (Sağ Üst Köşe) -->
+                <button type="button" id="btn-scanner-quick-upload" style="position:absolute; top:8px; right:8px; background:rgba(15,23,42,0.8); color:#fff; border:1px solid rgba(255,255,255,0.35); border-radius:6px; padding:5px 9px; font-size:11px; font-weight:600; cursor:pointer; z-index:10; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);">
+                    <i class="fas fa-file-upload"></i> Dosya Seç
+                </button>
+            </div>
+            <div id="soru-takip-scanner-feedback" style="min-height:24px; font-size:12px; font-weight:600; color:#059669; margin-bottom:12px;">
+                🎯 Kağıdın sağ üstündeki karekodu kameraya gösteriniz...
+            </div>
+            
+            <!-- EYLEM BUTONLARI: DOSYADAN TARA & İPTAL -->
+            <input type="file" id="soru-takip-scanner-file-input" accept="image/*" style="display:none;">
+            <div style="display:flex; gap:8px;">
+                <button type="button" class="btn" id="btn-scanner-upload-file" style="flex:1.3; background:#2563eb; color:#fff; padding:10px; border-radius:8px; font-weight:700; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-size:12.5px; box-shadow:0 2px 6px rgba(37,99,235,0.3);">
+                    <i class="fas fa-folder-open"></i> Dosyadan / Fotoğraftan Tara
+                </button>
+                <button type="button" class="btn" onclick="if(window.SoruTakipUI) window.SoruTakipUI.closeScannerModal()" style="flex:0.8; background:#f1f5f9; color:#475569; padding:10px; border-radius:8px; font-weight:600; border:none; cursor:pointer; font-size:12.5px;">
+                    İptal / Kapat
+                </button>
+            </div>
         </div>
     </div>
 
@@ -4190,7 +4320,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/app-config.js?v=4"></script>
     <script src="js/db-services.js?v=4"></script>
     <script src="js/ui-controller.js?v=4"></script>
-    <script src="js/curriculum.js?v=4"></script>
+    <script src="js/curriculum.js?v=6"></script>
     <script src="js/ui-strategy.js?v=4"></script>
     <script src="js/ui-students.js?v=4"></script>
     <script src="js/ui-schedule.js?v=4"></script>
@@ -4198,6 +4328,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/ui-exams.js?v=4"></script>
     <script src="js/ui-proje-gruplari.js?v=4"></script>
     <script src="js/auth.js?v=6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script src="js/ui-soru-takip.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

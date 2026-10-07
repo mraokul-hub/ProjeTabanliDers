@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
         trendChart: null,
         /** @type {Array} Tablodaki mevcut veri seti (AI analizi için saklanır) */
         currentData: [],
+        currentWeekNo: 1,
+        scannerStream: null,
+        scannerInterval: null,
 
         // ─────────────────────────────────────────────
         // BAŞLATICI
@@ -30,17 +33,105 @@ document.addEventListener('DOMContentLoaded', () => {
             this.container = document.getElementById('soru-takip-container');
             if (!this.container) return;
 
-            this.classSelect   = document.getElementById('soru-takip-class-select');
-            this.studentSelect = document.getElementById('soru-takip-student-select');
-            this.linkOutput    = document.getElementById('soru-takip-link-output');
-            this.whatsappBtn   = document.getElementById('soru-takip-whatsapp-btn');
-            this.tableBody     = document.getElementById('soru-takip-table-body');
-            this.aiResultBox   = document.getElementById('soru-takip-ai-result');
+            this.classSelect     = document.getElementById('soru-takip-class-select');
+            this.studentSelect   = document.getElementById('soru-takip-student-select');
+            this.linkOutput      = document.getElementById('soru-takip-link-output');
+            this.whatsappBtn     = document.getElementById('soru-takip-whatsapp-btn');
+            this.tableBody       = document.getElementById('soru-takip-table-body');
+            this.aiResultBox     = document.getElementById('soru-takip-ai-result');
 
+            // Yeni Dönem & Barkod Elemanları
+            this.dersSelect      = document.getElementById('soru-takip-ders-select');
+            this.startDateInput  = document.getElementById('soru-takip-start-date');
+            this.endDateInput    = document.getElementById('soru-takip-end-date');
+            this.weekBadge       = document.getElementById('soru-takip-week-badge');
+            this.linkStatus      = document.getElementById('soru-takip-link-status');
+            this.btnThisWeek     = document.getElementById('btn-period-this-week');
+            this.btnNextWeek     = document.getElementById('btn-period-next-week');
+            this.btnPeriod21Days = document.getElementById('btn-period-21-days');
+            this.btnScanBarcode  = document.getElementById('btn-scan-paper-barcode');
+            this.btnOpenDirect   = document.getElementById('btn-open-direct-form');
+            this.btnCopyLink     = document.getElementById('btn-copy-smart-link');
+            this.scannerModal     = document.getElementById('soru-takip-scanner-modal');
+            this.scannerVideo     = document.getElementById('soru-takip-scanner-video');
+            this.scannerCanvas    = document.getElementById('soru-takip-scanner-canvas');
+            this.scannerFeedback  = document.getElementById('soru-takip-scanner-feedback');
+            this.scannerFileInput = document.getElementById('soru-takip-scanner-file-input');
+            this.btnUploadFile    = document.getElementById('btn-scanner-upload-file');
+            this.btnQuickUpload   = document.getElementById('btn-scanner-quick-upload');
+            this.scannerDropzone  = document.getElementById('soru-takip-scanner-dropzone');
+
+            this.initPeriodDefaults();
             this.bindEvents();
             this.populateClassDropdown();
             this.populateStudentDropdown();
             window.SoruTakipUI = this;
+        },
+
+        // 21 Günlük Tek Ders Dönemi Belirleme (1 Sayfa = 21 Gün)
+        set21DaysPeriod() {
+            let startVal = this.startDateInput?.value;
+            if (!startVal) {
+                const today = new Date();
+                const day = today.getDay();
+                const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                const mon = new Date(today.setDate(diff));
+                startVal = mon.toISOString().split('T')[0];
+                if (this.startDateInput) this.startDateInput.value = startVal;
+            }
+
+            const parts = startVal.split('-');
+            if (parts.length === 3) {
+                const sDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                const eDate = new Date(sDate);
+                eDate.setDate(sDate.getDate() + 20); // 21 gün (0..20)
+                const yyyy = eDate.getFullYear();
+                const mm = String(eDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(eDate.getDate()).padStart(2, '0');
+                if (this.endDateInput) this.endDateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+
+            if (this.weekBadge) {
+                this.weekBadge.textContent = `${this.currentWeekNo}. Hafta (21 Gün)`;
+            }
+
+            const ders = this.dersSelect?.value || '';
+            if (this.linkStatus) {
+                this.linkStatus.textContent = ders ? `● ${ders} (21 Gün Kilitli)` : '● 21 Gün Kilitli';
+            }
+
+            const sid = this.studentSelect ? this.studentSelect.value : '';
+            if (sid) this.generateLink(sid);
+        },
+
+        // Varsayılan Haftayı ve Tarihleri Hesapla
+        initPeriodDefaults() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            const mon = new Date(today.setDate(diff));
+            const sun = new Date(mon);
+            sun.setDate(mon.getDate() + 6);
+
+            const monStr = mon.toISOString().split('T')[0];
+            const sunStr = sun.toISOString().split('T')[0];
+
+            if (this.startDateInput && !this.startDateInput.value) this.startDateInput.value = monStr;
+            if (this.endDateInput && !this.endDateInput.value) this.endDateInput.value = sunStr;
+
+            // Hafta hesapla (Eylül başlangıçlı MEB takvimi)
+            let sepStart = new Date(new Date().getFullYear(), 8, 8);
+            if (new Date() < sepStart && new Date().getMonth() < 6) {
+                sepStart = new Date(new Date().getFullYear() - 1, 8, 8);
+            }
+            const diffDays = Math.floor((new Date() - sepStart) / (1000 * 60 * 60 * 24));
+            this.currentWeekNo = Math.max(1, Math.min(40, Math.floor(diffDays / 7) + 1));
+
+            if (this.weekBadge) this.weekBadge.textContent = `${this.currentWeekNo}. Hafta`;
+            if (this.linkStatus) {
+                const ders = this.dersSelect?.value || '';
+                this.linkStatus.textContent = ders ? `● ${ders} Kilitli` : '● Tarih Kilitli';
+            }
         },
 
         // ─────────────────────────────────────────────
@@ -56,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.loadStudentData(sid);
                     } else {
                         if (this.linkOutput) this.linkOutput.value = '';
-                        if (this.tableBody) this.tableBody.innerHTML = '<tr><td colspan="9">Bir öğrenci seçiniz veya "A4 Soru Takip Formu Yazdır" butonu ile sınıfın tamamını yazdırınız.</td></tr>';
+                        if (this.tableBody) this.tableBody.innerHTML = '<tr><td colspan="10">Bir öğrenci seçiniz veya "A4 Soru Takip Formu Yazdır" butonu ile sınıfın tamamını yazdırınız.</td></tr>';
                         this.destroyCharts();
                     }
                 });
@@ -70,20 +161,172 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.loadStudentData(sid);
                     } else {
                         if (this.linkOutput) this.linkOutput.value = '';
-                        if (this.tableBody) this.tableBody.innerHTML = '<tr><td colspan="9">Lütfen öğrenci seçiniz.</td></tr>';
+                        if (this.tableBody) this.tableBody.innerHTML = '<tr><td colspan="10">Lütfen öğrenci seçiniz veya "Kağıt / Barkod Tara" ile kağıdı kameraya okutunuz.</td></tr>';
                         this.destroyCharts();
                     }
                 });
             }
 
+            // Tarih değişimleri
+            if (this.startDateInput) {
+                this.startDateInput.addEventListener('change', () => {
+                    const sid = this.studentSelect ? this.studentSelect.value : '';
+                    if (sid) this.generateLink(sid);
+                });
+            }
+            if (this.endDateInput) {
+                this.endDateInput.addEventListener('change', () => {
+                    const sid = this.studentSelect ? this.studentSelect.value : '';
+                    if (sid) this.generateLink(sid);
+                });
+            }
+
+            // Hızlı dönem butonları
+            if (this.btnThisWeek) {
+                this.btnThisWeek.addEventListener('click', () => {
+                    const now = new Date();
+                    const day = now.getDay();
+                    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+                    const mon = new Date(now.setDate(diff));
+                    const sun = new Date(mon);
+                    sun.setDate(mon.getDate() + 6);
+                    if (this.startDateInput) this.startDateInput.value = mon.toISOString().split('T')[0];
+                    if (this.endDateInput) this.endDateInput.value = sun.toISOString().split('T')[0];
+                    
+                    let sep = new Date(new Date().getFullYear(), 8, 8);
+                    if (new Date() < sep && new Date().getMonth() < 6) sep = new Date(new Date().getFullYear() - 1, 8, 8);
+                    this.currentWeekNo = Math.max(1, Math.min(40, Math.floor((new Date() - sep)/(1000*60*60*24*7)) + 1));
+                    if (this.weekBadge) this.weekBadge.textContent = `${this.currentWeekNo}. Hafta`;
+                    
+                    const sid = this.studentSelect ? this.studentSelect.value : '';
+                    if (sid) this.generateLink(sid);
+                });
+            }
+
+            if (this.btnNextWeek) {
+                this.btnNextWeek.addEventListener('click', () => {
+                    const next = new Date();
+                    next.setDate(next.getDate() + 7);
+                    const day = next.getDay();
+                    const diff = next.getDate() - day + (day === 0 ? -6 : 1);
+                    const mon = new Date(next.setDate(diff));
+                    const sun = new Date(mon);
+                    sun.setDate(mon.getDate() + 6);
+                    if (this.startDateInput) this.startDateInput.value = mon.toISOString().split('T')[0];
+                    if (this.endDateInput) this.endDateInput.value = sun.toISOString().split('T')[0];
+                    
+                    this.currentWeekNo = (this.currentWeekNo || 1) + 1;
+                    if (this.weekBadge) this.weekBadge.textContent = `${this.currentWeekNo}. Hafta`;
+                    
+                    const sid = this.studentSelect ? this.studentSelect.value : '';
+                    if (sid) this.generateLink(sid);
+                });
+            }
+
+            // Ders Değişimi (Seçimli ve Değiştirilebilir)
+            if (this.dersSelect) {
+                this.dersSelect.addEventListener('change', () => {
+                    const ders = this.dersSelect.value;
+                    if (ders) {
+                        this.set21DaysPeriod();
+                    } else {
+                        this.initPeriodDefaults();
+                    }
+                    const sid = this.studentSelect ? this.studentSelect.value : '';
+                    if (sid) this.generateLink(sid);
+                });
+            }
+
+            if (this.btnPeriod21Days) {
+                this.btnPeriod21Days.addEventListener('click', () => {
+                    this.set21DaysPeriod();
+                });
+            }
+
+            // Link Kopyala Butonu
+            if (this.btnCopyLink) {
+                this.btnCopyLink.addEventListener('click', () => {
+                    const val = this.linkOutput ? this.linkOutput.value : '';
+                    if (!val) {
+                        alert('Lütfen önce bir öğrenci seçiniz.');
+                        return;
+                    }
+                    navigator.clipboard.writeText(val).then(() => {
+                        this.btnCopyLink.innerHTML = '<i class="fas fa-check" style="color:#059669;"></i>';
+                        setTimeout(() => {
+                            this.btnCopyLink.innerHTML = '<i class="fas fa-copy"></i>';
+                        }, 1800);
+                    });
+                });
+            }
+
+            // Doğrudan Forma Git Butonu
+            if (this.btnOpenDirect) {
+                this.btnOpenDirect.addEventListener('click', () => {
+                    const link = this.linkOutput?.value;
+                    if (link) {
+                        window.open(link, '_blank');
+                    } else {
+                        alert('Lütfen önce bir öğrenci seçiniz veya A4 formundan karekod okutunuz.');
+                    }
+                });
+            }
+
+            // Kağıt / Barkod Tara Butonu
+            if (this.btnScanBarcode) {
+                this.btnScanBarcode.addEventListener('click', () => this.openScannerModal());
+            }
+
+            // Dosyadan / Fotoğraftan Barkod Tara Butonları
+            if (this.btnUploadFile && this.scannerFileInput) {
+                this.btnUploadFile.addEventListener('click', () => this.scannerFileInput.click());
+            }
+            if (this.btnQuickUpload && this.scannerFileInput) {
+                this.btnQuickUpload.addEventListener('click', () => this.scannerFileInput.click());
+            }
+            if (this.scannerFileInput) {
+                this.scannerFileInput.addEventListener('change', (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) this.scanImageFile(file);
+                });
+            }
+
+            // Sürükle & Bırak ile Dosyadan Tarama
+            const dropTarget = this.scannerDropzone || this.scannerVideo?.parentElement;
+            if (dropTarget) {
+                ['dragenter', 'dragover'].forEach(evt => {
+                    dropTarget.addEventListener(evt, (e) => {
+                        e.preventDefault();
+                        dropTarget.style.outline = '3px dashed #3b82f6';
+                        dropTarget.style.outlineOffset = '-4px';
+                    });
+                });
+                ['dragleave', 'drop'].forEach(evt => {
+                    dropTarget.addEventListener(evt, (e) => {
+                        e.preventDefault();
+                        dropTarget.style.outline = 'none';
+                    });
+                });
+                dropTarget.addEventListener('drop', (e) => {
+                    const file = e.dataTransfer?.files?.[0];
+                    if (file && file.type.startsWith('image/')) {
+                        this.scanImageFile(file);
+                    }
+                });
+            }
+
+            // WhatsApp Butonu
             if (this.whatsappBtn) {
                 this.whatsappBtn.addEventListener('click', () => {
                     const link = this.linkOutput?.value;
                     if (link) {
-                        window.open(
-                            `https://api.whatsapp.com/send?text=${encodeURIComponent('Soru çözüm verisi girişi için: ' + link)}`,
-                            '_blank'
-                        );
+                        const student = typeof studentData !== 'undefined' ? studentData.find(s => s.no == this.studentSelect?.value) : null;
+                        const sname = student ? student.adSoyad : '';
+                        const ders = this.dersSelect?.value || '';
+                        const dersText = ders ? `${ders} dersi ` : '';
+                        const periodDesc = ders ? '21 günlük takip çizelgesi' : `${this.currentWeekNo}. Hafta`;
+                        const text = `Sayın Velimiz, ${sname ? sname + ' öğrencimizin ' : ''}${dersText}${periodDesc} soru çözüm verilerini girmek için bağlantınız:\n${link}`;
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                     } else {
                         alert('Lütfen önce bir öğrenci seçiniz.');
                     }
@@ -100,6 +343,299 @@ document.addEventListener('DOMContentLoaded', () => {
             if (veliAiBtn) {
                 veliAiBtn.addEventListener('click', () => this.runParentReport());
             }
+        },
+
+        // ─────────────────────────────────────────────
+        // KAĞIT / BARKOD TARAYICI METOTLARI
+        // ─────────────────────────────────────────────
+        openScannerModal() {
+            if (!this.scannerModal) return;
+            this.scannerModal.style.display = 'flex';
+            this.startScanner();
+        },
+
+        closeScannerModal() {
+            this.stopScanner();
+            if (this.scannerModal) this.scannerModal.style.display = 'none';
+        },
+
+        async startScanner() {
+            if (!this.scannerVideo) return;
+            try {
+                if (this.scannerFeedback) {
+                    this.scannerFeedback.textContent = "📷 Kamera başlatılıyor...";
+                    this.scannerFeedback.style.color = "#0284c7";
+                }
+                this.scannerStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                this.scannerVideo.srcObject = this.scannerStream;
+                await this.scannerVideo.play();
+                this.startScanningLoop();
+            } catch(err) {
+                if (this.scannerFeedback) {
+                    this.scannerFeedback.textContent = "Kamera açılamadı: " + err.message;
+                    this.scannerFeedback.style.color = "#ef4444";
+                }
+            }
+        },
+
+        stopScanner() {
+            if (this.scannerInterval) {
+                clearInterval(this.scannerInterval);
+                this.scannerInterval = null;
+            }
+            if (this.scannerStream) {
+                this.scannerStream.getTracks().forEach(t => t.stop());
+                this.scannerStream = null;
+            }
+        },
+
+        startScanningLoop() {
+            if (typeof jsQR === 'undefined' || !this.scannerCanvas || !this.scannerVideo) return;
+            const ctx = this.scannerCanvas.getContext('2d');
+            
+            if (this.scannerFeedback) {
+                this.scannerFeedback.textContent = "🎯 Kağıdın sağ üstündeki karekodu kameraya gösteriniz...";
+                this.scannerFeedback.style.color = "#059669";
+            }
+
+            this.scannerInterval = setInterval(() => {
+                if (this.scannerVideo.readyState !== this.scannerVideo.HAVE_ENOUGH_DATA) return;
+                this.scannerCanvas.width = this.scannerVideo.videoWidth;
+                this.scannerCanvas.height = this.scannerVideo.videoHeight;
+                ctx.drawImage(this.scannerVideo, 0, 0, this.scannerCanvas.width, this.scannerCanvas.height);
+
+                const imageData = ctx.getImageData(0, 0, this.scannerCanvas.width, this.scannerCanvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+
+                if (code && code.data) {
+                    this.handleScannedCode(code.data);
+                }
+            }, 250);
+        },
+
+        // ─────────────────────────────────────────────
+        // DOSYADAN / FOTOĞRAFTAN KAREKOD TARAMA
+        // ─────────────────────────────────────────────
+        scanImageFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                if (this.scannerFeedback) {
+                    this.scannerFeedback.textContent = "⚠️ Lütfen geçerli bir resim dosyası seçiniz (PNG, JPG, WEBP vb.).";
+                    this.scannerFeedback.style.color = "#dc2626";
+                }
+                return;
+            }
+
+            if (this.scannerFeedback) {
+                this.scannerFeedback.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Dosya inceleniyor: <strong>${file.name}</strong>...`;
+                this.scannerFeedback.style.color = "#2563eb";
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const codeData = this.decodeQRFromImage(img, canvas, ctx);
+                    if (codeData) {
+                        if (this.scannerFeedback) {
+                            this.scannerFeedback.innerHTML = `✅ <strong>Dosyadaki karekod başarıyla okundu!</strong>`;
+                            this.scannerFeedback.style.color = "#059669";
+                        }
+                        this.handleScannedCode(codeData);
+                    } else {
+                        if (this.scannerFeedback) {
+                            this.scannerFeedback.innerHTML = `❌ Görselde karekod tespit edilemedi. Lütfen kağıdın sağ üst köşesini net gösteren aydınlık bir fotoğraf yükleyiniz.`;
+                            this.scannerFeedback.style.color = "#dc2626";
+                        }
+                    }
+                    if (this.scannerFileInput) this.scannerFileInput.value = '';
+                };
+                img.onerror = () => {
+                    if (this.scannerFeedback) {
+                        this.scannerFeedback.textContent = "❌ Resim yüklenirken bir sorun oluştu.";
+                        this.scannerFeedback.style.color = "#dc2626";
+                    }
+                    if (this.scannerFileInput) this.scannerFileInput.value = '';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
+
+        // Çok Kademeli Akıllı QR Kod Çözücü
+        decodeQRFromImage(img, canvas, ctx) {
+            if (typeof jsQR === 'undefined') {
+                console.error('jsQR kütüphanesi bulunamadı.');
+                return null;
+            }
+
+            const nw = img.naturalWidth;
+            const nh = img.naturalHeight;
+
+            // 1. Strateji: A4 Takip Formu Sağ Üst Çeyrek Odaklı Tarama
+            // Formun sağ üst köşesinde yer alan QR kodunu yüksek çözünürlükte izole eder.
+            const cropW = Math.round(nw * 0.55);
+            const cropH = Math.round(nh * 0.45);
+            const cropX = Math.round(nw - cropW);
+            const cropY = 0;
+
+            canvas.width = cropW;
+            canvas.height = cropH;
+            ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+            let imgData = ctx.getImageData(0, 0, cropW, cropH);
+            let code = jsQR(imgData.data, cropW, cropH, { inversionAttempts: 'attemptBoth' });
+            if (code && code.data) return code.data;
+
+            // 2. Strateji: Optimize edilmiş tam görsel (max 1600px)
+            const maxDim = 1600;
+            let scale = Math.min(1, maxDim / Math.max(nw, nh));
+            let targetW = Math.round(nw * scale);
+            let targetH = Math.round(nh * scale);
+
+            canvas.width = targetW;
+            canvas.height = targetH;
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+            imgData = ctx.getImageData(0, 0, targetW, targetH);
+            code = jsQR(imgData.data, targetW, targetH, { inversionAttempts: 'attemptBoth' });
+            if (code && code.data) return code.data;
+
+            // 3. Strateji: Gürültü azaltıcı 800px ölçek
+            if (Math.max(nw, nh) > 1000) {
+                scale = 800 / Math.max(nw, nh);
+                targetW = Math.round(nw * scale);
+                targetH = Math.round(nh * scale);
+                canvas.width = targetW;
+                canvas.height = targetH;
+                ctx.drawImage(img, 0, 0, targetW, targetH);
+                imgData = ctx.getImageData(0, 0, targetW, targetH);
+                code = jsQR(imgData.data, targetW, targetH, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) return code.data;
+            }
+
+            // 4. Strateji: Orijinal piksel çözünürlüğü (2400px'e kadar)
+            if (nw <= 2400 && nh <= 2400) {
+                canvas.width = nw;
+                canvas.height = nh;
+                ctx.drawImage(img, 0, 0);
+                imgData = ctx.getImageData(0, 0, nw, nh);
+                code = jsQR(imgData.data, nw, nh, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) return code.data;
+            }
+
+            return null;
+        },
+
+        handleScannedCode(rawText) {
+            let targetSid = '';
+            let targetStart = '';
+            let targetEnd = '';
+            let targetWeek = '';
+            let targetDers = '';
+
+            // 1. URL formatı mı?
+            if (rawText.startsWith('http://') || rawText.startsWith('https://')) {
+                try {
+                    const urlObj = new URL(rawText);
+                    targetSid   = urlObj.searchParams.get('sid');
+                    targetStart = urlObj.searchParams.get('start');
+                    targetEnd   = urlObj.searchParams.get('end');
+                    targetWeek  = urlObj.searchParams.get('week');
+                    targetDers  = urlObj.searchParams.get('ders');
+                } catch(e) {}
+            } else if (rawText.startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(rawText);
+                    targetSid   = parsed.sid || parsed.no;
+                    targetStart = parsed.start;
+                    targetEnd   = parsed.end;
+                    targetWeek  = parsed.week;
+                    targetDers  = parsed.ders;
+                } catch(e) {}
+            } else if (rawText.startsWith('ST-')) {
+                // ST-16-W06 veya ST-16-W05-MAT
+                const parts = rawText.split('-');
+                if (parts.length >= 2) targetSid = parts[1];
+                if (parts.length >= 3) targetWeek = parts[2].replace(/\D/g, '');
+                if (parts.length >= 4) {
+                    const dCode = parts[3].toUpperCase();
+                    const codeMap = {
+                        'MAT': 'Matematik',
+                        'TÜR': 'Türkçe',
+                        'TUR': 'Türkçe',
+                        'FEN': 'Fen Bilimleri',
+                        'SOS': 'Sosyal Bilgiler',
+                        'İNG': 'İngilizce',
+                        'ING': 'İngilizce',
+                        'DİN': 'Din Kültürü',
+                        'DIN': 'Din Kültürü',
+                        'İNK': 'T.C. İnkılap Tarihi',
+                        'INK': 'T.C. İnkılap Tarihi'
+                    };
+                    targetDers = codeMap[dCode] || parts[3];
+                }
+            }
+
+            if (!targetSid) return;
+
+            // Sesli geri bildirim (Soft Beep)
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 880;
+                gain.gain.value = 0.15;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                setTimeout(() => { osc.stop(); audioCtx.close(); }, 120);
+            } catch(e) {}
+
+            // Öğrenciyi veritabanında bul
+            const stList = typeof studentData !== 'undefined' ? studentData : [];
+            const foundStudent = stList.find(s => String(s.no) === String(targetSid));
+
+            if (targetStart && this.startDateInput) this.startDateInput.value = targetStart;
+            if (targetEnd && this.endDateInput) this.endDateInput.value = targetEnd;
+            if (targetWeek) {
+                this.currentWeekNo = parseInt(targetWeek, 10) || this.currentWeekNo;
+                if (this.weekBadge) this.weekBadge.textContent = `${this.currentWeekNo}. Hafta`;
+            }
+            if (targetDers && this.dersSelect) {
+                this.dersSelect.value = targetDers;
+            }
+
+            if (foundStudent) {
+                if (foundStudent.sinif && this.classSelect) {
+                    this.classSelect.value = foundStudent.sinif;
+                    this.populateStudentDropdown();
+                }
+                if (this.studentSelect) {
+                    this.studentSelect.value = foundStudent.no;
+                }
+                this.generateLink(foundStudent.no);
+                this.loadStudentData(foundStudent.no);
+
+                if (this.scannerFeedback) {
+                    const dersBadge = targetDers ? ` &middot; 📘 ${targetDers}` : '';
+                    this.scannerFeedback.innerHTML = `🎉 <strong>${foundStudent.adSoyad} (${foundStudent.no})</strong> Başarıyla Tanındı!${dersBadge}`;
+                    this.scannerFeedback.style.color = "#059669";
+                }
+            } else {
+                if (this.studentSelect) this.studentSelect.value = targetSid;
+                this.generateLink(targetSid);
+                this.loadStudentData(targetSid);
+            }
+
+            setTimeout(() => {
+                this.closeScannerModal();
+            }, 750);
         },
 
         // ─────────────────────────────────────────────
@@ -158,15 +694,30 @@ document.addEventListener('DOMContentLoaded', () => {
         generateLink(sid) {
             if (!window.currentUser?.uid) return;
             
-            let baseUrl = "https://mraokul-hub.github.io";
+            let baseUrl = "https://mraokul-hub.github.io/ProjeTabanliDersIsleme";
             if (window.location.origin && window.location.origin.startsWith('http')) {
                 baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
             }
             
             const student = typeof studentData !== 'undefined' ? studentData.find(s => s.no == sid) : null;
             const sname   = student ? student.adSoyad : '';
-            const link    = `${baseUrl}/veli-form.html?uid=${window.currentUser.uid}&sid=${sid}&sname=${encodeURIComponent(sname)}`;
+            const start   = this.startDateInput?.value || '';
+            const end     = this.endDateInput?.value || '';
+            const week    = this.currentWeekNo || 1;
+            const ders    = this.dersSelect?.value || '';
+
+            let link = `${baseUrl}/veli-form.html?uid=${window.currentUser.uid}&sid=${sid}&sname=${encodeURIComponent(sname)}`;
+            if (start && end) {
+                link += `&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&week=${encodeURIComponent(week)}`;
+            }
+            if (ders) {
+                link += `&ders=${encodeURIComponent(ders)}`;
+            }
             if (this.linkOutput) this.linkOutput.value = link;
+
+            if (this.linkStatus) {
+                this.linkStatus.textContent = ders ? `● ${ders} (21 Gün Kilitli)` : '● Tarih Kilitli';
+            }
         },
 
         // ─────────────────────────────────────────────
@@ -701,8 +1252,13 @@ BEKLENEN FORMAT (Veliye Hitaben)
 
 // A4 Soru Takip Formu Yazdırma Penceresini Açma Yardımcısı
 window.openSoruTakipKagitFormu = function() {
-    const classVal = document.getElementById('soru-takip-class-select')?.value || '';
+    const classVal   = document.getElementById('soru-takip-class-select')?.value || '';
     const studentVal = document.getElementById('soru-takip-student-select')?.value || '';
+    const dersVal    = document.getElementById('soru-takip-ders-select')?.value || '';
+    const startVal   = document.getElementById('soru-takip-start-date')?.value || '';
+    const endVal     = document.getElementById('soru-takip-end-date')?.value || '';
+    const weekVal    = window.SoruTakipUI?.currentWeekNo || 1;
+    const teacherUid = window.currentUser?.uid || '';
     
     let targetStudents = [];
     const allStudents = (typeof studentData !== 'undefined' ? studentData : []);
@@ -719,13 +1275,23 @@ window.openSoruTakipKagitFormu = function() {
     try {
         sessionStorage.setItem('soru_takip_print_class', classVal);
         sessionStorage.setItem('soru_takip_print_student_no', studentVal);
+        sessionStorage.setItem('soru_takip_print_ders', dersVal);
         sessionStorage.setItem('soru_takip_print_students', JSON.stringify(targetStudents));
+        sessionStorage.setItem('soru_takip_print_uid', teacherUid);
+        sessionStorage.setItem('soru_takip_print_start_date', startVal);
+        sessionStorage.setItem('soru_takip_print_end_date', endVal);
+        sessionStorage.setItem('soru_takip_print_week', weekVal);
     } catch(e) {}
     
     let url = 'Soru_Cozum_Kagit_Formu.html';
     const params = [];
     if (classVal) params.push('class=' + encodeURIComponent(classVal));
     if (studentVal) params.push('no=' + encodeURIComponent(studentVal));
+    if (dersVal) params.push('ders=' + encodeURIComponent(dersVal));
+    if (teacherUid) params.push('uid=' + encodeURIComponent(teacherUid));
+    if (startVal) params.push('start=' + encodeURIComponent(startVal));
+    if (endVal) params.push('end=' + encodeURIComponent(endVal));
+    if (weekVal) params.push('week=' + encodeURIComponent(weekVal));
     if (params.length > 0) url += '?' + params.join('&');
     
     window.open(url, '_blank');

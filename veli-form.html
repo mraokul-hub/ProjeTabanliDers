@@ -426,6 +426,12 @@
     <h2>📊 Soru Çözüm Takip</h2>
     <p class="subtitle" id="studentNameDisplay">Lütfen öğrencinin çözüm verilerini giriniz.</p>
 
+    <!-- Tarih Aralığı Kilit Rozeti -->
+    <div id="periodLockBanner" style="display:none; margin-bottom:1.25rem; padding:8px 12px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:8px; font-size:0.83rem; color:#3730a3; font-weight:600; text-align:center;">
+        <span id="periodLockText">📅 Takip Dönemi</span>
+        <span style="background:#4338ca; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px;">🔒 KİLİTLİ</span>
+    </div>
+
     <!-- Mod Sekmeleri -->
     <div class="mode-tabs">
         <button type="button" class="mode-tab-btn active" onclick="switchMode('manual')" id="tab-manual">✍️ Elle Giriş</button>
@@ -727,17 +733,81 @@
     // TEMEL YARDIMCI FONKSİYONLAR
     // ═══════════════════════════════════════════════════════
     const urlParams = new URLSearchParams(window.location.search);
-    const uid   = urlParams.get('uid');
-    const sid   = urlParams.get('sid');
-    const sName = urlParams.get('sname');
+    const uid       = urlParams.get('uid');
+    const sid       = urlParams.get('sid');
+    const sName     = urlParams.get('sname');
+    const startDate = urlParams.get('start');
+    const endDate   = urlParams.get('end');
+    const weekNo    = urlParams.get('week');
+    const dersName  = urlParams.get('ders');
 
     if (sName) {
         document.getElementById('studentNameDisplay').textContent =
             `${decodeURIComponent(sName)} için veri girişi yapıyorsunuz.`;
     }
 
-    document.getElementById('tarih').valueAsDate    = new Date();
-    document.getElementById('omr-tarih').valueAsDate = new Date();
+    // Ders Otomatik Seçimi
+    function applyDersSelection(dName) {
+        if (!dName) return;
+        const decoded = decodeURIComponent(dName);
+        ['ders', 'foto-ders', 'omr-ders'].forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            let found = false;
+            for (let opt of sel.options) {
+                if (opt.value.toLowerCase() === decoded.toLowerCase()) {
+                    opt.selected = true;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                const opt = document.createElement('option');
+                opt.value = decoded;
+                opt.textContent = decoded;
+                opt.selected = true;
+                sel.appendChild(opt);
+            }
+        });
+    }
+
+    if (dersName) {
+        applyDersSelection(dersName);
+    }
+
+    // Tarih Kilit Mekanizması
+    function applyDatePeriodLock(start, end, week) {
+        if (!start || !end) return;
+        const banner = document.getElementById('periodLockBanner');
+        const bannerTxt = document.getElementById('periodLockText');
+        if (banner && bannerTxt) {
+            const formatTR = s => s.split('-').reverse().join('.');
+            const dText = dersName ? ` | 📘 Ders: ${decodeURIComponent(dersName)}` : '';
+            bannerTxt.textContent = `📅 Takip Dönemi: ${formatTR(start)} – ${formatTR(end)} ${week ? '(' + week + '. Hafta)' : ''}${dText}`;
+            banner.style.display = 'block';
+        }
+
+        ['tarih', 'omr-tarih'].forEach(id => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.min = start;
+            input.max = end;
+
+            const today = new Date().toISOString().split('T')[0];
+            if (today >= start && today <= end) {
+                input.value = today;
+            } else {
+                input.value = start;
+            }
+        });
+    }
+
+    if (startDate && endDate) {
+        applyDatePeriodLock(startDate, endDate, weekNo);
+    } else {
+        document.getElementById('tarih').valueAsDate    = new Date();
+        document.getElementById('omr-tarih').valueAsDate = new Date();
+    }
 
     const statusMsg = document.getElementById('statusMessage');
 
@@ -765,7 +835,7 @@
 
     function checkParams() {
         if (!uid || !sid) {
-            showStatus("Bağlantı hatası: URL'de eksik parametre var. Öğretmenin gönderdiği linki kullanın.", true);
+            showStatus("Bağlantı hatası: URL'de eksik parametre var. Öğretmenin verdiği QR kodu taratın veya linki kullanın.", true);
             return false;
         }
         return true;
@@ -773,6 +843,11 @@
 
     async function sendToFirebase(data) {
         await firebase.auth().signInAnonymously();
+        if (startDate && endDate) {
+            data.takipBaslangic = startDate;
+            data.takipBitis     = endDate;
+            data.takipHaftasi   = weekNo || '';
+        }
         const ref = firebase.database().ref(`soru_takip_forms/${uid}/${sid}`).push();
         await ref.set({ ...data, timestamp: firebase.database.ServerValue.TIMESTAMP });
     }
@@ -796,7 +871,11 @@
         // Wizard sıfırla
         currentStep = 1;
         updateWizard();
-        document.getElementById('tarih').valueAsDate = new Date();
+        if (startDate && endDate) {
+            applyDatePeriodLock(startDate, endDate, weekNo);
+        } else {
+            document.getElementById('tarih').valueAsDate = new Date();
+        }
         document.getElementById('ders').value   = '';
         document.getElementById('kaynak').value = '';
         document.getElementById('konu').value   = '';
@@ -1121,6 +1200,35 @@
             });
 
             if (code && code.data) {
+                if (code.data.startsWith('http://') || code.data.startsWith('https://')) {
+                    try {
+                        const urlObj = new URL(code.data);
+                        const qSid   = urlObj.searchParams.get('sid');
+                        const qSname = urlObj.searchParams.get('sname');
+                        const qStart = urlObj.searchParams.get('start');
+                        const qEnd   = urlObj.searchParams.get('end');
+                        const qWeek  = urlObj.searchParams.get('week');
+                        const qDers  = urlObj.searchParams.get('ders');
+
+                        if (qStart && qEnd) {
+                            applyDatePeriodLock(qStart, qEnd, qWeek);
+                        }
+                        if (qDers) {
+                            applyDersSelection(qDers);
+                        }
+                        if (qSname) {
+                            document.getElementById('studentNameDisplay').textContent =
+                                `${decodeURIComponent(qSname)} için veri girişi yapıyorsunuz.`;
+                        }
+                        stopCamera();
+                        resultBox.style.display = 'block';
+                        resultBox.innerHTML = `✅ <strong>Öğrenci, Hafta ve Ders Tanındı!</strong><br>
+                            Öğrenci: <strong>${qSname ? decodeURIComponent(qSname) : ('No: ' + qSid)}</strong> &middot; Hafta: <strong>${qWeek || '1'}. Hafta</strong>${qDers ? ' &middot; Ders: <strong>' + decodeURIComponent(qDers) + '</strong>' : ''}<br>
+                            <em>Dönem: ${qStart} – ${qEnd} (Tarih Kilitlendi).</em>`;
+                        return;
+                    } catch(e) {}
+                }
+
                 try {
                     const parsed = JSON.parse(code.data);
                     fillOMRForm(parsed);
