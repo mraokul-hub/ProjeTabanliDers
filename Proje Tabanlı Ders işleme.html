@@ -34,7 +34,8 @@
                 // currentUser global nesnesi (ui-soru-takip.js gibi modüller kullanır)
                 window.currentUser = user;
 
-                if (user.email === 'mremzi@gmail.com') {
+                const isUserAdmin = (user.email && user.email.toLowerCase().trim() === 'mremzi@gmail.com');
+                if (isUserAdmin) {
                     const adminTabBtn = document.getElementById('admin-tab-btn');
                     if (adminTabBtn) adminTabBtn.style.display = 'inline-block';
                     // Mobil panel yönetici butonu
@@ -47,9 +48,18 @@
                     if (window.db) {
                         window.db.ref("kullanicilar/" + user.uid).once("value").then(snapshot => {
                             const profil = snapshot.val() || {};
+                            const hasAdminAccess = isUserAdmin || profil.rol === 'admin' || profil.admin === true || profil.isAdmin === true;
+
+                            if (hasAdminAccess) {
+                                const adminTabBtn = document.getElementById('admin-tab-btn');
+                                if (adminTabBtn) adminTabBtn.style.display = 'inline-block';
+                                const mobAdminBtn = document.getElementById('mob-btn-tab-admin');
+                                if (mobAdminBtn) mobAdminBtn.style.display = 'flex';
+                                if (typeof loadUsersAdmin === 'function') loadUsersAdmin();
+                            }
 
                             // Yönetici dışındaki kullanıcıların onay durumunu denetle
-                            if (user.email !== 'mremzi@gmail.com' && !profil.onayli) {
+                            if (!hasAdminAccess && !profil.onayli) {
                                 alert("Hesabınız henüz yönetici tarafından onaylanmamış veya askıya alınmış.");
                                 firebase.auth().signOut().then(() => {
                                     window.location.href = 'login.html';
@@ -2385,6 +2395,8 @@
                         class="fas fa-magic"></i> Görevleri Dağıt</button>
                 <button class="btn" style="background: #059669; color: white;" onclick="openKumeKagitFormu()"><i
                         class="fas fa-print"></i> A4 Küme Formu Yazdır (OCR)</button>
+                <button class="btn" id="btn-kume-ocr-read" style="background: #4f46e5; color: white;" onclick="openKumeOcrModal()"><i
+                        class="fas fa-camera"></i> A4 Küme Formunu Oku (OCR)</button>
                 <button class="btn" style="background: #ef4444;" onclick="clearAllGroups()"><i
                         class="fas fa-trash-alt"></i> Grupları Temizle</button>
             </div>
@@ -4172,7 +4184,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         <!-- BİRİNCİL EYLEM BUTONLARI -->
                         <div style="display:flex; flex-direction:column; gap:8px;">
                             <div style="display: flex; gap: 8px;">
-                                <button type="button" class="btn" id="btn-scan-paper-barcode" style="flex: 1.2; background: #059669; color: white; padding: 9px 8px; font-size: 12px; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:7px; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,0.25);">
+                                <button type="button" class="btn" id="btn-scan-paper-barcode" onclick="if(window.SoruTakipUI) window.SoruTakipUI.openScannerModal()" style="flex: 1.2; background: #059669; color: white; padding: 9px 8px; font-size: 12px; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:7px; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,0.25);">
                                     <i class="fas fa-camera"></i> Kağıt / Barkod Tara
                                 </button>
                                 <button type="button" class="btn btn-primary" id="btn-open-direct-form" style="flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 600; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:7px; cursor:pointer;">
@@ -4248,6 +4260,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     </table>
                 </div>
             </div>
+        </div>
     </div>
 
     <!-- BARKOD / KAĞIT TARAYICI MODALI -->
@@ -4290,11 +4303,168 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- A4 KÜME FORMU OPTİK / EL YAZISI OCR OKUMA MODALI                      -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <div id="kume-ocr-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:99999; align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(6px); overflow-y:auto;">
+        <div style="background:var(--card-bg, #ffffff); color:var(--text-main, #0f172a); border-radius:18px; max-width:960px; width:100%; max-height:92vh; overflow-y:auto; padding:24px; box-shadow:0 25px 60px rgba(0,0,0,0.35); position:relative; border:1px solid var(--border, #e2e8f0);">
+            
+            <!-- Modal Başlık & Kontroller -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border, #e2e8f0); padding-bottom:14px; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, #4f46e5, #06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                            A4 Küme Formunu Oku (Optik &amp; El Yazısı OCR)
+                        </h3>
+                        <p style="margin:2px 0 0 0; font-size:12.5px; color:var(--text-muted, #64748b);">
+                            Basılı veya elle doldurulmuş A4 küme formunu tarayarak 6 kümeyi ve öğrencileri otomatik sisteme aktarır.
+                        </p>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span id="kume-ocr-class-badge" style="background:#e0e7ff; color:#3730a3; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700;">
+                        Sınıf: -
+                    </span>
+                    <button type="button" onclick="closeKumeOcrModal()" style="background:none; border:none; font-size:26px; cursor:pointer; color:var(--text-muted, #64748b); line-height:1;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Adım 1: Kaynak Seçimi (Canlı Kamera / Dosya Yükleme / Panodan Yapıştırma) -->
+            <div id="kume-ocr-input-section">
+                <!-- Sekmeler / Yöntem Seçimi -->
+                <div style="display:flex; gap:8px; margin-bottom:14px; border-bottom:2px solid var(--border, #e2e8f0); padding-bottom:8px;">
+                    <button type="button" class="btn" id="btn-tab-ocr-file" onclick="setKumeOcrTab('file')" style="background:#4f46e5; color:#fff; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-file-image"></i> Fotoğraf Yükle / Sürükle
+                    </button>
+                    <button type="button" class="btn" id="btn-tab-ocr-camera" onclick="setKumeOcrTab('camera')" style="background:#f1f5f9; color:#475569; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-video"></i> Canlı Kamera ile Çek
+                    </button>
+                    <button type="button" class="btn" id="btn-tab-ocr-paste" onclick="setKumeOcrTab('paste')" style="background:#f1f5f9; color:#475569; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-paste"></i> Panodan Yapıştır (Ctrl+V)
+                    </button>
+                </div>
+
+                <!-- Dosya Yükleme Alanı -->
+                <div id="kume-ocr-file-area" style="border:2px dashed #6366f1; border-radius:14px; padding:30px 20px; text-align:center; background:rgba(99,102,241,0.03); cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('kume-ocr-file-input').click()" ondragover="event.preventDefault(); this.style.borderColor='#4338ca';" ondragleave="this.style.borderColor='#6366f1';" ondrop="handleKumeOcrDrop(event)">
+                    <input type="file" id="kume-ocr-file-input" accept="image/*" style="display:none;" onchange="handleKumeOcrFileSelect(this)">
+                    <div style="font-size:40px; color:#6366f1; margin-bottom:8px;">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <strong style="font-size:15px; display:block; margin-bottom:4px; color:#4f46e5;">A4 Küme Formu Fotoğrafını Buraya Bırakın veya Seçin</strong>
+                    <span style="font-size:12px; color:var(--text-muted, #64748b);">JPG, PNG, WEBP formatında telefonla çekilmiş veya taranmış A4 form görseli</span>
+                </div>
+
+                <!-- Canlı Kamera Alanı -->
+                <div id="kume-ocr-camera-area" style="display:none; text-align:center;">
+                    <div style="position:relative; width:100%; max-width:640px; margin:0 auto; height:360px; background:#000; border-radius:14px; overflow:hidden;">
+                        <video id="kume-ocr-video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+                        <div style="position:absolute; top:20px; bottom:20px; left:20px; right:20px; border:2px dashed rgba(255,255,255,0.7); border-radius:10px; pointer-events:none; box-shadow:0 0 0 4000px rgba(0,0,0,0.35);">
+                            <div style="position:absolute; top:8px; left:10px; color:#fff; font-size:11px; background:rgba(0,0,0,0.6); padding:2px 8px; border-radius:4px;">A4 Formu Bu Çerçeveye Hizalayınız</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px; display:flex; justify-content:center; gap:10px;">
+                        <button type="button" class="btn" onclick="captureKumeOcrFromCamera()" style="background:#10b981; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; font-size:14px; display:inline-flex; align-items:center; gap:8px;">
+                            <i class="fas fa-camera"></i> Fotoğrafı Çek ve Oku
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panodan Yapıştırma Bilgilendirme -->
+                <div id="kume-ocr-paste-area" style="display:none; padding:25px; text-align:center; background:rgba(59,130,246,0.05); border-radius:14px; border:1px solid rgba(59,130,246,0.2);">
+                    <i class="fas fa-clipboard-check" style="font-size:32px; color:#2563eb; margin-bottom:10px;"></i>
+                    <h4 style="margin:0 0 6px 0;">Ekran Görüntüsünü Doğrudan Yapıştırın</h4>
+                    <p style="font-size:13px; color:var(--text-muted, #64748b); margin:0;">
+                        Telefonunuzdan veya bilgisayarınızdan kopyaladığınız A4 form görselini bu pencere açıkken <kbd style="background:#e2e8f0; padding:2px 8px; border-radius:4px; font-family:monospace; font-size:12px;">Ctrl + V</kbd> tuşlarına basarak anında yapıştırabilirsiniz.
+                    </p>
+                </div>
+
+                <!-- OCR Motoru ve Ayarlar Paneli -->
+                <div style="margin-top:16px; padding:14px; border-radius:12px; background:var(--tab-bg, #f8fafc); border:1px solid var(--border, #e2e8f0); display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                        <span style="font-size:12.5px; font-weight:700;">Tanıma Motoru:</span>
+                        <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="radio" name="kume-ocr-engine" value="hybrid" checked onchange="toggleKumeOcrEngineUI()">
+                            <span>✨ <strong>Yapay Zeka &amp; El Yazısı</strong> (Önerilen)</span>
+                        </label>
+                        <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="radio" name="kume-ocr-engine" value="tesseract" onchange="toggleKumeOcrEngineUI()">
+                            <span>⚡ Tesseract.js (Yerel / Çevrimdışı)</span>
+                        </label>
+                    </div>
+                    <div id="kume-ocr-apikey-wrap" style="display:flex; align-items:center; gap:8px; font-size:12px;">
+                        <input type="password" id="kume-gemini-key-input" placeholder="Gemini API Anahtarı (Opsiyonel)" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border, #cbd5e1); font-size:12px; width:220px;" onchange="saveKumeGeminiKey(this.value)">
+                        <button type="button" class="btn" onclick="saveKumeGeminiKey(document.getElementById('kume-gemini-key-input').value)" style="padding:6px 12px; font-size:11px; background:#4f46e5; color:#fff;">Kaydet</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Görsel Önizleme ve İlerleme Durumu -->
+            <div id="kume-ocr-progress-section" style="display:none; margin:16px 0; padding:16px; border-radius:12px; background:#f0fdf4; border:1px solid #bbf7d0;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                    <span id="kume-ocr-status-text" style="font-weight:700; color:#166534; font-size:13.5px;">
+                        <i class="fas fa-spinner fa-spin me-1"></i> Form inceleniyor...
+                    </span>
+                    <span id="kume-ocr-percent-badge" style="font-weight:700; color:#166534; font-size:13px;">%0</span>
+                </div>
+                <div style="width:100%; height:8px; background:#dcfce7; border-radius:10px; overflow:hidden;">
+                    <div id="kume-ocr-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #10b981, #06b6d4); transition:width 0.3s;"></div>
+                </div>
+            </div>
+
+            <!-- Sonuç Doğrulama ve Kümeleri Onaylama Izgarası -->
+            <div id="kume-ocr-results-section" style="display:none; margin-top:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h4 style="margin:0; font-size:16px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-check-circle" style="color:#10b981;"></i> Okunan Küme ve Öğrenci Listesi (6 Küme)
+                        </h4>
+                        <p style="margin:2px 0 0 0; font-size:12px; color:var(--text-muted, #64748b);">
+                            Okunan verileri kontrol ediniz. Gerekirse isimleri veya rolleri düzenleyip sisteme aktarabilirsiniz.
+                        </p>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn" onclick="resetKumeOcrScan()" style="background:#f1f5f9; color:#475569; padding:7px 14px; font-size:12px;">
+                            <i class="fas fa-redo"></i> Yeni Form Tara
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 6 Küme Kartı Izgarası (Dinamik) -->
+                <div id="kume-ocr-cards-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; max-height:480px; overflow-y:auto; padding:4px;">
+                    <!-- Javascript ile doldurulur -->
+                </div>
+
+                <!-- Alt İşlem Butonları -->
+                <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border, #e2e8f0); display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn" onclick="closeKumeOcrModal()" style="background:#f1f5f9; color:#475569; padding:10px 20px; font-weight:600; font-size:13px;">
+                        Vazgeç
+                    </button>
+                    <button type="button" class="btn" id="btn-apply-kume-ocr" onclick="applyOcrClustersToSystem()" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; padding:10px 26px; font-weight:700; font-size:14px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                        <i class="fas fa-check-double"></i> Kümeleri Sisteme Aktar ve Kaydet
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <!-- Admin Panel Tab -->
     <div id="tab-admin" class="tab-content">
-        <h2>👑 Yönetici Paneli - Kullanıcı Onay ve Yönetimi</h2>
-        <div class="table-container" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <h2 style="margin: 0;">👑 Yönetici Paneli - Kullanıcı Onay ve Yönetimi</h2>
+                <span id="admin-user-count" style="background: rgba(245, 158, 11, 0.15); color: #d97706; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    Yükleniyor...
+                </span>
+            </div>
+            <button class="btn btn-primary" onclick="loadUsersAdmin()" style="padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-sync-alt"></i> Listeyi Yenile
+            </button>
+        </div>
+        <div class="table-container" style="margin-top: 10px;">
             <table class="custom-table" id="admin-users-table">
                 <thead>
                     <tr>
@@ -4329,15 +4499,16 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/ui-proje-gruplari.js?v=4"></script>
     <script src="js/auth.js?v=6"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="js/ui-soru-takip.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Soru Takip modülünü başlat
+            // Soru Takip modülünü başlat (eğer başlatılmadıysa)
             setTimeout(() => {
-                if (window.SoruTakipUI) {
+                if (window.SoruTakipUI && !window.SoruTakipUI._initialized) {
                     window.SoruTakipUI.init();
                 }
-            }, 1000);
+            }, 600);
         });
     </script>
 </body>

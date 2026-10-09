@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sınıf Yönetimi & Küme Takip Formu (A4 - OCR Uyumlu)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Firebase Uyumluluk Kütüphaneleri -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -35,6 +43,7 @@
         /* EKRAN KONTROL PANELİ (Yazdırmada Gizlenir) */
         .no-print-toolbar {
             width: 210mm;
+            max-width: 100%;
             background: #1e293b;
             color: #fff;
             padding: 14px 20px;
@@ -70,7 +79,7 @@
         .toolbar-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
@@ -78,10 +87,10 @@
             background: #059669;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
@@ -104,16 +113,48 @@
             background: #475569;
         }
 
-        .toolbar-select {
+        .toolbar-btn-blue {
+            background: #2563eb;
+            color: #ffffff;
+        }
+        .toolbar-btn-blue:hover {
+            background: #1d4ed8;
+        }
+
+        .toolbar-btn-wa {
+            background: #16a34a;
+            color: #ffffff;
+        }
+        .toolbar-btn-wa:hover {
+            background: #15803d;
+        }
+
+        .toolbar-select, .toolbar-input {
             background: #0f172a;
             color: #fff;
             border: 1px solid #475569;
-            padding: 7px 12px;
+            padding: 7px 10px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 500;
             outline: none;
-             /* ── A4 SAYFA TASARIMI (210mm x 297mm) ── */
+        }
+
+        .toolbar-input {
+            max-width: 140px;
+        }
+        .toolbar-input::placeholder {
+            color: #64748b;
+        }
+
+        /* ── A4 SAYFA KAPSAYICISI ── */
+        .a4-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* ── A4 SAYFA TASARIMI (210mm x 297mm) ── */
         .a4-page {
             width: 210mm;
             height: 297mm;
@@ -129,7 +170,6 @@
         }
 
         /* ── OPTİK REGİSTRASYON & HİZALAMA İŞARETLERİ (FIDUCIAL MARKERS) ── */
-        /* 4 köşede kenar paylarında (margin) yer alır, form kutularına asla temas etmez */
         .fiducial-target {
             position: absolute;
             width: 8mm;
@@ -226,33 +266,16 @@
         .machine-code-box {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-family: 'JetBrains Mono', monospace;
+            justify-content: flex-end;
+            min-width: 140px;
+            max-width: 180px;
         }
 
-        .doc-barcode {
-            display: flex;
-            align-items: center;
-            height: 18px;
-            gap: 1.5px;
-            background: #fff;
-            padding: 2px 4px;
-            border: 1px solid #000;
-        }
-
-        .bar-b { background: #000; height: 14px; }
-        .w1 { width: 1.5px; }
-        .w2 { width: 3px; }
-        .w3 { width: 4.5px; }
-        .bar-w { background: #fff; height: 14px; }
-
-        .doc-tag {
-            font-size: 9px;
-            font-weight: 700;
-            border: 1.5px solid #000;
-            padding: 2px 5px;
-            background: #f8fafc;
-            white-space: nowrap;
+        .machine-code-box svg {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 36px;
+            display: block;
         }
 
         /* Form Üst Bilgi Kutuları */
@@ -593,6 +616,87 @@
             background: #fafafa;
         }
 
+        /* ── MODAL STİLLERİ (QR Kod ve Mobil Paylaşım) ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        /* ── MOBİL UYUMLULUK VE DUYARLI TASARIM (RESPONSIVE) ── */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px 6px;
+                overflow-x: auto;
+            }
+
+            .no-print-toolbar {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .toolbar-info {
+                justify-content: flex-start;
+            }
+
+            .toolbar-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .toolbar-controls > * {
+                width: 100% !important;
+                max-width: 100% !important;
+                justify-content: center;
+            }
+
+            .a4-wrapper {
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 25px;
+            }
+
+            .a4-page {
+                min-width: 210mm;
+                transform-origin: top left;
+            }
+        }
+
         /* ── YAZDIRMA (PRINT) ÖZEL AYARLARI ── */
         @media print {
             @page {
@@ -604,8 +708,13 @@
                 padding: 0 !important;
                 margin: 0 !important;
             }
-            .no-print, .no-print-toolbar {
+            .no-print, .no-print-toolbar, .modal-overlay {
                 display: none !important;
+            }
+            .a4-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
             }
             .a4-page {
                 box-shadow: none !important;
@@ -621,293 +730,541 @@
 </head>
 <body>
 
-    <!-- EKRAN EYLEM ÇUBUĞU (Yazıcıda ve Tarayıcıda Çıkmaz) -->
+    <!-- EKRAN EYLEM ÇUBUĞU (Yazıcıda Çıkmaz) -->
     <div class="no-print-toolbar no-print">
         <div class="toolbar-info">
             <i class="fas fa-file-invoice" style="font-size:24px; color:#38bdf8;"></i>
             <div>
                 <h3>Sınıf Yönetimi & Küme Takip Formu (A4)</h3>
-                <p>Optik Karakter Tanıma (OCR) uyumlu referans noktaları ve el yazısı ızgaraları</p>
+                <p id="toolbar-sync-status">⚡ Otomatik Senkronize: Telefon & Bilgisayar Verisi Aktif</p>
             </div>
         </div>
 
         <div class="toolbar-controls">
             <!-- Sınıf Seçimi -->
             <select id="sinif-secici" class="toolbar-select" onchange="onSinifChange(this.value)">
-                <option value="">-- Boş Şablon (Sınıfsız) --</option>
+                <option value="">-- Sınıf Seçiniz --</option>
             </select>
 
+            <!-- Ders / Konu -->
+            <input type="text" id="ders-input" class="toolbar-input" placeholder="Ders / Konu..." oninput="updateHeaderInfo()">
+
+            <!-- Öğretmen -->
+            <input type="text" id="ogretmen-input" class="toolbar-input" placeholder="Öğretmen Adı..." oninput="updateHeaderInfo()">
+
             <!-- Mod Butonları -->
-            <button class="toolbar-btn toolbar-btn-secondary" onclick="renderBlankForm()" title="Tüm alanları boş bırakır">
-                <i class="fas fa-eraser"></i> Tamamen Boş
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="renderBlankForm()" title="Tüm öğrenci ve küme alanlarını boş bırakır">
+                <i class="fas fa-eraser"></i> Boş Şablon
             </button>
-            <button class="toolbar-btn toolbar-btn-secondary" id="btn-fill-groups" onclick="renderPrefilledForm()" title="Sistemdeki mevcut kümeleri yerleştirir">
-                <i class="fas fa-users"></i> Kümeleri Doldur
+
+            <button class="toolbar-btn toolbar-btn-blue" id="btn-auto-distribute" onclick="autoDistributeClassStudents()" title="Seçili sınıftaki tüm öğrencileri eşit olarak 6 kümeye dağıtır">
+                <i class="fas fa-magic"></i> Listeyi Dağıt
+            </button>
+
+            <button class="toolbar-btn toolbar-btn-secondary" id="btn-fill-groups" onclick="renderPrefilledForm()" title="Sistemde kayıtlı kümeleri yükler">
+                <i class="fas fa-users"></i> Kayıtlı Kümeler
+            </button>
+
+            <!-- Telefondan Aç QR Butonu -->
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="openQrModal()" title="Telefonda açmak veya paylaşmak için karekod üretir">
+                <i class="fas fa-qrcode"></i> Telefondan Aç
+            </button>
+
+            <!-- WhatsApp Paylaş Butonu -->
+            <button class="toolbar-btn toolbar-btn-wa" onclick="shareWhatsApp()" title="Form bağlantısını WhatsApp ile gönder">
+                <i class="fab fa-whatsapp"></i> Paylaş
             </button>
 
             <!-- Yazdır Butonu -->
-            <button class="toolbar-btn" onclick="window.print()">
-                <i class="fas fa-print"></i> Formu Yazdır (A4)
+            <button class="toolbar-btn" onclick="window.print()" title="A4 boyutunda yazdır veya PDF olarak kaydet">
+                <i class="fas fa-print"></i> Formu Yazdır
             </button>
 
             <button class="toolbar-btn toolbar-btn-secondary" onclick="window.close()" title="Sekmeyi Kapat">
-                <i class="fas fa-times"></i> Kapat
+                <i class="fas fa-times"></i>
             </button>
         </div>
     </div>
 
-    <!-- ── A4 BASILI FORM BAŞLANGICI ── -->
-    <div class="a4-page" id="printable-a4">
+    <!-- ── A4 BASILI FORM KAPSAYICISI ── -->
+    <div class="a4-wrapper">
+        <div class="a4-page" id="printable-a4">
 
-        <!-- 4 KÖŞE OPTİK REGİSTRASYON HEDEFLERİ (FIDUCIAL TARGETS) -->
-        <div class="fiducial-target fiducial-tl" title="TL Marker"></div>
-        <div class="fiducial-target fiducial-tr" title="TR Marker"></div>
-        <div class="fiducial-target fiducial-bl" title="BL Marker"></div>
-        <div class="fiducial-target fiducial-br" title="BR Marker"></div>
+            <!-- 4 KÖŞE OPTİK REGİSTRASYON HEDEFLERİ (FIDUCIAL TARGETS) -->
+            <div class="fiducial-target fiducial-tl" title="TL Marker"></div>
+            <div class="fiducial-target fiducial-tr" title="TR Marker"></div>
+            <div class="fiducial-target fiducial-bl" title="BL Marker"></div>
+            <div class="fiducial-target fiducial-br" title="BR Marker"></div>
 
-        <!-- KENAR HİZALAMA ÇENTİKLERİ (AXIS TIMING TICKS) -->
-        <div class="tick-h tick-top-1"></div>
-        <div class="tick-h tick-top-2"></div>
-        <div class="tick-h tick-bottom-1"></div>
-        <div class="tick-h tick-bottom-2"></div>
-        <div class="tick-v tick-left-1"></div>
-        <div class="tick-v tick-left-2"></div>
-        <div class="tick-v tick-right-1"></div>
-        <div class="tick-v tick-right-2"></div>
+            <!-- KENAR HİZALAMA ÇENTİKLERİ (AXIS TIMING TICKS) -->
+            <div class="tick-h tick-top-1"></div>
+            <div class="tick-h tick-top-2"></div>
+            <div class="tick-h tick-bottom-1"></div>
+            <div class="tick-h tick-bottom-2"></div>
+            <div class="tick-v tick-left-1"></div>
+            <div class="tick-v tick-left-2"></div>
+            <div class="tick-v tick-right-1"></div>
+            <div class="tick-v tick-right-2"></div>
 
-        <!-- ── FORM ÜST BİLGİ & METADATA ALANI ── -->
-        <div class="header-section">
-            <div class="header-top">
-                <div class="header-titles">
-                    <h1>KÜME YÖNETİMİ & GRUP DEĞERLENDİRME FORMU</h1>
-                    <h2>Proje Tabanlı Ders İşleme Sistemi &middot; Optik Form ve El Yazısı Veri Girişi</h2>
-                </div>
-                <div class="machine-code-box">
-                    <div class="doc-barcode" title="OCR Kalibrasyon Kodu">
-                        <div class="bar-b w2"></div><div class="bar-w w1"></div>
-                        <div class="bar-b w1"></div><div class="bar-w w1"></div>
-                        <div class="bar-b w3"></div><div class="bar-w w2"></div>
-                        <div class="bar-b w2"></div><div class="bar-w w1"></div>
-                        <div class="bar-b w1"></div><div class="bar-w w2"></div>
-                        <div class="bar-b w3"></div><div class="bar-w w1"></div>
-                        <div class="bar-b w2"></div>
+            <!-- ── FORM ÜST BİLGİ & METADATA ALANI ── -->
+            <div class="header-section">
+                <div class="header-top">
+                    <div class="header-titles">
+                        <h1>KÜME YÖNETİMİ &amp; GRUP DEĞERLENDİRME FORMU</h1>
+                        <h2>Proje Tabanlı Ders İşleme Sistemi &middot; Optik Form ve El Yazısı Veri Girişi</h2>
                     </div>
-                    <div class="doc-tag">FORM-ID: KUME-OCR-A4</div>
-                </div>
-            </div>
-
-            <div class="header-fields">
-                <div class="field-group">
-                    <span class="field-lbl">SINIF / ŞUBE:</span>
-                    <div class="field-comb" id="header-sinif-comb">
-                        <span class="comb-cell">&nbsp;</span>
-                        <span class="comb-cell">&nbsp;</span>
-                        <span class="comb-cell">/</span>
-                        <span class="comb-cell">&nbsp;</span>
+                    <div class="machine-code-box" id="kume-barcode-box" title="Standart 1D Barkod (Telefon ve OCR Uyumlu)">
+                        <!-- Standart Code 128 Barkod SVG -->
                     </div>
                 </div>
 
-                <div class="field-group">
-                    <span class="field-lbl">DERS / KONU:</span>
-                    <div class="field-line" id="header-ders-line">&nbsp;</div>
-                </div>
+                <div class="header-fields">
+                    <div class="field-group">
+                        <span class="field-lbl">SINIF / ŞUBE:</span>
+                        <div class="field-comb" id="header-sinif-comb">
+                            <span class="comb-cell">&nbsp;</span>
+                            <span class="comb-cell">&nbsp;</span>
+                            <span class="comb-cell">/</span>
+                            <span class="comb-cell">&nbsp;</span>
+                        </div>
+                    </div>
 
-                <div class="field-group">
-                    <span class="field-lbl">TARİH:</span>
-                    <div class="field-comb">
-                        <span class="comb-cell">&nbsp;</span>
-                        <span class="comb-cell">&nbsp;</span>
-                        <span class="comb-cell">.</span>
-                        <span class="comb-cell">&nbsp;</span>
-                        <span class="comb-cell">&nbsp;</span>
-                        <span class="comb-cell">.</span>
-                        <span class="comb-cell">2</span>
-                        <span class="comb-cell">0</span>
+                    <div class="field-group">
+                        <span class="field-lbl">DERS / KONU:</span>
+                        <div class="field-line" id="header-ders-line">&nbsp;</div>
+                    </div>
+
+                    <div class="field-group">
+                        <span class="field-lbl">TARİH:</span>
+                        <div class="field-comb" id="header-tarih-comb">
+                            <span class="comb-cell">&nbsp;</span>
+                            <span class="comb-cell">&nbsp;</span>
+                            <span class="comb-cell">.</span>
+                            <span class="comb-cell">&nbsp;</span>
+                            <span class="comb-cell">&nbsp;</span>
+                            <span class="comb-cell">.</span>
+                            <span class="comb-cell">2</span>
+                            <span class="comb-cell">0</span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <span class="field-lbl">ÖĞRETMEN:</span>
+                        <div class="field-line" id="header-teacher-line">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 6 KÜMELİ TABLO IZGARASI (2 SÜTUN X 3 SATIR) ── -->
+            <div class="clusters-grid" id="clusters-grid-container">
+                <!-- 6 KÜME KARTI JAVASCRIPT İLE DİNAMİK OLARAK OLUŞTURULACAK -->
+            </div>
+
+            <!-- ── FORM ALTI & OCR KALİBRASYON ŞERİDİ ── -->
+            <div class="footer-section">
+                <div class="footer-left">
+                    <div class="footer-rules">
+                        📌 <strong>OCR ve Tarama Rehberi:</strong> Sayfayı düz zeminde, 4 köşedeki siyah hedef kareleri (■) kadraja tam sığacak şekilde dik açıdan fotoğraflayınız.
+                    </div>
+                    <div class="footer-sub">
+                        * ROL KISALTMALARI: <strong>[PK]</strong> Proje Koord. / Yönetici | <strong>[VA]</strong> Veri Analisti / Yazıcı | <strong>[AR]</strong> Ar-Ge / Malzemeci | <strong>[HI]</strong> Halkla İliş. / Sözcü | <strong>[Ü]</strong> Üye
                     </div>
                 </div>
 
-                <div class="field-group">
-                    <span class="field-lbl">ÖĞRETMEN:</span>
-                    <div class="field-line" id="header-teacher-line">&nbsp;</div>
+                <div class="calibration-strip" title="Optik Binarizasyon Kalibratörü (0% - 100%)">
+                    <div class="cal-box cal-0"></div>
+                    <div class="cal-box cal-20"></div>
+                    <div class="cal-box cal-40"></div>
+                    <div class="cal-box cal-60"></div>
+                    <div class="cal-box cal-80"></div>
+                    <div class="cal-box cal-100"></div>
                 </div>
-            </div>
-        </div>
 
-        <!-- ── 6 KÜMELİ TABLO IZGARASI (2 SÜTUN X 3 SATIR) ── -->
-        <div class="clusters-grid" id="clusters-grid-container">
-            <!-- 6 KÜME KARTI JAVASCRIPT İLE DİNAMİK OLARAK OLUŞTURULACAK -->
-        </div>
-
-        <!-- ── FORM ALTI & OCR KALİBRASYON ŞERİDİ ── -->
-        <div class="footer-section">
-            <div class="footer-left">
-                <div class="footer-rules">
-                    📌 <strong>OCR ve Tarama Rehberi:</strong> Sayfayı düz zeminde, 4 köşedeki siyah hedef kareleri (■) kadraja tam sığacak şekilde dik açıdan fotoğraflayınız.
-                </div>
-                <div class="footer-sub">
-                    * ROL KISALTMALARI: <strong>[PK]</strong> Proje Koord. | <strong>[VA]</strong> Veri Analisti | <strong>[AR]</strong> Ar-Ge Sor. | <strong>[HI]</strong> Halkla İliş. | <strong>[Ü]</strong> Üye &nbsp;|&nbsp; Not ve numaraları kutucuklara taşmayacak şekilde yazınız.
+                <div class="system-seal">
+                    PROJE-AI &middot; 2026
                 </div>
             </div>
 
-            <div class="calibration-strip" title="Optik Binarizasyon Kalibratörü (0% - 100%)">
-                <div class="cal-box cal-0"></div>
-                <div class="cal-box cal-20"></div>
-                <div class="cal-box cal-40"></div>
-                <div class="cal-box cal-60"></div>
-                <div class="cal-box cal-80"></div>
-                <div class="cal-box cal-100"></div>
-            </div>
-
-            <div class="system-seal">
-                PROJE-AI &middot; 2026
-            </div>
         </div>
-
     </div>
 
-    <!-- ── FORM OLUŞTURMA VE VERİ ENTEGRASYON SCRIPTİ ── -->
+    <!-- ── TELEFONDAN AÇ / QR KOD MODALI ── -->
+    <div id="qr-modal" class="modal-overlay" onclick="if(event.target===this) closeQrModal()">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeQrModal()">&times;</button>
+            <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 16px;">
+                <i class="fas fa-qrcode" style="color:#059669; margin-right:6px;"></i>Telefondan Aç &amp; Aktar
+            </h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">
+                Telefonunuzun kamerasını aşağıdaki karekoda tutarak bu formu tüm öğrenci ve küme verileriyle telefonunuzda açabilirsiniz.
+            </p>
+            <div id="qrcode-container" style="display:flex; justify-content:center; margin-bottom:15px; padding:10px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;"></div>
+            <div style="display:flex; gap:6px;">
+                <input type="text" id="share-link-input" readonly style="flex:1; padding:7px 9px; font-size:11px; border:1px solid #cbd5e1; border-radius:6px; background:#f1f5f9;">
+                <button onclick="copyShareLink()" class="toolbar-btn" style="padding:7px 12px; font-size:11px;">
+                    <i class="fas fa-copy"></i> Kopyala
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── FORM OLUŞTURMA VE ÇOK KAYNAKLI VERİ AKTARIM MOTORU ── -->
     <script>
         const STORAGE_KEY = 'proje_tabanli_ders_data';
-        let globalData = {};
+        let globalData = {
+            students: [],
+            groups: {}
+        };
         let currentClass = '';
-        let isPrefilledMode = false;
+        let isPrefilledMode = true; // Varsayılan olarak otomatik DOLU aç
+        let forceAutoDistribute = false;
 
-        // Sayfa Yüklendiğinde
-        document.addEventListener('DOMContentLoaded', () => {
-            loadLocalSystemData();
-            initURLParams();
-            renderForm();
-        });
+        // STANDART 1D BARKOD MOTORU (CODE 128 & VEKTÖREL SVG)
+        const CODE128_B = [
+            '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
+            '221312','231212','112232','122132','122231','113222','123122','123221','223211','221132',
+            '221231','213212','223112','312131','311222','321122','321221','312212','322112','322211',
+            '212123','212321','232121','111323','131123','131321','112313','132113','132311','211313',
+            '231113','231311','112133','112331','132131','113123','113321','133121','313121','211331',
+            '231131','213113','213311','213131','311123','311321','331121','312113','312311','332111',
+            '314111','221411','431111','111224','111422','121124','121421','141122','141221','112214',
+            '112412','122114','122411','142112','142211','241211','221114','413111','241112','134111',
+            '111242','121142','121241','114212','124112','124211','411212','421112','421211','212141',
+            '214121','412121','111143','111341','131141','114113','114311','411113','411311','113141',
+            '114131','311141','411131','211412','211214','211232','2331112'
+        ];
 
-        // LocalStorage'dan Sistem Verilerini Oku
-        function loadLocalSystemData() {
-            try {
-                let raw = localStorage.getItem(STORAGE_KEY);
-                // Kullanıcı bazlı depolamayı da tara (NoSQL izolasyonu)
-                if (!raw) {
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key && key.startsWith(STORAGE_KEY)) {
-                            raw = localStorage.getItem(key);
-                            if (raw) break;
-                        }
-                    }
+        function sanitizeBarcodeText(str) {
+            if (!str) return 'CODE128';
+            return String(str)
+                .toUpperCase()
+                .replace(/[İı]/g, 'I')
+                .replace(/[Ğğ]/g, 'G')
+                .replace(/[Üü]/g, 'U')
+                .replace(/[Şş]/g, 'S')
+                .replace(/[Öö]/g, 'O')
+                .replace(/[Çç]/g, 'C')
+                .replace(/[^A-Z0-9\-_.]/g, '-');
+        }
+
+        function renderCode128SVG(rawText, barHeight = 24, showText = true) {
+            const text = sanitizeBarcodeText(rawText);
+            let checksum = 104;
+            let pattern = CODE128_B[104];
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i) - 32;
+                if (code >= 0 && code <= 95) {
+                    checksum += code * (i + 1);
+                    pattern += CODE128_B[code];
                 }
-                if (raw) {
-                    globalData = JSON.parse(raw);
+            }
+            pattern += CODE128_B[checksum % 103];
+            pattern += CODE128_B[106];
+
+            const quietZone = 8;
+            let totalModules = quietZone * 2;
+            for (let c of pattern) totalModules += parseInt(c, 10);
+
+            const totalHeight = showText ? (barHeight + 11) : barHeight;
+            let x = quietZone;
+            let rects = '';
+            for (let i = 0; i < pattern.length; i++) {
+                const w = parseInt(pattern[i], 10);
+                if (i % 2 === 0) {
+                    rects += `<rect x="${x}" y="0" width="${w}" height="${barHeight}" fill="#000"/>`;
                 }
-            } catch (e) {
-                console.warn('Veri okunamadı:', e);
-                globalData = {};
+                x += w;
             }
 
-            // Sınıf listesini doldur
-            const select = document.getElementById('sinif-secici');
-            const studentData = globalData.students || globalData.studentData || [];
-            const allGroups = globalData.groups || globalData.groupData || {};
+            let textNode = '';
+            if (showText) {
+                textNode = `<text x="${totalModules / 2}" y="${barHeight + 9}" font-family="monospace, Courier, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#000" letter-spacing="0.6">${text}</text>`;
+            }
 
-            const sinifSet = new Set();
-            studentData.forEach(s => { if (s.sinif) sinifSet.add(s.sinif); });
-            Object.keys(allGroups).forEach(gKey => { sinifSet.add(gKey.replace(/_/g, '/')); });
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalModules} ${totalHeight}" style="width:100%; height:auto; display:block; background:#fff;">${rects}${textNode}</svg>`;
+        }
 
-            // SessionStorage'dan da sınıf varsa ekle
+        // Sayfa Başlatma
+        document.addEventListener('DOMContentLoaded', async () => {
+            initDateHeader();
+            await loadAllSourcesData();
+        });
+
+        // Tarih Alanını Bugünün Tarihi ile Doldur
+        function initDateHeader() {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = String(today.getFullYear());
+            const cells = document.querySelectorAll('#header-tarih-comb .comb-cell');
+            if (cells.length >= 8) {
+                cells[0].textContent = d[0];
+                cells[1].textContent = d[1];
+                // cell[2] is '.'
+                cells[3].textContent = m[0];
+                cells[4].textContent = m[1];
+                // cell[5] is '.'
+                cells[6].textContent = y[2] || '2';
+                cells[7].textContent = y[3] || '6';
+            }
+        }
+
+        // Sınıf Adını Normalize Et (7/A, 7-A, 7_A eşleştirmesi)
+        function normSinif(val) {
+            return String(val || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+        }
+
+        // Çok Katmanlı Veri Çekme Motoru (Session, Local, Firebase, URL)
+        async function loadAllSourcesData() {
+            const statusEl = document.getElementById('toolbar-sync-status');
+
+            // 1. URL Parametreleri
+            const params = new URLSearchParams(window.location.search);
+            const urlSinif = params.get('sinif') || params.get('class') || '';
+            const urlUid = params.get('uid') || '';
+            const urlDers = params.get('ders') || '';
+            const urlOgretmen = params.get('ogretmen') || '';
+
+            if (urlDers) document.getElementById('ders-input').value = decodeURIComponent(urlDers);
+            if (urlOgretmen) document.getElementById('ogretmen-input').value = decodeURIComponent(urlOgretmen);
+
+            // 2. SessionStorage
+            let sessSinif = '';
+            let sessGroups = null;
+            let sessStudents = null;
             try {
-                const sessSinif = sessionStorage.getItem('kume_form_sinif');
-                if (sessSinif) sinifSet.add(sessSinif);
+                sessSinif = sessionStorage.getItem('kume_form_sinif') || '';
+                const rawG = sessionStorage.getItem('kume_form_groups');
+                if (rawG) sessGroups = JSON.parse(rawG);
+                const rawS = sessionStorage.getItem('kume_form_students');
+                if (rawS) sessStudents = JSON.parse(rawS);
+                const rawT = sessionStorage.getItem('kume_form_teacher');
+                if (rawT && !document.getElementById('ogretmen-input').value) {
+                    document.getElementById('ogretmen-input').value = rawT;
+                }
             } catch (e) {}
 
-            const siniflar = [...sinifSet].sort();
+            // 3. LocalStorage
+            let localSinif = '';
+            let localGroups = null;
+            let localStudents = null;
+            try {
+                localSinif = localStorage.getItem('kume_form_sinif') || '';
+                const rawLG = localStorage.getItem('kume_form_groups');
+                if (rawLG) localGroups = JSON.parse(rawLG);
+                const rawLS = localStorage.getItem('kume_form_students');
+                if (rawLS) localStudents = JSON.parse(rawLS);
+                const rawLT = localStorage.getItem('kume_form_teacher');
+                if (rawLT && !document.getElementById('ogretmen-input').value) {
+                    document.getElementById('ogretmen-input').value = rawLT;
+                }
+            } catch (e) {}
 
-            select.innerHTML = '<option value="">-- Boş Şablon (Sınıfsız) --</option>';
+            // 4. Ana Veritabanı LocalStorage Yedekleri (STORAGE_KEY & STORAGE_KEY_uid)
+            let mainStorageData = {};
+            try {
+                let rawMain = localStorage.getItem(STORAGE_KEY);
+                if (rawMain) {
+                    try { Object.assign(mainStorageData, JSON.parse(rawMain)); } catch(e) {}
+                }
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && k.startsWith(STORAGE_KEY) && k !== STORAGE_KEY) {
+                        try {
+                            const parsed = JSON.parse(localStorage.getItem(k));
+                            if (parsed && typeof parsed === 'object') {
+                                if (parsed.students && (!mainStorageData.students || mainStorageData.students.length === 0)) mainStorageData.students = parsed.students;
+                                if (parsed.groups) mainStorageData.groups = Object.assign({}, mainStorageData.groups || {}, parsed.groups);
+                            }
+                        } catch(e) {}
+                    }
+                }
+            } catch (e) {}
+
+            // Tüm kaynaklardaki öğrencileri birleştir (Sınıf geçişlerinde hiçbir öğrenci kaybolmasın)
+            let combinedStudents = [];
+            const studentIdSet = new Set();
+            const registerStudentList = (list) => {
+                if (!Array.isArray(list)) return;
+                list.forEach(s => {
+                    if (!s) return;
+                    const idKey = `${s.no || ''}_${s.adSoyad || s.name || ''}_${s.sinif || ''}`;
+                    if (!studentIdSet.has(idKey)) {
+                        studentIdSet.add(idKey);
+                        combinedStudents.push(s);
+                    }
+                });
+            };
+
+            if (mainStorageData.students) registerStudentList(mainStorageData.students);
+            if (mainStorageData.studentData) registerStudentList(mainStorageData.studentData);
+            if (localStudents) registerStudentList(localStudents);
+            if (sessStudents) registerStudentList(sessStudents);
+
+            globalData.students = combinedStudents;
+
+            // Kümeleri birleştir: her sınıfın kendi kümeleri korunacak şekilde nesne yap
+            let combinedGroups = {};
+            if (typeof mainStorageData.groups === 'object' && !Array.isArray(mainStorageData.groups)) {
+                Object.assign(combinedGroups, mainStorageData.groups);
+            }
+            if (typeof localGroups === 'object' && !Array.isArray(localGroups)) {
+                Object.assign(combinedGroups, localGroups);
+            } else if (Array.isArray(localGroups) && localSinif) {
+                combinedGroups[localSinif] = localGroups;
+                combinedGroups[localSinif.replace(/\//g, '_')] = localGroups;
+            }
+            if (typeof sessGroups === 'object' && !Array.isArray(sessGroups)) {
+                Object.assign(combinedGroups, sessGroups);
+            } else if (Array.isArray(sessGroups) && sessSinif) {
+                combinedGroups[sessSinif] = sessGroups;
+                combinedGroups[sessSinif.replace(/\//g, '_')] = sessGroups;
+            }
+
+            globalData.groups = combinedGroups;
+
+            // 5. Firebase Canlı Senkronizasyonu (Telefon veya İnternet Bağlantısı)
+            const targetUid = urlUid || (window.firebase && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+            if (targetUid && window.db) {
+                try {
+                    if (statusEl) statusEl.textContent = '🔄 Bulut verileri çekiliyor...';
+                    const snap = await window.db.ref('app_data/' + targetUid).once('value');
+                    if (snap.exists()) {
+                        const val = snap.val() || {};
+                        if (val.students) {
+                            const parsedStus = Array.isArray(val.students) ? val.students : Object.values(val.students);
+                            if (parsedStus.length > 0) registerStudentList(parsedStus);
+                        }
+                        if (val.groups && typeof val.groups === 'object') {
+                            Object.assign(globalData.groups, val.groups);
+                        }
+                        if (val.regular_groups && typeof val.regular_groups === 'object') {
+                            const rGroups = Object.values(val.regular_groups);
+                            rGroups.forEach(g => {
+                                if (g && g.sinif) {
+                                    const safeK = g.sinif.replace(/\//g, '_');
+                                    if (!globalData.groups[safeK]) globalData.groups[safeK] = [];
+                                    if (!globalData.groups[g.sinif]) globalData.groups[g.sinif] = [];
+                                    globalData.groups[safeK].push(g);
+                                    globalData.groups[g.sinif].push(g);
+                                }
+                            });
+                        }
+                        globalData.students = combinedStudents;
+                        if (statusEl) statusEl.textContent = '✅ Telefon & Bulut Senkronizasyonu Başarılı';
+                    }
+                } catch (err) {
+                    console.warn("Firebase canlı veri hatası:", err);
+                    if (statusEl) statusEl.textContent = '⚡ Çevrimdışı / Yerel Bellekten Yüklendi';
+                }
+            } else {
+                if (statusEl) statusEl.textContent = '⚡ Yerel Bellekten Otomatik Yüklendi';
+            }
+
+            // Sınıf Açılır Kutusunu İnşa Et
+            populateClassDropdown();
+
+            // Aktif Sınıfı Belirle
+            const targetClass = urlSinif || sessSinif || localSinif || '';
+            if (targetClass) {
+                selectClassByName(targetClass);
+            } else {
+                // Eğer tek bir sınıf varsa otomatik seç
+                const selectEl = document.getElementById('sinif-secici');
+                if (selectEl && selectEl.options.length === 2) {
+                    selectClassByName(selectEl.options[1].value);
+                } else {
+                    renderForm();
+                }
+            }
+        }
+
+        // Sınıf Listesini Doldur
+        function populateClassDropdown() {
+            const select = document.getElementById('sinif-secici');
+            select.innerHTML = '<option value="">-- Sınıf Seçiniz --</option>';
+
+            const sinifSet = new Set();
+            (globalData.students || []).forEach(s => {
+                if (s && s.sinif) sinifSet.add(s.sinif.trim());
+            });
+
+            const groupsObj = globalData.groups || {};
+            if (typeof groupsObj === 'object' && !Array.isArray(groupsObj)) {
+                Object.keys(groupsObj).forEach(k => {
+                    sinifSet.add(k.replace(/_/g, '/').trim());
+                });
+            }
+
+            const siniflar = [...sinifSet].sort();
             siniflar.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.textContent = `${s} Sınıfı`;
-                select.appendChild(opt);
+                if (s) {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = `${s} Sınıfı`;
+                    select.appendChild(opt);
+                }
             });
         }
 
-        // URL Parametrelerini Çözümle (?sinif=7/B)
-        function initURLParams() {
-            const params = new URLSearchParams(window.location.search);
-            const sParam = params.get('sinif');
-            if (sParam) {
-                currentClass = decodeURIComponent(sParam);
-                const select = document.getElementById('sinif-secici');
-                if (select) {
-                    let exists = false;
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].value === currentClass) {
-                            exists = true;
-                            break;
-                        }
-                    }
-                    if (!exists && currentClass) {
-                        const opt = document.createElement('option');
-                        opt.value = currentClass;
-                        opt.textContent = `${currentClass} Sınıfı`;
-                        select.appendChild(opt);
-                    }
-                    select.value = currentClass;
+        function selectClassByName(className) {
+            currentClass = className;
+            const select = document.getElementById('sinif-secici');
+            let found = false;
+
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === className || normSinif(select.options[i].value) === normSinif(className)) {
+                    select.selectedIndex = i;
+                    currentClass = select.options[i].value;
+                    found = true;
+                    break;
                 }
-                isPrefilledMode = true; // Sınıf seçilerek gelindiğinde otomatik DOLU aç
             }
+
+            if (!found && className) {
+                const opt = document.createElement('option');
+                opt.value = className;
+                opt.textContent = `${className} Sınıfı`;
+                select.appendChild(opt);
+                select.value = className;
+            }
+
+            isPrefilledMode = true;
+            renderForm();
         }
 
         function onSinifChange(val) {
             currentClass = val;
             isPrefilledMode = val ? true : false;
+            forceAutoDistribute = false;
             renderForm();
         }
 
         function renderBlankForm() {
             isPrefilledMode = false;
+            forceAutoDistribute = false;
             renderForm();
         }
 
         function renderPrefilledForm() {
             isPrefilledMode = true;
+            forceAutoDistribute = false;
             renderForm();
         }
 
-        // 6 Kümeli A4 Izgarasını İnşa Et
-        function renderForm() {
-            const container = document.getElementById('clusters-grid-container');
-            container.innerHTML = '';
-
-            // Üst bilgiyi güncelle
-            updateHeaderInfo();
-
-            // Eğer sistemde o sınıfa ait kayıtlı kümeler varsa al
-            let prefilledGroups = [];
-            if (isPrefilledMode && currentClass) {
-                // 1. Önce sessionStorage'dan anlık aktarılan kümeleri kontrol et
-                try {
-                    const sessSinif = sessionStorage.getItem('kume_form_sinif');
-                    const sessGroups = sessionStorage.getItem('kume_form_groups');
-                    if (sessSinif === currentClass && sessGroups) {
-                        prefilledGroups = JSON.parse(sessGroups);
-                    }
-                } catch (e) {}
-
-                // 2. Yoksa globalData (groups / groupData) üzerinden kontrol et
-                if (!prefilledGroups || prefilledGroups.length === 0) {
-                    const allGroups = globalData.groups || globalData.groupData || {};
-                    const safeClass = currentClass.replace(/\//g, '_');
-                    prefilledGroups = allGroups[safeClass] || allGroups[currentClass] || [];
-                }
+        function autoDistributeClassStudents() {
+            if (!currentClass) {
+                alert("Lütfen önce yukarıdaki menüden bir sınıf seçiniz.");
+                return;
             }
-
-            // 6 Küme kartı oluştur (2 sütun x 3 satır = 6 küme)
-            for (let k = 1; k <= 6; k++) {
-                const groupData = prefilledGroups[k - 1] || null;
-                const card = createClusterCard(k, groupData);
-                container.appendChild(card);
-            }
+            isPrefilledMode = true;
+            forceAutoDistribute = true;
+            renderForm();
         }
 
-        // Başlık Alanını Güncelle
+        // Başlık Alanını Güncelle (Sınıf, Ders, Öğretmen)
         function updateHeaderInfo() {
+            // Sınıf Kutucukları (Örn: 7 / A)
             const combContainer = document.getElementById('header-sinif-comb');
             combContainer.innerHTML = '';
 
@@ -933,18 +1290,120 @@
                     combContainer.appendChild(emptyCell);
                 }
             }
+
+            // Ders & Öğretmen
+            const dersVal = document.getElementById('ders-input')?.value || '';
+            const ogretmenVal = document.getElementById('ogretmen-input')?.value || '';
+
+            const dersLine = document.getElementById('header-ders-line');
+            if (dersLine) dersLine.textContent = dersVal || ' ';
+
+            const teacherLine = document.getElementById('header-teacher-line');
+            if (teacherLine) teacherLine.textContent = ogretmenVal || ' ';
+
+            // Standart 1D Barkod (Code 128) Güncelle
+            const barcodeBox = document.getElementById('kume-barcode-box');
+            if (barcodeBox) {
+                const bText = currentClass ? `KUME-${currentClass.replace(/[\/\s]/g, '')}` : 'KUME-A4';
+                barcodeBox.innerHTML = renderCode128SVG(bText, 24, true);
+            }
         }
 
-        // Tek Bir Küme Kartı Oluştur (Her biri 6 öğrenci satırı)
+        // Öğrencileri 6 Kümeye Akıllıca Dağıt
+        function distributeStudentsIntoClusters(studentsList) {
+            const clusters = [[], [], [], [], [], []];
+            const defaultRoles = ['Proje Koordinatörü', 'Veri Analisti', 'Ar-Ge Sorumlusu', 'Halkla İlişkiler', 'Üye', 'Üye'];
+
+            // Numaraya veya ada göre sırala
+            const sorted = [...studentsList].sort((a, b) => {
+                const noA = parseInt(a.no) || 0;
+                const noB = parseInt(b.no) || 0;
+                if (noA && noB) return noA - noB;
+                return (a.adSoyad || a.name || '').localeCompare(b.adSoyad || b.name || '', 'tr');
+            });
+
+            sorted.forEach((stu, idx) => {
+                const cIdx = idx % 6; // 6 kümeye dengeli dağıtım
+                const memberIdx = Math.floor(idx / 6);
+                if (memberIdx < 6) { // Küme başına maksimum 6 satır
+                    const assignedRole = stu.role || defaultRoles[memberIdx] || 'Üye';
+                    clusters[cIdx].push({
+                        name: stu.adSoyad || stu.name || '',
+                        no: stu.no || '',
+                        role: assignedRole
+                    });
+                }
+            });
+
+            return clusters.map((stus, idx) => ({
+                title: `${idx + 1}. Küme`,
+                students: stus
+            }));
+        }
+
+        // 6 Kümeli A4 Izgarasını Oluştur
+        function renderForm() {
+            const container = document.getElementById('clusters-grid-container');
+            container.innerHTML = '';
+
+            updateHeaderInfo();
+
+            let targetGroups = [];
+
+            if (isPrefilledMode && currentClass) {
+                // 1. Kullanıcı "Listeyi Dağıt" demediyse, önce seçilen bu sınıfın kayıtlı kümelerini ara
+                if (!forceAutoDistribute) {
+                    const groupsData = globalData.groups || {};
+                    const safeClass = currentClass.replace(/\//g, '_');
+
+                    let foundGroupList = null;
+                    if (typeof groupsData === 'object' && !Array.isArray(groupsData)) {
+                        foundGroupList = groupsData[safeClass] || groupsData[currentClass];
+                        if (!foundGroupList || foundGroupList.length === 0) {
+                            // Normalize sınıf adına göre ara
+                            for (let k in groupsData) {
+                                if (normSinif(k) === normSinif(currentClass)) {
+                                    foundGroupList = groupsData[k];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (Array.isArray(foundGroupList) && foundGroupList.length > 0) {
+                        targetGroups = foundGroupList;
+                    }
+                }
+
+                // 2. Eğer bu sınıf için kayıtlı küme yoksa VEYA "Listeyi Dağıt" istendiyse -> Sınıfın öğrencilerinden anında 6 kümeye dengeli dağıt!
+                if (!targetGroups || targetGroups.length === 0 || forceAutoDistribute) {
+                    const classStudents = (globalData.students || []).filter(s => {
+                        return s && (s.sinif === currentClass || normSinif(s.sinif) === normSinif(currentClass));
+                    });
+
+                    if (classStudents.length > 0) {
+                        targetGroups = distributeStudentsIntoClusters(classStudents);
+                    }
+                }
+            }
+
+            // 6 Küme kartı render et
+            for (let k = 1; k <= 6; k++) {
+                const groupData = (targetGroups && targetGroups[k - 1]) ? targetGroups[k - 1] : null;
+                const card = createClusterCard(k, groupData);
+                container.appendChild(card);
+            }
+        }
+
+        // Tek Bir Küme Kartı Oluştur (6 Öğrenci Satırı)
         function createClusterCard(clusterNum, groupData) {
             const card = document.createElement('div');
             card.className = 'cluster-card';
 
             const clusterIdTag = `K-0${clusterNum}`;
-            const groupTitle = groupData ? (groupData.title || `Küme ${clusterNum}`) : '';
+            const groupTitle = groupData ? (groupData.title || `${clusterNum}. Küme`) : '';
             const students = (groupData && groupData.students) ? groupData.students : [];
 
-            // Kart Başlığı
             let html = `
                 <div class="cluster-header">
                     <div class="cluster-title-wrap">
@@ -974,7 +1433,7 @@
                     <tbody>
             `;
 
-            // 6 Öğrenci Satırı (OCR İçin Sabit Koordinatlı Izgara)
+            // 6 Öğrenci Satırı (OCR Uyumlu Sabit Izgara)
             for (let row = 1; row <= 6; row++) {
                 const student = students[row - 1] || null;
                 let studentNo = '';
@@ -982,20 +1441,25 @@
                 let studentRole = '';
 
                 if (student) {
-                    studentName = student.name || '';
-                    studentRole = student.role || '';
-                    // Öğrenci numarasını bul
-                    if (student.no) {
-                        studentNo = student.no;
-                    } else {
-                        const studentList = globalData.students || globalData.studentData || [];
-                        const found = studentList.find(s => s.adSoyad === studentName);
+                    if (typeof student === 'string') {
+                        studentName = student;
+                    } else if (typeof student === 'object') {
+                        studentName = student.name || student.adSoyad || '';
+                        studentRole = student.role || '';
+                        if (student.no) studentNo = student.no;
+                    }
+                    if (!studentNo && studentName) {
+                        const studentList = globalData.students || [];
+                        const found = studentList.find(s => (s.adSoyad === studentName || s.name === studentName));
                         if (found) studentNo = found.no || '';
                     }
                 }
 
                 // Okul No için 4'lü segmented kutucuklar
-                const noChars = (studentNo + '').padEnd(4, ' ').split('').slice(0, 4);
+                const rawNoStr = studentNo ? String(studentNo).trim() : '';
+                let noFormatted = rawNoStr.length > 0 && rawNoStr.length < 4 ? rawNoStr.padStart(4, ' ') : rawNoStr.padEnd(4, ' ');
+                const noChars = noFormatted.split('').slice(0, 4);
+
                 let noBoxesHtml = '<div class="no-comb-grid">';
                 for (let i = 0; i < 4; i++) {
                     const ch = (noChars[i] && noChars[i] !== ' ') ? noChars[i] : '&nbsp;';
@@ -1003,19 +1467,20 @@
                 }
                 noBoxesHtml += '</div>';
 
-                // Rol Göstergeleri (PK, VA, AR, HI, Ü)
-                const isPK = studentRole.includes('Koordinatör') ? 'selected' : '';
-                const isVA = studentRole.includes('Analist') ? 'selected' : '';
-                const isAR = studentRole.includes('Ar-Ge') ? 'selected' : '';
-                const isHI = studentRole.includes('İlişkiler') ? 'selected' : '';
-                const isU = (studentRole === 'Üye' || (!isPK && !isVA && !isAR && !isHI && studentRole)) ? 'selected' : '';
+                // Rol Göstergeleri (PK, VA, AR, HI, Ü) - Hem modern hem klasik görev isimlerini destekler
+                const rNorm = String(studentRole || '').toLowerCase();
+                const isPK = (rNorm.includes('koordinatör') || rNorm.includes('yönetici') || rNorm === 'pk') ? 'selected' : '';
+                const isVA = (rNorm.includes('analist') || rNorm.includes('yazıcı') || rNorm === 'va') ? 'selected' : '';
+                const isAR = (rNorm.includes('ar-ge') || rNorm.includes('malzemeci') || rNorm === 'ar') ? 'selected' : '';
+                const isHI = (rNorm.includes('ilişkiler') || rNorm.includes('sözcü') || rNorm === 'hi') ? 'selected' : '';
+                const isU  = (!isPK && !isVA && !isAR && !isHI && studentRole) || (rNorm === 'üye' || rNorm === 'ü') ? 'selected' : '';
 
                 const roleHtml = `
                     <div class="role-indicators">
-                        <span class="role-tag ${isPK}" title="Proje Koordinatörü">PK</span>
-                        <span class="role-tag ${isVA}" title="Veri Analisti">VA</span>
-                        <span class="role-tag ${isAR}" title="Ar-Ge Sorumlusu">AR</span>
-                        <span class="role-tag ${isHI}" title="Halkla İlişkiler">HI</span>
+                        <span class="role-tag ${isPK}" title="Proje Koordinatörü / Yönetici">PK</span>
+                        <span class="role-tag ${isVA}" title="Veri Analisti / Yazıcı">VA</span>
+                        <span class="role-tag ${isAR}" title="Ar-Ge Sorumlusu / Malzemeci">AR</span>
+                        <span class="role-tag ${isHI}" title="Halkla İlişkiler / Sözcü">HI</span>
                         <span class="role-tag ${isU}" title="Üye">Ü</span>
                     </div>
                 `;
@@ -1045,9 +1510,61 @@
             return card;
         }
 
+        // ── QR KOD & MOBİL AKTARIM MODAL FONKSİYONLARI ──
+        function generateShareURL() {
+            const url = new URL(window.location.href);
+            if (currentClass) url.searchParams.set('sinif', currentClass);
+            const dersVal = document.getElementById('ders-input')?.value;
+            if (dersVal) url.searchParams.set('ders', dersVal);
+            const ogretmenVal = document.getElementById('ogretmen-input')?.value;
+            if (ogretmenVal) url.searchParams.set('ogretmen', ogretmenVal);
+            return url.toString();
+        }
+
+        function openQrModal() {
+            const modal = document.getElementById('qr-modal');
+            const qrContainer = document.getElementById('qrcode-container');
+            const linkInput = document.getElementById('share-link-input');
+
+            const shareUrl = generateShareURL();
+            linkInput.value = shareUrl;
+
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: shareUrl,
+                width: 170,
+                height: 170,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            modal.style.display = 'flex';
+        }
+
+        function closeQrModal() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+
+        function copyShareLink() {
+            const linkInput = document.getElementById('share-link-input');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                alert("Bağlantı panoya kopyalandı! Telefonunuzda doğrudan açabilirsiniz.");
+            });
+        }
+
+        function shareWhatsApp() {
+            const shareUrl = generateShareURL();
+            const text = `📋 ${currentClass || ''} Sınıfı Küme Takip Formu (A4): ${shareUrl}`;
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, '_blank');
+        }
+
         function escapeHTML(str) {
             if (!str) return '';
-            return str
+            return String(str)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")

@@ -199,11 +199,13 @@
 
         auth.onAuthStateChanged(user => {
             if (user) {
-                if (user.email === 'mremzi@gmail.com') {
+                const isAdmin = user.email && user.email.toLowerCase().trim() === 'mremzi@gmail.com';
+                if (isAdmin) {
                     window.location.href = 'Proje Tabanlı Ders işleme.html';
                 } else {
                     db.ref("kullanicilar/" + user.uid).once("value").then(snapshot => {
-                        if (snapshot.exists() && snapshot.val().onayli === true) {
+                        const val = snapshot.val() || {};
+                        if (snapshot.exists() && (val.onayli === true || val.rol === 'admin' || val.admin === true)) {
                             window.location.href = 'Proje Tabanlı Ders işleme.html';
                         } else {
                             auth.signOut();

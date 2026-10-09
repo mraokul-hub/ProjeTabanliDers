@@ -30,8 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // BAŞLATICI
         // ─────────────────────────────────────────────
         init() {
+            if (this._initialized) return;
             this.container = document.getElementById('soru-takip-container');
             if (!this.container) return;
+            this._initialized = true;
 
             this.classSelect     = document.getElementById('soru-takip-class-select');
             this.studentSelect   = document.getElementById('soru-takip-student-select');
@@ -274,7 +276,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Kağıt / Barkod Tara Butonu
             if (this.btnScanBarcode) {
-                this.btnScanBarcode.addEventListener('click', () => this.openScannerModal());
+                this.btnScanBarcode.onclick = (e) => {
+                    if (e) e.preventDefault();
+                    this.openScannerModal();
+                };
             }
 
             // Dosyadan / Fotoğraftan Barkod Tara Butonları
@@ -392,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         startScanningLoop() {
-            if (typeof jsQR === 'undefined' || !this.scannerCanvas || !this.scannerVideo) return;
+            if (!this.scannerCanvas || !this.scannerVideo) return;
             const ctx = this.scannerCanvas.getContext('2d');
             
             if (this.scannerFeedback) {
@@ -400,21 +405,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.scannerFeedback.style.color = "#059669";
             }
 
-            this.scannerInterval = setInterval(() => {
+            const hasBarcodeDetector = ('BarcodeDetector' in window);
+            let detector = null;
+            if (hasBarcodeDetector) {
+                try {
+                    detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13'] });
+                } catch(e) {}
+            }
+
+            this.scannerInterval = setInterval(async () => {
                 if (this.scannerVideo.readyState !== this.scannerVideo.HAVE_ENOUGH_DATA) return;
-                this.scannerCanvas.width = this.scannerVideo.videoWidth;
-                this.scannerCanvas.height = this.scannerVideo.videoHeight;
-                ctx.drawImage(this.scannerVideo, 0, 0, this.scannerCanvas.width, this.scannerCanvas.height);
-
-                const imageData = ctx.getImageData(0, 0, this.scannerCanvas.width, this.scannerCanvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: 'dontInvert'
-                });
-
-                if (code && code.data) {
-                    this.handleScannedCode(code.data);
+                
+                // 1. Öncelik: Yerel Tarayıcı BarcodeDetector Motoru (Ultra Hızlı ve Donanım Destekli)
+                if (detector) {
+                    try {
+                        const barcodes = await detector.detect(this.scannerVideo);
+                        if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                            this.handleScannedCode(barcodes[0].rawValue);
+                            return;
+                        }
+                    } catch(e) {}
                 }
-            }, 250);
+
+                // 2. Öncelik: jsQR Canvas Kare Analizi
+                if (typeof jsQR !== 'undefined') {
+                    this.scannerCanvas.width = this.scannerVideo.videoWidth;
+                    this.scannerCanvas.height = this.scannerVideo.videoHeight;
+                    ctx.drawImage(this.scannerVideo, 0, 0, this.scannerCanvas.width, this.scannerCanvas.height);
+
+                    const imageData = ctx.getImageData(0, 0, this.scannerCanvas.width, this.scannerCanvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'attemptBoth'
+                    });
+
+                    if (code && code.data) {
+                        this.handleScannedCode(code.data);
+                    }
+                }
+            }, 200);
         },
 
         // ─────────────────────────────────────────────
@@ -437,11 +465,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
-                img.onload = () => {
+                img.onload = async () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    const codeData = this.decodeQRFromImage(img, canvas, ctx);
+                    const codeData = await this.decodeQRFromImage(img, canvas, ctx);
                     if (codeData) {
                         if (this.scannerFeedback) {
                             this.scannerFeedback.innerHTML = `✅ <strong>Dosyadaki karekod başarıyla okundu!</strong>`;
@@ -450,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.handleScannedCode(codeData);
                     } else {
                         if (this.scannerFeedback) {
-                            this.scannerFeedback.innerHTML = `❌ Görselde karekod tespit edilemedi. Lütfen kağıdın sağ üst köşesini net gösteren aydınlık bir fotoğraf yükleyiniz.`;
+                            this.scannerFeedback.innerHTML = `❌ Görselde karekod tespit edilemedi. Lütfen kağıdın sağ üst köşesini net gösteren aydınlık bir fotoğraf yükleyiniz veya doğrudan telefon kameranızla okutunuz.`;
                             this.scannerFeedback.style.color = "#dc2626";
                         }
                     }
@@ -468,8 +496,21 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         },
 
-        // Çok Kademeli Akıllı QR Kod Çözücü
-        decodeQRFromImage(img, canvas, ctx) {
+        // Çok Kademeli Akıllı QR & Barkod Çözücü
+        async decodeQRFromImage(img, canvas, ctx) {
+            // 1. Strateji: Donanım Hızlandırmalı Modern Tarayıcı Motoru (Chromium BarcodeDetector API)
+            if ('BarcodeDetector' in window) {
+                try {
+                    const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a'] });
+                    const codes = await detector.detect(img);
+                    if (codes && codes.length > 0 && codes[0].rawValue) {
+                        return codes[0].rawValue;
+                    }
+                } catch (e) {
+                    console.warn("BarcodeDetector hatası, jsQR motoruna geçiliyor:", e);
+                }
+            }
+
             if (typeof jsQR === 'undefined') {
                 console.error('jsQR kütüphanesi bulunamadı.');
                 return null;
@@ -478,54 +519,63 @@ document.addEventListener('DOMContentLoaded', () => {
             const nw = img.naturalWidth;
             const nh = img.naturalHeight;
 
-            // 1. Strateji: A4 Takip Formu Sağ Üst Çeyrek Odaklı Tarama
-            // Formun sağ üst köşesinde yer alan QR kodunu yüksek çözünürlükte izole eder.
-            const cropW = Math.round(nw * 0.55);
-            const cropH = Math.round(nh * 0.45);
-            const cropX = Math.round(nw - cropW);
-            const cropY = 0;
-
-            canvas.width = cropW;
-            canvas.height = cropH;
-            ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-            let imgData = ctx.getImageData(0, 0, cropW, cropH);
-            let code = jsQR(imgData.data, cropW, cropH, { inversionAttempts: 'attemptBoth' });
-            if (code && code.data) return code.data;
-
-            // 2. Strateji: Optimize edilmiş tam görsel (max 1600px)
-            const maxDim = 1600;
-            let scale = Math.min(1, maxDim / Math.max(nw, nh));
-            let targetW = Math.round(nw * scale);
-            let targetH = Math.round(nh * scale);
-
-            canvas.width = targetW;
-            canvas.height = targetH;
-            ctx.drawImage(img, 0, 0, targetW, targetH);
-            imgData = ctx.getImageData(0, 0, targetW, targetH);
-            code = jsQR(imgData.data, targetW, targetH, { inversionAttempts: 'attemptBoth' });
-            if (code && code.data) return code.data;
-
-            // 3. Strateji: Gürültü azaltıcı 800px ölçek
-            if (Math.max(nw, nh) > 1000) {
-                scale = 800 / Math.max(nw, nh);
-                targetW = Math.round(nw * scale);
-                targetH = Math.round(nh * scale);
+            // Yardımcı test fonksiyonu: Belirtilen alanı çizer, jsQR ile arar, başarısız olursa kontrast binarizasyonu dener
+            const testCanvasRegion = (targetW, targetH, sx = 0, sy = 0, sw = nw, sh = nh) => {
                 canvas.width = targetW;
                 canvas.height = targetH;
-                ctx.drawImage(img, 0, 0, targetW, targetH);
-                imgData = ctx.getImageData(0, 0, targetW, targetH);
-                code = jsQR(imgData.data, targetW, targetH, { inversionAttempts: 'attemptBoth' });
-                if (code && code.data) return code.data;
-            }
+                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+                let idata = ctx.getImageData(0, 0, targetW, targetH);
+                let res = jsQR(idata.data, targetW, targetH, { inversionAttempts: 'attemptBoth' });
+                if (res && res.data) return res.data;
 
-            // 4. Strateji: Orijinal piksel çözünürlüğü (2400px'e kadar)
-            if (nw <= 2400 && nh <= 2400) {
-                canvas.width = nw;
-                canvas.height = nh;
-                ctx.drawImage(img, 0, 0);
-                imgData = ctx.getImageData(0, 0, nw, nh);
-                code = jsQR(imgData.data, nw, nh, { inversionAttempts: 'attemptBoth' });
-                if (code && code.data) return code.data;
+                // Kontrast Eşikleme / Binarizasyon Filtresi (Gölgeli ve Loş Işıklı Kağıtlar İçin)
+                const d = idata.data;
+                let minL = 255, maxL = 0;
+                for (let i = 0; i < d.length; i += 4) {
+                    let lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+                    if (lum < minL) minL = lum;
+                    if (lum > maxL) maxL = lum;
+                }
+                if (maxL - minL > 25) {
+                    const thresh = minL + (maxL - minL) * 0.52;
+                    for (let i = 0; i < d.length; i += 4) {
+                        let lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+                        let v = lum < thresh ? 0 : 255;
+                        d[i] = v;
+                        d[i+1] = v;
+                        d[i+2] = v;
+                    }
+                    res = jsQR(d, targetW, targetH, { inversionAttempts: 'attemptBoth' });
+                    if (res && res.data) return res.data;
+                }
+                return null;
+            };
+
+            // 2. Strateji: Doğrudan Tam Görsel (Kullanıcı sadece karekodu veya üst kısmı kırpıp yüklediyse)
+            let found = testCanvasRegion(Math.min(nw, 1400), Math.round(nh * (Math.min(nw, 1400) / nw)));
+            if (found) return found;
+
+            found = testCanvasRegion(Math.min(nw, 800), Math.round(nh * (Math.min(nw, 800) / nw)));
+            if (found) return found;
+
+            // 3. Strateji: A4 Takip Formu Sağ Üst Köşe (Tam Kağıt Çekimlerinde Odaklanma)
+            const cropW1 = Math.round(nw * 0.45);
+            const cropH1 = Math.round(nh * 0.35);
+            const cropX1 = Math.round(nw - cropW1);
+            found = testCanvasRegion(cropW1, cropH1, cropX1, 0, cropW1, cropH1);
+            if (found) return found;
+
+            // 4. Strateji: Genişletilmiş Sağ Üst Çeyrek (%60 x %45)
+            const cropW2 = Math.round(nw * 0.60);
+            const cropH2 = Math.round(nh * 0.45);
+            const cropX2 = Math.round(nw - cropW2);
+            found = testCanvasRegion(cropW2, cropH2, cropX2, 0, cropW2, cropH2);
+            if (found) return found;
+
+            // 5. Strateji: Orijinal Tam Çözünürlük (2600px'e kadar)
+            if (nw <= 2600 && nh <= 2600) {
+                found = testCanvasRegion(nw, nh);
+                if (found) return found;
             }
 
             return null;
@@ -542,23 +592,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rawText.startsWith('http://') || rawText.startsWith('https://')) {
                 try {
                     const urlObj = new URL(rawText);
-                    targetSid   = urlObj.searchParams.get('sid');
-                    targetStart = urlObj.searchParams.get('start');
-                    targetEnd   = urlObj.searchParams.get('end');
-                    targetWeek  = urlObj.searchParams.get('week');
-                    targetDers  = urlObj.searchParams.get('ders');
+                    targetSid   = urlObj.searchParams.get('sid') || urlObj.searchParams.get('s');
+                    targetStart = urlObj.searchParams.get('start') || urlObj.searchParams.get('st');
+                    targetEnd   = urlObj.searchParams.get('end') || urlObj.searchParams.get('ed');
+                    targetWeek  = urlObj.searchParams.get('week') || urlObj.searchParams.get('w');
+                    targetDers  = urlObj.searchParams.get('ders') || urlObj.searchParams.get('d');
                 } catch(e) {}
             } else if (rawText.startsWith('{')) {
                 try {
                     const parsed = JSON.parse(rawText);
-                    targetSid   = parsed.sid || parsed.no;
-                    targetStart = parsed.start;
-                    targetEnd   = parsed.end;
-                    targetWeek  = parsed.week;
-                    targetDers  = parsed.ders;
+                    targetSid   = parsed.sid || parsed.no || parsed.s;
+                    targetStart = parsed.start || parsed.st;
+                    targetEnd   = parsed.end || parsed.ed;
+                    targetWeek  = parsed.week || parsed.w;
+                    targetDers  = parsed.ders || parsed.d;
                 } catch(e) {}
             } else if (rawText.startsWith('ST-')) {
-                // ST-16-W06 veya ST-16-W05-MAT
+                // ST-101-W05 veya ST-101-W05-MAT
                 const parts = rawText.split('-');
                 if (parts.length >= 2) targetSid = parts[1];
                 if (parts.length >= 3) targetWeek = parts[2].replace(/\D/g, '');
@@ -583,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!targetSid) return;
 
-            // Sesli geri bildirim (Soft Beep)
+            // Sesli bildirim (Soft Beep)
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
@@ -596,6 +646,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 osc.start();
                 setTimeout(() => { osc.stop(); audioCtx.close(); }, 120);
             } catch(e) {}
+
+            this.stopScanner();
 
             // Öğrenciyi veritabanında bul
             const stList = typeof studentData !== 'undefined' ? studentData : [];
@@ -624,18 +676,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (this.scannerFeedback) {
                     const dersBadge = targetDers ? ` &middot; 📘 ${targetDers}` : '';
-                    this.scannerFeedback.innerHTML = `🎉 <strong>${foundStudent.adSoyad} (${foundStudent.no})</strong> Başarıyla Tanındı!${dersBadge}`;
-                    this.scannerFeedback.style.color = "#059669";
+                    this.scannerFeedback.innerHTML = `
+                        <div style="background:#ecfdf5; border:1.5px solid #059669; border-radius:8px; padding:10px; margin-top:4px;">
+                            <div style="font-size:13.5px; font-weight:800; color:#065f46;">
+                                🎉 <strong>${foundStudent.adSoyad} (${foundStudent.no})</strong> Tanındı!
+                            </div>
+                            <div style="font-size:11.5px; color:#047857; margin-top:3px;">
+                                📅 ${this.currentWeekNo}. Hafta${dersBadge} &middot; Sistem Senkronize Edildi
+                            </div>
+                            <div style="display:flex; gap:6px; justify-content:center; margin-top:8px;">
+                                <button type="button" onclick="window.SoruTakipUI.openDirectForm(); window.SoruTakipUI.closeScannerModal();" class="btn" style="background:#059669; color:#fff; font-size:11.5px; padding:6px 12px; border-radius:6px; font-weight:700; border:none; cursor:pointer;">
+                                    ⚡ Doğrudan Veri Girişini Aç
+                                </button>
+                                <button type="button" onclick="window.SoruTakipUI.closeScannerModal();" class="btn" style="background:#e2e8f0; color:#1e293b; font-size:11.5px; padding:6px 12px; border-radius:6px; font-weight:600; border:none; cursor:pointer;">
+                                    Tabloyu Göster
+                                </button>
+                            </div>
+                        </div>`;
                 }
             } else {
                 if (this.studentSelect) this.studentSelect.value = targetSid;
                 this.generateLink(targetSid);
                 this.loadStudentData(targetSid);
+                if (this.scannerFeedback) {
+                    this.scannerFeedback.innerHTML = `🎉 <strong>Öğrenci No: ${targetSid}</strong> Başarıyla Tanındı!`;
+                    this.scannerFeedback.style.color = "#059669";
+                }
             }
 
+            // Kullanıcı buton tıklamazsa 1.8 sn sonra modalı yumuşak kapatır
             setTimeout(() => {
-                this.closeScannerModal();
-            }, 750);
+                if (this.scannerModal && this.scannerModal.style.display !== 'none') {
+                    this.closeScannerModal();
+                }
+            }, 1800);
         },
 
         // ─────────────────────────────────────────────
@@ -1281,6 +1355,15 @@ window.openSoruTakipKagitFormu = function() {
         sessionStorage.setItem('soru_takip_print_start_date', startVal);
         sessionStorage.setItem('soru_takip_print_end_date', endVal);
         sessionStorage.setItem('soru_takip_print_week', weekVal);
+
+        localStorage.setItem('soru_takip_print_class', classVal);
+        localStorage.setItem('soru_takip_print_student_no', studentVal);
+        localStorage.setItem('soru_takip_print_ders', dersVal);
+        localStorage.setItem('soru_takip_print_students', JSON.stringify(targetStudents));
+        localStorage.setItem('soru_takip_print_uid', teacherUid);
+        localStorage.setItem('soru_takip_print_start_date', startVal);
+        localStorage.setItem('soru_takip_print_end_date', endVal);
+        localStorage.setItem('soru_takip_print_week', weekVal);
     } catch(e) {}
     
     let url = 'Soru_Cozum_Kagit_Formu.html';

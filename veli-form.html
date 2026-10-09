@@ -733,17 +733,35 @@
     // TEMEL YARDIMCI FONKSİYONLAR
     // ═══════════════════════════════════════════════════════
     const urlParams = new URLSearchParams(window.location.search);
-    const uid       = urlParams.get('uid');
-    const sid       = urlParams.get('sid');
-    const sName     = urlParams.get('sname');
-    const startDate = urlParams.get('start');
-    const endDate   = urlParams.get('end');
-    const weekNo    = urlParams.get('week');
-    const dersName  = urlParams.get('ders');
+    const uid       = urlParams.get('uid') || urlParams.get('u');
+    const sid       = urlParams.get('sid') || urlParams.get('s');
+    const sName     = urlParams.get('sname') || urlParams.get('sn');
+    const startDate = urlParams.get('start') || urlParams.get('st');
+    const endDate   = urlParams.get('end') || urlParams.get('ed');
+    const weekNo    = urlParams.get('week') || urlParams.get('w');
+    const dersName  = urlParams.get('ders') || urlParams.get('d');
 
     if (sName) {
         document.getElementById('studentNameDisplay').textContent =
             `${decodeURIComponent(sName)} için veri girişi yapıyorsunuz.`;
+    } else if (sid) {
+        document.getElementById('studentNameDisplay').textContent =
+            `Öğrenci No: ${sid} için veri girişi yapıyorsunuz.`;
+        if (uid && typeof firebase !== 'undefined') {
+            try {
+                firebase.database().ref(`app_data/${uid}/students`).once('value', snap => {
+                    if (snap.exists()) {
+                        const list = snap.val();
+                        const arr = Array.isArray(list) ? list : Object.values(list || {});
+                        const found = arr.find(s => String(s.no) === String(sid));
+                        if (found && found.adSoyad) {
+                            document.getElementById('studentNameDisplay').textContent =
+                                `${found.adSoyad} (${found.no}) için veri girişi yapıyorsunuz.`;
+                        }
+                    }
+                });
+            } catch(e) {}
+        }
     }
 
     // Ders Otomatik Seçimi
@@ -1203,12 +1221,12 @@
                 if (code.data.startsWith('http://') || code.data.startsWith('https://')) {
                     try {
                         const urlObj = new URL(code.data);
-                        const qSid   = urlObj.searchParams.get('sid');
-                        const qSname = urlObj.searchParams.get('sname');
-                        const qStart = urlObj.searchParams.get('start');
-                        const qEnd   = urlObj.searchParams.get('end');
-                        const qWeek  = urlObj.searchParams.get('week');
-                        const qDers  = urlObj.searchParams.get('ders');
+                        const qSid   = urlObj.searchParams.get('sid') || urlObj.searchParams.get('s');
+                        const qSname = urlObj.searchParams.get('sname') || urlObj.searchParams.get('sn');
+                        const qStart = urlObj.searchParams.get('start') || urlObj.searchParams.get('st');
+                        const qEnd   = urlObj.searchParams.get('end') || urlObj.searchParams.get('ed');
+                        const qWeek  = urlObj.searchParams.get('week') || urlObj.searchParams.get('w');
+                        const qDers  = urlObj.searchParams.get('ders') || urlObj.searchParams.get('d');
 
                         if (qStart && qEnd) {
                             applyDatePeriodLock(qStart, qEnd, qWeek);

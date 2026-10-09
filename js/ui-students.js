@@ -231,12 +231,14 @@ function clearAllGroups() {
 
 function openKumeKagitFormu() {
     const sel = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
+    const teacherUid = window.currentUser?.uid || '';
+    const teacherName = (document.getElementById('user-display-name')?.textContent || '').trim();
     
     // 1. Seçili sınıfın ekrandaki mevcut kümelerini anında topla ve kaydet
+    let currentClassGroups = [];
     if (sel) {
         const container = document.getElementById('groups-container');
         if (container) {
-            const currentClassGroups = [];
             container.querySelectorAll('.group-card').forEach((card, idx) => {
                 const titleInput = card.querySelector('.group-title-input');
                 const title = titleInput ? titleInput.value : `Küme ${idx + 1}`;
@@ -259,18 +261,36 @@ function openKumeKagitFormu() {
                         students.push({ name, role, no: studentNo });
                     }
                 });
-                currentClassGroups.push({ title, students });
+                if (students.length > 0 || title) {
+                    currentClassGroups.push({ title, students });
+                }
             });
 
             // groupData ve depolamaya anında işle
             const safeClass = sel.replace(/\//g, '_');
             if (typeof groupData !== 'object' || groupData === null) groupData = {};
-            groupData[safeClass] = currentClassGroups;
-            groupData[sel] = currentClassGroups;
+            if (currentClassGroups.length > 0) {
+                groupData[safeClass] = currentClassGroups;
+                groupData[sel] = currentClassGroups;
+            }
+
+            // Seçili sınıfın ham öğrenci listesini de filtrele ve hazırla
+            const classStudents = (typeof studentData !== 'undefined')
+                ? studentData.filter(s => s.sinif === sel || String(s.sinif).replace(/[\/_-]/g, '') === String(sel).replace(/[\/_-]/g, ''))
+                : [];
 
             try {
+                // Hem sessionStorage hem de localStorage'a tüm okul/öğretmen verisini yaz (Sınıf geçişleri için)
                 sessionStorage.setItem('kume_form_sinif', sel);
-                sessionStorage.setItem('kume_form_groups', JSON.stringify(currentClassGroups));
+                sessionStorage.setItem('kume_form_groups', JSON.stringify(typeof groupData === 'object' && groupData !== null ? groupData : {}));
+                sessionStorage.setItem('kume_form_students', JSON.stringify(typeof studentData !== 'undefined' ? studentData : []));
+                sessionStorage.setItem('kume_form_teacher', teacherName);
+
+                localStorage.setItem('kume_form_sinif', sel);
+                localStorage.setItem('kume_form_groups', JSON.stringify(typeof groupData === 'object' && groupData !== null ? groupData : {}));
+                localStorage.setItem('kume_form_students', JSON.stringify(typeof studentData !== 'undefined' ? studentData : []));
+                localStorage.setItem('kume_form_teacher', teacherName);
+
                 if (typeof saveDataLocal === 'function') saveDataLocal();
                 else if (typeof saveData === 'function') saveData();
             } catch (e) {
@@ -279,7 +299,12 @@ function openKumeKagitFormu() {
         }
     }
 
-    const url = 'Sinif_Kume_Kagit_Formu.html' + (sel ? '?sinif=' + encodeURIComponent(sel) : '');
+    const params = [];
+    if (sel) params.push('sinif=' + encodeURIComponent(sel));
+    if (teacherUid) params.push('uid=' + encodeURIComponent(teacherUid));
+    if (teacherName) params.push('ogretmen=' + encodeURIComponent(teacherName));
+
+    const url = 'Sinif_Kume_Kagit_Formu.html' + (params.length > 0 ? '?' + params.join('&') : '');
     window.open(url, '_blank');
 }
 
@@ -654,3 +679,742 @@ function addToSchedule() {
     renderSchedule(); saveData(); document.getElementById('schedule-time').value = ''; document.getElementById('schedule-lesson').value = '';
     if (Notification.permission !== 'granted') Notification.requestPermission();
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// A4 KÜME FORMU OPTİK OKUYUCU & EL YAZISI TANIMA MOTORU (OCR & VISION AI)
+// ══════════════════════════════════════════════════════════════════════════
+
+let kumeOcrCameraStream = null;
+let kumeOcrParsedClusters = [];
+let kumeOcrActiveImageBase64 = null;
+let kumeOcrActiveTab = 'file';
+
+// 1. Modalı Aç
+function openKumeOcrModal() {
+    const classFilter = document.getElementById('class-filter');
+    let selectedClass = classFilter ? classFilter.value : '';
+    if (!selectedClass) {
+        // Eğer sınıf seçilmemişse listedeki ilk geçerli sınıfı otomatik seç
+        if (classFilter && classFilter.options.length > 1) {
+            for (let i = 0; i < classFilter.options.length; i++) {
+                if (classFilter.options[i].value) {
+                    classFilter.selectedIndex = i;
+                    selectedClass = classFilter.options[i].value;
+                    if (typeof loadClassGroups === 'function') loadClassGroups(selectedClass);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!selectedClass) {
+        alert("Lütfen önce yukarıdaki menüden işlem yapılacak sınıfı seçiniz veya sisteme öğrenci yükleyiniz!");
+        if (classFilter) classFilter.focus();
+        return;
+    }
+
+    const modal = document.getElementById('kume-ocr-modal');
+    if (!modal) {
+        console.error("kume-ocr-modal bulunamadı.");
+        return;
+    }
+
+    // Sınıf rozetini ve mevcut öğrenci sayısını güncelle
+    const classBadge = document.getElementById('kume-ocr-class-badge');
+    const norm = (s) => String(s || '').replace(/[\/_\-\s]/g, '').trim().toUpperCase();
+    const classStudents = (typeof studentData !== 'undefined')
+        ? studentData.filter(s => s && (s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass)))
+        : [];
+
+    if (classBadge) {
+        classBadge.textContent = `${selectedClass} Sınıfı (${classStudents.length} Kayıtlı Öğrenci)`;
+    }
+
+    // Varsa kayıtlı Gemini API anahtarını yükle
+    const savedKey = localStorage.getItem('GEMINI_API_KEY') || localStorage.getItem('gemini_api_key') || '';
+    const keyInput = document.getElementById('kume-gemini-key-input');
+    if (keyInput) keyInput.value = savedKey;
+
+    setKumeOcrTab('file');
+    resetKumeOcrScan();
+
+    modal.style.display = 'flex';
+    window.addEventListener('paste', handleKumeOcrPaste);
+}
+
+// 2. Modalı Kapat
+function closeKumeOcrModal() {
+    stopKumeOcrCamera();
+    window.removeEventListener('paste', handleKumeOcrPaste);
+    const modal = document.getElementById('kume-ocr-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+window.openKumeOcrModal = openKumeOcrModal;
+window.closeKumeOcrModal = closeKumeOcrModal;
+
+// 3. Sekmeler Arası Geçiş (Dosya / Kamera / Yapıştır)
+function setKumeOcrTab(tabName) {
+    kumeOcrActiveTab = tabName;
+    const fileArea = document.getElementById('kume-ocr-file-area');
+    const cameraArea = document.getElementById('kume-ocr-camera-area');
+    const pasteArea = document.getElementById('kume-ocr-paste-area');
+    const btnFile = document.getElementById('btn-tab-ocr-file');
+    const btnCamera = document.getElementById('btn-tab-ocr-camera');
+    const btnPaste = document.getElementById('btn-tab-ocr-paste');
+
+    if (fileArea) fileArea.style.display = (tabName === 'file') ? 'block' : 'none';
+    if (cameraArea) cameraArea.style.display = (tabName === 'camera') ? 'block' : 'none';
+    if (pasteArea) pasteArea.style.display = (tabName === 'paste') ? 'block' : 'none';
+
+    const activeBg = "#4f46e5";
+    const activeColor = "#ffffff";
+    const inactiveBg = "#f1f5f9";
+    const inactiveColor = "#475569";
+
+    if (btnFile) {
+        btnFile.style.background = (tabName === 'file') ? activeBg : inactiveBg;
+        btnFile.style.color = (tabName === 'file') ? activeColor : inactiveColor;
+    }
+    if (btnCamera) {
+        btnCamera.style.background = (tabName === 'camera') ? activeBg : inactiveBg;
+        btnCamera.style.color = (tabName === 'camera') ? activeColor : inactiveColor;
+    }
+    if (btnPaste) {
+        btnPaste.style.background = (tabName === 'paste') ? activeBg : inactiveBg;
+        btnPaste.style.color = (tabName === 'paste') ? activeColor : inactiveColor;
+    }
+
+    if (tabName === 'camera') {
+        startKumeOcrCamera();
+    } else {
+        stopKumeOcrCamera();
+    }
+}
+
+// 4. Canlı Kamera Yönetimi
+async function startKumeOcrCamera() {
+    const video = document.getElementById('kume-ocr-video');
+    if (!video) return;
+    try {
+        stopKumeOcrCamera();
+        kumeOcrCameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            }
+        });
+        video.srcObject = kumeOcrCameraStream;
+        await video.play();
+    } catch (err) {
+        console.warn("Kamera açılamadı:", err);
+        alert("Kamera açılamadı: " + err.message + "\nLütfen 'Fotoğraf Yükle' seçeneğini kullanarak formu yükleyiniz.");
+        setKumeOcrTab('file');
+    }
+}
+
+function stopKumeOcrCamera() {
+    if (kumeOcrCameraStream) {
+        kumeOcrCameraStream.getTracks().forEach(t => t.stop());
+        kumeOcrCameraStream = null;
+    }
+}
+
+function captureKumeOcrFromCamera() {
+    const video = document.getElementById('kume-ocr-video');
+    if (!video || !video.videoWidth) {
+        alert("Kamera görüntüsü henüz hazır değil, lütfen bir saniye bekleyiniz.");
+        return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    stopKumeOcrCamera();
+    processKumeOcrImage(dataUrl);
+}
+
+// 5. Dosya Yükleme & Sürükle Bırak
+function handleKumeOcrFileSelect(input) {
+    if (input.files && input.files[0]) {
+        loadKumeOcrFile(input.files[0]);
+        input.value = '';
+    }
+}
+
+function handleKumeOcrDrop(e) {
+    e.preventDefault();
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files[0]) {
+        loadKumeOcrFile(dt.files[0]);
+    }
+}
+
+function loadKumeOcrFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        alert("Lütfen geçerli bir resim dosyası seçiniz (JPG, PNG, WEBP vb.).");
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        processKumeOcrImage(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+// 6. Panodan Yapıştırma (Ctrl+V)
+function handleKumeOcrPaste(e) {
+    const modal = document.getElementById('kume-ocr-modal');
+    if (!modal || modal.style.display === 'none') return;
+
+    const items = (e.clipboardData || window.clipboardData)?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                processKumeOcrImage(ev.target.result);
+            };
+            reader.readAsDataURL(blob);
+            break;
+        }
+    }
+}
+
+// 7. API Anahtarı ve UI Ayarları
+function saveKumeGeminiKey(key) {
+    const cleanKey = (key || '').trim();
+    if (cleanKey) {
+        localStorage.setItem('GEMINI_API_KEY', cleanKey);
+        localStorage.setItem('gemini_api_key', cleanKey);
+        if (typeof showStatus === 'function') showStatus("Gemini API Anahtarı kaydedildi.", false);
+        else alert("Gemini API Anahtarı kaydedildi.");
+    }
+}
+
+function toggleKumeOcrEngineUI() {
+    const engine = document.querySelector('input[name="kume-ocr-engine"]:checked')?.value || 'hybrid';
+    const keyWrap = document.getElementById('kume-ocr-apikey-wrap');
+    if (keyWrap) {
+        keyWrap.style.display = (engine === 'hybrid') ? 'flex' : 'none';
+    }
+}
+
+function updateKumeOcrProgress(text, percent) {
+    const progSec = document.getElementById('kume-ocr-progress-section');
+    const statusText = document.getElementById('kume-ocr-status-text');
+    const badge = document.getElementById('kume-ocr-percent-badge');
+    const bar = document.getElementById('kume-ocr-progress-bar');
+
+    if (progSec) progSec.style.display = 'block';
+    if (statusText) statusText.innerHTML = text;
+    if (badge) badge.textContent = `%${percent}`;
+    if (bar) bar.style.width = `${percent}%`;
+}
+
+function resetKumeOcrScan() {
+    const inputSec = document.getElementById('kume-ocr-input-section');
+    const progSec = document.getElementById('kume-ocr-progress-section');
+    const resSec = document.getElementById('kume-ocr-results-section');
+
+    if (inputSec) inputSec.style.display = 'block';
+    if (progSec) progSec.style.display = 'none';
+    if (resSec) resSec.style.display = 'none';
+
+    kumeOcrParsedClusters = [];
+    kumeOcrActiveImageBase64 = null;
+}
+
+// 8. Görsel İşleme ve Çift Kademeli OCR Motoru
+async function processKumeOcrImage(imageSource) {
+    kumeOcrActiveImageBase64 = imageSource;
+
+    const inputSec = document.getElementById('kume-ocr-input-section');
+    if (inputSec) inputSec.style.display = 'none';
+
+    updateKumeOcrProgress('<i class="fas fa-magic fa-spin me-2"></i>Form görseli optimize ediliyor ve hazırlanıyor...', 15);
+
+    // Aktif sınıftaki kayıtlı öğrenci listesini al
+    const selectedClass = document.getElementById('class-filter')?.value || '';
+    const norm = (s) => String(s || '').replace(/[\/_\-\s]/g, '').trim().toUpperCase();
+    const classStudents = (typeof studentData !== 'undefined')
+        ? studentData.filter(s => s && (s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass)))
+        : [];
+
+    const engine = document.querySelector('input[name="kume-ocr-engine"]:checked')?.value || 'hybrid';
+    const apiKey = localStorage.getItem('GEMINI_API_KEY') || localStorage.getItem('gemini_api_key') || document.getElementById('kume-gemini-key-input')?.value?.trim();
+
+    // ── STREATEGY A: GEMINI VISION AI (El Yazısı ve Türkçe için En Yüksek Doğruluk) ──
+    if (engine === 'hybrid' && apiKey) {
+        try {
+            updateKumeOcrProgress('✨ <strong>Google Gemini AI:</strong> El yazıları ve küme tabloları okunuyor...', 40);
+            const geminiResult = await callGeminiVisionKumeOcr(imageSource, classStudents, selectedClass, apiKey);
+            if (geminiResult && Array.isArray(geminiResult) && geminiResult.length > 0) {
+                updateKumeOcrProgress('✅ El yazıları başarıyla çözümlendi, eşleştirme tamamlandı!', 100);
+                setTimeout(() => {
+                    renderKumeOcrResults(geminiResult, classStudents);
+                }, 400);
+                return;
+            }
+        } catch (err) {
+            console.warn("Gemini Vision API çağrısı başarısız oldu, yerel Tesseract motoruna geçiliyor:", err);
+            updateKumeOcrProgress('⚠️ Gemini API yanıt vermedi. Yerel Tesseract OCR motoruna aktarılıyor...', 35);
+        }
+    }
+
+    // ── STREATEGY B: TESSERACT.JS (Çevrimdışı / Yerel Motor) + AKILLI ÖĞRENCİ LİSTESİ EŞLEŞTİRME ──
+    try {
+        updateKumeOcrProgress('⚡ <strong>Tesseract OCR Motoru:</strong> Metinler taranıyor...', 50);
+        const tesseractResult = await runTesseractKumeOcr(imageSource, classStudents);
+        updateKumeOcrProgress('✅ Optik karakter tanıma tamamlandı!', 100);
+        setTimeout(() => {
+            renderKumeOcrResults(tesseractResult, classStudents);
+        }, 400);
+    } catch (err) {
+        console.error("OCR Hatası:", err);
+        alert("Görsel taranırken bir hata oluştu: " + err.message);
+        resetKumeOcrScan();
+    }
+}
+
+// 9. Gemini Vision API ile Küme Formunu Okuma
+async function callGeminiVisionKumeOcr(imageSource, classStudents, selectedClass, apiKey) {
+    // Base64 veri ve MIME tipini ayıkla
+    const parts = imageSource.split(',');
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const base64Data = parts[1];
+
+    const studentRosterStr = classStudents.map(s => `${s.no ? s.no + ' - ' : ''}${s.adSoyad}`).join(', ');
+
+    const promptText = `Sen A4 Küme Yönetimi ve Grup Değerlendirme Formunu okuyan uzman bir optik karakter ve el yazısı tanıma (OCR) asistanısın.
+Fotoğrafta 6 adet küme kartı vardır (KÜME 1, KÜME 2, KÜME 3, KÜME 4, KÜME 5, KÜME 6).
+Her kümede bir "KÜME ADI" ve 6 satırlı tabloda öğrenciler yer alır.
+Tablodaki sütunlar: Sıra, Okul No, Öğrenci Adı Soyadı, Görev/Rol (PK: Proje Koordinatörü, VA: Veri Analisti, AR: Ar-Ge Sorumlusu, HI: Halkla İlişkiler, Ü: Üye).
+
+Bu sınıftaki (${selectedClass}) kayıtlı öğrenciler:
+${studentRosterStr || 'Kayıtlı liste boş'}
+
+GÖREV:
+Görseldeki el yazılarını ve kutucuklardaki işaretlemeleri oku. İsimleri ve numaraları yukarıdaki sınıf listesindeki doğru öğrencilerle eşleştir.
+YANIT FORMATI:
+SADECE ve YALNIZCA geçerli bir JSON dizi formatı döndür. Açıklama metni, selamlama veya markdown kod bloğu (örn: \`\`\`json) yazma. Doğrudan [ ile başlayıp ] ile bitir:
+[
+  {
+    "title": "1. Küme",
+    "students": [
+      { "no": "104", "name": "Ahmet Yılmaz", "role": "Proje Koordinatörü" }
+    ]
+  }
+]`;
+
+    // Gemini modellerini dene (Flash 1.5 -> Flash 2.0 -> Flash 2.5)
+    const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+    let lastError = null;
+
+    for (let model of models) {
+        try {
+            updateKumeOcrProgress(`✨ Gemini AI (${model}) el yazısını analiz ediyor...`, 65);
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: promptText },
+                            {
+                                inlineData: {
+                                    mimeType: mimeType,
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0.1,
+                        topK: 1
+                    }
+                })
+            });
+
+            if (!res.ok) {
+                lastError = new Error(`HTTP ${res.status}: ${res.statusText}`);
+                continue;
+            }
+
+            const data = await res.json();
+            const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+            const parsed = JSON.parse(cleaned);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return normalizeParsedClusters(parsed, classStudents);
+            }
+        } catch (e) {
+            lastError = e;
+        }
+    }
+
+    throw lastError || new Error("Gemini AI çıktısı JSON formatına dönüştürülemedi.");
+}
+
+// 10. Tesseract.js ile Yerel OCR ve Akıllı Eşleştirme Motoru
+async function runTesseractKumeOcr(imageSource, classStudents) {
+    if (typeof Tesseract === 'undefined') {
+        throw new Error("Tesseract.js kütüphanesi henüz yüklenemedi. Lütfen internet bağlantınızı kontrol ediniz veya sayfayı yenileyiniz.");
+    }
+
+    // Görseli canvas üzerinde optimize et (Kontrast artırma & Binarizasyon hazırlığı)
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imageSource;
+    });
+
+    const canvas = document.createElement('canvas');
+    let width = img.width;
+    let height = img.height;
+    const maxDim = 2000;
+    if (width > maxDim || height > maxDim) {
+        if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+        } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+        }
+    }
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // Tesseract OCR Çalıştır
+    const { data } = await Tesseract.recognize(canvas, 'tur+eng', {
+        logger: m => {
+            if (m.status === 'recognizing text') {
+                const p = Math.round((m.progress || 0) * 45) + 45;
+                updateKumeOcrProgress('⚡ Tesseract el yazıları ve karakterleri çözümlüyor...', p);
+            }
+        }
+    });
+
+    const fullText = data.text || '';
+    return parseTesseractTextToClusters(fullText, classStudents);
+}
+
+// 11. Tesseract Metnini 6 Kümeye Akıllıca Ayrıştırma
+function parseTesseractTextToClusters(fullText, classStudents) {
+    const lines = fullText.split('\n').map(l => l.trim()).filter(Boolean);
+    const clusters = [];
+    for (let i = 1; i <= 6; i++) {
+        clusters.push({
+            title: `${i}. Küme`,
+            students: []
+        });
+    }
+
+    // Öğrenci listesinden numaraya ve ada göre eşleştirme havuzu
+    const remainingStudents = [...classStudents];
+    const assignedSet = new Set();
+
+    // 1. Adım: Metindeki satırlarda geçen okul numaralarını bul
+    lines.forEach((line, lineIdx) => {
+        // Numaraları tespit et (2-5 haneli sayılar)
+        const numMatches = line.match(/\b\d{2,5}\b/g);
+        if (numMatches) {
+            numMatches.forEach(numStr => {
+                const found = remainingStudents.find(s => String(s.no) === numStr && !assignedSet.has(s.no));
+                if (found) {
+                    assignedSet.add(found.no);
+                    const cIdx = Math.min(5, Math.floor((lineIdx / Math.max(1, lines.length)) * 6));
+                    clusters[cIdx].students.push({
+                        no: found.no,
+                        name: found.adSoyad,
+                        role: detectRoleInLine(line)
+                    });
+                }
+            });
+        }
+    });
+
+    // 2. Adım: Henüz atanmamış öğrencilerin isim benzerliklerini (Levenshtein/Kelime) tara
+    remainingStudents.forEach(stu => {
+        if (assignedSet.has(stu.no)) return;
+        const nameTokens = stu.adSoyad.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+        for (let lIdx = 0; lIdx < lines.length; lIdx++) {
+            const lLow = lines[lIdx].toLowerCase();
+            const matchCount = nameTokens.filter(tok => lLow.includes(tok)).length;
+            if (matchCount >= Math.max(1, nameTokens.length - 1)) {
+                assignedSet.add(stu.no);
+                const cIdx = Math.min(5, Math.floor((lIdx / Math.max(1, lines.length)) * 6));
+                clusters[cIdx].students.push({
+                    no: stu.no || '',
+                    name: stu.adSoyad,
+                    role: detectRoleInLine(lines[lIdx])
+                });
+                break;
+            }
+        }
+    });
+
+    // 3. Adım: Küme başlıklarını satırlardan tespit etmeye çalış
+    lines.forEach((line) => {
+        const kMatch = line.match(/küme\s*([1-6])\s*[:\-]?\s*(.*)/i);
+        if (kMatch) {
+            const num = parseInt(kMatch[1], 10);
+            const extraTitle = kMatch[2].trim();
+            if (num >= 1 && num <= 6 && extraTitle.length > 2 && extraTitle.length < 30) {
+                clusters[num - 1].title = extraTitle;
+            }
+        }
+    });
+
+    return normalizeParsedClusters(clusters, classStudents);
+}
+
+// Rol Kısaltmalarını Satırdan Yakala
+function detectRoleInLine(lineStr) {
+    const s = lineStr.toUpperCase();
+    if (s.includes('PK') || s.includes('KOORD')) return 'Proje Koordinatörü';
+    if (s.includes('VA') || s.includes('ANALİST') || s.includes('YAZICI')) return 'Veri Analisti';
+    if (s.includes('AR') || s.includes('AR-GE') || s.includes('MALZEME')) return 'Ar-Ge Sorumlusu';
+    if (s.includes('HI') || s.includes('İLİŞK') || s.includes('SÖZCÜ')) return 'Halkla İlişkiler';
+    return 'Üye';
+}
+
+// 12. Parse Edilen Kümeleri Standart 6 Kümeye Tamamlama & Düzeltme
+function normalizeParsedClusters(clusters, classStudents) {
+    const normalized = [];
+    const rolesCycle = ['Proje Koordinatörü', 'Veri Analisti', 'Ar-Ge Sorumlusu', 'Halkla İlişkiler', 'Üye', 'Üye'];
+
+    for (let i = 1; i <= 6; i++) {
+        const existing = clusters[i - 1] || null;
+        const title = (existing && existing.title) ? existing.title : `${i}. Küme`;
+        const rawStudents = (existing && Array.isArray(existing.students)) ? existing.students : [];
+
+        const cleanStudents = rawStudents.map((st, sIdx) => {
+            let sNo = st.no ? String(st.no).trim() : '';
+            let sName = st.name ? String(st.name).trim() : '';
+            let sRole = st.role ? String(st.role).trim() : (rolesCycle[sIdx] || 'Üye');
+
+            // Eğer no yoksa ama isim sınıf listesinde varsa no'yu eşle
+            if (!sNo && sName && classStudents.length > 0) {
+                const match = classStudents.find(cs => cs.adSoyad.toLowerCase() === sName.toLowerCase());
+                if (match) sNo = match.no || '';
+            }
+
+            return { no: sNo, name: sName, role: sRole };
+        });
+
+        normalized.push({
+            title: title,
+            students: cleanStudents
+        });
+    }
+
+    return normalized;
+}
+
+// 13. Okunan Kümeleri Doğrulama Izgarasında Gösterme
+function renderKumeOcrResults(clusters, classStudents) {
+    kumeOcrParsedClusters = clusters;
+
+    const progSec = document.getElementById('kume-ocr-progress-section');
+    const resSec = document.getElementById('kume-ocr-results-section');
+    const grid = document.getElementById('kume-ocr-cards-grid');
+
+    if (progSec) progSec.style.display = 'none';
+    if (resSec) resSec.style.display = 'block';
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    clusters.forEach((cluster, cIdx) => {
+        const card = document.createElement('div');
+        card.className = 'ocr-cluster-card';
+        card.setAttribute('data-cluster-idx', cIdx);
+        card.style.cssText = `
+            background: var(--card-bg, #ffffff);
+            border: 2px solid var(--border, #e2e8f0);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        `;
+
+        let studentsRowsHtml = '';
+        const students = cluster.students || [];
+
+        students.forEach((stu, sIdx) => {
+            const isMatched = classStudents.some(cs => (stu.no && String(cs.no) === String(stu.no)) || (stu.name && cs.adSoyad.toLowerCase() === stu.name.toLowerCase()));
+            const matchBadge = isMatched
+                ? `<span style="color:#059669; font-weight:700; font-size:12px;" title="Kayıtlı öğrenci listesiyle doğrulandı">✔️</span>`
+                : `<span style="color:#f59e0b; font-weight:700; font-size:12px;" title="Yeni veya liste dışı öğrenci">⚠️</span>`;
+
+            studentsRowsHtml += `
+                <div class="ocr-student-row" style="display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid var(--border, #f1f5f9);">
+                    <span style="font-size:11px; font-weight:700; color:var(--text-muted); width:16px;">${sIdx + 1}.</span>
+                    <input type="text" class="ocr-student-no" value="${escapeHtml(stu.no || '')}" placeholder="No" style="width:48px; padding:4px 6px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1); text-align:center;">
+                    <input type="text" class="ocr-student-name" value="${escapeHtml(stu.name || '')}" placeholder="Öğrenci Adı Soyadı" style="flex:1; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1);">
+                    <select class="ocr-student-role" style="padding:4px 6px; font-size:11.5px; border-radius:6px; border:1px solid var(--border, #cbd5e1); max-width:115px;">
+                        <option value="Proje Koordinatörü" ${stu.role.includes('Koord') || stu.role === 'PK' ? 'selected' : ''}>[PK] Koordinatör</option>
+                        <option value="Veri Analisti" ${stu.role.includes('Analist') || stu.role === 'VA' ? 'selected' : ''}>[VA] Analist</option>
+                        <option value="Ar-Ge Sorumlusu" ${stu.role.includes('Ar-Ge') || stu.role === 'AR' ? 'selected' : ''}>[AR] Ar-Ge</option>
+                        <option value="Halkla İlişkiler" ${stu.role.includes('İlişkiler') || stu.role === 'HI' ? 'selected' : ''}>[HI] Halkla İliş.</option>
+                        <option value="Üye" ${!stu.role || stu.role === 'Üye' || stu.role === 'Ü' ? 'selected' : ''}>[Ü] Üye</option>
+                    </select>
+                    ${matchBadge}
+                    <button type="button" onclick="this.closest('.ocr-student-row').remove()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; padding:2px;" title="Öğrenciyi Sil">&times;</button>
+                </div>
+            `;
+        });
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e0e7ff; padding-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="background:#4f46e5; color:#fff; font-size:11px; font-weight:800; padding:2px 7px; border-radius:6px;">K-${String(cIdx + 1).padStart(2, '0')}</span>
+                    <input type="text" class="ocr-cluster-title" value="${escapeHtml(cluster.title || `${cIdx + 1}. Küme`)}" style="font-weight:700; font-size:13.5px; border:none; border-bottom:1px dashed #cbd5e1; padding:2px 4px; background:transparent;">
+                </div>
+                <button type="button" class="btn" onclick="addOcrStudentRow(this)" style="padding:3px 8px; font-size:11px; background:#e0e7ff; color:#3730a3; border-radius:6px;">
+                    <i class="fas fa-plus"></i> Ekle
+                </button>
+            </div>
+            <div class="ocr-students-list" style="display:flex; flex-direction:column; min-height:80px;">
+                ${studentsRowsHtml || '<div style="text-align:center; color:var(--text-muted); font-size:12px; padding:15px;">Öğrenci bulunamadı.</div>'}
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+}
+
+// 14. Yeni Satır Ekleme Yardımcısı
+function addOcrStudentRow(btn) {
+    const list = btn.closest('.ocr-cluster-card').querySelector('.ocr-students-list');
+    const emptyMsg = list.querySelector('div[style*="text-align:center"]');
+    if (emptyMsg) emptyMsg.remove();
+
+    const rowCount = list.querySelectorAll('.ocr-student-row').length + 1;
+    const row = document.createElement('div');
+    row.className = 'ocr-student-row';
+    row.style.cssText = 'display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid var(--border, #f1f5f9);';
+    row.innerHTML = `
+        <span style="font-size:11px; font-weight:700; color:var(--text-muted); width:16px;">${rowCount}.</span>
+        <input type="text" class="ocr-student-no" placeholder="No" style="width:48px; padding:4px 6px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1); text-align:center;">
+        <input type="text" class="ocr-student-name" placeholder="Öğrenci Adı Soyadı" style="flex:1; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1);">
+        <select class="ocr-student-role" style="padding:4px 6px; font-size:11.5px; border-radius:6px; border:1px solid var(--border, #cbd5e1); max-width:115px;">
+            <option value="Proje Koordinatörü">[PK] Koordinatör</option>
+            <option value="Veri Analisti">[VA] Analist</option>
+            <option value="Ar-Ge Sorumlusu">[AR] Ar-Ge</option>
+            <option value="Halkla İlişkiler">[HI] Halkla İliş.</option>
+            <option value="Üye" selected>[Ü] Üye</option>
+        </select>
+        <span style="color:#94a3b8; font-size:12px;">✏️</span>
+        <button type="button" onclick="this.closest('.ocr-student-row').remove()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; padding:2px;" title="Sil">&times;</button>
+    `;
+    list.appendChild(row);
+}
+
+// 15. Kümeleri Doğrudan Sisteme Aktar ve Kaydet
+function applyOcrClustersToSystem() {
+    const selectedClass = document.getElementById('class-filter')?.value;
+    if (!selectedClass) {
+        alert("Lütfen önce bir sınıf seçiniz!");
+        return;
+    }
+
+    const cards = document.querySelectorAll('.ocr-cluster-card');
+    if (cards.length === 0) {
+        alert("Aktarılacak küme verisi bulunamadı.");
+        return;
+    }
+
+    const finalGroups = [];
+    let totalStudents = 0;
+
+    cards.forEach((card, idx) => {
+        const titleInput = card.querySelector('.ocr-cluster-title');
+        const title = titleInput ? titleInput.value.trim() : `${idx + 1}. Küme`;
+        const students = [];
+
+        card.querySelectorAll('.ocr-student-row').forEach(row => {
+            const noInput = row.querySelector('.ocr-student-no');
+            const nameInput = row.querySelector('.ocr-student-name');
+            const roleSelect = row.querySelector('.ocr-student-role');
+
+            const no = noInput ? noInput.value.trim() : '';
+            const name = nameInput ? nameInput.value.trim() : '';
+            const role = roleSelect ? roleSelect.value : 'Üye';
+
+            if (name) {
+                students.push({ name, no, role });
+                totalStudents++;
+            }
+        });
+
+        finalGroups.push({ title, students });
+    });
+
+    if (totalStudents === 0) {
+        if (!confirm("Kümelerde hiç öğrenci adı tespit edilmedi. Yine de boş kümeleri kaydetmek istiyor musunuz?")) {
+            return;
+        }
+    }
+
+    // 1. groupData nesnesini güncelle
+    const safeClass = selectedClass.replace(/\//g, '_');
+    if (typeof groupData !== 'object' || groupData === null) groupData = {};
+    groupData[safeClass] = finalGroups;
+    groupData[selectedClass] = finalGroups;
+
+    // 2. Ana ekrandaki kümeleri yeniden çiz
+    if (typeof loadClassGroups === 'function') {
+        loadClassGroups(selectedClass);
+    }
+    if (typeof updateStudentPickers === 'function') {
+        updateStudentPickers();
+    }
+
+    // 3. Kalıcı kaydet (Firebase ve LocalStorage)
+    try {
+        sessionStorage.setItem('kume_form_sinif', selectedClass);
+        sessionStorage.setItem('kume_form_groups', JSON.stringify(groupData));
+        localStorage.setItem('kume_form_sinif', selectedClass);
+        localStorage.setItem('kume_form_groups', JSON.stringify(groupData));
+    } catch (e) {}
+
+    if (typeof saveDataLocal === 'function') saveDataLocal();
+    else if (typeof saveData === 'function') saveData();
+
+    // 4. Modalı Kapat & Tebrik Bildirimi
+    closeKumeOcrModal();
+
+    if (typeof showStatus === 'function') {
+        showStatus(`🎉 ${selectedClass} sınıfına ${finalGroups.length} küme ve ${totalStudents} öğrenci aktarıldı!`, false);
+    } else {
+        alert(`✅ Başarılı!\n\n${selectedClass} sınıfı için ${finalGroups.length} küme ve toplam ${totalStudents} öğrenci başarıyla sisteme aktarıldı ve kaydedildi.`);
+    }
+}
+
+// Güvenli HTML Kaçış Yardımcısı
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+

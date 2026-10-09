@@ -6,6 +6,12 @@
     <title>Soru Çözüm Takip Formu (A4 - OCR & Optik Uyumlu)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <!-- Firebase Uyumluluk Kütüphaneleri (Çok Katmanlı Veri Köprüsü) -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -284,48 +290,84 @@
             color: #000;
         }
 
-        /* QR Kod & Barkod Kolonu (Sağ Kolon) */
+        /* STANDART 1D BARKOD & SADE BİÇİM (DÜŞÜK ÇÖZÜNÜRLÜKTE BİLE ANINDA OKUNUR) */
         .header-qr-col {
-            width: 76px;
+            width: 124px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             border-left: 1.5px solid #000;
-            padding-left: 6px;
+            padding: 2px 4px;
             background: #fff;
             text-align: center;
+            box-sizing: border-box;
         }
 
-        .qr-code-box {
-            width: 52px;
-            height: 52px;
+        .barcode-box {
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             background: #fff;
         }
 
-        .qr-code-box img, .qr-code-box canvas {
-            width: 52px !important;
-            height: 52px !important;
+        .barcode-box svg {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 48px;
             display: block;
         }
 
-        .qr-code-tag {
+        .barcode-sub-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 4px;
+            margin-top: 1px;
+            padding-top: 1px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .mini-qr-box {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .mini-qr-box img, .mini-qr-box canvas {
+            width: 30px !important;
+            height: 30px !important;
+            display: block;
+        }
+
+        .barcode-meta-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            line-height: 1.1;
+        }
+
+        .barcode-meta-text {
             font-family: 'JetBrains Mono', monospace;
             font-size: 7px;
             font-weight: 800;
-            margin-top: 2px;
+            color: #0f172a;
             letter-spacing: -0.2px;
             white-space: nowrap;
         }
 
-        .qr-code-hint {
-            font-size: 6px;
-            font-weight: 700;
-            color: #374151;
-            letter-spacing: -0.2px;
+        .barcode-hint-text {
+            font-size: 5.5px;
+            font-weight: 800;
+            color: #059669;
+            letter-spacing: 0.1px;
             text-transform: uppercase;
             white-space: nowrap;
         }
@@ -421,14 +463,14 @@
             line-height: 1.15;
         }
 
-        /* Sütun Genişlikleri: Tarih alanı tam sığacak şekilde 68px'e genişletildi */
-        .col-sira { width: 24px; text-align: center !important; font-weight: 700; background: #fafafa; font-size: 9px; }
-        .col-tarih { width: 68px; text-align: center !important; padding: 0 2px !important; }
-        .col-ders { width: 72px; font-weight: 600; font-size: 9px; padding: 0 2px !important; }
+        /* Sütun Genişlikleri: Belirgin ve büyük kutucuklar için optimize edildi (Görsel 1) */
+        .col-sira { width: 22px; text-align: center !important; font-weight: 700; background: #fafafa; font-size: 9px; }
+        .col-tarih { width: 66px; text-align: center !important; padding: 0 2px !important; }
+        .col-ders { width: 70px; font-weight: 600; font-size: 9px; padding: 0 2px !important; }
         .col-kaynak { width: auto; font-size: 9px; padding-left: 4px !important; }
-        .col-tip { width: 64px; text-align: center !important; }
-        .col-dyb { width: 38px; text-align: center !important; }
-        .col-os { width: 36px; text-align: center !important; }
+        .col-tip { width: 76px; text-align: center !important; }
+        .col-dyb { width: 48px; text-align: center !important; }
+        .col-os { width: 48px; text-align: center !important; }
 
         /* Tek Ders Modunda Ders Adı Hücresi */
         .prefilled-ders-name {
@@ -478,49 +520,60 @@
             line-height: 1;
         }
 
-        /* 2 Haneli Segmented Rakam Kutucukları */
+        /* 2 Haneli Segmented Rakam Kutucukları (Görsel 1'e göre belirgin ve büyük) */
         .comb-2 {
             display: inline-flex;
-            gap: 1.5px;
+            gap: 2.5px;
             vertical-align: middle;
             justify-content: center;
         }
 
         .comb-2-cell {
-            width: 11px;
-            height: 14px;
-            border: 1px solid #4b5563;
+            width: 15px;
+            height: 20px;
+            border: 1.5px solid #111827;
+            border-radius: 2px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 9px;
-            font-weight: 700;
+            font-size: 11.5px;
+            font-weight: 800;
             background: #fff;
+            box-shadow: inset 0 0.5px 1px rgba(0,0,0,0.06);
         }
 
-        /* Soru Tipi OMR Balonları (T, YN, K) */
+        /* Soru Tipi OMR Balonları (T, YN, K - Görsel 1'e göre büyütülmüş ve net) */
         .omr-bubbles {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            gap: 3px;
             padding: 0 1px;
-            font-size: 7.5px;
-            font-weight: 700;
+            font-size: 9.5px;
+            font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
         }
 
         .bubble-tag {
-            border: 1px solid #6b7280;
-            border-radius: 2px;
-            padding: 0 2px;
-            line-height: 12px;
-            height: 13px;
+            border: 1.5px solid #1f2937;
+            border-radius: 3px;
+            padding: 0 3px;
+            min-width: 18px;
+            height: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             background: #fff;
-            color: #111;
+            color: #0f172a;
+            font-size: 9.5px;
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: 0 0.5px 1px rgba(0,0,0,0.08);
+        }
+
+        .bubble-tag[title="Yeni Nesil"] {
+            min-width: 23px;
         }
 
         /* Dotted Yazı Çizgisi */
@@ -691,6 +744,11 @@
                 <i class="fas fa-print"></i> Formları Yazdır (A4)
             </button>
 
+            <!-- Telefondan Aç QR Butonu -->
+            <button class="toolbar-btn toolbar-btn-secondary" onclick="openQrModal()" title="Telefonda açmak veya paylaşmak için karekod üretir" style="background:#2563eb; color:#fff;">
+                <i class="fas fa-qrcode"></i> Telefona Aktar (QR)
+            </button>
+
             <!-- Boş Şablon Butonu -->
             <button class="toolbar-btn toolbar-btn-secondary" onclick="renderBlankOnly()" title="Tek boş şablon gösterir">
                 <i class="fas fa-eraser"></i> Boş Şablon
@@ -725,17 +783,82 @@
         let selectedWeek = 1;
         let teacherUid = '';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStudentData();
+        // STANDART 1D BARKOD MOTORU (CODE 128 & VEKTÖREL SVG - DÜŞÜK ÇÖZÜNÜRLÜKTE BİLE ANINDA OKUNUR)
+        const CODE128_B = [
+            '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
+            '221312','231212','112232','122132','122231','113222','123122','123221','223211','221132',
+            '221231','213212','223112','312131','311222','321122','321221','312212','322112','322211',
+            '212123','212321','232121','111323','131123','131321','112313','132113','132311','211313',
+            '231113','231311','112133','112331','132131','113123','113321','133121','313121','211331',
+            '231131','213113','213311','213131','311123','311321','331121','312113','312311','332111',
+            '314111','221411','431111','111224','111422','121124','121421','141122','141221','112214',
+            '112412','122114','122411','142112','142211','241211','221114','413111','241112','134111',
+            '111242','121142','121241','114212','124112','124211','411212','421112','421211','212141',
+            '214121','412121','111143','111341','131141','114113','114311','411113','411311','113141',
+            '114131','311141','411131','211412','211214','211232','2331112'
+        ];
+
+        function sanitizeBarcodeText(str) {
+            if (!str) return 'CODE128';
+            return String(str)
+                .toUpperCase()
+                .replace(/[İı]/g, 'I')
+                .replace(/[Ğğ]/g, 'G')
+                .replace(/[Üü]/g, 'U')
+                .replace(/[Şş]/g, 'S')
+                .replace(/[Öö]/g, 'O')
+                .replace(/[Çç]/g, 'C')
+                .replace(/[^A-Z0-9\-_.]/g, '-');
+        }
+
+        function renderCode128SVG(rawText, barHeight = 26, showText = true) {
+            const text = sanitizeBarcodeText(rawText);
+            let checksum = 104; // Start Code B
+            let pattern = CODE128_B[104];
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i) - 32;
+                if (code >= 0 && code <= 95) {
+                    checksum += code * (i + 1);
+                    pattern += CODE128_B[code];
+                }
+            }
+            pattern += CODE128_B[checksum % 103];
+            pattern += CODE128_B[106];
+
+            const quietZone = 8;
+            let totalModules = quietZone * 2;
+            for (let c of pattern) totalModules += parseInt(c, 10);
+
+            const totalHeight = showText ? (barHeight + 11) : barHeight;
+            let x = quietZone;
+            let rects = '';
+            for (let i = 0; i < pattern.length; i++) {
+                const w = parseInt(pattern[i], 10);
+                if (i % 2 === 0) {
+                    rects += `<rect x="${x}" y="0" width="${w}" height="${barHeight}" fill="#000"/>`;
+                }
+                x += w;
+            }
+
+            let textNode = '';
+            if (showText) {
+                textNode = `<text x="${totalModules / 2}" y="${barHeight + 9}" font-family="monospace, Courier, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#000" letter-spacing="0.6">${text}</text>`;
+            }
+
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalModules} ${totalHeight}" style="width:100%; height:auto; display:block; background:#fff;">${rects}${textNode}</svg>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
             initURLAndSession();
+            await loadStudentData();
             initPeriodControls();
             populateClassDropdown();
             populateStudentDropdown();
             renderPages();
         });
 
-        // Veritabanı ve Session'dan Öğrenci Verilerini Al
-        function loadStudentData() {
+        // Veritabanı, Session ve Firebase'den Çok Katmanlı Öğrenci Verisi Çekme Motoru
+        async function loadStudentData() {
             // 1. SessionStorage kontrolü (en güncel anlık veri)
             try {
                 const sessionRaw = sessionStorage.getItem('soru_takip_print_students');
@@ -747,7 +870,20 @@
                 }
             } catch (e) {}
 
-            // 2. LocalStorage yedeği
+            // 2. LocalStorage doğrudan soru takip yedeği (Farklı sekme / telefon)
+            if (!allStudents.length) {
+                try {
+                    const localRaw = localStorage.getItem('soru_takip_print_students');
+                    if (localRaw) {
+                        const parsed = JSON.parse(localRaw);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            allStudents = parsed;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // 3. Genel uygulama veritabanı yedeği
             if (!allStudents.length) {
                 try {
                     const raw = localStorage.getItem(STORAGE_KEY);
@@ -759,6 +895,27 @@
                         }
                     }
                 } catch (e) {}
+            }
+
+            // 4. Firebase Canlı Senkronizasyonu (Telefonda veya bilgisayarda doğrudan linkle açıldığında)
+            const params = new URLSearchParams(window.location.search);
+            const targetUid = params.get('uid') || teacherUid || (window.firebase && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+            if (!allStudents.length && targetUid && window.firebase && firebase.database) {
+                try {
+                    const snap = await firebase.database().ref(`app_data/${targetUid}/students`).once('value');
+                    if (snap.exists()) {
+                        const val = snap.val();
+                        const list = Array.isArray(val) ? val : Object.values(val || {});
+                        if (list.length > 0) {
+                            allStudents = list;
+                            populateClassDropdown();
+                            populateStudentDropdown();
+                            renderPages();
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Firebase canlı öğrenci aktarım hatası:", err);
+                }
             }
         }
 
@@ -1085,40 +1242,47 @@
                 container.insertAdjacentHTML('beforeend', generateSinglePageHTML(st, idx));
             });
 
-            // Dinamik QR Kodlarını Üret
+            // Dinamik Standart Barkod (Code 128) ve Optimize QR Kodlarını Üret
             targetStudents.forEach((st, idx) => {
+                const studentCode = (st && st.no) ? String(st.no).padStart(3, '0') : '000';
+                const dersTag = selectedDers ? `-${selectedDers.substring(0, 3).toUpperCase()}` : '';
+                const barcodeText = `ST-${studentCode}-W${String(selectedWeek).padStart(2, '0')}${dersTag}`;
+
+                // 1. Standart 1D Vektörel Barkod (Telefon ve barkod tarayıcılar anında algılar)
+                const barcodeBox = document.getElementById(`barcode-box-${idx}`);
+                if (barcodeBox) {
+                    barcodeBox.innerHTML = renderCode128SVG(barcodeText, 25, true);
+                }
+
+                // 2. Hızlı Mobil / Veli Karekodu (Kompakt ve yüksek kontrastlı)
                 const qrBox = document.getElementById(`qr-box-${idx}`);
-                if (!qrBox) return;
-                qrBox.innerHTML = '';
+                if (qrBox) {
+                    qrBox.innerHTML = '';
+                    let baseUrl = "https://mraokul-hub.github.io/ProjeTabanliDersIsleme";
+                    if (window.location.origin && window.location.origin.startsWith('http')) {
+                        baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+                    }
 
-                let baseUrl = "https://mraokul-hub.github.io/ProjeTabanliDersIsleme";
-                if (window.location.origin && window.location.origin.startsWith('http')) {
-                    baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-                }
+                    const stNo = (st && st.no) ? encodeURIComponent(st.no) : '';
+                    const dersQuery = selectedDers ? `&d=${encodeURIComponent(selectedDers.substring(0, 4))}` : '';
+                    const targetUrl = `${baseUrl}/veli-form.html?s=${stNo}&w=${selectedWeek}${dersQuery}${teacherUid ? '&u=' + encodeURIComponent(teacherUid) : ''}`;
 
-                const dersQuery = selectedDers ? `&ders=${encodeURIComponent(selectedDers)}` : '';
-                let targetUrl = '';
-                if (st && st.no) {
-                    targetUrl = `${baseUrl}/veli-form.html?uid=${encodeURIComponent(teacherUid)}&sid=${encodeURIComponent(st.no)}&sname=${encodeURIComponent(st.adSoyad || '')}&start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&week=${encodeURIComponent(selectedWeek)}${dersQuery}`;
-                } else {
-                    targetUrl = `${baseUrl}/veli-form.html?uid=${encodeURIComponent(teacherUid)}&start=${encodeURIComponent(selectedStartDate)}&end=${encodeURIComponent(selectedEndDate)}&week=${encodeURIComponent(selectedWeek)}${dersQuery}`;
-                }
-
-                if (typeof QRCode !== 'undefined') {
-                    try {
-                        new QRCode(qrBox, {
-                            text: targetUrl,
-                            width: 52,
-                            height: 52,
-                            colorDark: "#000000",
-                            colorLight: "#ffffff",
-                            correctLevel: QRCode.CorrectLevel.M
-                        });
-                    } catch (err) {
+                    if (typeof QRCode !== 'undefined') {
+                        try {
+                            new QRCode(qrBox, {
+                                text: targetUrl,
+                                width: 32,
+                                height: 32,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.L
+                            });
+                        } catch (err) {
+                            renderFallbackBarcode(qrBox, st ? st.no : '00');
+                        }
+                    } else {
                         renderFallbackBarcode(qrBox, st ? st.no : '00');
                     }
-                } else {
-                    renderFallbackBarcode(qrBox, st ? st.no : '00');
                 }
             });
         }
@@ -1367,11 +1531,16 @@
                         </div>
                     </div>
 
-                    <!-- SAĞ KOLON: DİNAMİK QR KOD & BARKOD ETİKETİ -->
+                    <!-- SAĞ KOLON: DİNAMİK STANDART BARKOD & HIZLI QR KOD -->
                     <div class="header-qr-col">
-                        <div class="qr-code-box" id="qr-box-${pageIndex}" title="Kameraya okutarak doğrudan öğrenci sayfasına gidin"></div>
-                        <div class="qr-code-tag">ST-${studentCode}-W${String(selectedWeek).padStart(2,'0')}${dersTag}</div>
-                        <div class="qr-code-hint">TARATIP VERİ GİR</div>
+                        <div class="barcode-box" id="barcode-box-${pageIndex}" title="Standart 1D Barkod (Telefon ve Optik Okuyucu Uyumlu)"></div>
+                        <div class="barcode-sub-strip">
+                            <div class="mini-qr-box" id="qr-box-${pageIndex}" title="Kameraya okutarak doğrudan öğrenci sayfasına gidin"></div>
+                            <div class="barcode-meta-info">
+                                <span class="barcode-meta-text">ST-${studentCode}-W${String(selectedWeek).padStart(2,'0')}${dersTag}</span>
+                                <span class="barcode-hint-text">STANDART BARKOD</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1384,7 +1553,7 @@
                                 <th class="col-tarih">TARİH</th>
                                 <th class="col-ders">DERS</th>
                                 <th class="col-kaynak">KAYNAK KİTAP / KONU</th>
-                                <th class="col-tip">SORU TİPİ<br><span style="font-size:7.5px; font-weight:500;">(T / YN / K)</span></th>
+                                <th class="col-tip">SORU TİPİ<br><span style="font-size:8px; font-weight:700;">(T / YN / K)</span></th>
                                 <th class="col-dyb">✅ DOĞRU</th>
                                 <th class="col-dyb">❌ YANLIŞ</th>
                                 <th class="col-dyb">⬜ BOŞ</th>
@@ -1424,6 +1593,85 @@
             </div>
             `;
         }
+
+        // ── QR KOD & MOBİL AKTARIM MODAL FONKSİYONLARI ──
+        function generateShareURL() {
+            const url = new URL(window.location.href);
+            if (selectedClass) url.searchParams.set('sinif', selectedClass);
+            if (selectedStudentNo) url.searchParams.set('no', selectedStudentNo);
+            if (selectedDers) url.searchParams.set('ders', selectedDers);
+            if (teacherUid) url.searchParams.set('uid', teacherUid);
+            if (selectedStartDate) url.searchParams.set('start', selectedStartDate);
+            if (selectedEndDate) url.searchParams.set('end', selectedEndDate);
+            if (selectedWeek) url.searchParams.set('week', selectedWeek);
+            return url.toString();
+        }
+
+        function openQrModal() {
+            const modal = document.getElementById('qr-modal');
+            const qrContainer = document.getElementById('qrcode-container');
+            const linkInput = document.getElementById('share-link-input');
+
+            const shareUrl = generateShareURL();
+            linkInput.value = shareUrl;
+
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: shareUrl,
+                width: 170,
+                height: 170,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            modal.style.display = 'flex';
+        }
+
+        function closeQrModal() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+
+        function copyShareLink() {
+            const linkInput = document.getElementById('share-link-input');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                alert("Bağlantı kopyalandı! Cep telefonunuzda doğrudan açabilirsiniz.");
+            });
+        }
+
+        function shareWhatsApp() {
+            const shareUrl = generateShareURL();
+            const text = `📋 Soru Çözüm Takip Formu (A4): ${shareUrl}`;
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, '_blank');
+        }
     </script>
+
+    <!-- ── TELEFONA AKTAR / PAYLAŞ MODAL ── -->
+    <div id="qr-modal" class="modal-overlay no-print" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:99999; align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(3px);">
+        <div style="background:#fff; border-radius:14px; max-width:440px; width:100%; padding:22px; box-shadow:0 20px 40px rgba(0,0,0,0.25); position:relative; text-align:center;">
+            <button type="button" onclick="closeQrModal()" style="position:absolute; top:12px; right:14px; background:none; border:none; font-size:24px; cursor:pointer; color:#64748b;">&times;</button>
+            <h3 style="margin:0 0 6px 0; font-size:16px; color:#0f172a; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fas fa-mobile-alt" style="color:#2563eb;"></i> Cep Telefonuna Aktar
+            </h3>
+            <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
+                Telefonunuzun kamerasıyla aşağıdaki karekodu taratarak bu formu ve öğrenci listesini cep telefonunuzda anında açabilirsiniz.
+            </p>
+            <div id="qrcode-container" style="display:flex; justify-content:center; margin:12px 0; padding:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;"></div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+                <input type="text" id="share-link-input" readonly style="flex:1; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:11px; font-family:monospace; color:#334155;">
+                <button type="button" class="toolbar-btn" onclick="copyShareLink()" style="background:#2563eb; color:#fff; padding:6px 12px; font-size:11.5px; border-radius:6px; border:none; cursor:pointer;">
+                    <i class="fas fa-copy"></i> Kopyala
+                </button>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+                <button type="button" class="toolbar-btn" onclick="shareWhatsApp()" style="background:#16a34a; color:#fff; padding:8px 14px; font-size:12px; border-radius:6px; border:none; cursor:pointer;">
+                    <i class="fab fa-whatsapp"></i> WhatsApp Paylaş
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
