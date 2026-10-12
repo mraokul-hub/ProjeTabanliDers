@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.btnUploadFile    = document.getElementById('btn-scanner-upload-file');
             this.btnQuickUpload   = document.getElementById('btn-scanner-quick-upload');
             this.scannerDropzone  = document.getElementById('soru-takip-scanner-dropzone');
+            this.scannerCurrentFacingMode = 'environment';
 
             this.initPeriodDefaults();
             this.bindEvents();
@@ -320,6 +321,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            // Kamera Değiştir Butonu
+            const btnSwitchCam = document.getElementById('btn-scanner-switch-camera');
+            if (btnSwitchCam) {
+                btnSwitchCam.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.switchCamera();
+                });
+            }
+
+            // Siyah ekrana veya tap-to-play uyarısına tıklayarak videoyu başlatma
+            const tapOverlay = document.getElementById('soru-takip-scanner-tap-to-play');
+            const handleManualPlay = () => {
+                if (this.scannerVideo) {
+                    this.scannerVideo.play().then(() => {
+                        if (tapOverlay) tapOverlay.style.display = 'none';
+                        this.startScanningLoop();
+                    }).catch(e => console.warn(e));
+                }
+            };
+            if (tapOverlay) tapOverlay.addEventListener('click', handleManualPlay);
+            if (this.scannerVideo) this.scannerVideo.addEventListener('click', handleManualPlay);
+
             // WhatsApp Butonu
             if (this.whatsappBtn) {
                 this.whatsappBtn.addEventListener('click', () => {
@@ -362,27 +385,131 @@ document.addEventListener('DOMContentLoaded', () => {
         closeScannerModal() {
             this.stopScanner();
             if (this.scannerModal) this.scannerModal.style.display = 'none';
+            const tapOverlay = document.getElementById('soru-takip-scanner-tap-to-play');
+            if (tapOverlay) tapOverlay.style.display = 'none';
         },
 
-        async startScanner() {
+        switchCamera() {
+            const nextMode = (this.scannerCurrentFacingMode === 'environment') ? 'user' : 'environment';
+            this.startScanner(nextMode);
+        },
+
+        async startScanner(preferredFacingMode) {
             if (!this.scannerVideo) return;
-            try {
+
+            // Önceki yayını durdur
+            this.stopScanner();
+
+            if (preferredFacingMode) {
+                this.scannerCurrentFacingMode = preferredFacingMode;
+            } else if (!this.scannerCurrentFacingMode) {
+                this.scannerCurrentFacingMode = 'environment';
+            }
+
+            if (this.scannerFeedback) {
+                this.scannerFeedback.textContent = "📷 Kamera başlatılıyor...";
+                this.scannerFeedback.style.color = "#0284c7";
+            }
+
+            const tapOverlay = document.getElementById('soru-takip-scanner-tap-to-play');
+            if (tapOverlay) tapOverlay.style.display = 'none';
+
+            // Tarayıcı MediaDevices desteği kontrolü
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 if (this.scannerFeedback) {
-                    this.scannerFeedback.textContent = "📷 Kamera başlatılıyor...";
-                    this.scannerFeedback.style.color = "#0284c7";
-                }
-                this.scannerStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
-                this.scannerVideo.srcObject = this.scannerStream;
-                await this.scannerVideo.play();
-                this.startScanningLoop();
-            } catch(err) {
-                if (this.scannerFeedback) {
-                    this.scannerFeedback.textContent = "Kamera açılamadı: " + err.message;
+                    this.scannerFeedback.innerHTML = "⚠️ Tarayıcınız doğrudan kamera erişimini desteklemiyor.<br>Lütfen aşağıdaki <strong>'Dosyadan / Fotoğraftan Tara'</strong> butonunu kullanarak fotoğraf çekiniz.";
                     this.scannerFeedback.style.color = "#ef4444";
                 }
+                return;
             }
+
+            // Mobil Safari/Chrome için zorunlu video özellikleri
+            this.scannerVideo.setAttribute('autoplay', '');
+            this.scannerVideo.setAttribute('muted', '');
+            this.scannerVideo.setAttribute('playsinline', '');
+            this.scannerVideo.setAttribute('webkit-playsinline', '');
+            this.scannerVideo.playsInline = true;
+            this.scannerVideo.muted = true;
+
+            const mode = this.scannerCurrentFacingMode;
+
+            // Kademeli deneme listesi (ideal environment -> exact environment -> ideal user -> genel video)
+            const constraintsList = [
+                { video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+                { video: { facingMode: { ideal: mode } } },
+                { video: { facingMode: mode } },
+                { video: true }
+            ];
+
+            let stream = null;
+            let lastErr = null;
+
+            for (const constraints of constraintsList) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    if (stream) break;
+                } catch(err) {
+                    lastErr = err;
+                }
+            }
+
+            if (!stream) {
+                let errText = "Kamera açılamadı";
+                if (lastErr) {
+                    if (lastErr.name === 'NotAllowedError' || lastErr.name === 'PermissionDeniedError') {
+                        errText = "🔒 Kamera izni reddedildi. Lütfen tarayıcı adres çubuğundaki kilit (veya site ayarı) simgesine dokunup kamera iznini açınız.";
+                    } else if (lastErr.name === 'NotFoundError' || lastErr.name === 'DevicesNotFoundError') {
+                        errText = "Cihazda kullanılabilir kamera bulunamadı.";
+                    } else if (lastErr.name === 'NotReadableError' || lastErr.name === 'TrackStartError') {
+                        errText = "Kamera başka bir uygulama tarafından kullanılıyor olabilir.";
+                    } else {
+                        errText = "Kamera açılamadı: " + (lastErr.message || lastErr.name);
+                    }
+                }
+                if (this.scannerFeedback) {
+                    this.scannerFeedback.innerHTML = errText + "<br><small style='color:#64748b;'>Alternatif olarak aşağıdaki 'Dosyadan / Fotoğraftan Tara' butonuna dokunup kameranızla fotoğraf çekebilirsiniz.</small>";
+                    this.scannerFeedback.style.color = "#ef4444";
+                }
+                return;
+            }
+
+            this.scannerStream = stream;
+            this.scannerVideo.srcObject = stream;
+
+            // Mobilde play() kilidini çözmek için onloadedmetadata dinle ve play()'i güvenli çağır
+            let loopStarted = false;
+            const initiatePlay = () => {
+                if (loopStarted) return;
+                const playPromise = this.scannerVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        if (tapOverlay) tapOverlay.style.display = 'none';
+                        loopStarted = true;
+                        this.startScanningLoop();
+                    }).catch(playErr => {
+                        console.warn("Otomatik video oynatma engellendi:", playErr);
+                        if (tapOverlay) tapOverlay.style.display = 'block';
+                        if (this.scannerFeedback) {
+                            this.scannerFeedback.textContent = "👆 Kamerayı başlatmak için siyah alana dokunun...";
+                            this.scannerFeedback.style.color = "#d97706";
+                        }
+                    });
+                } else {
+                    loopStarted = true;
+                    this.startScanningLoop();
+                }
+            };
+
+            this.scannerVideo.onloadedmetadata = () => {
+                initiatePlay();
+            };
+
+            // Yedek başlatıcı (bazı Android tarayıcılarında onloadedmetadata geç tetiklenebilir)
+            setTimeout(() => {
+                if (!loopStarted) {
+                    initiatePlay();
+                }
+            }, 600);
         },
 
         stopScanner() {
@@ -394,14 +521,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.scannerStream.getTracks().forEach(t => t.stop());
                 this.scannerStream = null;
             }
+            if (this.scannerVideo) {
+                this.scannerVideo.srcObject = null;
+            }
         },
 
         startScanningLoop() {
+            if (this.scannerInterval) {
+                clearInterval(this.scannerInterval);
+                this.scannerInterval = null;
+            }
             if (!this.scannerCanvas || !this.scannerVideo) return;
             const ctx = this.scannerCanvas.getContext('2d');
             
             if (this.scannerFeedback) {
-                this.scannerFeedback.textContent = "🎯 Kağıdın sağ üstündeki karekodu kameraya gösteriniz...";
+                const isBackCam = (this.scannerCurrentFacingMode === 'environment');
+                this.scannerFeedback.innerHTML = `🎯 Kağıdın sağ üstündeki karekodu kameraya gösteriniz... <span style="font-size:11px; color:#64748b;">(${isBackCam ? 'Arka Kamera' : 'Ön Kamera'})</span>`;
                 this.scannerFeedback.style.color = "#059669";
             }
 
@@ -414,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.scannerInterval = setInterval(async () => {
-                if (this.scannerVideo.readyState !== this.scannerVideo.HAVE_ENOUGH_DATA) return;
+                if (this.scannerVideo.readyState < 2 || this.scannerVideo.paused || !this.scannerVideo.videoWidth) return;
                 
                 // 1. Öncelik: Yerel Tarayıcı BarcodeDetector Motoru (Ultra Hızlı ve Donanım Destekli)
                 if (detector) {

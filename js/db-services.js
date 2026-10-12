@@ -3,6 +3,23 @@
 // Firebase NoSQL Düzleştirilmiş Mimarisi - Atomik Güncellemeler
 // ============================================================
 
+// Firebase Realtime DB anahtar kısıtlamaları için güvenli encode/decode
+// Yasaklı karakterler: . # $ / [ ]
+function encodeFirebaseKey(key) {
+    if (typeof key !== 'string') return String(key || '');
+    return key.replace(/[\.\#\$\/\[\]]/g, match => '%' + match.charCodeAt(0).toString(16).toUpperCase());
+}
+
+function decodeFirebaseKey(key) {
+    if (typeof key !== 'string') return String(key || '');
+    return key.replace(/%[0-9A-Fa-f]{2}/g, match => {
+        const char = String.fromCharCode(parseInt(match.substring(1), 16));
+        return ['.', '#', '$', '/', '[', ']'].includes(char) ? char : match;
+    });
+}
+window.encodeFirebaseKey = encodeFirebaseKey;
+window.decodeFirebaseKey = decodeFirebaseKey;
+
 // Global referanslar (Diff motoru için son kaydedilen durumlar)
 let _lastSavedRefs = {
     students: {},
@@ -10,15 +27,18 @@ let _lastSavedRefs = {
     regular_groups: {},
     exams: {},
     schedule: null,
-    tracking: null
+    tracking: {}
 };
 
 let saveTimeout = null;
-function saveData() {
+function saveData(immediate = false) {
     if (saveTimeout) clearTimeout(saveTimeout);
+    if (immediate) {
+        return _executeSaveData();
+    }
     saveTimeout = setTimeout(() => {
         _executeSaveData();
-    }, 1500); // 1.5 saniyelik debounce
+    }, 1200); // 1.2 saniyelik debounce
 }
 
 async function _executeSaveData() {
@@ -150,12 +170,62 @@ async function _executeSaveData() {
             _lastSavedRefs.schedule = scheduleData ? JSON.parse(currScheduleStr) : [];
         }
 
-        // --- F. TRACKING (Akış) ---
-        const currTrackingStr = JSON.stringify(trackingData);
-        if (currTrackingStr !== JSON.stringify(_lastSavedRefs.tracking)) {
-            updates[`app_data/${uid}/tracking`] = trackingData;
-            _lastSavedRefs.tracking = trackingData ? JSON.parse(currTrackingStr) : [];
+        // --- F. TRACKING (Ödev & Proje Takip Sistemi) ---
+        let currentTracking = {};
+        (trackingData || []).forEach((item, i) => {
+            if (item) {
+                const trackId = item.id ? String(item.id) : ('trk_' + i);
+                const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                
+                // Submissions nesnesini Firebase için sanitize et (Öğrenci isimlerindeki '.' karakterlerini korur)
+                const sanitizedSubmissions = {};
+                if (item.submissions && typeof item.submissions === 'object') {
+                    for (let sName in item.submissions) {
+                        const safeName = encodeFirebaseKey(sName);
+                        const sub = item.submissions[sName] || {};
+                        sanitizedSubmissions[safeName] = {
+                            done: !!sub.done,
+                            absent: !!sub.absent,
+                            date: sub.date || '',
+                            xp: (sub.xp !== undefined && sub.xp !== null) ? Number(sub.xp) : (Number(item.xp) || 0),
+                            penalty: (sub.penalty !== undefined && sub.penalty !== null) ? Number(sub.penalty) : (Number(item.penaltyXp) || 0)
+                        };
+                    }
+                }
+                
+                currentTracking[safeTrackId] = {
+                    id: item.id || safeTrackId,
+                    type: item.type || 'Ödev',
+                    title: item.title || '',
+                    sinif: item.sinif || '',
+                    date: item.date || '',
+                    xp: Number(item.xp) || 0,
+                    penaltyXp: Number(item.penaltyXp) || 0,
+                    targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
+                    submissions: sanitizedSubmissions,
+                    isNotified: !!item.isNotified,
+                    isEvaluated: !!item.isEvaluated
+                };
+            }
+        });
+
+        if (!_lastSavedRefs.tracking || typeof _lastSavedRefs.tracking !== 'object') {
+            _lastSavedRefs.tracking = {};
         }
+
+        // Eklenenler / Güncellenenler
+        for (let safeTrackId in currentTracking) {
+            if (JSON.stringify(currentTracking[safeTrackId]) !== JSON.stringify(_lastSavedRefs.tracking[safeTrackId])) {
+                updates[`app_data/${uid}/tracking/${safeTrackId}`] = currentTracking[safeTrackId];
+            }
+        }
+        // Silinenler
+        for (let safeTrackId in _lastSavedRefs.tracking) {
+            if (!currentTracking[safeTrackId]) {
+                updates[`app_data/${uid}/tracking/${safeTrackId}`] = null;
+            }
+        }
+        _lastSavedRefs.tracking = JSON.parse(JSON.stringify(currentTracking));
     }
 
     // 3. Değişiklikleri Firebase'e Tek Seferde Yaz (Atomik)
@@ -286,11 +356,95 @@ async function loadFromLocalStorage() {
         if (!studentsFound) {
             if (studentData && studentData.length > 0) {
                 console.log("[Veri] Yerel depolamadaki öğrenciler Firebase'e aktarılıyor...");
-                saveData();
+                saveData(true);
             } else {
                 studentData = [];
                 _lastSavedRefs.students = {};
                 fullUIRender();
+            }
+        }
+
+        // Ödev & Proje Takip (Tracking) Firebase'den İlk Yükleme (once 'value')
+        let trackingFound = false;
+        try {
+            const trackSnap = await window.db.ref('app_data/' + uid + '/tracking').once('value');
+            if (trackSnap.exists()) {
+                const trackVal = trackSnap.val();
+                let rawList = Array.isArray(trackVal) ? trackVal.filter(Boolean) : Object.values(trackVal || {});
+                let normalizedList = [];
+                let normalizedRefs = {};
+                rawList.forEach((item, idx) => {
+                    if (item) {
+                        const trackId = item.id ? String(item.id) : ('trk_' + idx);
+                        const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                        const decodedSubmissions = {};
+                        if (item.submissions && typeof item.submissions === 'object') {
+                            for (let k in item.submissions) {
+                                decodedSubmissions[decodeFirebaseKey(k)] = item.submissions[k];
+                            }
+                        }
+                        item.submissions = decodedSubmissions;
+                        normalizedList.push(item);
+                        normalizedRefs[safeTrackId] = item;
+                    }
+                });
+                if (normalizedList.length > 0) {
+                    trackingData = normalizedList;
+                    _lastSavedRefs.tracking = normalizedRefs;
+                    trackingFound = true;
+                    renderTrackingList();
+                }
+            }
+        } catch (e) {
+            console.warn("Firebase tracking ilk yükleme hatası:", e);
+        }
+
+        // Göç (Migration) Kontrolü: Eğer öğretmenin tracking klasörü boşsa ve yönetici ise main_data'dan bak
+        if (!trackingFound && currentUser.email === 'mremzi@gmail.com') {
+            try {
+                const adminTrackSnap = await window.db.ref('app_data/main_data/tracking').once('value');
+                if (adminTrackSnap.exists()) {
+                    const aVal = adminTrackSnap.val();
+                    const aList = Array.isArray(aVal) ? aVal.filter(Boolean) : Object.values(aVal || {});
+                    if (aList.length > 0) {
+                        console.log("[Göç] Yönetici tracking verileri main_data üzerinden içe aktarılıyor...");
+                        let normalizedList = [];
+                        let normalizedRefs = {};
+                        aList.forEach((item, idx) => {
+                            if (item) {
+                                const trackId = item.id ? String(item.id) : ('trk_' + idx);
+                                const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                                const decodedSubmissions = {};
+                                if (item.submissions && typeof item.submissions === 'object') {
+                                    for (let k in item.submissions) {
+                                        decodedSubmissions[decodeFirebaseKey(k)] = item.submissions[k];
+                                    }
+                                }
+                                item.submissions = decodedSubmissions;
+                                normalizedList.push(item);
+                                normalizedRefs[safeTrackId] = item;
+                            }
+                        });
+                        trackingData = normalizedList;
+                        _lastSavedRefs.tracking = normalizedRefs;
+                        trackingFound = true;
+                        renderTrackingList();
+                        saveData(true);
+                    }
+                }
+            } catch (err) {
+                console.warn("Admin tracking migration hatası:", err);
+            }
+        }
+
+        // Eğer Firebase'de tracking yoksa ama yerel önbellekte trackingData varsa, veriyi SİLME; Firebase'e senkronize et!
+        if (!trackingFound) {
+            if (trackingData && trackingData.length > 0) {
+                console.log("[Veri] Yerel depolamadaki ödev/takip verileri Firebase'e aktarılıyor...");
+                saveData(true);
+            } else {
+                trackingData = [];
+                _lastSavedRefs.tracking = {};
             }
         }
 
@@ -406,8 +560,34 @@ function attachListeners(uid) {
     });
 
     db.ref(`app_data/${uid}/tracking`).on('value', snap => {
-        trackingData = snap.val() || [];
-        _lastSavedRefs.tracking = trackingData;
+        const val = snap.val();
+        if (val) {
+            let rawList = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+            let normalizedList = [];
+            let normalizedRefs = {};
+            rawList.forEach((item, idx) => {
+                if (item) {
+                    const trackId = item.id ? String(item.id) : ('trk_' + idx);
+                    const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                    const decodedSubmissions = {};
+                    if (item.submissions && typeof item.submissions === 'object') {
+                        for (let k in item.submissions) {
+                            decodedSubmissions[decodeFirebaseKey(k)] = item.submissions[k];
+                        }
+                    }
+                    item.submissions = decodedSubmissions;
+                    normalizedList.push(item);
+                    normalizedRefs[safeTrackId] = item;
+                }
+            });
+            trackingData = normalizedList;
+            _lastSavedRefs.tracking = normalizedRefs;
+        } else {
+            if (initialLoadComplete) {
+                trackingData = [];
+                _lastSavedRefs.tracking = {};
+            }
+        }
         if (!isUIActive() && initialLoadComplete) renderTrackingList();
     });
 }

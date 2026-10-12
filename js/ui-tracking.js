@@ -33,11 +33,13 @@
                 // Yeni kayıt
                 selectedClasses.forEach(sinif => {
                     const selectedStudents = Array.from(document.querySelectorAll(`.track-student-checkbox[data-class="${sinif}"]:checked`)).map(cb => cb.value);
-                    trackingData.push({ id: Date.now() + Math.random(), type, title, sinif, date, xp, penaltyXp, targetStudents: selectedStudents.length > 0 ? selectedStudents : null, submissions: {}, isNotified: false });
+                    const newId = 'trk_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                    trackingData.push({ id: newId, type, title, sinif, date, xp, penaltyXp, targetStudents: selectedStudents.length > 0 ? selectedStudents : null, submissions: {}, isNotified: false });
                 });
             }
 
-            renderTrackingList(); saveData();
+            renderTrackingList();
+            if (typeof saveData === 'function') saveData(true);
             document.getElementById('track-title').value = ''; document.getElementById('track-date').value = '';
             document.querySelectorAll('.track-class-checkbox, .track-student-checkbox').forEach(cb => cb.checked = false);
             document.querySelectorAll('[id^="student-list-"]').forEach(el => el.style.display = 'none');
@@ -196,7 +198,13 @@
 
 
 
-        function deleteTrackingItem(id) { if (confirm('Bu görevi silmek istiyor musunuz?')) { trackingData = trackingData.filter(i => String(i.id) !== String(id)); renderTrackingList(); saveData(); } }
+        function deleteTrackingItem(id) {
+            if (confirm('Bu görevi silmek istiyor musunuz?')) {
+                trackingData = trackingData.filter(i => String(i.id) !== String(id));
+                renderTrackingList();
+                if (typeof saveData === 'function') saveData(true);
+            }
+        }
 
         function editTrackingItem(id) {
             const item = trackingData.find(i => String(i.id) === String(id));
@@ -242,15 +250,124 @@
             if (titleField) { titleField.scrollIntoView({ behavior: 'smooth', block: 'center' }); titleField.focus(); }
         }
 
+        let evalSortMode = localStorage.getItem('eval_sort_mode') || 'no'; // 'no' veya 'name'
+        let evalSortAsc = localStorage.getItem('eval_sort_asc') !== 'false'; // true veya false
+
+        function setEvalSort(mode) {
+            if (evalSortMode === mode) {
+                evalSortAsc = !evalSortAsc;
+            } else {
+                evalSortMode = mode;
+                evalSortAsc = true;
+            }
+            localStorage.setItem('eval_sort_mode', evalSortMode);
+            localStorage.setItem('eval_sort_asc', evalSortAsc);
+            if (activeTrackingId) {
+                openEvaluation(activeTrackingId);
+            }
+        }
+        window.setEvalSort = setEvalSort;
+
+        function toggleEvalSortHeader() {
+            if (evalSortMode === 'no') {
+                if (evalSortAsc) {
+                    evalSortAsc = false;
+                } else {
+                    evalSortMode = 'name';
+                    evalSortAsc = true;
+                }
+            } else {
+                if (evalSortAsc) {
+                    evalSortAsc = false;
+                } else {
+                    evalSortMode = 'no';
+                    evalSortAsc = true;
+                }
+            }
+            localStorage.setItem('eval_sort_mode', evalSortMode);
+            localStorage.setItem('eval_sort_asc', evalSortAsc);
+            if (activeTrackingId) {
+                openEvaluation(activeTrackingId);
+            }
+        }
+        window.toggleEvalSortHeader = toggleEvalSortHeader;
+
         function openEvaluation(id) {
             activeTrackingId = id; activeExamId = null;
             const item = trackingData.find(i => String(i.id) === String(id));
             if (!item) return;
-            let students = studentData.filter(s => s.sinif === item.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(item.sinif))); if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
+            let students = studentData.filter(s => s.sinif === item.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(item.sinif)));
+            if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
+
+            // Öğrencileri ada veya numaraya göre sırala
+            students.sort((a, b) => {
+                if (evalSortMode === 'name') {
+                    const nameA = String(a.adSoyad || '').trim();
+                    const nameB = String(b.adSoyad || '').trim();
+                    const res = nameA.localeCompare(nameB, 'tr-TR', { sensitivity: 'base' });
+                    return evalSortAsc ? res : -res;
+                } else {
+                    // Numaraya göre sırala
+                    const valA = parseInt(a.no, 10);
+                    const valB = parseInt(b.no, 10);
+                    if (!isNaN(valA) && !isNaN(valB)) {
+                        const diff = valA - valB;
+                        if (diff !== 0) return evalSortAsc ? diff : -diff;
+                    } else if (!isNaN(valA)) {
+                        return evalSortAsc ? -1 : 1;
+                    } else if (!isNaN(valB)) {
+                        return evalSortAsc ? 1 : -1;
+                    } else {
+                        const strDiff = String(a.no || '').localeCompare(String(b.no || ''), undefined, { numeric: true });
+                        if (strDiff !== 0) return evalSortAsc ? strDiff : -strDiff;
+                    }
+                    return (a.adSoyad || '').localeCompare(b.adSoyad || '', 'tr-TR');
+                }
+            });
 
             document.getElementById('eval-title').textContent = `${item.title} - Değerlendirme`;
-            document.getElementById('eval-info').textContent = `${item.sinif} Sınıfı Listesi`;
-            document.querySelector('#evaluation-modal thead tr').innerHTML = `<th>Öğrenci</th><th>Durum</th><th>Gelmedi</th><th>Teslim Zamanı</th><th>XP</th><th>Paylaş</th>`;
+
+            const infoEl = document.getElementById('eval-info');
+            if (infoEl) {
+                infoEl.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin:4px 0 10px 0;">
+                    <div style="font-size:13px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-users" style="color:var(--secondary);"></i>
+                        <span>${item.sinif} Sınıfı Listesi</span>
+                        <span style="font-size:11px; opacity:0.8; font-weight:normal;">(${students.length} Öğrenci)</span>
+                    </div>
+                    <div style="display:inline-flex; align-items:center; gap:5px; background:var(--input-bg, rgba(0,0,0,0.03)); padding:4px 8px; border-radius:8px; border:1px solid var(--border, #cbd5e1);">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-muted); margin-right:4px;"><i class="fas fa-sort"></i> SIRALA:</span>
+                        <button type="button" class="btn" onclick="setEvalSort('no')" style="padding:4px 10px; font-size:11.5px; border-radius:6px; cursor:pointer; transition:all 0.2s; ${evalSortMode === 'no' ? 'background:var(--secondary); color:#fff; font-weight:700; box-shadow:0 2px 4px rgba(59,130,246,0.3);' : 'background:transparent; color:var(--text-main); border:1px solid var(--border);'}">
+                            <i class="fas ${evalSortMode === 'no' ? (evalSortAsc ? 'fa-sort-numeric-down' : 'fa-sort-numeric-up') : 'fa-sort-numeric-down'}"></i> Numaraya Göre ${evalSortMode === 'no' ? (evalSortAsc ? '(1→9)' : '(9→1)') : ''}
+                        </button>
+                        <button type="button" class="btn" onclick="setEvalSort('name')" style="padding:4px 10px; font-size:11.5px; border-radius:6px; cursor:pointer; transition:all 0.2s; ${evalSortMode === 'name' ? 'background:var(--secondary); color:#fff; font-weight:700; box-shadow:0 2px 4px rgba(59,130,246,0.3);' : 'background:transparent; color:var(--text-main); border:1px solid var(--border);'}">
+                            <i class="fas ${evalSortMode === 'name' ? (evalSortAsc ? 'fa-sort-alpha-down' : 'fa-sort-alpha-up') : 'fa-sort-alpha-down'}"></i> Ada Göre ${evalSortMode === 'name' ? (evalSortAsc ? '(A→Z)' : '(Z→A)') : ''}
+                        </button>
+                    </div>
+                </div>`;
+            }
+
+            const sortBadge = `
+                <span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:2px 7px; border-radius:6px; margin-left:8px; vertical-align:middle; background:${evalSortMode === 'name' ? 'rgba(59,130,246,0.18)' : 'rgba(16,185,129,0.18)'}; color:${evalSortMode === 'name' ? 'var(--secondary, #2563eb)' : 'var(--accent, #059669)'}; font-weight:700;">
+                    <i class="fas ${evalSortMode === 'name' ? (evalSortAsc ? 'fa-sort-alpha-down' : 'fa-sort-alpha-up') : (evalSortAsc ? 'fa-sort-numeric-down' : 'fa-sort-numeric-up')}"></i>
+                    ${evalSortMode === 'name' ? (evalSortAsc ? 'Ad (A→Z)' : 'Ad (Z→A)') : (evalSortAsc ? 'No (1→9)' : 'No (9→1)')}
+                </span>
+            `;
+
+            document.querySelector('#evaluation-modal thead tr').innerHTML = `
+                <th onclick="toggleEvalSortHeader()" style="cursor:pointer; user-select:none; transition:background 0.2s;" title="Numaraya veya ada göre sıralamak için tıklayın">
+                    <span style="display:inline-flex; align-items:center;">
+                        ÖĞRENCİ ${sortBadge}
+                        <i class="fas fa-sort" style="margin-left:6px; opacity:0.4; font-size:11px;"></i>
+                    </span>
+                </th>
+                <th>DURUM</th>
+                <th>GELMEDİ</th>
+                <th>TESLİM ZAMANI</th>
+                <th>XP</th>
+                <th>PAYLAŞ</th>
+            `;
 
             const body = document.getElementById('eval-body'); body.innerHTML = '';
             const submissions = item.submissions || {};
@@ -265,15 +382,16 @@
                 }
 
                 const safeAdSoyad = s.adSoyad.replace(/'/g, "\\'");
+                const safeItemId = String(id).replace(/'/g, "\\'");
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${s.no} - ${s.adSoyad}</td>
+                tr.innerHTML = `<td>${s.no ? s.no + ' - ' : ''}${s.adSoyad}</td>
                 <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''} onchange="updateSubmissionStatus('${safeAdSoyad}', 'done', this.checked)"> Yapıldı</label></td>
                 <td><label><input type="checkbox" ${sub.absent ? 'checked' : ''} onchange="updateSubmissionStatus('${safeAdSoyad}', 'absent', this.checked)"> Gelmedi</label></td>
                 <td><span style="font-size:11px;">${sub.date || '-'}</span></td>
                 <td>${xpText}</td>
                 <td style="display:flex;gap:4px;align-items:center;">
-                    <button class="action-btn" onclick="shareStudentResult(${id}, '${safeAdSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                    <button class="action-btn" onclick="shareStudentResultBip(${id}, '${safeAdSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                    <button class="action-btn" onclick="shareStudentResult('${safeItemId}', '${safeAdSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button class="action-btn" onclick="shareStudentResultBip('${safeItemId}', '${safeAdSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
                 </td>`;
                 body.appendChild(tr);
             });
@@ -338,12 +456,17 @@
             const item = trackingData.find(i => String(i.id) === String(activeTrackingId));
             if (item) {
                 item.isEvaluated = true;
-                saveData();
                 renderTrackingList();
+                if (typeof saveData === 'function') saveData(true);
                 closeEvaluation();
             }
         }
-        function closeEvaluation() { document.getElementById('evaluation-modal').style.display = 'none'; activeTrackingId = null; activeExamId = null; }
+        function closeEvaluation() {
+            document.getElementById('evaluation-modal').style.display = 'none';
+            activeTrackingId = null;
+            activeExamId = null;
+            if (typeof saveData === 'function') saveData(true);
+        }
 
         function buildTrackingSummaryText(id) {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';

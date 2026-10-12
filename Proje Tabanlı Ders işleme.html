@@ -4281,10 +4281,18 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                 <!-- Hedefleme Çerçevesi -->
                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:160px; height:160px; border:2.5px solid #10b981; border-radius:12px; box-shadow:0 0 0 4000px rgba(0,0,0,0.3); pointer-events:none;">
                 </div>
+                <!-- Kamera Değiştir Butonu (Sol Üst Köşe) -->
+                <button type="button" id="btn-scanner-switch-camera" style="position:absolute; top:8px; left:8px; background:rgba(15,23,42,0.8); color:#fff; border:1px solid rgba(255,255,255,0.35); border-radius:6px; padding:5px 9px; font-size:11px; font-weight:600; cursor:pointer; z-index:10; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);" title="Ön / Arka Kamera Değiştir">
+                    <i class="fas fa-sync-alt"></i> Kamera Değiştir
+                </button>
                 <!-- Hızlı Dosya Butonu (Sağ Üst Köşe) -->
                 <button type="button" id="btn-scanner-quick-upload" style="position:absolute; top:8px; right:8px; background:rgba(15,23,42,0.8); color:#fff; border:1px solid rgba(255,255,255,0.35); border-radius:6px; padding:5px 9px; font-size:11px; font-weight:600; cursor:pointer; z-index:10; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);">
                     <i class="fas fa-file-upload"></i> Dosya Seç
                 </button>
+                <!-- Mobilde Oynatma Tıklama Katmanı -->
+                <div id="soru-takip-scanner-tap-to-play" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:15; background:rgba(15,23,42,0.85); color:#fff; padding:10px 16px; border-radius:8px; font-size:12px; cursor:pointer; border:1px solid #10b981; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.5);">
+                    <i class="fas fa-play me-1" style="color:#10b981;"></i> Kamerayı Başlatmak İçin Dokunun
+                </div>
             </div>
             <div id="soru-takip-scanner-feedback" style="min-height:24px; font-size:12px; font-weight:600; color:#059669; margin-bottom:12px;">
                 🎯 Kağıdın sağ üstündeki karekodu kameraya gösteriniz...
@@ -4386,17 +4394,28 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
                         <span style="font-size:12.5px; font-weight:700;">Tanıma Motoru:</span>
                         <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                            <input type="radio" name="kume-ocr-engine" value="hybrid" checked onchange="toggleKumeOcrEngineUI()">
-                            <span>✨ <strong>Yapay Zeka &amp; El Yazısı</strong> (Önerilen)</span>
+                            <input type="radio" name="kume-ocr-engine" value="tesseract" checked onchange="toggleKumeOcrEngineUI()">
+                            <span>⚡ <strong>Ücretsiz &amp; Yerel OCR</strong> (Tesseract.js - Anahtar İstemez)</span>
                         </label>
                         <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                            <input type="radio" name="kume-ocr-engine" value="tesseract" onchange="toggleKumeOcrEngineUI()">
-                            <span>⚡ Tesseract.js (Yerel / Çevrimdışı)</span>
+                            <input type="radio" name="kume-ocr-engine" value="hybrid" onchange="toggleKumeOcrEngineUI()">
+                            <span>✨ <strong>Gelişmiş AI Vision</strong> (Google Gemini - Opsiyonel)</span>
                         </label>
                     </div>
-                    <div id="kume-ocr-apikey-wrap" style="display:flex; align-items:center; gap:8px; font-size:12px;">
-                        <input type="password" id="kume-gemini-key-input" placeholder="Gemini API Anahtarı (Opsiyonel)" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border, #cbd5e1); font-size:12px; width:220px;" onchange="saveKumeGeminiKey(this.value)">
-                        <button type="button" class="btn" onclick="saveKumeGeminiKey(document.getElementById('kume-gemini-key-input').value)" style="padding:6px 12px; font-size:11px; background:#4f46e5; color:#fff;">Kaydet</button>
+                    <div id="kume-ocr-apikey-wrap" style="display:none; align-items:center; gap:8px; font-size:12px;">
+                        <div style="position:relative; display:inline-flex; align-items:center;">
+                            <input type="password" id="kume-gemini-key-input" name="gemini_ocr_api_key_field" autocomplete="new-password" data-lpignore="true" spellcheck="false" placeholder="Gemini API Anahtarı (Opsiyonel)" style="padding:6px 30px 6px 10px; border-radius:6px; border:1px solid var(--border, #cbd5e1); font-size:12px; width:230px;">
+                            <i class="fas fa-eye" id="kume-gemini-key-eye" onclick="toggleGeminiKeyVisibility()" style="position:absolute; right:10px; cursor:pointer; color:#64748b; font-size:12px;" title="Anahtarı Göster/Gizle"></i>
+                        </div>
+                        <button type="button" class="btn" onclick="saveKumeGeminiKey(document.getElementById('kume-gemini-key-input').value, true)" style="padding:6px 12px; font-size:11px; background:#4f46e5; color:#fff;">Kaydet</button>
+                    </div>
+                </div>
+
+                <!-- Öğretmenler İçin Çekim Kalitesi & Hızlı Doğrulama Rehber İpucu -->
+                <div style="margin-top:10px; padding:10px 14px; border-radius:10px; background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2); font-size:12px; color:#1e40af; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-lightbulb" style="color:#2563eb; font-size:14px; flex-shrink:0;"></i>
+                        <span><strong>OCR Çekim &amp; Doğrulama İpucu:</strong> Formu tam dik açıdan (90°), gölgesiz ve aydınlıkta çekiniz. Okunamayan bir satır olursa doğrulama ekranındaki açılır listeden öğrenciyi 1 saniyede seçebilirsiniz.</span>
                     </div>
                 </div>
             </div>
@@ -4487,20 +4506,20 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <!-- Modüler JavaScript Dosyaları                                  -->
     <!-- ============================================================ -->
     <script src="js/pdf-excel-parser.js?v=4"></script>
-    <script src="js/app-config.js?v=4"></script>
-    <script src="js/db-services.js?v=4"></script>
+    <script src="js/app-config.js?v=5"></script>
+    <script src="js/db-services.js?v=5"></script>
     <script src="js/ui-controller.js?v=4"></script>
     <script src="js/curriculum.js?v=6"></script>
     <script src="js/ui-strategy.js?v=4"></script>
-    <script src="js/ui-students.js?v=4"></script>
+    <script src="js/ui-students.js?v=6"></script>
     <script src="js/ui-schedule.js?v=4"></script>
-    <script src="js/ui-tracking.js?v=4"></script>
+    <script src="js/ui-tracking.js?v=5"></script>
     <script src="js/ui-exams.js?v=4"></script>
     <script src="js/ui-proje-gruplari.js?v=4"></script>
     <script src="js/auth.js?v=6"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="js/ui-soru-takip.js"></script>
+    <script src="js/ui-soru-takip.js?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Soru Takip modülünü başlat (eğer başlatılmadıysa)

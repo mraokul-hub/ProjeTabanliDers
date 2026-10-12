@@ -61,9 +61,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyTheme();
     updateDbStatusIcon();
 
-    // Gemini API anahtarını yükle
+    // Gemini API anahtarını yükle (Eğer tarayıcı otomatik doldurmasıyla yanlışlıkla kullanıcı giriş şifresi kaydedildiyse temizle)
     const savedGeminiKey = localStorage.getItem('GEMINI_API_KEY');
-    if (savedGeminiKey && document.getElementById('gemini-api-key')) {
+    if (savedGeminiKey && !savedGeminiKey.startsWith('AIzaSy')) {
+        localStorage.removeItem('GEMINI_API_KEY');
+        localStorage.removeItem('gemini_api_key');
+    } else if (savedGeminiKey && document.getElementById('gemini-api-key')) {
         document.getElementById('gemini-api-key').value = savedGeminiKey;
     }
 

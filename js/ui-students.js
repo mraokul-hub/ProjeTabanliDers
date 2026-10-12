@@ -731,12 +731,19 @@ function openKumeOcrModal() {
     }
 
     // Varsa kayıtlı Gemini API anahtarını yükle
-    const savedKey = localStorage.getItem('GEMINI_API_KEY') || localStorage.getItem('gemini_api_key') || '';
+    let savedKey = localStorage.getItem('GEMINI_API_KEY') || localStorage.getItem('gemini_api_key') || '';
+    // Eğer tarayıcı otomatik doldurmasıyla yanlışlıkla kullanıcı giriş şifresi kaydedildiyse temizle
+    if (savedKey && !savedKey.startsWith('AIzaSy')) {
+        localStorage.removeItem('GEMINI_API_KEY');
+        localStorage.removeItem('gemini_api_key');
+        savedKey = '';
+    }
     const keyInput = document.getElementById('kume-gemini-key-input');
     if (keyInput) keyInput.value = savedKey;
 
     setKumeOcrTab('file');
     resetKumeOcrScan();
+    toggleKumeOcrEngineUI();
 
     modal.style.display = 'flex';
     window.addEventListener('paste', handleKumeOcrPaste);
@@ -889,15 +896,38 @@ function handleKumeOcrPaste(e) {
 }
 
 // 7. API Anahtarı ve UI Ayarları
-function saveKumeGeminiKey(key) {
+function saveKumeGeminiKey(key, isUserClick = true) {
     const cleanKey = (key || '').trim();
     if (cleanKey) {
         localStorage.setItem('GEMINI_API_KEY', cleanKey);
         localStorage.setItem('gemini_api_key', cleanKey);
-        if (typeof showStatus === 'function') showStatus("Gemini API Anahtarı kaydedildi.", false);
-        else alert("Gemini API Anahtarı kaydedildi.");
+        if (isUserClick) {
+            if (typeof showStatus === 'function') showStatus("Gemini API Anahtarı kaydedildi.", false);
+            else alert("Gemini API Anahtarı kaydedildi.");
+        }
+    } else {
+        localStorage.removeItem('GEMINI_API_KEY');
+        localStorage.removeItem('gemini_api_key');
+        if (isUserClick) {
+            alert("Gemini API Anahtarı temizlendi.");
+        }
     }
 }
+
+function toggleGeminiKeyVisibility() {
+    const keyInput = document.getElementById('kume-gemini-key-input');
+    const eyeIcon = document.getElementById('kume-gemini-key-eye');
+    if (!keyInput) return;
+    if (keyInput.type === 'password') {
+        keyInput.type = 'text';
+        if (eyeIcon) eyeIcon.className = 'fas fa-eye-slash';
+    } else {
+        keyInput.type = 'password';
+        if (eyeIcon) eyeIcon.className = 'fas fa-eye';
+    }
+}
+window.toggleGeminiKeyVisibility = toggleGeminiKeyVisibility;
+window.saveKumeGeminiKey = saveKumeGeminiKey;
 
 function toggleKumeOcrEngineUI() {
     const engine = document.querySelector('input[name="kume-ocr-engine"]:checked')?.value || 'hybrid';
@@ -932,6 +962,87 @@ function resetKumeOcrScan() {
     kumeOcrActiveImageBase64 = null;
 }
 
+// ── YARDIMCI METİN & FUZZY EŞLEŞTİRME FONKSİYONLARI ──
+
+// Türkçe Karakter Katlama & Normalizasyon (OCR karakter sapmalarını toleranslı kılar)
+function foldTurkishText(str) {
+    if (!str) return '';
+    return String(str)
+        .toLowerCase()
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ı/g, 'i')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c')
+        .replace(/[^a-z0-9]/g, '');
+}
+
+// Levenshtein Mesafesi Algoritması (Harf eksik/hatalı olsa bile en yakın ismi bulur)
+function calcLevenshteinDist(a, b) {
+    if (!a || !b) return (a || '').length + (b || '').length;
+    const al = a.length;
+    const bl = b.length;
+    let prev = new Array(bl + 1);
+    let curr = new Array(bl + 1);
+    for (let j = 0; j <= bl; j++) prev[j] = j;
+
+    for (let i = 1; i <= al; i++) {
+        curr[0] = i;
+        const ac = a[i - 1];
+        for (let j = 1; j <= bl; j++) {
+            const cost = ac === b[j - 1] ? 0 : 1;
+            curr[j] = Math.min(
+                prev[j] + 1,       // silme
+                curr[j - 1] + 1,   // ekleme
+                prev[j - 1] + cost // değiştirme
+            );
+        }
+        for (let j = 0; j <= bl; j++) prev[j] = curr[j];
+    }
+    return prev[bl];
+}
+
+// Benzerlik Oranı (0.0 - 1.0)
+function calcStringSimilarity(s1, s2) {
+    if (!s1 && !s2) return 1.0;
+    if (!s1 || !s2) return 0.0;
+    const maxLen = Math.max(s1.length, s2.length);
+    if (maxLen === 0) return 1.0;
+    const dist = calcLevenshteinDist(s1, s2);
+    return Math.max(0, (maxLen - dist) / maxLen);
+}
+
+// OCR El Yazısı Rakam Düzeltme (Harf/Rakam Karışıklıklarını Düzeltme: O->0, l->1, S->5 vb.)
+function cleanOcrDigitCandidate(word) {
+    if (!word) return '';
+    return String(word)
+        .replace(/[Oo]/g, '0')
+        .replace(/[Ili|!]/g, '1')
+        .replace(/[Zz]/g, '2')
+        .replace(/[Ss]/g, '5')
+        .replace(/[Bb]/g, '8')
+        .replace(/\D/g, '');
+}
+
+// Opsiyonel: Form Başlığındaki Barkodu Tespit Etme (Sınıfı Kağıttan Doğrulama)
+async function detectKumeBarcodeFromImage(imageSource) {
+    try {
+        if ('BarcodeDetector' in window) {
+            const detector = new BarcodeDetector({ formats: ['code_128', 'qr_code', 'code_39'] });
+            const img = new Image();
+            await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageSource; });
+            const codes = await detector.detect(img);
+            if (codes && codes.length > 0 && codes[0].rawValue) {
+                return codes[0].rawValue;
+            }
+        }
+    } catch (e) {
+        console.debug("Kume form barkod taraması atlandı:", e);
+    }
+    return null;
+}
+
 // 8. Görsel İşleme ve Çift Kademeli OCR Motoru
 async function processKumeOcrImage(imageSource) {
     kumeOcrActiveImageBase64 = imageSource;
@@ -939,7 +1050,25 @@ async function processKumeOcrImage(imageSource) {
     const inputSec = document.getElementById('kume-ocr-input-section');
     if (inputSec) inputSec.style.display = 'none';
 
-    updateKumeOcrProgress('<i class="fas fa-magic fa-spin me-2"></i>Form görseli optimize ediliyor ve hazırlanıyor...', 15);
+    updateKumeOcrProgress('<i class="fas fa-magic fa-spin me-2"></i>Form görseli optimize ediliyor ve kalibre ediliyor...', 15);
+
+    // Kağıt Formunda Barkod Varsa Sınıfı Otomatik Doğrula / Senkronize Et
+    try {
+        const detectedCode = await detectKumeBarcodeFromImage(imageSource);
+        if (detectedCode && detectedCode.startsWith('KUME-')) {
+            const rawClass = detectedCode.replace('KUME-', '').trim();
+            const classSelect = document.getElementById('class-filter');
+            if (classSelect && rawClass) {
+                const norm = (s) => String(s || '').replace(/[\/_\-\s]/g, '').trim().toUpperCase();
+                const matchedOption = Array.from(classSelect.options).find(opt => norm(opt.value) === norm(rawClass));
+                if (matchedOption && classSelect.value !== matchedOption.value) {
+                    console.log(`Barkoddan sınıf tespit edildi: ${matchedOption.value}`);
+                    classSelect.value = matchedOption.value;
+                    classSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+    } catch (e) {}
 
     // Aktif sınıftaki kayıtlı öğrenci listesini al
     const selectedClass = document.getElementById('class-filter')?.value || '';
@@ -948,28 +1077,32 @@ async function processKumeOcrImage(imageSource) {
         ? studentData.filter(s => s && (s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass)))
         : [];
 
-    const engine = document.querySelector('input[name="kume-ocr-engine"]:checked')?.value || 'hybrid';
+    const engine = document.querySelector('input[name="kume-ocr-engine"]:checked')?.value || 'tesseract';
     const apiKey = localStorage.getItem('GEMINI_API_KEY') || localStorage.getItem('gemini_api_key') || document.getElementById('kume-gemini-key-input')?.value?.trim();
 
-    // ── STREATEGY A: GEMINI VISION AI (El Yazısı ve Türkçe için En Yüksek Doğruluk) ──
-    if (engine === 'hybrid' && apiKey) {
-        try {
-            updateKumeOcrProgress('✨ <strong>Google Gemini AI:</strong> El yazıları ve küme tabloları okunuyor...', 40);
-            const geminiResult = await callGeminiVisionKumeOcr(imageSource, classStudents, selectedClass, apiKey);
-            if (geminiResult && Array.isArray(geminiResult) && geminiResult.length > 0) {
-                updateKumeOcrProgress('✅ El yazıları başarıyla çözümlendi, eşleştirme tamamlandı!', 100);
-                setTimeout(() => {
-                    renderKumeOcrResults(geminiResult, classStudents);
-                }, 400);
-                return;
+    // ── STRATEJİ A: GEMINI VISION AI (El Yazısı ve Türkçe için En Yüksek Doğruluk) ──
+    if (engine === 'hybrid') {
+        if (apiKey) {
+            try {
+                updateKumeOcrProgress('✨ <strong>Google Gemini AI:</strong> El yazıları ve küme tabloları analiz ediliyor...', 40);
+                const geminiResult = await callGeminiVisionKumeOcr(imageSource, classStudents, selectedClass, apiKey);
+                if (geminiResult && Array.isArray(geminiResult) && geminiResult.length > 0) {
+                    updateKumeOcrProgress('✅ El yazıları başarıyla çözümlendi, eşleştirme tamamlandı!', 100);
+                    setTimeout(() => {
+                        renderKumeOcrResults(geminiResult, classStudents);
+                    }, 400);
+                    return;
+                }
+            } catch (err) {
+                console.warn("Gemini Vision API çağrısı başarısız oldu, yerel Tesseract motoruna geçiliyor:", err);
+                updateKumeOcrProgress('⚠️ Gemini API yanıt vermedi. Yerel Tesseract OCR motoruna aktarılıyor...', 35);
             }
-        } catch (err) {
-            console.warn("Gemini Vision API çağrısı başarısız oldu, yerel Tesseract motoruna geçiliyor:", err);
-            updateKumeOcrProgress('⚠️ Gemini API yanıt vermedi. Yerel Tesseract OCR motoruna aktarılıyor...', 35);
+        } else {
+            updateKumeOcrProgress('ℹ️ Gemini API anahtarı bulunmadığından yerel Tesseract motoru devreye alınıyor...', 30);
         }
     }
 
-    // ── STREATEGY B: TESSERACT.JS (Çevrimdışı / Yerel Motor) + AKILLI ÖĞRENCİ LİSTESİ EŞLEŞTİRME ──
+    // ── STRATEJİ B: TESSERACT.JS (Çevrimdışı / Yerel Motor) + AKILLI ÖĞRENCİ LİSTESİ EŞLEŞTİRME ──
     try {
         updateKumeOcrProgress('⚡ <strong>Tesseract OCR Motoru:</strong> Metinler taranıyor...', 50);
         const tesseractResult = await runTesseractKumeOcr(imageSource, classStudents);
@@ -1015,8 +1148,8 @@ SADECE ve YALNIZCA geçerli bir JSON dizi formatı döndür. Açıklama metni, s
   }
 ]`;
 
-    // Gemini modellerini dene (Flash 1.5 -> Flash 2.0 -> Flash 2.5)
-    const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+    // Gemini modelleri (Flash 1.5 -> Flash 2.0)
+    const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
     let lastError = null;
 
     for (let model of models) {
@@ -1045,7 +1178,9 @@ SADECE ve YALNIZCA geçerli bir JSON dizi formatı döndür. Açıklama metni, s
             });
 
             if (!res.ok) {
-                lastError = new Error(`HTTP ${res.status}: ${res.statusText}`);
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData?.error?.message || res.statusText;
+                lastError = new Error(`HTTP ${res.status}: ${errMsg}`);
                 continue;
             }
 
@@ -1053,7 +1188,14 @@ SADECE ve YALNIZCA geçerli bir JSON dizi formatı döndür. Açıklama metni, s
             const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
 
-            const parsed = JSON.parse(cleaned);
+            let parsed = null;
+            const jsonMatch = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/);
+            if (jsonMatch) {
+                parsed = JSON.parse(jsonMatch[0]);
+            } else {
+                parsed = JSON.parse(cleaned);
+            }
+
             if (Array.isArray(parsed) && parsed.length > 0) {
                 return normalizeParsedClusters(parsed, classStudents);
             }
@@ -1071,7 +1213,7 @@ async function runTesseractKumeOcr(imageSource, classStudents) {
         throw new Error("Tesseract.js kütüphanesi henüz yüklenemedi. Lütfen internet bağlantınızı kontrol ediniz veya sayfayı yenileyiniz.");
     }
 
-    // Görseli canvas üzerinde optimize et (Kontrast artırma & Binarizasyon hazırlığı)
+    // Görseli canvas üzerinde optimize et
     const img = new Image();
     await new Promise((resolve, reject) => {
         img.onload = resolve;
@@ -1097,6 +1239,34 @@ async function runTesseractKumeOcr(imageSource, classStudents) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, width, height);
 
+    // Görüntü Ön-İşleme: Dinamik Kontrast Germe (Dynamic Contrast Stretching)
+    // Beyaz kağıt arka planını parlak, kurşun ve tükenmez kalem el yazılarını netleştirir
+    try {
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const d = imgData.data;
+        let minLum = 255;
+        let maxLum = 0;
+
+        for (let i = 0; i < d.length; i += 4) {
+            const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            if (lum < minLum) minLum = lum;
+            if (lum > maxLum) maxLum = lum;
+        }
+
+        const lumRange = Math.max(30, maxLum - minLum);
+        for (let i = 0; i < d.length; i += 4) {
+            const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            let normVal = ((gray - minLum) / lumRange) * 255;
+            normVal = Math.min(255, Math.max(0, ((normVal - 128) * 1.35) + 128));
+            d[i] = normVal;
+            d[i + 1] = normVal;
+            d[i + 2] = normVal;
+        }
+        ctx.putImageData(imgData, 0, 0);
+    } catch (e) {
+        console.warn("Görsel filtreleme atlandı:", e);
+    }
+
     // Tesseract OCR Çalıştır
     const { data } = await Tesseract.recognize(canvas, 'tur+eng', {
         logger: m => {
@@ -1111,7 +1281,7 @@ async function runTesseractKumeOcr(imageSource, classStudents) {
     return parseTesseractTextToClusters(fullText, classStudents);
 }
 
-// 11. Tesseract Metnini 6 Kümeye Akıllıca Ayrıştırma
+// 11. Tesseract Metnini 6 Kümeye Akıllıca Ayrıştırma (Levenshtein + Regex + Karakter Katlama)
 function parseTesseractTextToClusters(fullText, classStudents) {
     const lines = fullText.split('\n').map(l => l.trim()).filter(Boolean);
     const clusters = [];
@@ -1122,20 +1292,43 @@ function parseTesseractTextToClusters(fullText, classStudents) {
         });
     }
 
-    // Öğrenci listesinden numaraya ve ada göre eşleştirme havuzu
     const remainingStudents = [...classStudents];
     const assignedSet = new Set();
 
-    // 1. Adım: Metindeki satırlarda geçen okul numaralarını bul
+    // Satır bazında küme takibi: "K-01", "KÜME 1", "1. KÜME" vb. başlıklarını algıla
+    let currentClusterIdx = 0;
+    const lineClusterIndices = [];
+
     lines.forEach((line, lineIdx) => {
-        // Numaraları tespit et (2-5 haneli sayılar)
-        const numMatches = line.match(/\b\d{2,5}\b/g);
-        if (numMatches) {
+        const kMatch = line.match(/(?:k[\-_]?0?([1-6])|küme\s*([1-6])|([1-6])\.\s*küme)/i);
+        if (kMatch) {
+            const detectedNum = parseInt(kMatch[1] || kMatch[2] || kMatch[3], 10);
+            if (detectedNum >= 1 && detectedNum <= 6) {
+                currentClusterIdx = detectedNum - 1;
+            }
+        }
+        lineClusterIndices[lineIdx] = currentClusterIdx;
+    });
+
+    // ── 1. AŞAMA: OKUL NUMARALARINI TESPİT ET (Regex + OCR Harf/Rakam Düzeltme) ──
+    lines.forEach((line, lineIdx) => {
+        const numMatches = line.match(/\b\d{2,5}\b/g) || [];
+
+        // Kelimelerden OCR rakam adayı türet (Örn: 'l04' -> '104')
+        const tokens = line.split(/[\s,;:|\-]+/).filter(t => t.length >= 2 && t.length <= 6);
+        tokens.forEach(tok => {
+            const candidate = cleanOcrDigitCandidate(tok);
+            if (candidate && candidate.length >= 2 && candidate.length <= 5 && !numMatches.includes(candidate)) {
+                numMatches.push(candidate);
+            }
+        });
+
+        if (numMatches.length > 0) {
             numMatches.forEach(numStr => {
                 const found = remainingStudents.find(s => String(s.no) === numStr && !assignedSet.has(s.no));
                 if (found) {
                     assignedSet.add(found.no);
-                    const cIdx = Math.min(5, Math.floor((lineIdx / Math.max(1, lines.length)) * 6));
+                    const cIdx = lineClusterIndices[lineIdx] ?? Math.min(5, Math.floor((lineIdx / Math.max(1, lines.length)) * 6));
                     clusters[cIdx].students.push({
                         no: found.no,
                         name: found.adSoyad,
@@ -1146,33 +1339,80 @@ function parseTesseractTextToClusters(fullText, classStudents) {
         }
     });
 
-    // 2. Adım: Henüz atanmamış öğrencilerin isim benzerliklerini (Levenshtein/Kelime) tara
+    // ── 2. AŞAMA: LEVENSHTEIN MESAFE & FUZZY İSİM EŞLEŞTİRME ──
     remainingStudents.forEach(stu => {
         if (assignedSet.has(stu.no)) return;
-        const nameTokens = stu.adSoyad.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-        for (let lIdx = 0; lIdx < lines.length; lIdx++) {
-            const lLow = lines[lIdx].toLowerCase();
-            const matchCount = nameTokens.filter(tok => lLow.includes(tok)).length;
-            if (matchCount >= Math.max(1, nameTokens.length - 1)) {
-                assignedSet.add(stu.no);
-                const cIdx = Math.min(5, Math.floor((lIdx / Math.max(1, lines.length)) * 6));
-                clusters[cIdx].students.push({
-                    no: stu.no || '',
-                    name: stu.adSoyad,
-                    role: detectRoleInLine(lines[lIdx])
-                });
-                break;
+
+        const stuTokens = (stu.adSoyad || '').split(/\s+/).filter(t => t.length >= 2);
+        const foldedStuTokens = stuTokens.map(foldTurkishText);
+        const foldedFullName = foldTurkishText(stu.adSoyad || '');
+
+        let bestMatch = null;
+        let bestScore = 0;
+        let bestLineIdx = -1;
+
+        lines.forEach((line, lIdx) => {
+            const foldedLine = foldTurkishText(line);
+            if (!foldedLine) return;
+
+            // 1. Tam ad alt-dize eşleşmesi
+            if (foldedFullName.length >= 4 && foldedLine.includes(foldedFullName)) {
+                bestScore = 1.0;
+                bestMatch = line;
+                bestLineIdx = lIdx;
+                return;
             }
+
+            // 2. Token bazında Levenshtein fuzzy benzerliği
+            const lineTokens = line.split(/[\s,;:|\-]+/).map(foldTurkishText).filter(t => t.length >= 2);
+            let matchedTokenCount = 0;
+
+            for (const sTok of foldedStuTokens) {
+                let maxTokSim = 0;
+                for (const lTok of lineTokens) {
+                    if (lTok === sTok) {
+                        maxTokSim = 1.0;
+                        break;
+                    }
+                    if (Math.abs(lTok.length - sTok.length) <= 2) {
+                        const sim = calcStringSimilarity(sTok, lTok);
+                        if (sim > maxTokSim) maxTokSim = sim;
+                    }
+                }
+                if (maxTokSim >= 0.75) {
+                    matchedTokenCount++;
+                }
+            }
+
+            const requiredMatches = Math.max(1, Math.ceil(foldedStuTokens.length * 0.65));
+            if (matchedTokenCount >= requiredMatches) {
+                const score = matchedTokenCount / foldedStuTokens.length;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = line;
+                    bestLineIdx = lIdx;
+                }
+            }
+        });
+
+        if (bestScore >= 0.65 && bestLineIdx !== -1) {
+            assignedSet.add(stu.no);
+            const cIdx = lineClusterIndices[bestLineIdx] ?? Math.min(5, Math.floor((bestLineIdx / Math.max(1, lines.length)) * 6));
+            clusters[cIdx].students.push({
+                no: stu.no || '',
+                name: stu.adSoyad,
+                role: detectRoleInLine(lines[bestLineIdx])
+            });
         }
     });
 
-    // 3. Adım: Küme başlıklarını satırlardan tespit etmeye çalış
+    // ── 3. AŞAMA: KÜME BAŞLIKLARINI YENİDEN KONTROL ET & DÜZENLE ──
     lines.forEach((line) => {
-        const kMatch = line.match(/küme\s*([1-6])\s*[:\-]?\s*(.*)/i);
+        const kMatch = line.match(/(?:küme\s*([1-6])|([1-6])\.\s*küme)\s*[:\-]?\s*(.*)/i);
         if (kMatch) {
-            const num = parseInt(kMatch[1], 10);
-            const extraTitle = kMatch[2].trim();
-            if (num >= 1 && num <= 6 && extraTitle.length > 2 && extraTitle.length < 30) {
+            const num = parseInt(kMatch[1] || kMatch[2], 10);
+            const extraTitle = (kMatch[3] || '').trim();
+            if (num >= 1 && num <= 6 && extraTitle.length > 2 && extraTitle.length < 35 && !extraTitle.toUpperCase().includes('ÖĞRENCİ')) {
                 clusters[num - 1].title = extraTitle;
             }
         }
@@ -1184,7 +1424,7 @@ function parseTesseractTextToClusters(fullText, classStudents) {
 // Rol Kısaltmalarını Satırdan Yakala
 function detectRoleInLine(lineStr) {
     const s = lineStr.toUpperCase();
-    if (s.includes('PK') || s.includes('KOORD')) return 'Proje Koordinatörü';
+    if (s.includes('PK') || s.includes('KOORD') || s.includes('YÖNETİCİ')) return 'Proje Koordinatörü';
     if (s.includes('VA') || s.includes('ANALİST') || s.includes('YAZICI')) return 'Veri Analisti';
     if (s.includes('AR') || s.includes('AR-GE') || s.includes('MALZEME')) return 'Ar-Ge Sorumlusu';
     if (s.includes('HI') || s.includes('İLİŞK') || s.includes('SÖZCÜ')) return 'Halkla İlişkiler';
@@ -1236,6 +1476,18 @@ function renderKumeOcrResults(clusters, classStudents) {
     if (resSec) resSec.style.display = 'block';
     if (!grid) return;
 
+    // Sınıf mevcudu için otomatik tamamlama datalist oluştur / güncelle
+    let datalist = document.getElementById('kume-ocr-students-datalist');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'kume-ocr-students-datalist';
+        document.body.appendChild(datalist);
+    }
+    datalist.innerHTML = classStudents.map(cs => {
+        const noPrefix = cs.no ? `${cs.no} - ` : '';
+        return `<option value="${escapeHtml(cs.adSoyad)}">${noPrefix}${escapeHtml(cs.adSoyad)}</option>`;
+    }).join('');
+
     grid.innerHTML = '';
 
     clusters.forEach((cluster, cIdx) => {
@@ -1259,14 +1511,14 @@ function renderKumeOcrResults(clusters, classStudents) {
         students.forEach((stu, sIdx) => {
             const isMatched = classStudents.some(cs => (stu.no && String(cs.no) === String(stu.no)) || (stu.name && cs.adSoyad.toLowerCase() === stu.name.toLowerCase()));
             const matchBadge = isMatched
-                ? `<span style="color:#059669; font-weight:700; font-size:12px;" title="Kayıtlı öğrenci listesiyle doğrulandı">✔️</span>`
-                : `<span style="color:#f59e0b; font-weight:700; font-size:12px;" title="Yeni veya liste dışı öğrenci">⚠️</span>`;
+                ? `<span class="ocr-match-badge" style="color:#059669; font-weight:700; font-size:12px;" title="Kayıtlı öğrenci listesiyle doğrulandı">✔️</span>`
+                : `<span class="ocr-match-badge" style="color:#f59e0b; font-weight:700; font-size:12px;" title="Yeni veya liste dışı öğrenci (Açılır listeden seçebilirsiniz)">⚠️</span>`;
 
             studentsRowsHtml += `
                 <div class="ocr-student-row" style="display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid var(--border, #f1f5f9);">
                     <span style="font-size:11px; font-weight:700; color:var(--text-muted); width:16px;">${sIdx + 1}.</span>
                     <input type="text" class="ocr-student-no" value="${escapeHtml(stu.no || '')}" placeholder="No" style="width:48px; padding:4px 6px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1); text-align:center;">
-                    <input type="text" class="ocr-student-name" value="${escapeHtml(stu.name || '')}" placeholder="Öğrenci Adı Soyadı" style="flex:1; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1);">
+                    <input type="text" class="ocr-student-name" list="kume-ocr-students-datalist" value="${escapeHtml(stu.name || '')}" placeholder="Öğrenci Adı Soyadı (Listeden Seç)" oninput="handleOcrStudentNameChange(this)" style="flex:1; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1);">
                     <select class="ocr-student-role" style="padding:4px 6px; font-size:11.5px; border-radius:6px; border:1px solid var(--border, #cbd5e1); max-width:115px;">
                         <option value="Proje Koordinatörü" ${stu.role.includes('Koord') || stu.role === 'PK' ? 'selected' : ''}>[PK] Koordinatör</option>
                         <option value="Veri Analisti" ${stu.role.includes('Analist') || stu.role === 'VA' ? 'selected' : ''}>[VA] Analist</option>
@@ -1286,9 +1538,11 @@ function renderKumeOcrResults(clusters, classStudents) {
                     <span style="background:#4f46e5; color:#fff; font-size:11px; font-weight:800; padding:2px 7px; border-radius:6px;">K-${String(cIdx + 1).padStart(2, '0')}</span>
                     <input type="text" class="ocr-cluster-title" value="${escapeHtml(cluster.title || `${cIdx + 1}. Küme`)}" style="font-weight:700; font-size:13.5px; border:none; border-bottom:1px dashed #cbd5e1; padding:2px 4px; background:transparent;">
                 </div>
-                <button type="button" class="btn" onclick="addOcrStudentRow(this)" style="padding:3px 8px; font-size:11px; background:#e0e7ff; color:#3730a3; border-radius:6px;">
-                    <i class="fas fa-plus"></i> Ekle
-                </button>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn" onclick="addOcrStudentRow(this)" style="padding:3px 8px; font-size:11px; background:#e0e7ff; color:#3730a3; border-radius:6px;" title="Yeni boş satır ekle">
+                        <i class="fas fa-plus"></i> Ekle
+                    </button>
+                </div>
             </div>
             <div class="ocr-students-list" style="display:flex; flex-direction:column; min-height:80px;">
                 ${studentsRowsHtml || '<div style="text-align:center; color:var(--text-muted); font-size:12px; padding:15px;">Öğrenci bulunamadı.</div>'}
@@ -1298,6 +1552,38 @@ function renderKumeOcrResults(clusters, classStudents) {
         grid.appendChild(card);
     });
 }
+
+// Otomatik Öğrenci İsmi & Numara Eşleştirme (Datalist seçildiğinde çalışır)
+function handleOcrStudentNameChange(input) {
+    const row = input.closest('.ocr-student-row');
+    if (!row) return;
+    const nameVal = (input.value || '').trim();
+    const noInput = row.querySelector('.ocr-student-no');
+    const badgeSpan = row.querySelector('.ocr-match-badge');
+
+    const selectedClass = document.getElementById('class-filter')?.value || '';
+    const norm = (s) => String(s || '').replace(/[\/_\-\s]/g, '').trim().toUpperCase();
+    const classStudents = (typeof studentData !== 'undefined')
+        ? studentData.filter(s => s && (s.sinif === selectedClass || norm(s.sinif) === norm(selectedClass)))
+        : [];
+
+    const matched = classStudents.find(cs => cs.adSoyad.toLowerCase() === nameVal.toLowerCase());
+    if (matched) {
+        if (noInput && !noInput.value) noInput.value = matched.no || '';
+        if (badgeSpan) {
+            badgeSpan.innerHTML = '✔️';
+            badgeSpan.style.color = '#059669';
+            badgeSpan.title = 'Kayıtlı öğrenci listesiyle doğrulandı';
+        }
+    } else {
+        if (badgeSpan) {
+            badgeSpan.innerHTML = '⚠️';
+            badgeSpan.style.color = '#f59e0b';
+            badgeSpan.title = 'Liste dışı veya el ile yazılmış öğrenci';
+        }
+    }
+}
+window.handleOcrStudentNameChange = handleOcrStudentNameChange;
 
 // 14. Yeni Satır Ekleme Yardımcısı
 function addOcrStudentRow(btn) {
@@ -1312,7 +1598,7 @@ function addOcrStudentRow(btn) {
     row.innerHTML = `
         <span style="font-size:11px; font-weight:700; color:var(--text-muted); width:16px;">${rowCount}.</span>
         <input type="text" class="ocr-student-no" placeholder="No" style="width:48px; padding:4px 6px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1); text-align:center;">
-        <input type="text" class="ocr-student-name" placeholder="Öğrenci Adı Soyadı" style="flex:1; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1);">
+        <input type="text" class="ocr-student-name" list="kume-ocr-students-datalist" placeholder="Öğrenci Adı Soyadı (Listeden Seç)" oninput="handleOcrStudentNameChange(this)" style="flex:1; padding:4px 8px; font-size:12px; border-radius:6px; border:1px solid var(--border, #cbd5e1);">
         <select class="ocr-student-role" style="padding:4px 6px; font-size:11.5px; border-radius:6px; border:1px solid var(--border, #cbd5e1); max-width:115px;">
             <option value="Proje Koordinatörü">[PK] Koordinatör</option>
             <option value="Veri Analisti">[VA] Analist</option>
@@ -1320,7 +1606,7 @@ function addOcrStudentRow(btn) {
             <option value="Halkla İlişkiler">[HI] Halkla İliş.</option>
             <option value="Üye" selected>[Ü] Üye</option>
         </select>
-        <span style="color:#94a3b8; font-size:12px;">✏️</span>
+        <span class="ocr-match-badge" style="color:#94a3b8; font-size:12px;" title="Manuel giriş">✏️</span>
         <button type="button" onclick="this.closest('.ocr-student-row').remove()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; padding:2px;" title="Sil">&times;</button>
     `;
     list.appendChild(row);
