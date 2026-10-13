@@ -43,7 +43,7 @@
                 });
                 body.appendChild(tr);
             });
-            if (times.length === 0) body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Henüz ders eklenmemiş.</td></tr>';
+            if (times.length === 0) body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Henüz ders eklenmemiş.</td></tr>';
         }
 
         function removeFromSchedule(idx) { if (confirm('Dersi silmek istediğinize emin misiniz?')) { scheduleData.splice(idx, 1); renderSchedule(); saveData(); } }

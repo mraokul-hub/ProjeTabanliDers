@@ -431,6 +431,10 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             studentData = studentData.filter((_, i) => !indicesToDelete.has(i));
             document.getElementById('select-all').checked = false;
             renderStudentTable();
+            if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+            if (typeof renderTrackingList === 'function') renderTrackingList();
+            if (typeof syncStudentsWithChecklists === 'function') syncStudentsWithChecklists();
+            if (typeof renderChecklistList === 'function') renderChecklistList();
             saveData();
         }
 
@@ -459,17 +463,37 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             if (!adSoyad || !no) return alert("Okul No ve Ad Soyad zorunludur.");
 
             if (editIndex >= 0) {
+                const oldStudent = studentData[editIndex];
+                const oldName = oldStudent ? oldStudent.adSoyad : null;
                 // 🔑 Mevcut öğrencinin tüm verilerini koru (xpLogs, gozlemler, artmayanNot, vak vb.)
                 // Sadece düzenlenen alanları güncelle
                 studentData[editIndex] = {
                     ...studentData[editIndex],  // eski veriler korunur
                     sira, no, adSoyad, sinif, xp, ilgi_alanlari
                 };
+                if (oldName && oldName !== adSoyad && typeof trackingData !== 'undefined' && Array.isArray(trackingData)) {
+                    trackingData.forEach(item => {
+                        if (item.targetStudents && Array.isArray(item.targetStudents)) {
+                            const tIdx = item.targetStudents.indexOf(oldName);
+                            if (tIdx !== -1) item.targetStudents[tIdx] = adSoyad;
+                        }
+                        if (item.submissions && item.submissions[oldName]) {
+                            item.submissions[adSoyad] = item.submissions[oldName];
+                            delete item.submissions[oldName];
+                        }
+                    });
+                }
             } else {
                 studentData.push({ sira, no, adSoyad, sinif, xp, ilgi_alanlari });
             }
 
-            clearForm(); renderStudentTable(); saveData();
+            clearForm(); 
+            renderStudentTable(); 
+            if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+            if (typeof renderTrackingList === 'function') renderTrackingList();
+            if (typeof syncStudentsWithChecklists === 'function') syncStudentsWithChecklists();
+            if (typeof renderChecklistList === 'function') renderChecklistList();
+            saveData();
         }
 
         function editStudent(index) { 
@@ -489,6 +513,10 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             if (confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) { 
                 studentData.splice(index, 1); 
                 renderStudentTable(); 
+                if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+                if (typeof renderTrackingList === 'function') renderTrackingList();
+                if (typeof syncStudentsWithChecklists === 'function') syncStudentsWithChecklists();
+                if (typeof renderChecklistList === 'function') renderChecklistList();
                 saveData(); 
                 clearForm(); 
             } 

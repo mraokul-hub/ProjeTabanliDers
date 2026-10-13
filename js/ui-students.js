@@ -50,7 +50,13 @@ function loadExcel() {
                 }
                 if (sAdSoyad && sAdSoyad !== '') studentData.push({ sira: sSira, no: sNo, adSoyad: sAdSoyad, sinif: sSinif });
             }
-            renderStudentTable(); saveData(); alert('Liste aktarıldı.');
+            renderStudentTable(); 
+            if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+            if (typeof renderTrackingList === 'function') renderTrackingList();
+            if (typeof syncStudentsWithChecklists === 'function') syncStudentsWithChecklists();
+            if (typeof renderChecklistList === 'function') renderChecklistList();
+            saveData(); 
+            alert('Liste aktarıldı.');
         } else { alert("Hata: Excel formatı tam çözümlenemedi."); }
         fileInput.value = '';
     };
@@ -157,15 +163,17 @@ function generateGroups() {
 
     // Önceki sınıftan kalan rastgele grupları database'den siliyoruz ki yenisi yazılsın
     const safeClass = selectedClass.replace(/\//g, '_');
-    if (typeof groupData === 'object') groupData[safeClass] = '';
+    if (typeof groupData === 'object') groupData[safeClass] = [];
 
     groups.forEach((group, index) => {
         let html = `<div class="group-card"><h3><input type="text" class="group-title-input" value="Küme ${index + 1}" oninput="this.setAttribute('value', this.value); saveData()"><button class="action-btn btn-delete" onclick="if(confirm('Kümeyi silmek istiyor musunuz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}" title="Küme Sil"><i class="fas fa-times"></i></button></h3><ul style="padding:0;list-style:none;">`;
         group.forEach(m => {
+            const escapedAd = (m.adSoyad || '').replace(/"/g, '&quot;');
+            const safeJsAd = (m.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             html += `<li style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
-                    <div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${m.adSoyad}" style="font-weight: 600; font-size: 14px;">${m.no} - ${m.adSoyad}</span>
+                    <div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${escapedAd}" style="font-weight: 600; font-size: 14px;">${m.no} - ${escapedAd}</span>
                         <div style="display:flex; align-items:center; gap:5px;"><span class="xp-badge" style="font-size:10px; padding:1px 5px;">${m.xp || 0} XP</span>
-                            <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${m.adSoyad}', 1)">+</button><button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${m.adSoyad}', -1)">-</button><button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${m.adSoyad}', 5)"><i class="fas fa-question"></i></button>
+                            <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${safeJsAd}', 1)">+</button><button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${safeJsAd}', -1)">-</button><button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${safeJsAd}', 5)"><i class="fas fa-question"></i></button>
                         </div></div>
                     <div style="display:flex; gap:8px; align-items:center;"><select class="role-select" onchange="this.querySelectorAll('option').forEach(o => o.value === this.value ? o.setAttribute('selected', 'selected') : o.removeAttribute('selected')); updateRoleColor(this); saveData()"><option value="">Görev...</option><option value="Proje Koordinatörü">Proje Koordinatörü</option><option value="Veri Analisti">Veri Analisti</option><option value="Ar-Ge Sorumlusu">Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler">Halkla İlişkiler</option><option value="Üye">Üye</option></select>
                         <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove(); updateStudentPickers(); saveData();}"><i class="fas fa-user-minus"></i></button></div></li>`;
@@ -466,7 +474,7 @@ function updateStudentPickers() {
     // SADECE #groups-container içindeki kümelerdeki öğrencileri topla
     const groupsContainer = document.getElementById('groups-container');
     const assignedStudentNames = groupsContainer
-        ? Array.from(groupsContainer.querySelectorAll('.group-card li .student-name-text')).map(s => s.getAttribute('data-name') || s.textContent)
+        ? Array.from(groupsContainer.querySelectorAll('.group-card li .student-name-text')).map(s => (s.getAttribute('data-name') || s.textContent.split(' - ').pop()).trim())
         : [];
     
     // Hem normal gruplara atanmış hem de proje gruplarına atanmış öğrencileri listeden çıkar
@@ -516,22 +524,28 @@ function addStudentToGroupUI(btn) {
 
     checkedBoxes.forEach(cb => {
         const studentName = cb.value;
-        const safeStudentName = studentName.replace(/'/g, "\\'");
         const student = studentData.find(s => s.adSoyad === studentName);
         const xp = student ? (student.xp || 0) : 0;
         const displayNo = student ? student.no : '';
+        const escapedName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(studentName) : studentName.replace(/"/g, '&quot;');
         const li = document.createElement('li');
         li.style = 'margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;';
-        li.innerHTML = `<div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${studentName.replace(/"/g, '&quot;')}" style="font-weight: 600; font-size: 14px;">${displayNo} - ${studentName}</span>
+        li.innerHTML = `<div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${escapedName}" style="font-weight: 600; font-size: 14px;">${displayNo} - ${escapedName}</span>
                     <div style="display:flex; align-items:center; gap:5px;"><span class="xp-badge" style="font-size:10px; padding:1px 5px;">${xp} XP</span>
-                        <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${safeStudentName}', 1)">+</button>
-                        <button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${safeStudentName}', -1)">-</button>
-                        <button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${safeStudentName}', 5)"><i class="fas fa-question"></i></button>
+                        <button type="button" class="btn-mini-xp btn-mini-plus">+</button>
+                        <button type="button" class="btn-mini-xp btn-mini-minus">-</button>
+                        <button type="button" class="btn-mini-xp btn-mini-question"><i class="fas fa-question"></i></button>
                     </div></div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <select class="role-select" onchange="updateRoleColor(this)"><option value="">Görev...</option><option value="Proje Koordinatörü">Proje Koordinatörü</option><option value="Veri Analisti">Veri Analisti</option><option value="Ar-Ge Sorumlusu">Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler">Halkla İlişkiler</option><option value="Üye">Üye</option></select>
                     <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove(); updateStudentPickers(); saveData();}"><i class="fas fa-user-minus"></i></button>
                 </div>`;
+        const btnPlus = li.querySelector('.btn-mini-plus');
+        const btnMinus = li.querySelector('.btn-mini-minus');
+        const btnQuest = li.querySelector('.btn-mini-question');
+        if (btnPlus) btnPlus.onclick = () => addXPByName(studentName, 1);
+        if (btnMinus) btnMinus.onclick = () => addXPByName(studentName, -1);
+        if (btnQuest) btnQuest.onclick = () => addXPByName(studentName, 5);
         ul.appendChild(li);
         added = true;
     });

@@ -847,6 +847,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1800);
         },
 
+        openDirectForm() {
+            const link = this.linkOutput?.value;
+            if (link) {
+                window.open(link, '_blank');
+            } else {
+                alert('Lütfen önce bir öğrenci seçiniz veya A4 formundan karekod okutunuz.');
+            }
+        },
+
         // ─────────────────────────────────────────────
         // SINIF LİSTESİ DROPDOWN
         // ─────────────────────────────────────────────

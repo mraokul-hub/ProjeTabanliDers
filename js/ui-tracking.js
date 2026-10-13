@@ -5,15 +5,113 @@
 
         let _editingTrackingId = null; // Düzenle modu için
 
+        /**
+         * Değerlendirme aşamasındaki (tamamlanmamış) ödev-proje-görevleri
+         * sınıftaki güncel öğrencilerle senkronize eder.
+         * Yeni öğrenci eklendiğinde değerlendirme listesinde ve hedefte görünmesini sağlar.
+         */
+        function syncStudentsWithTracking() {
+            if (typeof trackingData === 'undefined' || !Array.isArray(trackingData) ||
+                typeof studentData === 'undefined' || !Array.isArray(studentData)) {
+                return false;
+            }
+            const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+            let hasChanges = false;
+
+            trackingData.forEach(item => {
+                if (!item || item.isEvaluated) return; // Sadece değerlendirme aşamasındaki (arşivlenmemiş) kayıtlar
+
+                const itemClassNorm = norm(item.sinif);
+                const classStudents = studentData.filter(s => norm(s.sinif) === itemClassNorm);
+                if (classStudents.length === 0) return;
+
+                // 1. targetStudents null ise zaten tüm sınıfı dinamik alır.
+                if (item.targetStudents === null || item.targetStudents === undefined) {
+                    return;
+                }
+
+                // 2. targetStudents dizi ise:
+                if (Array.isArray(item.targetStudents)) {
+                    // Sınıftaki öğrencilerin kaç tanesi targetStudents içinde?
+                    const inTarget = classStudents.filter(s => item.targetStudents.includes(s.adSoyad));
+                    
+                    // Eğer targetStudents sınıfın çoğunu içeriyorsa (bütün sınıfa atanmış bir ödev/proje ise)
+                    const isClassWide = (inTarget.length >= classStudents.length - 2) || 
+                                        (classStudents.length > 0 && (inTarget.length / classStudents.length) >= 0.5);
+
+                    if (isClassWide) {
+                        // Sınıfa yeni eklenmiş öğrencileri targetStudents'a ekle
+                        classStudents.forEach(s => {
+                            if (s.adSoyad && !item.targetStudents.includes(s.adSoyad)) {
+                                item.targetStudents.push(s.adSoyad);
+                                hasChanges = true;
+                            }
+                        });
+                        // Sistemden silinmiş öğrencileri targetStudents'tan temizle
+                        const prevLen = item.targetStudents.length;
+                        item.targetStudents = item.targetStudents.filter(name => studentData.some(s => s.adSoyad === name));
+                        if (item.targetStudents.length !== prevLen) hasChanges = true;
+                    }
+                }
+            });
+
+            if (hasChanges && typeof saveData === 'function') {
+                saveData(true);
+            }
+            return hasChanges;
+        }
+        window.syncStudentsWithTracking = syncStudentsWithTracking;
+
+        /**
+         * Bir ödev/proje/görev için geçerli öğrencileri döner.
+         * Değerlendirme aşamasındaki sınıf ödevlerinde yeni öğrencileri otomatik kapsar.
+         */
+        function getTrackingItemStudents(item) {
+            if (!item) return [];
+            const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
+            const itemClassNorm = norm(item.sinif);
+            const classStudents = studentData.filter(s => s.sinif === item.sinif || norm(s.sinif) === itemClassNorm);
+
+            // Hedef öğrenci kısıtlaması yoksa tüm sınıf
+            if (!item.targetStudents || !Array.isArray(item.targetStudents) || item.targetStudents.length === 0) {
+                return classStudents;
+            }
+
+            // Değerlendirme aşamasındaki görevlerde sınıf çapında görev kontrolü
+            if (!item.isEvaluated) {
+                const inTarget = classStudents.filter(s => item.targetStudents.includes(s.adSoyad));
+                const isClassWide = (inTarget.length >= classStudents.length - 2) || 
+                                    (classStudents.length > 0 && (inTarget.length / classStudents.length) >= 0.5);
+                if (isClassWide) {
+                    // Yeni öğrencileri anında dahil et
+                    classStudents.forEach(s => {
+                        if (s.adSoyad && !item.targetStudents.includes(s.adSoyad)) {
+                            item.targetStudents.push(s.adSoyad);
+                        }
+                    });
+                    return classStudents;
+                }
+            }
+
+            // Özel seçilmiş kısıtlı grup ödevi
+            return classStudents.filter(s => item.targetStudents.includes(s.adSoyad));
+        }
+        window.getTrackingItemStudents = getTrackingItemStudents;
+
         function addTrackingItem() {
-            const type = document.getElementById('track-type').value; const title = document.getElementById('track-title').value; const date = document.getElementById('track-date').value;
-            const xp = parseInt(document.getElementById('track-xp').value) || 0; const penaltyXp = parseInt(document.getElementById('track-penalty').value) || 0;
+            const type = document.getElementById('track-type').value; 
+            const title = document.getElementById('track-title').value; 
+            const date = document.getElementById('track-date').value;
+            const xp = parseInt(document.getElementById('track-xp').value) || 0; 
+            const penaltyXp = parseInt(document.getElementById('track-penalty').value) || 0;
             let classSet = new Set();
             document.querySelectorAll('.track-class-checkbox:checked').forEach(cb => classSet.add(cb.value));
             document.querySelectorAll('.track-student-checkbox:checked').forEach(cb => classSet.add(cb.dataset.class));
             const selectedClasses = Array.from(classSet);
 
             if (!title || selectedClasses.length === 0 || !date) return alert("Lütfen gerekli alanları doldurun!");
+
+            const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
 
             // Düzenle modu: submissions korunarak güncelle
             if (_editingTrackingId !== null) {
@@ -23,8 +121,14 @@
                     trackingData[idx] = { ...trackingData[idx], type, title, date, xp, penaltyXp, submissions: existingSubmissions };
                     // Sınıf değiştiyse sınıfı da güncelle
                     if (selectedClasses.length === 1) trackingData[idx].sinif = selectedClasses[0];
-                    const selectedStudents = Array.from(document.querySelectorAll(`.track-student-checkbox[data-class="${trackingData[idx].sinif}"]:checked`)).map(cb => cb.value);
-                    trackingData[idx].targetStudents = selectedStudents.length > 0 ? selectedStudents : null;
+                    const targetSinif = trackingData[idx].sinif;
+                    const classStudents = studentData.filter(s => s.sinif === targetSinif || norm(s.sinif) === norm(targetSinif));
+                    const selectedStudents = Array.from(document.querySelectorAll(`.track-student-checkbox[data-class="${targetSinif}"]:checked`)).map(cb => cb.value);
+                    const isClassChecked = !!document.querySelector(`.track-class-checkbox[value="${targetSinif}"]:checked`);
+                    
+                    // Tüm sınıf seçilmişse targetStudents: null yap (böylece yeni eklenen öğrenciler daima dinamik görünür)
+                    const isAllClass = isClassChecked && (selectedStudents.length === 0 || selectedStudents.length >= classStudents.length);
+                    trackingData[idx].targetStudents = isAllClass ? null : (selectedStudents.length > 0 ? selectedStudents : null);
                 }
                 _editingTrackingId = null;
                 const btn = document.getElementById('track-add-btn');
@@ -32,9 +136,16 @@
             } else {
                 // Yeni kayıt
                 selectedClasses.forEach(sinif => {
+                    const classStudents = studentData.filter(s => s.sinif === sinif || norm(s.sinif) === norm(sinif));
                     const selectedStudents = Array.from(document.querySelectorAll(`.track-student-checkbox[data-class="${sinif}"]:checked`)).map(cb => cb.value);
+                    const isClassChecked = !!document.querySelector(`.track-class-checkbox[value="${sinif}"]:checked`);
+                    
+                    // Tüm sınıf seçilmişse targetStudents: null yap
+                    const isAllClass = isClassChecked && (selectedStudents.length === 0 || selectedStudents.length >= classStudents.length);
+                    const targetList = isAllClass ? null : (selectedStudents.length > 0 ? selectedStudents : null);
+
                     const newId = 'trk_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-                    trackingData.push({ id: newId, type, title, sinif, date, xp, penaltyXp, targetStudents: selectedStudents.length > 0 ? selectedStudents : null, submissions: {}, isNotified: false });
+                    trackingData.push({ id: newId, type, title, sinif, date, xp, penaltyXp, targetStudents: targetList, submissions: {}, isNotified: false });
                 });
             }
 
@@ -131,6 +242,8 @@
         }
 
         function renderTrackingList() {
+            if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+
             const activeList = document.getElementById('tracking-list-active');
             const passiveList = document.getElementById('tracking-list-passive');
             if (!activeList || !passiveList) return;
@@ -148,8 +261,9 @@
                 const isActiveDay = deadline.toDateString() === now.toDateString();
                 const isPassive = item.isEvaluated || (!isActiveDay && deadline < now);
 
-                const totalCount = item.targetStudents ? item.targetStudents.length : studentData.filter(s => s.sinif === item.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(item.sinif))).length;
-                const doneCount = item.submissions ? Object.values(item.submissions).filter(s => s.done).length : 0;
+                const assignedStudents = getTrackingItemStudents(item);
+                const totalCount = assignedStudents.length;
+                const doneCount = item.submissions ? assignedStudents.filter(s => item.submissions[s.adSoyad]?.done).length : 0;
 
                 const borderColor = isPassive ? '#6b7280' : 'var(--secondary)';
                 const badgeExtra = isPassive ? ' style="background:#6b7280;"' : '';
@@ -198,11 +312,58 @@
 
 
 
-        function deleteTrackingItem(id) {
-            if (confirm('Bu görevi silmek istiyor musunuz?')) {
-                trackingData = trackingData.filter(i => String(i.id) !== String(id));
-                renderTrackingList();
-                if (typeof saveData === 'function') saveData(true);
+        async function deleteTrackingItem(id) {
+            const itemToDelete = trackingData.find(i => String(i.id) === String(id));
+            const itemTitle = itemToDelete ? itemToDelete.title : 'Bu görevi';
+            if (!confirm(`"${itemTitle}" kaydını kalıcı olarak silmek istiyor musunuz?`)) {
+                return;
+            }
+
+            // 1. Yerel listeden kaldır
+            trackingData = trackingData.filter(i => String(i.id) !== String(id));
+            renderTrackingList();
+
+            // 2. Doğrudan Firebase'den kalıcı olarak sil
+            const safeTrackId = (typeof encodeFirebaseKey === 'function') 
+                ? encodeFirebaseKey(String(id)).replace(/[\/\.\#\$\/\[\]]/g, '_') 
+                : String(id);
+            const altKey = itemToDelete ? itemToDelete.firebaseKey : null;
+
+            const currentUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+            const uid = currentUser ? currentUser.uid : (window.currentUser ? window.currentUser.uid : null);
+
+            if (uid && window.db) {
+                try {
+                    // Kullanıcı altındaki kaydı sil
+                    await window.db.ref(`app_data/${uid}/tracking/${safeTrackId}`).remove();
+                    if (altKey && altKey !== safeTrackId) {
+                        await window.db.ref(`app_data/${uid}/tracking/${altKey}`).remove();
+                    }
+
+                    // Eğer admin ise main_data altındaki kopyayı da kaldır ki geri yüklenmesin
+                    if (currentUser && currentUser.email === 'mremzi@gmail.com') {
+                        window.db.ref(`app_data/main_data/tracking/${safeTrackId}`).remove().catch(()=>{});
+                        if (altKey && altKey !== safeTrackId) {
+                            window.db.ref(`app_data/main_data/tracking/${altKey}`).remove().catch(()=>{});
+                        }
+                    }
+                    console.log(`[Firebase] Görev/Proje kalıcı olarak silindi: ${safeTrackId}`);
+                } catch(err) {
+                    console.error("Firebase doğrudan silme hatası:", err);
+                }
+            }
+
+            // 3. Genel veritabanı diff ve localStorage senkronizasyonu
+            if (typeof saveData === 'function') {
+                saveData(true);
+            }
+
+            // 4. Görsel Toast bildirimi ve durum güncellemesi
+            if (typeof showGlobalToast === 'function') {
+                showGlobalToast(`🗑️ "${itemTitle}" başarıyla silindi ve veritabanından kaldırıldı.`, 'success');
+            }
+            if (typeof setDbSyncStatus === 'function') {
+                setDbSyncStatus('synced', 'Kayıt Başarıyla Silindi');
             }
         }
 
@@ -232,12 +393,16 @@
             // Sınıf checkbox'larını işaretle
             document.querySelectorAll('.track-class-checkbox').forEach(cb => { cb.checked = cb.value === item.sinif; });
 
-            // Belirli öğrenciler varsa onları da işaretle
+            // Belirli öğrenciler varsa onları da işaretle; tüm sınıf ise tamamını işaretle
             if (item.targetStudents && item.targetStudents.length > 0) {
                 const studentList = document.getElementById(`student-list-${item.sinif}`);
                 if (studentList) studentList.style.display = 'block';
                 document.querySelectorAll(`.track-student-checkbox[data-class="${item.sinif}"]`).forEach(cb => {
                     cb.checked = item.targetStudents.includes(cb.value);
+                });
+            } else {
+                document.querySelectorAll(`.track-student-checkbox[data-class="${item.sinif}"]`).forEach(cb => {
+                    cb.checked = true;
                 });
             }
 
@@ -296,8 +461,8 @@
             activeTrackingId = id; activeExamId = null;
             const item = trackingData.find(i => String(i.id) === String(id));
             if (!item) return;
-            let students = studentData.filter(s => s.sinif === item.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(item.sinif)));
-            if (item.targetStudents) students = students.filter(s => item.targetStudents.includes(s.adSoyad));
+            if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+            let students = getTrackingItemStudents(item);
 
             // Öğrencileri ada veya numaraya göre sırala
             students.sort((a, b) => {
@@ -377,22 +542,37 @@
                 let xpText = '';
                 if (sub.absent) {
                     xpText = '<span style="color:#6b7280; font-weight:700;">Muaf (0)</span>';
+                } else if (sub.done) {
+                    xpText = `<span style="color:var(--accent); font-weight:700;">+${sub.xp || item.xp}</span>`;
+                } else if (sub.date !== '') {
+                    xpText = `<span style="color:var(--red); font-weight:700;">-${sub.penalty || item.penaltyXp}</span>`;
                 } else {
-                    xpText = `<span style="color:${sub.done ? 'var(--accent)' : 'var(--red)'}; font-weight:700;">${sub.done ? '+' : '-'}${sub.done ? (sub.xp || item.xp) : (sub.penalty || item.penaltyXp)}</span>`;
+                    xpText = '<span style="color:var(--text-muted); font-size:11px;">Bekliyor (0)</span>';
                 }
 
-                const safeAdSoyad = s.adSoyad.replace(/'/g, "\\'");
-                const safeItemId = String(id).replace(/'/g, "\\'");
+                const escapedName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(s.adSoyad) : s.adSoyad;
+                const studentNo = s.no ? ((typeof window.escapeHTML === 'function') ? window.escapeHTML(s.no) : s.no) + ' - ' : '';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${s.no ? s.no + ' - ' : ''}${s.adSoyad}</td>
-                <td><label><input type="checkbox" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''} onchange="updateSubmissionStatus('${safeAdSoyad}', 'done', this.checked)"> Yapıldı</label></td>
-                <td><label><input type="checkbox" ${sub.absent ? 'checked' : ''} onchange="updateSubmissionStatus('${safeAdSoyad}', 'absent', this.checked)"> Gelmedi</label></td>
+                tr.innerHTML = `<td>${studentNo}${escapedName}</td>
+                <td><label><input type="checkbox" class="eval-chk-done" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''}> Yapıldı</label></td>
+                <td><label><input type="checkbox" class="eval-chk-absent" ${sub.absent ? 'checked' : ''}> Gelmedi</label></td>
                 <td><span style="font-size:11px;">${sub.date || '-'}</span></td>
                 <td>${xpText}</td>
                 <td style="display:flex;gap:4px;align-items:center;">
-                    <button class="action-btn" onclick="shareStudentResult('${safeItemId}', '${safeAdSoyad}')" style="color:#25D366; background:none; font-size:16px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                    <button class="action-btn" onclick="shareStudentResultBip('${safeItemId}', '${safeAdSoyad}')" style="color:#00B2FF; background:none; font-size:16px;" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                    <button type="button" class="action-btn eval-btn-wa" style="color:#25D366; background:none; font-size:16px; cursor:pointer;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button type="button" class="action-btn eval-btn-bip" style="color:#00B2FF; background:none; font-size:16px; cursor:pointer;" title="BiP"><i class="fas fa-comment-dots"></i></button>
                 </td>`;
+
+                const chkDone = tr.querySelector('.eval-chk-done');
+                const chkAbsent = tr.querySelector('.eval-chk-absent');
+                const btnWa = tr.querySelector('.eval-btn-wa');
+                const btnBip = tr.querySelector('.eval-btn-bip');
+
+                if (chkDone) chkDone.onchange = (e) => updateSubmissionStatus(s.adSoyad, 'done', e.target.checked);
+                if (chkAbsent) chkAbsent.onchange = (e) => updateSubmissionStatus(s.adSoyad, 'absent', e.target.checked);
+                if (btnWa) btnWa.onclick = () => shareStudentResult(String(id), s.adSoyad);
+                if (btnBip) btnBip.onclick = () => shareStudentResultBip(String(id), s.adSoyad);
+
                 body.appendChild(tr);
             });
             document.getElementById('evaluation-modal').style.display = 'block';
@@ -400,21 +580,26 @@
 
         window.updateSubmissionStatus = function(name, field, value) {
             const item = trackingData.find(i => String(i.id) === String(activeTrackingId));
+            if (!item) return;
             if (!item.submissions) item.submissions = {};
             if (!item.submissions[name]) item.submissions[name] = { done: false, absent: false, date: '', xp: item.xp, penalty: item.penaltyXp };
 
             const sub = item.submissions[name];
             const sIdx = studentData.findIndex(s => s.adSoyad === name);
 
+            const prevDone = !!sub.done;
+            const prevAbsent = !!sub.absent;
+            const prevEvaluated = (sub.date !== '');
+
+            // Önceki durumu nötrle (revert)
             if (sIdx !== -1) {
                 if (!studentData[sIdx].xpLogs) studentData[sIdx].xpLogs = [];
-                // Revert old state
-                if (!sub.absent) {
-                    if (sub.done) {
+                if (prevEvaluated && !prevAbsent) {
+                    if (prevDone) {
                         let oldAmt = sub.xp !== undefined ? sub.xp : item.xp;
                         studentData[sIdx].xp = (studentData[sIdx].xp || 0) - oldAmt;
                         studentData[sIdx].xpLogs.push({ reason: `${item.title} (İptal)`, amount: -oldAmt, date: new Date().toISOString() });
-                    } else if (sub.date !== '') {
+                    } else {
                         let oldAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
                         studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
                         studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
@@ -423,26 +608,27 @@
             }
 
             sub[field] = value;
-            if (field === 'absent' && value === true) {
-                sub.done = false; // Cannot be done if absent
-            }
 
-            if (sIdx !== -1) {
-                // Apply new state
-                if (!sub.absent) {
-                    if (sub.done) {
+            if (field === 'absent') {
+                if (value === true) {
+                    sub.done = false;
+                    sub.date = new Date().toLocaleString('tr-TR');
+                } else {
+                    sub.date = '';
+                }
+            } else if (field === 'done') {
+                if (value === true) {
+                    sub.absent = false;
+                    sub.date = new Date().toLocaleString('tr-TR');
+                    if (sIdx !== -1) {
                         let newAmt = sub.xp !== undefined ? sub.xp : item.xp;
                         studentData[sIdx].xp = (studentData[sIdx].xp || 0) + newAmt;
                         studentData[sIdx].xpLogs.push({ reason: `${item.title} (Tamamladı)`, amount: newAmt, date: new Date().toISOString() });
-                    } else {
-                        let newAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
-                        studentData[sIdx].xp = (studentData[sIdx].xp || 0) - newAmt;
-                        studentData[sIdx].xpLogs.push({ reason: `${item.title} (Eksik)`, amount: -newAmt, date: new Date().toISOString() });
                     }
+                } else {
+                    sub.date = '';
                 }
             }
-
-            sub.date = new Date().toLocaleString('tr-TR');
 
             renderStudentTable();
             renderTrackingList();
@@ -470,11 +656,8 @@
 
         function buildTrackingSummaryText(id) {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
-            const normSinif = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
-            let students = studentData.filter(s => s.sinif === item.sinif || normSinif(s.sinif) === normSinif(item.sinif));
-            if (item.targetStudents && item.targetStudents.length > 0) {
-                students = students.filter(s => item.targetStudents.includes(s.adSoyad));
-            }
+            if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+            let students = getTrackingItemStudents(item);
             students.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
 
             const submissions = item.submissions || {};
@@ -485,9 +668,11 @@
             const hasEvaluations = Object.keys(submissions).length > 0;
             if (hasEvaluations && students.length > 0) {
                 const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
-                const notDone = students.filter(s => !submissions[s.adSoyad]?.done).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
-                text += `\n\n✅ *TAMAMLAYANLAR (${done.length} / ${students.length}):*\n` + (done.length > 0 ? '🔹 ' + done.join('\n🔹 ') : 'Henüz teslim eden yok');
+                const absent = students.filter(s => submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
+                const notDone = students.filter(s => !submissions[s.adSoyad]?.done && !submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
+                text += `\n\n✅ *TAMAMLAYANLAR (${done.length} / ${students.length}):*\n` + (done.length > 0 ? '🔷 ' + done.join('\n🔷 ') : 'Henüz teslim eden yok');
                 text += `\n\n❌ *EKSİK OLANLAR (${notDone.length} / ${students.length}):*\n` + (notDone.length > 0 ? '🔸 ' + notDone.join('\n🔸 ') : 'Herkes tamamladı! 🎉');
+                text += `\n\n⚪ *GELMEYENLER (${absent.length}):*\n` + (absent.length > 0 ? '▫️ ' + absent.join('\n▫️ ') : 'Gelmeyen öğrenci yok');
             }
             return text;
         }
@@ -512,8 +697,18 @@
 
         function buildStudentResultText(id, name) {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
-            const sub = (item.submissions && item.submissions[name]) ? item.submissions[name] : { done: false };
-            return `🎯 *${item.type.toUpperCase()} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📊 *Durum:* ${sub.done ? '✅ Tamamlandı (+' + (sub.xp || item.xp) + ' XP)' : '❌ Teslim Edilmedi (-' + (sub.penalty || item.penaltyXp) + ' XP)'}`;
+            const sub = (item.submissions && item.submissions[name]) ? item.submissions[name] : { done: false, absent: false };
+            let durumText = '';
+            if (sub.absent) {
+                durumText = '⚪ Gelmedi / Muaf (0 XP)';
+            } else if (sub.done) {
+                durumText = '✅ Tamamlandı (+' + (sub.xp || item.xp) + ' XP)';
+            } else if (sub.date !== '') {
+                durumText = '❌ Teslim Edilmedi / Eksik (-' + (sub.penalty || item.penaltyXp) + ' XP)';
+            } else {
+                durumText = '⏳ Henüz Teslim Edilmedi / Bekliyor (0 XP)';
+            }
+            return `🎯 *${item.type.toUpperCase()} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📊 *Durum:* ${durumText}`;
         }
 
         function shareStudentResult(id, name) {
@@ -533,3 +728,13 @@
                 window.open(`https://web.bip.com/`, '_blank');
             }
         }
+
+        window.openEvaluation = openEvaluation;
+        window.renderTrackingList = renderTrackingList;
+        window.addTrackingItem = addTrackingItem;
+        window.buildTrackingSummaryText = buildTrackingSummaryText;
+        window.shareTrackingSummary = shareTrackingSummary;
+        window.shareTrackingSummaryBip = shareTrackingSummaryBip;
+        window.buildStudentResultText = buildStudentResultText;
+        window.shareStudentResult = shareStudentResult;
+        window.shareStudentResultBip = shareStudentResultBip;

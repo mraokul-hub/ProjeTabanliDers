@@ -11,19 +11,20 @@ const TAB_LABELS = {
     'tab3': '⚔️ Ders İşleme & Strateji',
     'tab4': '🐎 Öğretmen Ders Programı',
     'tab5': '📜 Ödev & Proje Takip',
+    'tab-checklists': '📋 Takip & Kontrol Çizelgeleri',
     'tab6': '🦅 Sınav Analiz',
     'tab7': '🛡️ Öz Değerlendirme & Formlar',
     'tab8': '🌙 İleri Çalışma Grupları',
     'tab9': '🌳 Proje Grupları',
-    'tab10': '🧭 Sistem Kullanım Kılavuzu',
     'tab11': '📊 Soru Çözüm Takip',
+    'tab10': '🧭 Sistem Kullanım Kılavuzu',
     'tab-admin': '👑 Yönetici Paneli'
 };
 
-// Toplam normal (admin háriç) modül sayısı
+// Toplam normal (admin hariç) modül sayısı
 const TAB_NUMBERS = {
     'tab1': 1, 'tab2': 2, 'tab-buz-kirma': 3, 'tab3': 4, 'tab4': 5,
-    'tab5': 6, 'tab6': 7, 'tab7': 8, 'tab8': 9, 'tab9': 10, 'tab10': 11, 'tab11': 12, 'tab-admin': ''
+    'tab5': 6, 'tab-checklists': 7, 'tab6': 8, 'tab7': 9, 'tab8': 10, 'tab9': 11, 'tab11': 12, 'tab10': 13, 'tab-admin': ''
 };
 
 function openTab(tabId) {
@@ -53,7 +54,7 @@ function openTab(tabId) {
     const labelEl = document.getElementById('mobile-active-tab-label');
     if (labelEl) labelEl.textContent = label;
     const numEl = document.querySelector('.mobile-nav-bar > div:last-child');
-    if (numEl && num) numEl.textContent = num + '/12';
+    if (numEl && num) numEl.textContent = num + '/13';
     if (numEl && !num) numEl.textContent = '★';
 
     // Mobil panel: aktif butonu vurgula
@@ -63,6 +64,11 @@ function openTab(tabId) {
 
     if (tabId === 'tab2') {
         if (typeof updateStudentPickers === 'function') updateStudentPickers();
+    }
+
+    if (tabId === 'tab-checklists') {
+        if (typeof updateChecklistClassContainer === 'function') updateChecklistClassContainer();
+        if (typeof renderChecklistList === 'function') renderChecklistList();
     }
 
     if (tabId === 'tab6') {
@@ -251,6 +257,7 @@ function updateClassDropdown() {
     }
     updateExamUploadDropdowns();
     updateEvalClassDropdown();
+    if (typeof updateChecklistClassContainer === 'function') updateChecklistClassContainer();
 }
 
 // ----------------------------------------------------------------------

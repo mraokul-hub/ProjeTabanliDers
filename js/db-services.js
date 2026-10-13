@@ -21,25 +21,153 @@ window.encodeFirebaseKey = encodeFirebaseKey;
 window.decodeFirebaseKey = decodeFirebaseKey;
 
 // Global referanslar (Diff motoru için son kaydedilen durumlar)
+// Global referanslar (Diff motoru için son kaydedilen durumlar)
 let _lastSavedRefs = {
     students: {},
     projects: {},
     regular_groups: {},
     exams: {},
     schedule: null,
-    tracking: {}
+    tracking: {},
+    checklists: {}
 };
 
+let _isSaving = false;
+let _hasPendingSave = false;
 let saveTimeout = null;
+
+function showGlobalToast(message, type = 'success') {
+    let container = document.getElementById('global-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'global-toast-container';
+        container.style = 'position:fixed; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:10px; pointer-events:none;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const bg = type === 'success' ? '#10b981' : (type === 'warning' ? '#f59e0b' : (type === 'error' ? '#ef4444' : '#3b82f6'));
+    toast.style = `pointer-events:auto; background:${bg}; color:#ffffff; padding:10px 18px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 10px 25px -5px rgba(0,0,0,0.3); display:flex; align-items:center; gap:8px; opacity:0; transform:translateX(30px); transition:all 0.3s cubic-bezier(0.4,0,0.2,1);`;
+    toast.innerHTML = message;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(30px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 3500);
+}
+window.showGlobalToast = showGlobalToast;
+
+function setDbSyncStatus(status, message) {
+    const el = document.getElementById('db-status');
+    const badge = document.getElementById('db-status-badge');
+    const timeEl = document.getElementById('db-status-time');
+    const nowStr = new Date().toLocaleTimeString('tr-TR');
+
+    let iconHtml = '<i class="fas fa-database"></i>';
+    let color = 'var(--accent, #10b981)';
+    let bgColor = 'rgba(16, 185, 129, 0.12)';
+    let borderColor = 'rgba(16, 185, 129, 0.35)';
+    let statusDesc = message || 'Bulut Senkronize';
+
+    if (status === 'saving') {
+        iconHtml = '<i class="fas fa-sync fa-spin"></i>';
+        color = 'var(--secondary, #3b82f6)';
+        bgColor = 'rgba(59, 130, 246, 0.12)';
+        borderColor = 'rgba(59, 130, 246, 0.35)';
+        statusDesc = message || 'Buluta Aktarılıyor...';
+    } else if (status === 'synced') {
+        iconHtml = '<i class="fas fa-check-circle"></i>';
+        color = 'var(--accent, #10b981)';
+        bgColor = 'rgba(16, 185, 129, 0.12)';
+        borderColor = 'rgba(16, 185, 129, 0.35)';
+        statusDesc = message || 'Bulut Senkronize';
+    } else if (status === 'offline') {
+        iconHtml = '<i class="fas fa-wifi-slash"></i>';
+        color = 'var(--warning, #f59e0b)';
+        bgColor = 'rgba(245, 158, 11, 0.12)';
+        borderColor = 'rgba(245, 158, 11, 0.35)';
+        statusDesc = message || 'Çevrimdışı (Yerel Aktif)';
+    } else if (status === 'error') {
+        iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
+        color = 'var(--red, #ef4444)';
+        bgColor = 'rgba(239, 68, 68, 0.12)';
+        borderColor = 'rgba(239, 68, 68, 0.35)';
+        statusDesc = message || 'Bağlantı Hatası';
+    }
+
+    if (el) {
+        el.innerHTML = iconHtml;
+    }
+    if (timeEl) {
+        timeEl.textContent = `(${nowStr})`;
+    }
+    if (badge) {
+        badge.style.color = color;
+        badge.style.background = bgColor;
+        badge.style.borderColor = borderColor;
+        badge.title = `Veritabanı Durumu: ${statusDesc} [${nowStr}] (Yenilemek için tıklayın)`;
+    }
+}
+
+function manualForceSync() {
+    showGlobalToast('<i class="fas fa-sync fa-spin"></i> Veritabanı canlı senkronizasyonu başlatıldı...', 'info');
+    saveData(true);
+}
+window.manualForceSync = manualForceSync;
+
 function saveData(immediate = false) {
     if (saveTimeout) clearTimeout(saveTimeout);
     if (immediate) {
-        return _executeSaveData();
+        return _queueSaveData();
     }
     saveTimeout = setTimeout(() => {
-        _executeSaveData();
-    }, 1200); // 1.2 saniyelik debounce
+        _queueSaveData();
+    }, 800); // 800ms debounce
 }
+
+async function _queueSaveData() {
+    if (_isSaving) {
+        _hasPendingSave = true;
+        return;
+    }
+    _isSaving = true;
+    try {
+        await _executeSaveData();
+    } finally {
+        _isSaving = false;
+        if (_hasPendingSave) {
+            _hasPendingSave = false;
+            _queueSaveData();
+        }
+    }
+}
+
+// Çevrimdışı/Sayfa Kapanma Olayları - Veri Kaybı Önleme
+window.addEventListener('online', () => {
+    console.log("[Ağ] İnternet bağlantısı yeniden kuruldu, bekleyen veriler senkronize ediliyor...");
+    setDbSyncStatus('saving', 'İnternet bağlantısı kuruldu, senkronize ediliyor...');
+    saveData(true);
+});
+
+window.addEventListener('offline', () => {
+    console.warn("[Ağ] İnternet bağlantısı kesildi, yerel depolama devrede.");
+    setDbSyncStatus('offline', 'Çevrimdışı (Yerel aktif, internet gelince aktarılacak)');
+});
+
+window.addEventListener('beforeunload', () => {
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+        _executeSaveData();
+    }
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && saveTimeout) {
+        clearTimeout(saveTimeout);
+        _executeSaveData();
+    }
+});
 
 async function _executeSaveData() {
     // 1. UI (DOM) üzerinden mevcut sınıf kümelerini çekme
@@ -50,21 +178,24 @@ async function _executeSaveData() {
 
         const container = document.getElementById('groups-container');
         if (container) {
-            const parsedGroups = [];
-            container.querySelectorAll('.group-card').forEach(card => {
-                const titleInput = card.querySelector('.group-title-input');
-                const title = titleInput ? titleInput.value : '';
-                const students = [];
-                card.querySelectorAll('li').forEach(li => {
-                    const nameEl = li.querySelector('.student-name-text');
-                    const name = nameEl ? (nameEl.getAttribute('data-name') || nameEl.textContent.split(' - ').pop()) : '';
-                    const selectEl = li.querySelector('.role-select');
-                    const role = selectEl ? selectEl.value : '';
-                    if (name) students.push({ name, role });
+            const cards = container.querySelectorAll('.group-card');
+            if (cards.length > 0) {
+                const parsedGroups = [];
+                cards.forEach(card => {
+                    const titleInput = card.querySelector('.group-title-input');
+                    const title = titleInput ? titleInput.value : '';
+                    const students = [];
+                    card.querySelectorAll('li').forEach(li => {
+                        const nameEl = li.querySelector('.student-name-text');
+                        const name = nameEl ? (nameEl.getAttribute('data-name') || nameEl.textContent.split(' - ').pop().trim()) : '';
+                        const selectEl = li.querySelector('.role-select');
+                        const role = selectEl ? selectEl.value : '';
+                        if (name) students.push({ name, role });
+                    });
+                    parsedGroups.push({ title, students });
                 });
-                parsedGroups.push({ title, students });
-            });
-            groupData[safeClass] = parsedGroups;
+                groupData[safeClass] = parsedGroups;
+            }
         }
     }
 
@@ -72,7 +203,18 @@ async function _executeSaveData() {
     let updates = {};
     const uid = window.currentUser ? window.currentUser.uid : null;
 
+    // Aday referanslar (Sadece başarılı Firebase yazımında commit edilecek!)
+    let candidateRefs = {
+        students: null,
+        projects: null,
+        regular_groups: null,
+        exams: null,
+        schedule: null,
+        tracking: null
+    };
+
     if (uid && window.db) {
+        setDbSyncStatus('saving');
         
         // --- A. STUDENTS ---
         let currentStudents = {};
@@ -94,7 +236,7 @@ async function _executeSaveData() {
         for (let safeKey in _lastSavedRefs.students) {
             if (!currentStudents[safeKey]) updates[`app_data/${uid}/students/${safeKey}`] = null;
         }
-        _lastSavedRefs.students = JSON.parse(JSON.stringify(currentStudents)); // Deep clone
+        candidateRefs.students = currentStudents;
         
         // --- B. PROJECTS (Proje Grupları) ---
         let currentProjects = {};
@@ -113,7 +255,7 @@ async function _executeSaveData() {
         for (let id in _lastSavedRefs.projects) {
             if (!currentProjects[id]) updates[`app_data/${uid}/projects/${id}`] = null;
         }
-        _lastSavedRefs.projects = JSON.parse(JSON.stringify(currentProjects));
+        candidateRefs.projects = currentProjects;
         
         // --- C. REGULAR GROUPS (Normal Kümeler) ---
         let currentRegGroups = {};
@@ -144,7 +286,7 @@ async function _executeSaveData() {
         for (let id in _lastSavedRefs.regular_groups) {
             if (!currentRegGroups[id]) updates[`app_data/${uid}/regular_groups/${id}`] = null;
         }
-        _lastSavedRefs.regular_groups = JSON.parse(JSON.stringify(currentRegGroups));
+        candidateRefs.regular_groups = currentRegGroups;
         
         // --- D. EXAMS (Sınavlar) ---
         let currentExams = {};
@@ -161,21 +303,21 @@ async function _executeSaveData() {
         for (let id in _lastSavedRefs.exams) {
             if (!currentExams[id]) updates[`app_data/${uid}/exams/${id}`] = null;
         }
-        _lastSavedRefs.exams = JSON.parse(JSON.stringify(currentExams));
+        candidateRefs.exams = currentExams;
 
         // --- E. SCHEDULE (Takvim) ---
         const currScheduleStr = JSON.stringify(scheduleData);
         if (currScheduleStr !== JSON.stringify(_lastSavedRefs.schedule)) {
             updates[`app_data/${uid}/schedule`] = scheduleData;
-            _lastSavedRefs.schedule = scheduleData ? JSON.parse(currScheduleStr) : [];
         }
+        candidateRefs.schedule = scheduleData;
 
         // --- F. TRACKING (Ödev & Proje Takip Sistemi) ---
         let currentTracking = {};
         (trackingData || []).forEach((item, i) => {
             if (item) {
                 const trackId = item.id ? String(item.id) : ('trk_' + i);
-                const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                const safeTrackId = item.firebaseKey || encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
                 
                 // Submissions nesnesini Firebase için sanitize et (Öğrenci isimlerindeki '.' karakterlerini korur)
                 const sanitizedSubmissions = {};
@@ -225,7 +367,56 @@ async function _executeSaveData() {
                 updates[`app_data/${uid}/tracking/${safeTrackId}`] = null;
             }
         }
-        _lastSavedRefs.tracking = JSON.parse(JSON.stringify(currentTracking));
+        candidateRefs.tracking = currentTracking;
+
+        // --- G. CHECKLISTS (Öğretmen Takip ve Kontrol Çizelgeleri) ---
+        let currentChecklists = {};
+        (typeof checklistData !== 'undefined' ? checklistData : []).forEach((item, i) => {
+            if (item) {
+                const chkId = item.id ? String(item.id) : ('chk_' + i);
+                const safeChkId = item.firebaseKey || encodeFirebaseKey(chkId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+
+                const sanitizedEvaluations = {};
+                if (item.evaluations && typeof item.evaluations === 'object') {
+                    for (let sName in item.evaluations) {
+                        const safeName = encodeFirebaseKey(sName);
+                        sanitizedEvaluations[safeName] = item.evaluations[sName] || {};
+                    }
+                }
+
+                currentChecklists[safeChkId] = {
+                    id: item.id || safeChkId,
+                    templateType: item.templateType || 'meb_katilim',
+                    title: item.title || '',
+                    sinif: item.sinif || '',
+                    date: item.date || '',
+                    evalType: item.evalType || 'score',
+                    badge: item.badge || 'ÇİZELGE',
+                    badgeColor: item.badgeColor || '#3b82f6',
+                    criteria: Array.isArray(item.criteria) ? item.criteria : [],
+                    targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
+                    evaluations: sanitizedEvaluations,
+                    isArchived: !!item.isArchived,
+                    createdAt: item.createdAt || new Date().toISOString()
+                };
+            }
+        });
+
+        if (!_lastSavedRefs.checklists || typeof _lastSavedRefs.checklists !== 'object') {
+            _lastSavedRefs.checklists = {};
+        }
+
+        for (let safeChkId in currentChecklists) {
+            if (JSON.stringify(currentChecklists[safeChkId]) !== JSON.stringify(_lastSavedRefs.checklists[safeChkId])) {
+                updates[`app_data/${uid}/checklists/${safeChkId}`] = currentChecklists[safeChkId];
+            }
+        }
+        for (let safeChkId in _lastSavedRefs.checklists) {
+            if (!currentChecklists[safeChkId]) {
+                updates[`app_data/${uid}/checklists/${safeChkId}`] = null;
+            }
+        }
+        candidateRefs.checklists = currentChecklists;
     }
 
     // 3. Değişiklikleri Firebase'e Tek Seferde Yaz (Atomik)
@@ -233,20 +424,28 @@ async function _executeSaveData() {
         const updateCount = Object.keys(updates).length;
         if (uid && window.db && updateCount > 0) {
             await window.db.ref().update(updates);
-            console.log(`[Firebase Atomik] ${updateCount} farklı kayıt (delta) güncellendi.`);
-            const dbStatusEl = document.getElementById('db-status');
-            if (dbStatusEl) {
-                dbStatusEl.style.color = 'var(--accent)';
-                dbStatusEl.title = 'Realtime DB (NoSQL Atomik Güncelleme)';
-            }
+            console.log(`[Firebase Atomik] ${updateCount} farklı kayıt (delta) başarıyla güncellendi.`);
+            
+            // Başarılı yazımda referansları commit et
+            if (candidateRefs.students) _lastSavedRefs.students = JSON.parse(JSON.stringify(candidateRefs.students));
+            if (candidateRefs.projects) _lastSavedRefs.projects = JSON.parse(JSON.stringify(candidateRefs.projects));
+            if (candidateRefs.regular_groups) _lastSavedRefs.regular_groups = JSON.parse(JSON.stringify(candidateRefs.regular_groups));
+            if (candidateRefs.exams) _lastSavedRefs.exams = JSON.parse(JSON.stringify(candidateRefs.exams));
+            if (candidateRefs.schedule !== null) _lastSavedRefs.schedule = candidateRefs.schedule ? JSON.parse(JSON.stringify(candidateRefs.schedule)) : [];
+            if (candidateRefs.tracking) _lastSavedRefs.tracking = JSON.parse(JSON.stringify(candidateRefs.tracking));
+            if (candidateRefs.checklists) _lastSavedRefs.checklists = JSON.parse(JSON.stringify(candidateRefs.checklists));
+
+            setDbSyncStatus('synced', `Realtime DB Güncel (${updateCount} delta)`);
+        } else if (uid && window.db) {
+            // Fark yok, zaten güncel
+            setDbSyncStatus('synced', 'Realtime DB Güncel');
+        } else {
+            setDbSyncStatus('offline', 'Çevrimdışı / Yerel Mod');
         }
     } catch (e) {
         console.error("Realtime DB güncelleme hatası:", e);
-        const dbStatusEl = document.getElementById('db-status');
-        if (dbStatusEl) {
-            dbStatusEl.style.color = 'var(--red)';
-            dbStatusEl.title = 'Bağlantı Hatası (Yerel Aktif)';
-        }
+        // Hata durumunda _lastSavedRefs değiştirilmez! Bir sonraki kayıtta tekrar denenecek.
+        setDbSyncStatus('error', 'Bağlantı Hatası: ' + (e.message || 'Yeniden denenecek'));
     }
 
     // LocalStorage Yedeği (Çevrimdışı/Hızlı Yükleme İçin - Kullanıcı Bazlı İzolasyon)
@@ -256,6 +455,7 @@ async function _executeSaveData() {
         groups: typeof groupData === 'object' ? groupData : {},
         schedule: scheduleData,
         tracking: trackingData,
+        checklists: typeof checklistData !== 'undefined' ? checklistData : [],
         exams: examData,
         lastUpdate: new Date().toISOString()
     };
@@ -271,7 +471,7 @@ let initialLoadComplete = false;
 
 // UI Aktif mi Kontrolü (Form doldururken tablo renderını engeller)
 function isUIActive() {
-    const activeModals = ['chart-modal', 'pg-create-modal', 'pg-detail-modal', 'evaluation-modal', 'xp-modal']
+    const activeModals = ['chart-modal', 'pg-create-modal', 'pg-detail-modal', 'evaluation-modal', 'xp-modal', 'checklist-eval-modal']
         .some(id => {
             const el = document.getElementById(id);
             return el && (el.style.display === 'block' || el.style.display === 'flex');
@@ -366,68 +566,78 @@ async function loadFromLocalStorage() {
 
         // Ödev & Proje Takip (Tracking) Firebase'den İlk Yükleme (once 'value')
         let trackingFound = false;
+        const migrationDoneKey = 'tracking_migration_done_' + uid;
+        const alreadyMigrated = localStorage.getItem(migrationDoneKey) === 'true';
+
         try {
             const trackSnap = await window.db.ref('app_data/' + uid + '/tracking').once('value');
             if (trackSnap.exists()) {
                 const trackVal = trackSnap.val();
-                let rawList = Array.isArray(trackVal) ? trackVal.filter(Boolean) : Object.values(trackVal || {});
                 let normalizedList = [];
                 let normalizedRefs = {};
-                rawList.forEach((item, idx) => {
-                    if (item) {
-                        const trackId = item.id ? String(item.id) : ('trk_' + idx);
-                        const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
-                        const decodedSubmissions = {};
-                        if (item.submissions && typeof item.submissions === 'object') {
-                            for (let k in item.submissions) {
-                                decodedSubmissions[decodeFirebaseKey(k)] = item.submissions[k];
+
+                if (trackVal && typeof trackVal === 'object') {
+                    const entries = Array.isArray(trackVal)
+                        ? trackVal.map((v, i) => [String(i), v]).filter(([_, v]) => Boolean(v))
+                        : Object.entries(trackVal);
+
+                    entries.forEach(([fbKey, item]) => {
+                        if (item) {
+                            const trackId = item.id ? String(item.id) : ('trk_' + fbKey);
+                            const safeTrackId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                            item.id = trackId;
+                            item.firebaseKey = safeTrackId;
+
+                            const decodedSubmissions = {};
+                            if (item.submissions && typeof item.submissions === 'object') {
+                                for (let k in item.submissions) {
+                                    decodedSubmissions[decodeFirebaseKey(k)] = item.submissions[k];
+                                }
                             }
+                            item.submissions = decodedSubmissions;
+                            normalizedList.push(item);
+                            normalizedRefs[safeTrackId] = item;
                         }
-                        item.submissions = decodedSubmissions;
-                        normalizedList.push(item);
-                        normalizedRefs[safeTrackId] = item;
-                    }
-                });
-                if (normalizedList.length > 0) {
-                    trackingData = normalizedList;
-                    _lastSavedRefs.tracking = normalizedRefs;
-                    trackingFound = true;
-                    renderTrackingList();
+                    });
                 }
+
+                trackingData = normalizedList;
+                _lastSavedRefs.tracking = normalizedRefs;
+                trackingFound = true;
+                localStorage.setItem(migrationDoneKey, 'true');
+                renderTrackingList();
             }
         } catch (e) {
             console.warn("Firebase tracking ilk yükleme hatası:", e);
         }
 
-        // Göç (Migration) Kontrolü: Eğer öğretmenin tracking klasörü boşsa ve yönetici ise main_data'dan bak
-        if (!trackingFound && currentUser.email === 'mremzi@gmail.com') {
+        // Göç (Migration) Kontrolü: Yalnızca ilk kurulumda (daha önce göç yapılmamışsa) bir defaya mahsus çalışır!
+        if (!trackingFound && !alreadyMigrated && currentUser.email === 'mremzi@gmail.com') {
             try {
                 const adminTrackSnap = await window.db.ref('app_data/main_data/tracking').once('value');
                 if (adminTrackSnap.exists()) {
                     const aVal = adminTrackSnap.val();
-                    const aList = Array.isArray(aVal) ? aVal.filter(Boolean) : Object.values(aVal || {});
-                    if (aList.length > 0) {
-                        console.log("[Göç] Yönetici tracking verileri main_data üzerinden içe aktarılıyor...");
-                        let normalizedList = [];
-                        let normalizedRefs = {};
-                        aList.forEach((item, idx) => {
+                    let normalizedList = [];
+                    let normalizedRefs = {};
+                    if (aVal && typeof aVal === 'object') {
+                        const entries = Array.isArray(aVal) ? aVal.map((v, i) => [String(i), v]).filter(([_, v]) => Boolean(v)) : Object.entries(aVal);
+                        entries.forEach(([fbKey, item]) => {
                             if (item) {
-                                const trackId = item.id ? String(item.id) : ('trk_' + idx);
-                                const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
-                                const decodedSubmissions = {};
-                                if (item.submissions && typeof item.submissions === 'object') {
-                                    for (let k in item.submissions) {
-                                        decodedSubmissions[decodeFirebaseKey(k)] = item.submissions[k];
-                                    }
-                                }
-                                item.submissions = decodedSubmissions;
+                                const trackId = item.id ? String(item.id) : ('trk_' + fbKey);
+                                const safeTrackId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                                item.id = trackId;
+                                item.firebaseKey = safeTrackId;
                                 normalizedList.push(item);
                                 normalizedRefs[safeTrackId] = item;
                             }
                         });
+                    }
+                    if (normalizedList.length > 0) {
+                        console.log("[Göç] Yönetici tracking verileri ilk kez main_data üzerinden içe aktarılıyor...");
                         trackingData = normalizedList;
                         _lastSavedRefs.tracking = normalizedRefs;
                         trackingFound = true;
+                        localStorage.setItem(migrationDoneKey, 'true');
                         renderTrackingList();
                         saveData(true);
                     }
@@ -437,14 +647,74 @@ async function loadFromLocalStorage() {
             }
         }
 
-        // Eğer Firebase'de tracking yoksa ama yerel önbellekte trackingData varsa, veriyi SİLME; Firebase'e senkronize et!
-        if (!trackingFound) {
+        // Eğer Firebase'de hiç tracking düğümü yoksa ve göç daha önce yapılmamışsa yerelden bir kere aktar
+        if (!trackingFound && !alreadyMigrated) {
             if (trackingData && trackingData.length > 0) {
-                console.log("[Veri] Yerel depolamadaki ödev/takip verileri Firebase'e aktarılıyor...");
+                console.log("[Veri] Yerel depolamadaki ilk ödev/takip verileri Firebase'e aktarılıyor...");
                 saveData(true);
+                localStorage.setItem(migrationDoneKey, 'true');
             } else {
                 trackingData = [];
                 _lastSavedRefs.tracking = {};
+            }
+        } else if (!trackingFound && alreadyMigrated) {
+            // Kullanıcı daha önce çalışmış ve silmiş; eski kayıtları kesinlikle geri yükleme!
+            trackingData = [];
+            window.trackingData = [];
+            _lastSavedRefs.tracking = {};
+            renderTrackingList();
+        }
+
+        // Çizelgeler (Checklists) Firebase'den İlk Yükleme (once 'value')
+        let checklistsFound = false;
+        try {
+            const chkSnap = await window.db.ref('app_data/' + uid + '/checklists').once('value');
+            if (chkSnap.exists()) {
+                const chkVal = chkSnap.val();
+                let normalizedList = [];
+                let normalizedRefs = {};
+                if (chkVal && typeof chkVal === 'object') {
+                    const entries = Array.isArray(chkVal)
+                        ? chkVal.map((v, i) => [String(i), v]).filter(([_, v]) => Boolean(v))
+                        : Object.entries(chkVal);
+
+                    entries.forEach(([fbKey, item]) => {
+                        if (item) {
+                            const chkId = item.id ? String(item.id) : ('chk_' + fbKey);
+                            const safeChkId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                            item.id = chkId;
+                            item.firebaseKey = safeChkId;
+
+                            const decodedEvaluations = {};
+                            if (item.evaluations && typeof item.evaluations === 'object') {
+                                for (let k in item.evaluations) {
+                                    decodedEvaluations[decodeFirebaseKey(k)] = item.evaluations[k];
+                                }
+                            }
+                            item.evaluations = decodedEvaluations;
+                            normalizedList.push(item);
+                            normalizedRefs[safeChkId] = item;
+                        }
+                    });
+                }
+                checklistData = normalizedList;
+                window.checklistData = normalizedList;
+                _lastSavedRefs.checklists = normalizedRefs;
+                checklistsFound = true;
+                if (typeof renderChecklistList === 'function') renderChecklistList();
+            }
+        } catch (e) {
+            console.warn("Firebase checklists ilk yükleme hatası:", e);
+        }
+
+        if (!checklistsFound) {
+            if (checklistData && checklistData.length > 0) {
+                window.checklistData = checklistData;
+                saveData(true);
+            } else {
+                checklistData = [];
+                window.checklistData = [];
+                _lastSavedRefs.checklists = {};
             }
         }
 
@@ -491,7 +761,11 @@ function attachListeners(uid) {
         if (!exists) {
             studentData.push(student);
             _lastSavedRefs.students[snap.key] = student;
-            if (!isUIActive() && initialLoadComplete) renderStudentTable();
+            if (!isUIActive() && initialLoadComplete) {
+                renderStudentTable();
+                if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+                if (typeof renderTrackingList === 'function') renderTrackingList();
+            }
         }
     });
 
@@ -505,7 +779,11 @@ function attachListeners(uid) {
         if (!stillInRefs) {
             studentData = studentData.filter(s => String(s.no) !== targetNo);
             delete _lastSavedRefs.students[key];
-            if (!isUIActive()) renderStudentTable();
+            if (!isUIActive()) {
+                renderStudentTable();
+                if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
+                if (typeof renderTrackingList === 'function') renderTrackingList();
+            }
         }
     });
 
@@ -561,14 +839,20 @@ function attachListeners(uid) {
 
     db.ref(`app_data/${uid}/tracking`).on('value', snap => {
         const val = snap.val();
-        if (val) {
-            let rawList = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+        if (val && typeof val === 'object') {
+            const entries = Array.isArray(val)
+                ? val.map((v, i) => [String(i), v]).filter(([_, v]) => Boolean(v))
+                : Object.entries(val);
+
             let normalizedList = [];
             let normalizedRefs = {};
-            rawList.forEach((item, idx) => {
+            entries.forEach(([fbKey, item]) => {
                 if (item) {
-                    const trackId = item.id ? String(item.id) : ('trk_' + idx);
-                    const safeTrackId = encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                    const trackId = item.id ? String(item.id) : ('trk_' + fbKey);
+                    const safeTrackId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                    item.id = trackId;
+                    item.firebaseKey = safeTrackId;
+
                     const decodedSubmissions = {};
                     if (item.submissions && typeof item.submissions === 'object') {
                         for (let k in item.submissions) {
@@ -590,12 +874,54 @@ function attachListeners(uid) {
         }
         if (!isUIActive() && initialLoadComplete) renderTrackingList();
     });
+
+    // Checklists (Öğretmen Takip ve Kontrol Çizelgeleri) Dinleyicisi
+    db.ref(`app_data/${uid}/checklists`).on('value', snap => {
+        const val = snap.val();
+        if (val) {
+            let entries = Object.entries(val);
+            let normalizedList = [];
+            let normalizedRefs = {};
+            entries.forEach(([fbKey, item]) => {
+                if (item) {
+                    const chkId = item.id ? String(item.id) : ('chk_' + fbKey);
+                    const safeChkId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                    item.id = chkId;
+                    item.firebaseKey = safeChkId;
+
+                    const decodedEvaluations = {};
+                    if (item.evaluations && typeof item.evaluations === 'object') {
+                        for (let k in item.evaluations) {
+                            decodedEvaluations[decodeFirebaseKey(k)] = item.evaluations[k];
+                        }
+                    }
+                    item.evaluations = decodedEvaluations;
+                    normalizedList.push(item);
+                    normalizedRefs[safeChkId] = item;
+                }
+            });
+            checklistData = normalizedList;
+            window.checklistData = normalizedList;
+            _lastSavedRefs.checklists = normalizedRefs;
+        } else {
+            if (initialLoadComplete) {
+                checklistData = [];
+                window.checklistData = [];
+                _lastSavedRefs.checklists = {};
+            }
+        }
+        if (!isUIActive() && initialLoadComplete && typeof renderChecklistList === 'function') {
+            renderChecklistList();
+        }
+    });
 }
 
 function fullUIRender() {
     renderStudentTable();
     renderSchedule();
     renderTrackingList();
+    if (typeof updateChecklistClassContainer === 'function') updateChecklistClassContainer();
+    if (typeof renderChecklistList === 'function') renderChecklistList();
     renderExams();
     updateClassDropdown();
     if (typeof ileriSinifDoldur === 'function') ileriSinifDoldur();
@@ -630,10 +956,16 @@ async function loadLocalFallback() {
         try {
             const p = JSON.parse(savedData);
             studentData = p.students || [];
-            advancedGroupData = p.advancedGroups || [];
+            if (typeof advancedGroupData !== 'undefined') {
+                advancedGroupData = p.advancedGroups || [];
+            } else {
+                window.advancedGroupData = p.advancedGroups || [];
+            }
             groupData = p.groups || {};
             scheduleData = p.schedule || [];
             trackingData = p.tracking || [];
+            checklistData = p.checklists || [];
+            window.checklistData = checklistData;
             examData = p.exams || [];
             fullUIRender();
         } catch (e) {}
@@ -735,6 +1067,7 @@ function exportToJson() {
         groups: typeof groupData === 'object' ? groupData : {},
         schedule: scheduleData,
         tracking: trackingData,
+        checklists: typeof checklistData !== 'undefined' ? checklistData : (window.checklistData || []),
         exams: examData,
         advancedGroups: typeof advancedGroupData !== 'undefined' ? advancedGroupData : [],
         lastUpdate: new Date().toISOString()
@@ -759,6 +1092,8 @@ function importFromJson(input) {
                     groupData = parsed.groups || {};
                     scheduleData = parsed.schedule || [];
                     trackingData = parsed.tracking || [];
+                    checklistData = parsed.checklists || [];
+                    window.checklistData = checklistData;
                     examData = parsed.exams || [];
                     
                     saveData(); // Atomik olarak Firebase'e iter
@@ -778,6 +1113,8 @@ function resetAllData() {
             studentData = [];
             examData = [];
             trackingData = [];
+            checklistData = [];
+            window.checklistData = [];
             scheduleData = [];
             if (typeof projeGruplariData !== 'undefined') projeGruplariData = [];
             if (typeof advancedGroupData !== 'undefined') advancedGroupData = [];

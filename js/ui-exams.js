@@ -101,6 +101,7 @@
         function processMappedExcel() {
             const examId = parseInt(document.getElementById('active-exam-upload-select').value); const exam = examData.find(e => e.id === examId);
             if (!exam) return alert("Hedef sınav bulunamadı.");
+            const examClasses = (exam.classes || (exam.sinif ? [exam.sinif] : [])).map(c => typeof window.normSinif === 'function' ? window.normSinif(c) : String(c).trim().toUpperCase());
             const maps = {
                 studentNo: document.getElementById('map-studentNo')?.value || '',
                 studentName: document.getElementById('map-studentName')?.value || '',
@@ -121,8 +122,15 @@
                 if (!row || row.length === 0 || row[maps.studentName] === "") return;
                 let name = row[maps.studentName].toString().trim(); let no = maps.studentNo !== "" ? row[maps.studentNo].toString().trim() : "";
                 let rowClass = maps.studentClass !== "" ? row[maps.studentClass].toString().trim().toUpperCase() : "";
-                let student = studentData.find(s => (s.adSoyad.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR') || (no !== "" && s.no.toString() === no.toString())) && examClasses.includes(s.sinif));
-                if (!student && rowClass !== "" && !examClasses.includes(rowClass)) return;
+                let normRowClass = typeof window.normSinif === 'function' ? window.normSinif(rowClass) : rowClass;
+                let student = studentData.find(s => {
+                    const nameMatch = s.adSoyad.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR');
+                    const noMatch = (no !== "" && String(s.no) === no);
+                    const normSClass = typeof window.normSinif === 'function' ? window.normSinif(s.sinif) : String(s.sinif).trim().toUpperCase();
+                    const classMatch = examClasses.length === 0 || examClasses.includes(normSClass);
+                    return (nameMatch || noMatch) && classMatch;
+                });
+                if (!student && rowClass !== "" && examClasses.length > 0 && !examClasses.includes(normRowClass)) return;
                 const studentKey = student ? student.adSoyad : name; const finalClass = student ? student.sinif : rowClass;
 
                 exam.results[studentKey] = {
@@ -383,13 +391,15 @@
                 let liHtml = '';
                 grup.forEach((ogr, oi) => {
                     const rol = rollerler[Math.min(oi, rollerler.length - 1)];
+                    const safeJsAd = (ogr.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const escapedName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(ogr.adSoyad) : (ogr.adSoyad || '').replace(/"/g, '&quot;');
                     liHtml += `<li style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px;">
                     <div style="display:flex;flex-direction:column;gap:2px;">
-                        <span class="student-name-text" data-name="${ogr.adSoyad}" style="font-weight:600;font-size:14px;">${ogr.no} - ${ogr.adSoyad}</span>
+                        <span class="student-name-text" data-name="${escapedName}" style="font-weight:600;font-size:14px;">${ogr.no} - ${escapedName}</span>
                         <div style="display:flex;align-items:center;gap:5px;">
                             <span class="xp-badge" style="font-size:10px;padding:1px 5px;">${ogr.xp || 0} XP</span>
-                            <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${ogr.adSoyad}',1)">+</button>
-                            <button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${ogr.adSoyad}',-1)">-</button>
+                            <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${safeJsAd}',1)">+</button>
+                            <button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${safeJsAd}',-1)">-</button>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">

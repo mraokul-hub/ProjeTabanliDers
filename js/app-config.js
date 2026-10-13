@@ -8,7 +8,16 @@ let studentData = [];
 let groupData = "";
 let scheduleData = [];
 let trackingData = [];
+let checklistData = [];
 let examData = [];
+
+// window referans senkronizasyonu
+window.studentData = studentData;
+window.groupData = groupData;
+window.scheduleData = scheduleData;
+window.trackingData = trackingData;
+window.checklistData = checklistData;
+window.examData = examData;
 let myChart = null;
 let currentSort = { column: null, asc: true };
 let activeExamId = null;
