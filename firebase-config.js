@@ -17,7 +17,21 @@ try {
     }
     window.analytics = firebase.analytics();
     window.db = firebase.database();
+
+    // Canlı Bağlantı Durumu Takibi (.info/connected) - Fail-Fast Desteği
+    // null: İlk bağlantı bekleniyor, true: Bağlı, false: Bağlantı koptu
+    window.isFirebaseConnected = null;
+    if (window.db) {
+        window.db.ref(".info/connected").on("value", snap => {
+            const connected = snap.val() === true;
+            window.isFirebaseConnected = connected;
+            if (typeof window.onFirebaseConnectionChange === 'function') {
+                window.onFirebaseConnectionChange(connected);
+            }
+        });
+    }
 } catch (e) {
     console.error("Firebase başlatma hatası (Çevrimdışı veya bağlantı sorunu):", e);
     window.db = null; // db objesinin null olması, çökmesini engelleyecek
+    window.isFirebaseConnected = false;
 }

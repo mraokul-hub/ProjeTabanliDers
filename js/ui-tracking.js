@@ -184,6 +184,43 @@
         window.toggleDeadlineDropdown = toggleDeadlineDropdown;
         window.closeDeadlineBanner = closeDeadlineBanner;
 
+        function isTrackingItemPassive(item, now = new Date()) {
+            if (!item) return true;
+            if (item.isEvaluated || item.isArchived || item.isPassive) return true;
+            if (!item.date) return false;
+            const deadline = new Date(item.date);
+            const isActiveDay = deadline.toDateString() === now.toDateString();
+            return !isActiveDay && deadline < now;
+        }
+        window.isTrackingItemPassive = isTrackingItemPassive;
+
+        function navigateToTrackingItem(taskId) {
+            if (typeof openTab === 'function') {
+                openTab('tab5');
+            }
+            setTimeout(() => {
+                const card = document.getElementById(`tracking-card-${taskId}`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const origTransition = card.style.transition;
+                    const origShadow = card.style.boxShadow;
+                    const origTransform = card.style.transform;
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.boxShadow = '0 0 0 3px #10b981, 0 10px 25px -5px rgba(16, 185, 129, 0.45)';
+                    card.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        card.style.boxShadow = origShadow || '';
+                        card.style.transform = origTransform || '';
+                        card.style.transition = origTransition || '';
+                    }, 2500);
+                } else {
+                    const list = document.getElementById('tracking-list-active');
+                    if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 120);
+        }
+        window.navigateToTrackingItem = navigateToTrackingItem;
+
         function checkDeadlines() {
             const banner = document.getElementById('deadline-banner');
             const bannerText = document.getElementById('deadline-banner-text');
@@ -191,9 +228,14 @@
             if (!banner || !bannerText) return;
 
             const now = new Date();
-            let upcomingTasks = trackingData.filter(item => {
-                const dueDate = new Date(item.date);
-                const diffTime = dueDate - now;
+            let upcomingTasks = (trackingData || []).filter(item => {
+                if (!item || !item.date) return false;
+
+                // Pasif hale geçenleri (değerlendirilmiş veya süresi bitmiş) kesinlikle gösterme!
+                if (isTrackingItemPassive(item, now)) return false;
+
+                const deadline = new Date(item.date);
+                const diffTime = deadline - now;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 return diffDays >= 0 && diffDays <= 7;
             });
@@ -221,9 +263,10 @@
 
                     const safeTitle = typeof escapeHTML === 'function' ? escapeHTML(task.title) : task.title;
                     const safeSinif = typeof escapeHTML === 'function' ? escapeHTML(task.sinif || '') : (task.sinif || '');
+                    const safeId = String(task.id || '').replace(/'/g, "\\'");
 
                     return `
-                    <div class="deadline-task-row">
+                    <div class="deadline-task-row" onclick="navigateToTrackingItem('${safeId}')" title="📜 6. Ödev & Proje Takip Sistemi'nde Aç" style="cursor: pointer;">
                         <div class="deadline-task-main">
                             <span class="deadline-task-idx">${idx + 1}</span>
                             <span class="deadline-task-desc">${safeTitle}</span>
@@ -231,6 +274,7 @@
                         <div class="deadline-task-meta">
                             <span class="deadline-class-pill">${safeSinif}</span>
                             <span class="deadline-time-pill ${badgeClass}">${dayText}</span>
+                            <i class="fas fa-arrow-right" style="font-size: 11px; opacity: 0.6; margin-left: 4px;"></i>
                         </div>
                     </div>`;
                 });
@@ -240,6 +284,7 @@
                 banner.style.display = 'none';
             }
         }
+        window.checkDeadlines = checkDeadlines;
 
         function renderTrackingList() {
             if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
@@ -257,9 +302,7 @@
             let passiveCount = 0;
 
             trackingData.forEach(item => {
-                const deadline = new Date(item.date);
-                const isActiveDay = deadline.toDateString() === now.toDateString();
-                const isPassive = item.isEvaluated || (!isActiveDay && deadline < now);
+                const isPassive = isTrackingItemPassive(item, now);
 
                 const assignedStudents = getTrackingItemStudents(item);
                 const totalCount = assignedStudents.length;
@@ -271,6 +314,7 @@
 
                 const card = document.createElement('div');
                 card.className = 'form-box';
+                card.id = `tracking-card-${item.id}`;
                 card.style = `margin-bottom:15px; border-left: 5px solid ${borderColor}; ${isPassive ? 'opacity:0.75;' : ''}`;
                 card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
                 <div><span class="xp-badge"${badgeExtra}>${item.type}</span>${pasifLabel}<h4 style="margin:5px 0;">${item.title} (${item.sinif})</h4><p style="font-size:12px; margin:0; color:var(--text-muted);">Teslim: ${doneCount} / ${totalCount} | Son Tarih: ${new Date(item.date).toLocaleString('tr-TR')}</p></div>

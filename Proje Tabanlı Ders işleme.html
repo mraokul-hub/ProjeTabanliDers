@@ -1555,12 +1555,15 @@
             border: 1px solid var(--border);
             border-left: 3px solid #10b981;
             border-radius: 8px;
-            transition: border-color 0.2s, transform 0.2s;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s, background 0.2s, box-shadow 0.2s;
         }
 
         .deadline-task-row:hover {
             border-color: #10b981;
-            transform: translateX(2px);
+            transform: translateX(4px);
+            background: rgba(16, 185, 129, 0.08);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
         }
 
         .deadline-task-main {
@@ -2080,8 +2083,10 @@
 
         /* ── Takip & Kontrol Çizelgeleri Stilleri ── */
         .btn-chk-status {
-            width: 28px;
+            min-width: 28px;
             height: 28px;
+            padding: 0 4px;
+            box-sizing: border-box;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: var(--input-bg, #f8fafc);
@@ -2093,7 +2098,6 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
         }
         .btn-chk-status:hover {
             transform: scale(1.08);
@@ -2122,6 +2126,12 @@
             color: #ffffff !important;
             border-color: #7c3aed !important;
             box-shadow: 0 2px 6px rgba(139,92,246,0.35);
+        }
+        .chk-criterion-header {
+            transition: background 0.15s ease;
+        }
+        .chk-criterion-header:hover {
+            background: rgba(59,130,246,0.06);
         }
     </style>
 </head>
@@ -3802,21 +3812,28 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             style="width:100%; padding:6px 28px 6px 10px; font-size:12px; border-radius:6px; border:1px solid var(--border);">
                         <i class="fas fa-search" style="position:absolute; right:8px; top:8px; color:var(--text-muted); font-size:12px;"></i>
                     </div>
-                    <button class="btn" onclick="setChecklistEvalSort('no')" style="padding:6px 10px; font-size:11px; background:var(--card-bg); border:1px solid var(--border);" title="Numaraya Göre Sırala">
-                        <i class="fas fa-sort-numeric-down"></i> No
+                    <span id="chk-modal-count-badge" style="font-size:11.5px; font-weight:700; color:var(--text-muted); background:var(--card-bg); border:1px solid var(--border); padding:5px 9px; border-radius:6px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px;" title="Sınıf Mevcudu / Filtrelenen Öğrenci Sayısı">
+                        <i class="fas fa-users" style="color:var(--secondary);"></i> <span id="chk-modal-count-text">0 Öğrenci</span>
+                    </span>
+                    <button id="chk-sort-btn-no" type="button" class="btn" onclick="setChecklistEvalSort('no')" style="padding:6px 10px; font-size:11px; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); font-weight:600; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Numaraya Göre Sırala">
+                        <i class="fas fa-sort-numeric-down" style="color:var(--secondary);"></i> No
                     </button>
-                    <button class="btn" onclick="setChecklistEvalSort('name')" style="padding:6px 10px; font-size:11px; background:var(--card-bg); border:1px solid var(--border);" title="İsme Göre Sırala">
-                        <i class="fas fa-sort-alpha-down"></i> İsim
+                    <button id="chk-sort-btn-name" type="button" class="btn" onclick="setChecklistEvalSort('name')" style="padding:6px 10px; font-size:11px; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); font-weight:600; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="İsme Göre Sırala">
+                        <i class="fas fa-sort-alpha-down" style="color:var(--secondary);"></i> İsim
                     </button>
                 </div>
 
                 <!-- Sağ: Toplu Doldurma Butonları & Raporlama -->
                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <button class="btn" onclick="openChecklistCriteriaConfigModal()" style="padding:6px 12px; font-size:11.5px; background:rgba(236,72,153,0.12); color:#ec4899; border:1px solid rgba(236,72,153,0.3); font-weight:700;" title="Kriterleri ve Değerlendirme Simgelerini Düzenle">
+                        <i class="fas fa-sliders-h"></i> Kriter & Simgeleri Düzenle
+                    </button>
+                    <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
                     <button class="btn" onclick="batchSetAllActiveChecklist('maxScore')" style="padding:6px 10px; font-size:11.5px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.3);" title="Tüm öğrencilere kriterlerin tam puanını ver">
                         <i class="fas fa-check-double"></i> Tam Puan
                     </button>
-                    <button class="btn" onclick="batchSetAllActiveChecklist('+')" style="padding:6px 10px; font-size:11.5px; background:rgba(59,130,246,0.12); color:#3b82f6; border:1px solid rgba(59,130,246,0.3);" title="Tüm simgeli kutuları + yap">
-                        <i class="fas fa-plus"></i> Hepsi (+)
+                    <button id="chk-btn-batch-positive" class="btn" onclick="batchSetAllActiveChecklist('firstPositive')" style="padding:6px 10px; font-size:11.5px; background:rgba(59,130,246,0.12); color:#3b82f6; border:1px solid rgba(59,130,246,0.3);" title="Tüm simgeli kutuları geçer/pozitif simge ile doldur">
+                        <i class="fas fa-plus"></i> <span id="chk-btn-batch-positive-text">Hepsi (+)</span>
                     </button>
                     <button class="btn" onclick="batchSetAllActiveChecklist('clear')" style="padding:6px 10px; font-size:11.5px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.25);" title="Puanları sıfırla">
                         <i class="fas fa-eraser"></i> Sıfırla
@@ -3859,6 +3876,107 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     </button>
                     <button class="btn btn-primary" onclick="closeChecklistModal()" style="font-size:13px; padding:9px 22px; font-weight:700;">
                         <i class="fas fa-check"></i> Kapat ve Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Öğretmen Takip & Kontrol Çizelgesi Kriter Yapılandırma Modalı ── -->
+    <div id="checklist-criteria-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:2100; backdrop-filter:blur(5px); padding:20px; box-sizing:border-box; overflow-y:auto;">
+        <div class="container" style="max-width:680px; margin:40px auto; position:relative; background:var(--card-bg); border-radius:var(--radius); padding:24px; box-shadow:0 25px 50px rgba(0,0,0,0.45); border:1px solid var(--border);">
+            <button class="action-btn btn-delete" onclick="closeChecklistCriteriaConfigModal()"
+                style="position:absolute; top:20px; right:20px; font-size:18px;" title="Kapat"><i class="fas fa-times"></i></button>
+
+            <div style="margin-bottom:16px; padding-right:35px;">
+                <h3 style="margin:0 0 6px 0; color:var(--primary); font-size:18px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-sliders-h" style="color:#ec4899;"></i> Çizelge Kriterlerini & Simgelerini Düzenle
+                </h3>
+                <p id="chk-criteria-modal-subtitle" style="margin:0; font-size:12.5px; color:var(--text-muted); line-height:1.4;">
+                    Kriter başlıklarını değiştirebilir, yeni kriter sütunları ekleyebilir, puanları veya değerlendirme simgelerini (+ / - / ✓ / 1-5 vb.) güncelleyebilirsiniz.
+                </p>
+            </div>
+
+            <!-- Değerlendirme Formatı Seçimi -->
+            <div style="background:var(--tab-bg); padding:12px 14px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;">
+                <label style="font-size:12px; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">
+                    <i class="fas fa-cog"></i> Değerlendirme Formatı:
+                </label>
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; font-weight:600;">
+                        <input type="radio" name="chk-modal-evaltype" value="check" id="chk-modal-evaltype-check" onchange="onChecklistCriteriaModalEvalTypeChange('check')">
+                        <span>Kontrol Simgeli (+ / - / G / ! / ✓ vb.)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; font-weight:600;">
+                        <input type="radio" name="chk-modal-evaltype" value="score" id="chk-modal-evaltype-score" onchange="onChecklistCriteriaModalEvalTypeChange('score')">
+                        <span>Puanlı Değerlendirme (0-100 Puan)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Değerlendirme Simgeleri / Butonları Yapılandırma Bölümü (Sadece Kontrol Tipi İçin) -->
+            <div id="chk-modal-symbols-section" style="background:var(--tab-bg); padding:12px 14px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--text-main); margin:0;">
+                        <i class="fas fa-icons" style="color:#3b82f6;"></i> Değerlendirme Simgeleri & Butonları:
+                    </label>
+                    <span style="font-size:11px; color:var(--text-muted);">Hücrelerdeki butonları ve renkleri özelleştirin</span>
+                </div>
+
+                <!-- Hızlı Hazır Şablonlar (Presetler) -->
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Hazır Simge Şablonları:</div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button type="button" class="btn" onclick="applyChecklistSymbolPreset('standard')" style="padding:3px 8px; font-size:11px; background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);" title="Varsayılan: + / - / G / !">+ / - / G / !</button>
+                        <button type="button" class="btn" onclick="applyChecklistSymbolPreset('tick_cross')" style="padding:3px 8px; font-size:11px; background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);" title="Onay / Red: ✓ / ✗ / G / !">✓ / ✗ / G / !</button>
+                        <button type="button" class="btn" onclick="applyChecklistSymbolPreset('three_tier')" style="padding:3px 8px; font-size:11px; background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);" title="3 Kademeli: + / ½ / -">+ / ½ / -</button>
+                        <button type="button" class="btn" onclick="applyChecklistSymbolPreset('ratings')" style="padding:3px 8px; font-size:11px; background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);" title="1-5 Puan">5 / 4 / 3 / 2 / 1</button>
+                        <button type="button" class="btn" onclick="applyChecklistSymbolPreset('letters')" style="padding:3px 8px; font-size:11px; background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);" title="Harf Notu">A / B / C / D</button>
+                        <button type="button" class="btn" onclick="applyChecklistSymbolPreset('faces')" style="padding:3px 8px; font-size:11px; background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);" title="Gülen Yüzler">😊 / 😐 / 🙁</button>
+                    </div>
+                </div>
+
+                <!-- Simge Listesi (Dinamik) -->
+                <div id="chk-modal-symbols-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px; max-height:160px; overflow-y:auto; padding-right:4px;">
+                    <!-- JS ile dinamik render edilir -->
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <button type="button" class="btn" onclick="addChecklistSymbolRow()" style="padding:5px 12px; font-size:11.5px; background:rgba(59,130,246,0.12); color:var(--secondary); border:1px solid rgba(59,130,246,0.3); font-weight:700;">
+                        <i class="fas fa-plus"></i> Yeni Simge / Buton Ekle
+                    </button>
+                    <span style="font-size:11px; color:var(--text-muted); font-style:italic;">☑ "Geçer" işaretli olanlar toplam puana +1 sayılır</span>
+                </div>
+            </div>
+
+            <!-- Kriter Listesi -->
+            <div style="margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:12.5px; font-weight:700; color:var(--text-main);">Kriter ve Sütun Başlıkları</span>
+                    <span id="chk-modal-criteria-summary" style="font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:6px; background:rgba(59,130,246,0.12); color:var(--secondary);">2 Kriter</span>
+                </div>
+                <div id="chk-modal-criteria-list" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+                    <!-- JS ile dinamik çizilir -->
+                </div>
+            </div>
+
+            <!-- Alt Araçlar ve Kaydet Butonu -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-top:14px; border-top:1px solid var(--border);">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="btn" onclick="addChecklistCriteriaModalRow()" style="padding:7px 12px; font-size:12px; background:rgba(59,130,246,0.12); color:var(--secondary); border:1px solid rgba(59,130,246,0.3); font-weight:700;">
+                        <i class="fas fa-plus"></i> Yeni Kriter Ekle
+                    </button>
+                    <button type="button" id="chk-modal-distribute-btn" class="btn" onclick="distributeChecklistCriteriaModalScores()" style="padding:7px 12px; font-size:12px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.3); font-weight:600; display:none;">
+                        <i class="fas fa-balance-scale"></i> 100 Puana Eşit Dağıt
+                    </button>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn" onclick="closeChecklistCriteriaConfigModal()" style="padding:7px 14px; font-size:12px; background:var(--tab-bg); border:1px solid var(--border);">
+                        Vazgeç
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveChecklistCriteriaConfig()" style="padding:7px 18px; font-size:12px; font-weight:700;">
+                        <i class="fas fa-check"></i> Değişiklikleri Kaydet
                     </button>
                 </div>
             </div>

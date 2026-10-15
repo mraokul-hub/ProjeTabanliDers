@@ -72,6 +72,76 @@
         }
     };
 
+    const DEFAULT_CHECK_SYMBOLS = [
+        { key: '+', label: 'Var / Yapıldı', color: '#10b981', isPositive: true },
+        { key: '-', label: 'Yok / Eksik', color: '#ef4444', isPositive: false },
+        { key: 'G', label: 'Gelmedi', color: '#f59e0b', isPositive: false },
+        { key: '!', label: 'Unuttu / Muaf', color: '#8b5cf6', isPositive: false }
+    ];
+
+    const CHECK_SYMBOL_PRESETS = {
+        'standard': {
+            name: '+ / - / G / !',
+            symbols: [
+                { key: '+', label: 'Var / Yapıldı', color: '#10b981', isPositive: true },
+                { key: '-', label: 'Yok / Eksik', color: '#ef4444', isPositive: false },
+                { key: 'G', label: 'Gelmedi', color: '#f59e0b', isPositive: false },
+                { key: '!', label: 'Unuttu / Muaf', color: '#8b5cf6', isPositive: false }
+            ]
+        },
+        'tick_cross': {
+            name: '✓ / ✗ / G / !',
+            symbols: [
+                { key: '✓', label: 'Tam / Onay', color: '#10b981', isPositive: true },
+                { key: '✗', label: 'Eksik / Red', color: '#ef4444', isPositive: false },
+                { key: 'G', label: 'Gelmedi', color: '#f59e0b', isPositive: false },
+                { key: '!', label: 'Unuttu', color: '#8b5cf6', isPositive: false }
+            ]
+        },
+        'three_tier': {
+            name: '+ / ½ / -',
+            symbols: [
+                { key: '+', label: 'Tam Başarılı', color: '#10b981', isPositive: true },
+                { key: '½', label: 'Kısmi / Orta', color: '#f59e0b', isPositive: false },
+                { key: '-', label: 'Yetersiz / Eksik', color: '#ef4444', isPositive: false }
+            ]
+        },
+        'ratings': {
+            name: '5 / 4 / 3 / 2 / 1',
+            symbols: [
+                { key: '5', label: 'Pekiyi (5)', color: '#10b981', isPositive: true },
+                { key: '4', label: 'İyi (4)', color: '#3b82f6', isPositive: true },
+                { key: '3', label: 'Orta (3)', color: '#f59e0b', isPositive: false },
+                { key: '2', label: 'Geçer (2)', color: '#ea580c', isPositive: false },
+                { key: '1', label: 'Yetersiz (1)', color: '#ef4444', isPositive: false }
+            ]
+        },
+        'letters': {
+            name: 'A / B / C / D',
+            symbols: [
+                { key: 'A', label: 'A (Çok İyi)', color: '#10b981', isPositive: true },
+                { key: 'B', label: 'B (İyi)', color: '#3b82f6', isPositive: true },
+                { key: 'C', label: 'C (Orta)', color: '#f59e0b', isPositive: false },
+                { key: 'D', label: 'D (Geliştirilmeli)', color: '#ef4444', isPositive: false }
+            ]
+        },
+        'faces': {
+            name: '😊 / 😐 / 🙁',
+            symbols: [
+                { key: '😊', label: 'Başarılı', color: '#10b981', isPositive: true },
+                { key: '😐', label: 'Orta', color: '#f59e0b', isPositive: false },
+                { key: '🙁', label: 'Geliştirilmeli', color: '#ef4444', isPositive: false }
+            ]
+        }
+    };
+
+    function getChecklistSymbols(item) {
+        if (item && Array.isArray(item.customSymbols) && item.customSymbols.length > 0) {
+            return item.customSymbols;
+        }
+        return DEFAULT_CHECK_SYMBOLS;
+    }
+
     let _currentCriteria = [];
     let _editingChecklistId = null;
     let _activeModalChecklistId = null;
@@ -412,6 +482,9 @@
         setChecklistList(list);
 
         renderChecklistList();
+        if (typeof window.invalidateChecklistSavedRef === 'function') {
+            window.invalidateChecklistSavedRef();
+        }
         if (typeof saveData === 'function') saveData(true);
 
         // Formu sıfırla
@@ -645,6 +718,7 @@
     // ── MATRİS DEĞERLENDİRME MODALI ──
     function openChecklistModal(id) {
         _activeModalChecklistId = id;
+        window._activeModalChecklistId = id;
         const item = getChecklistList().find(c => String(c.id) === String(id));
         if (!item) return;
 
@@ -663,12 +737,13 @@
             titleEl.innerHTML = `<i class="fas fa-clipboard-check" style="color:var(--secondary); margin-right:8px;"></i> ${escapeHtml(item.title)}`;
         }
         if (infoEl) {
+            const symbols = getChecklistSymbols(item);
             infoEl.innerHTML = `
                 <span class="xp-badge" style="background:${item.badgeColor || 'var(--secondary)'};">${item.badge || 'ÇİZELGE'}</span>
                 <span><strong>Sınıf:</strong> ${item.sinif}</span>
                 <span><strong>Mevcut:</strong> ${students.length} Öğrenci</span>
                 <span><strong>Tarih:</strong> ${item.date || '-'}</span>
-                <span><strong>Format:</strong> ${item.evalType === 'score' ? 'Puanlı (0-100)' : 'Kontrol (+ / - / G / !)'}</span>
+                <span><strong>Format:</strong> ${item.evalType === 'score' ? 'Puanlı (0-100)' : 'Kontrol (' + symbols.map(s => escapeHtml(s.key)).join(' / ') + ')'}</span>
             `;
         }
 
@@ -680,6 +755,7 @@
         const modal = document.getElementById('checklist-eval-modal');
         if (modal) modal.style.display = 'none';
         _activeModalChecklistId = null;
+        window._activeModalChecklistId = null;
         renderChecklistList();
         if (typeof saveData === 'function') saveData(true);
     }
@@ -701,7 +777,8 @@
         const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
         if (!item) return;
 
-        let students = getChecklistItemStudents(item);
+        const allStudents = getChecklistItemStudents(item);
+        let students = [...allStudents];
         const searchInput = document.getElementById('chk-modal-search');
         const filterVal = (searchInput?.value || '').trim().toLocaleLowerCase('tr-TR');
 
@@ -711,6 +788,30 @@
                 const noMatch = String(s.no || '').includes(filterVal);
                 return nameMatch || noMatch;
             });
+        }
+
+        // Toolbar sayaç rozetini güncelle
+        const countText = document.getElementById('chk-modal-count-text');
+        if (countText) {
+            countText.textContent = filterVal ? `${students.length} / ${allStudents.length} Öğrenci` : `${students.length} Öğrenci`;
+        }
+
+        // Toolbar sıralama butonlarının görünüm ve aktiflik durumunu güncelle
+        const btnSortNo = document.getElementById('chk-sort-btn-no');
+        const btnSortName = document.getElementById('chk-sort-btn-name');
+        if (btnSortNo) {
+            const isActive = _chkSortMode === 'no';
+            btnSortNo.style.background = isActive ? 'rgba(59,130,246,0.15)' : 'var(--card-bg)';
+            btnSortNo.style.color = isActive ? 'var(--secondary)' : 'var(--text-main)';
+            btnSortNo.style.borderColor = isActive ? 'var(--secondary)' : 'var(--border)';
+            btnSortNo.innerHTML = `<i class="fas fa-sort-numeric-${_chkSortAsc ? 'down' : 'up'}" style="color:var(--secondary);"></i> No ${isActive ? (_chkSortAsc ? '▲' : '▼') : ''}`;
+        }
+        if (btnSortName) {
+            const isActive = _chkSortMode === 'name';
+            btnSortName.style.background = isActive ? 'rgba(59,130,246,0.15)' : 'var(--card-bg)';
+            btnSortName.style.color = isActive ? 'var(--secondary)' : 'var(--text-main)';
+            btnSortName.style.borderColor = isActive ? 'var(--secondary)' : 'var(--border)';
+            btnSortName.innerHTML = `<i class="fas fa-sort-alpha-${_chkSortAsc ? 'down' : 'up'}" style="color:var(--secondary);"></i> İsim ${isActive ? (_chkSortAsc ? '▲' : '▼') : ''}`;
         }
 
         // Sıralama
@@ -728,6 +829,28 @@
             }
         });
 
+        // Header meta bilgisi güncellensin
+        const symbols = getChecklistSymbols(item);
+        const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
+        const primaryPositiveKey = positiveKeys[0] || symbols[0]?.key || '+';
+
+        const infoEl = document.getElementById('chk-modal-info');
+        if (infoEl) {
+            infoEl.innerHTML = `
+                <span class="xp-badge" style="background:${item.badgeColor || 'var(--secondary)'};">${item.badge || 'ÇİZELGE'}</span>
+                <span><strong>Sınıf:</strong> ${item.sinif}</span>
+                <span><strong>Mevcut:</strong> ${students.length} Öğrenci</span>
+                <span><strong>Tarih:</strong> ${item.date || '-'}</span>
+                <span><strong>Format:</strong> ${item.evalType === 'score' ? 'Puanlı (0-100)' : 'Kontrol (' + symbols.map(s => escapeHtml(s.key)).join(' / ') + ')'}</span>
+            `;
+        }
+
+        // Toolbar Hepsi (+) butonunun metnini simgeye göre güncelle
+        const batchPosText = document.getElementById('chk-btn-batch-positive-text');
+        if (batchPosText) {
+            batchPosText.textContent = `Hepsi (${primaryPositiveKey})`;
+        }
+
         // Thead
         const thead = document.getElementById('chk-modal-thead');
         if (thead) {
@@ -739,12 +862,26 @@
                     <th style="min-width:160px; cursor:pointer;" onclick="setChecklistEvalSort('name')" title="Ada göre sırala">
                         ÖĞRENCİ ADI SOYADI ${_chkSortMode === 'name' ? (_chkSortAsc ? '▲' : '▼') : '↕'}
                     </th>
-                    ${item.criteria.map(c => `
-                        <th style="text-align:center; min-width:90px;" title="${escapeHtml(c.name)}">
-                            <div style="font-size:11.5px; font-weight:700;">${escapeHtml(c.name)}</div>
-                            ${item.evalType === 'score' ? `<span style="font-size:10px; opacity:0.8; font-weight:normal;">(Maks: ${c.maxScore} P)</span>` : ''}
+                    ${item.criteria.map((c, cIdx) => `
+                        <th style="text-align:center; min-width:115px; position:relative; padding:8px 6px;" class="chk-criterion-header" title="${escapeHtml(c.name)} - Tıklayarak adını düzenleyebilirsiniz">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;" onclick="promptRenameChecklistCriterion('${c.id}')" title="Kriter adını hızlıca değiştirmek için tıklayın">
+                                <span style="font-size:12px; font-weight:700; border-bottom:1px dashed currentColor; padding-bottom:1px;">${escapeHtml(c.name)}</span>
+                                <i class="fas fa-pen" style="font-size:10px; color:var(--secondary); opacity:0.8;"></i>
+                            </div>
+                            <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-top:3px;">
+                                ${item.evalType === 'score' ? `<span style="font-size:10px; opacity:0.85; font-weight:normal;">(Maks: ${c.maxScore} P)</span>` : ''}
+                                ${item.evalType === 'check' ? `
+                                    <button type="button" class="btn" onclick="event.stopPropagation(); batchSetColumnChecklist('${c.id}', '${escapeAttr(primaryPositiveKey)}')" title="Bu kriteri tüm sınıfa (${escapeAttr(primaryPositiveKey)}) yap" style="font-size:9.5px; padding:1px 5px; background:rgba(16,185,129,0.15); color:#10b981; border-radius:4px; border:1px solid rgba(16,185,129,0.3); font-weight:700;"><i class="fas fa-check"></i> Hepsi</button>
+                                    <button type="button" class="btn" onclick="event.stopPropagation(); batchSetColumnChecklist('${c.id}', 'clear')" title="Bu sütunu temizle" style="font-size:9.5px; padding:1px 5px; background:rgba(239,68,68,0.1); color:#ef4444; border-radius:4px; border:1px solid rgba(239,68,68,0.25);"><i class="fas fa-times"></i></button>
+                                ` : ''}
+                            </div>
                         </th>
                     `).join('')}
+                    <th style="text-align:center; width:45px; vertical-align:middle; background:rgba(59,130,246,0.04);">
+                        <button type="button" class="btn" onclick="quickAddChecklistCriterion()" style="padding:4px 8px; font-size:11px; background:rgba(59,130,246,0.15); color:var(--secondary); border:1px dashed var(--secondary); border-radius:6px; font-weight:700;" title="Yeni Kriter Sütunu Ekle">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </th>
                     <th style="text-align:center; width:80px;">TOPLAM</th>
                     <th style="min-width:140px;">NOT / AÇIKLAMA</th>
                     <th style="text-align:center; width:90px;">PAYLAŞ</th>
@@ -787,18 +924,23 @@
                         </td>
                     `;
                 } else {
-                    // Checkbox (+ / - / G / !) tipi
+                    // Checkbox (Simgeli butonlar) tipi
                     const status = cellVal || '';
                     if (status !== '') hasAnyEntry = true;
-                    if (status === '+') studentTotal++;
+                    if (positiveKeys.includes(status)) studentTotal++;
+
+                    const symButtonsHtml = symbols.map(sym => {
+                        const isActive = (status === sym.key);
+                        const activeStyle = isActive
+                            ? `background:${sym.color || 'var(--secondary)'} !important; color:#ffffff !important; border-color:${sym.color || 'var(--secondary)'} !important; box-shadow:0 2px 6px ${(sym.color || '#3b82f6')}66;`
+                            : '';
+                        return `<button type="button" class="btn-chk-status ${isActive ? 'active-custom' : ''}" style="${activeStyle}" onclick="updateChecklistStatusCell('${escapeAttr(s.adSoyad)}', '${crit.id}', '${escapeAttr(sym.key)}')" title="${escapeAttr(sym.label || sym.key)} (${escapeAttr(sym.key)})">${escapeHtml(sym.key)}</button>`;
+                    }).join('');
 
                     criteriaCellsHtml += `
                         <td style="text-align:center; padding:4px;">
                             <div style="display:inline-flex; gap:2px; background:var(--input-bg); padding:2px; border-radius:6px; border:1px solid var(--border);">
-                                <button type="button" class="btn-chk-status ${status === '+' ? 'active-plus' : ''}" onclick="updateChecklistStatusCell('${escapeAttr(s.adSoyad)}', '${crit.id}', '+')" title="Var / Yapıldı (+)">+</button>
-                                <button type="button" class="btn-chk-status ${status === '-' ? 'active-minus' : ''}" onclick="updateChecklistStatusCell('${escapeAttr(s.adSoyad)}', '${crit.id}', '-')" title="Yok / Eksik (-)">-</button>
-                                <button type="button" class="btn-chk-status ${status === 'G' ? 'active-gelmedi' : ''}" onclick="updateChecklistStatusCell('${escapeAttr(s.adSoyad)}', '${crit.id}', 'G')" title="Gelmedi (G)">G</button>
-                                <button type="button" class="btn-chk-status ${status === '!' ? 'active-unuttu' : ''}" onclick="updateChecklistStatusCell('${escapeAttr(s.adSoyad)}', '${crit.id}', '!')" title="Unuttu (!)">!</button>
+                                ${symButtonsHtml}
                             </div>
                         </td>
                     `;
@@ -822,6 +964,7 @@
                 <td style="font-weight:700; color:var(--text-muted);">${s.no || '-'}</td>
                 <td style="font-weight:600;">${escapeHtml(s.adSoyad)}</td>
                 ${criteriaCellsHtml}
+                <td style="text-align:center; color:var(--text-muted); opacity:0.25; font-size:11px;">•</td>
                 <td style="text-align:center;">${totalBadgeHtml}</td>
                 <td>
                     <input type="text" value="${escapeAttr(studentEval.note || '')}" 
@@ -910,26 +1053,53 @@
         const students = getChecklistItemStudents(item);
         if (!item.evaluations) item.evaluations = {};
 
+        const symbols = getChecklistSymbols(item);
+        const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
+        const primaryPositiveKey = positiveKeys[0] || symbols[0]?.key || '+';
+
         if (type === 'maxScore') {
             students.forEach(s => {
                 if (!item.evaluations[s.adSoyad]) item.evaluations[s.adSoyad] = {};
-                let total = 0;
-                item.criteria.forEach(c => {
-                    item.evaluations[s.adSoyad][c.id] = c.maxScore;
-                    total += c.maxScore;
-                });
-                item.evaluations[s.adSoyad].total = total;
+                if (item.evalType === 'score') {
+                    let total = 0;
+                    item.criteria.forEach(c => {
+                        item.evaluations[s.adSoyad][c.id] = c.maxScore;
+                        total += c.maxScore;
+                    });
+                    item.evaluations[s.adSoyad].total = total;
+                } else {
+                    item.criteria.forEach(c => {
+                        item.evaluations[s.adSoyad][c.id] = primaryPositiveKey;
+                    });
+                }
             });
         } else if (type === 'clear') {
             if (!confirm('Tüm öğrenci puan ve işaretlemeleri temizlenecek. Emin misiniz?')) return;
             students.forEach(s => {
                 item.evaluations[s.adSoyad] = {};
             });
-        } else if (type === '+') {
+        } else if (type === '+' || type === 'firstPositive') {
+            students.forEach(s => {
+                if (!item.evaluations[s.adSoyad]) item.evaluations[s.adSoyad] = {};
+                if (item.evalType === 'score') {
+                    let total = 0;
+                    item.criteria.forEach(c => {
+                        item.evaluations[s.adSoyad][c.id] = c.maxScore;
+                        total += c.maxScore;
+                    });
+                    item.evaluations[s.adSoyad].total = total;
+                } else {
+                    item.criteria.forEach(c => {
+                        item.evaluations[s.adSoyad][c.id] = primaryPositiveKey;
+                    });
+                }
+            });
+        } else {
+            // Belirli bir simge
             students.forEach(s => {
                 if (!item.evaluations[s.adSoyad]) item.evaluations[s.adSoyad] = {};
                 item.criteria.forEach(c => {
-                    item.evaluations[s.adSoyad][c.id] = '+';
+                    item.evaluations[s.adSoyad][c.id] = type;
                 });
             });
         }
@@ -938,6 +1108,458 @@
         if (typeof saveData === 'function') saveData(true);
         if (typeof showGlobalToast === 'function') {
             showGlobalToast('⚡ Toplu işlem tüm sınıfa başarıyla uygulandı!', 'success');
+        }
+    }
+
+    // ── HIZLI KRİTER İŞLEMLERİ (BAŞLIK & SÜTUN EYLEMLERİ) ──
+    function promptRenameChecklistCriterion(critId) {
+        const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
+        if (!item) return;
+        const crit = (item.criteria || []).find(c => String(c.id) === String(critId));
+        if (!crit) return;
+
+        const newName = prompt('Kriter adını düzenleyin:', crit.name);
+        if (newName === null) return; // İptal
+        const trimmed = newName.trim();
+        if (!trimmed) {
+            alert('Kriter adı boş bırakılamaz!');
+            return;
+        }
+
+        crit.name = trimmed;
+        renderChecklistModalTable();
+        renderChecklistList();
+        if (typeof window.invalidateChecklistSavedRef === 'function') {
+            window.invalidateChecklistSavedRef(item.firebaseKey || item.id);
+        }
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`✅ Kriter adı "${trimmed}" olarak güncellendi.`, 'success');
+        }
+    }
+
+    function quickAddChecklistCriterion() {
+        const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
+        if (!item) return;
+        const count = (item.criteria || []).length + 1;
+        const name = prompt('Yeni kriter başlığını girin:', `Kriter ${count}`);
+        if (name === null) return;
+        const trimmed = name.trim();
+        if (!trimmed) return;
+
+        if (!item.criteria) item.criteria = [];
+        item.criteria.push({
+            id: 'c_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            name: trimmed,
+            maxScore: item.evalType === 'score' ? 20 : 1
+        });
+
+        renderChecklistModalTable();
+        renderChecklistList();
+        if (typeof window.invalidateChecklistSavedRef === 'function') {
+            window.invalidateChecklistSavedRef(item.firebaseKey || item.id);
+        }
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`✅ "${trimmed}" kriter sütunu eklendi!`, 'success');
+        }
+    }
+
+    function batchSetColumnChecklist(critId, val) {
+        const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
+        if (!item) return;
+        const students = getChecklistItemStudents(item);
+        if (!item.evaluations) item.evaluations = {};
+
+        const symbols = getChecklistSymbols(item);
+        const primaryPositiveKey = symbols.find(s => s.isPositive)?.key || symbols[0]?.key || '+';
+        const targetVal = (val === '+') ? primaryPositiveKey : val;
+
+        students.forEach(s => {
+            if (!item.evaluations[s.adSoyad]) item.evaluations[s.adSoyad] = {};
+            if (targetVal === 'clear') {
+                delete item.evaluations[s.adSoyad][critId];
+            } else {
+                item.evaluations[s.adSoyad][critId] = targetVal;
+            }
+        });
+
+        renderChecklistModalTable();
+        if (typeof window.invalidateChecklistSavedRef === 'function') {
+            window.invalidateChecklistSavedRef(item.firebaseKey || item.id);
+        }
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(targetVal === 'clear' ? '🧹 Kriter sütunu temizlendi.' : `⚡ Kriter tüm sınıfa uygulandı (${targetVal})!`, 'info');
+        }
+    }
+
+    // ── KRİTER & SİMGE DÜZENLEME MODALI (DETAYLI YAPILANDIRMA) ──
+    let _tempModalCriteria = [];
+    let _tempModalSymbols = [];
+    let _tempModalEvalType = 'check';
+
+    function openChecklistCriteriaConfigModal() {
+        const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
+        if (!item) return;
+
+        _tempModalCriteria = JSON.parse(JSON.stringify(item.criteria || []));
+        _tempModalEvalType = item.evalType || 'check';
+        _tempModalSymbols = JSON.parse(JSON.stringify(getChecklistSymbols(item)));
+
+        const radioCheck = document.getElementById('chk-modal-evaltype-check');
+        const radioScore = document.getElementById('chk-modal-evaltype-score');
+        if (radioCheck && radioScore) {
+            radioCheck.checked = (_tempModalEvalType === 'check');
+            radioScore.checked = (_tempModalEvalType === 'score');
+        }
+
+        const subtitleEl = document.getElementById('chk-criteria-modal-subtitle');
+        if (subtitleEl) {
+            subtitleEl.textContent = `"${item.title}" (${item.sinif}) çizelgesinin kriterlerini, değerlendirme formatını ve simgelerini yapılandırın.`;
+        }
+
+        renderCriteriaModalRows();
+        renderModalSymbolsList();
+
+        const symSection = document.getElementById('chk-modal-symbols-section');
+        if (symSection) {
+            symSection.style.display = (_tempModalEvalType === 'check') ? 'block' : 'none';
+        }
+
+        const modal = document.getElementById('checklist-criteria-modal');
+        if (modal) modal.style.display = 'block';
+    }
+
+    function closeChecklistCriteriaConfigModal() {
+        const modal = document.getElementById('checklist-criteria-modal');
+        if (modal) modal.style.display = 'none';
+        _tempModalCriteria = [];
+        _tempModalSymbols = [];
+    }
+
+    function onChecklistCriteriaModalEvalTypeChange(newType) {
+        _tempModalEvalType = newType;
+        const symSection = document.getElementById('chk-modal-symbols-section');
+        if (symSection) {
+            symSection.style.display = (_tempModalEvalType === 'check') ? 'block' : 'none';
+        }
+
+        if (newType === 'check') {
+            _tempModalCriteria.forEach(c => c.maxScore = 1);
+        } else {
+            const allOne = _tempModalCriteria.every(c => c.maxScore === 1);
+            if (allOne && _tempModalCriteria.length > 0) {
+                const equalShare = Math.floor(100 / _tempModalCriteria.length);
+                _tempModalCriteria.forEach((c, idx) => {
+                    c.maxScore = (idx === _tempModalCriteria.length - 1)
+                        ? (100 - equalShare * (_tempModalCriteria.length - 1))
+                        : equalShare;
+                });
+            }
+        }
+        renderCriteriaModalRows();
+    }
+
+    // ── SİMGE / BUTON YÖNETİMİ FONKSİYONLARI ──
+    function renderModalSymbolsList() {
+        const container = document.getElementById('chk-modal-symbols-list');
+        if (!container) return;
+        container.innerHTML = '';
+
+        _tempModalSymbols.forEach((sym, idx) => {
+            const row = document.createElement('div');
+            row.style = 'display:flex; align-items:center; gap:8px; background:var(--card-bg); padding:6px 8px; border-radius:6px; border:1px solid var(--border);';
+            row.innerHTML = `
+                <input type="text" maxlength="4" value="${escapeAttr(sym.key)}" 
+                    placeholder="Simge" 
+                    style="width:46px; text-align:center; font-weight:800; font-size:13px; padding:4px 2px; border:1px solid var(--border); border-radius:6px; background:var(--input-bg); color:var(--text-main);" 
+                    oninput="updateModalSymbolField(${idx}, 'key', this.value)" title="Buton üzerindeki karakter veya emoji (örn: +, ✓, A, 5)">
+                <input type="text" value="${escapeAttr(sym.label || '')}" 
+                    placeholder="Açıklama (Örn: Var / Tam)" 
+                    style="flex:1; font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:var(--input-bg); color:var(--text-main);" 
+                    oninput="updateModalSymbolField(${idx}, 'label', this.value)">
+                <input type="color" value="${sym.color || '#3b82f6'}" 
+                    style="width:32px; height:28px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:none;" 
+                    onchange="updateModalSymbolField(${idx}, 'color', this.value)" title="Buton rengi">
+                <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:600; cursor:pointer; margin:0; white-space:nowrap; color:var(--text-main);" title="İşaretlendiğinde toplam puana +1 eklenir">
+                    <input type="checkbox" ${sym.isPositive ? 'checked' : ''} onchange="updateModalSymbolField(${idx}, 'isPositive', this.checked)">
+                    <span>Geçer</span>
+                </label>
+                <button type="button" class="action-btn btn-delete" onclick="removeModalSymbolRow(${idx})" title="Bu simgeyi kaldır" style="padding:4px 7px; font-size:11px;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function updateModalSymbolField(idx, field, val) {
+        if (_tempModalSymbols[idx]) {
+            _tempModalSymbols[idx][field] = val;
+        }
+    }
+
+    function addChecklistSymbolRow() {
+        _tempModalSymbols.push({
+            key: '?',
+            label: 'Açıklama',
+            color: '#6366f1',
+            isPositive: false
+        });
+        renderModalSymbolsList();
+    }
+
+    function removeModalSymbolRow(idx) {
+        if (_tempModalSymbols.length <= 1) {
+            alert('En az bir simge bulunmalıdır!');
+            return;
+        }
+        _tempModalSymbols.splice(idx, 1);
+        renderModalSymbolsList();
+    }
+
+    function applyChecklistSymbolPreset(presetKey) {
+        const preset = CHECK_SYMBOL_PRESETS[presetKey];
+        if (!preset) return;
+        _tempModalSymbols = JSON.parse(JSON.stringify(preset.symbols));
+        renderModalSymbolsList();
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`🎨 "${preset.name}" simge şablonu yüklendi. Kaydet'e basarak uygulayabilirsiniz.`, 'info');
+        }
+    }
+
+    function renderCriteriaModalRows() {
+        const listContainer = document.getElementById('chk-modal-criteria-list');
+        const summaryBadge = document.getElementById('chk-modal-criteria-summary');
+        const distributeBtn = document.getElementById('chk-modal-distribute-btn');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '';
+        let totalMax = 0;
+
+        _tempModalCriteria.forEach((crit, idx) => {
+            totalMax += parseInt(crit.maxScore) || 0;
+            const row = document.createElement('div');
+            row.style = 'display:flex; align-items:center; gap:8px; background:var(--input-bg); padding:8px 10px; border-radius:8px; border:1px solid var(--border);';
+            row.innerHTML = `
+                <span style="font-size:12px; font-weight:700; color:var(--text-muted); width:24px; text-align:center;">${idx + 1}.</span>
+                <input type="text" value="${escapeHtml(crit.name)}" 
+                    placeholder="Kriter / Sütun Başlığı" 
+                    style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg); color:var(--text-main);"
+                    oninput="updateModalCriterionName(${idx}, this.value)">
+                ${_tempModalEvalType === 'score' ? `
+                    <div style="display:inline-flex; align-items:center; gap:4px;">
+                        <input type="number" value="${crit.maxScore || 0}" min="1" max="100" 
+                            style="width:55px; padding:6px; text-align:center; font-size:12px; font-weight:700; border:1px solid var(--border); border-radius:6px; background:var(--card-bg); color:var(--text-main);"
+                            oninput="updateModalCriterionScore(${idx}, this.value)">
+                        <span style="font-size:11px; color:var(--text-muted); font-weight:600;">Puan</span>
+                    </div>
+                ` : `
+                    <span style="font-size:11px; padding:3px 8px; border-radius:6px; background:rgba(59,130,246,0.1); color:var(--secondary); font-weight:700; white-space:nowrap;">+/- Simge</span>
+                `}
+                <div style="display:inline-flex; gap:2px;">
+                    <button type="button" class="action-btn" onclick="moveModalCriterion(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:default;"' : 'title="Yukarı Taşı"'}><i class="fas fa-arrow-up"></i></button>
+                    <button type="button" class="action-btn" onclick="moveModalCriterion(${idx}, 1)" ${idx === _tempModalCriteria.length - 1 ? 'disabled style="opacity:0.3; cursor:default;"' : 'title="Aşağı Taşı"'}><i class="fas fa-arrow-down"></i></button>
+                </div>
+                <button type="button" class="action-btn btn-delete" onclick="removeModalCriterion(${idx})" title="Kriteri Sil" style="padding:5px 8px; font-size:11px;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            listContainer.appendChild(row);
+        });
+
+        if (summaryBadge) {
+            if (_tempModalEvalType === 'score') {
+                const isHundred = totalMax === 100;
+                summaryBadge.innerHTML = `Toplam: <strong>${totalMax} Puan</strong> ${isHundred ? '✅ (100 Tam)' : '⚠️ (100 Önerilir)'}`;
+                summaryBadge.style.background = isHundred ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)';
+                summaryBadge.style.color = isHundred ? 'var(--accent)' : 'var(--yellow)';
+            } else {
+                summaryBadge.innerHTML = `${_tempModalCriteria.length} Kontrol Sütunu`;
+                summaryBadge.style.background = 'rgba(59,130,246,0.12)';
+                summaryBadge.style.color = 'var(--secondary)';
+            }
+        }
+
+        if (distributeBtn) {
+            distributeBtn.style.display = (_tempModalEvalType === 'score') ? 'inline-block' : 'none';
+        }
+    }
+
+    function updateModalCriterionName(idx, val) {
+        if (_tempModalCriteria[idx]) {
+            _tempModalCriteria[idx].name = val;
+        }
+    }
+
+    function updateModalCriterionScore(idx, val) {
+        if (_tempModalCriteria[idx]) {
+            _tempModalCriteria[idx].maxScore = parseInt(val, 10) || 0;
+            const summaryBadge = document.getElementById('chk-modal-criteria-summary');
+            if (summaryBadge && _tempModalEvalType === 'score') {
+                const totalMax = _tempModalCriteria.reduce((sum, c) => sum + (parseInt(c.maxScore) || 0), 0);
+                const isHundred = totalMax === 100;
+                summaryBadge.innerHTML = `Toplam: <strong>${totalMax} Puan</strong> ${isHundred ? '✅ (100 Tam)' : '⚠️ (100 Önerilir)'}`;
+                summaryBadge.style.background = isHundred ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)';
+                summaryBadge.style.color = isHundred ? 'var(--accent)' : 'var(--yellow)';
+            }
+        }
+    }
+
+    function addChecklistCriteriaModalRow() {
+        const newIdx = _tempModalCriteria.length + 1;
+        _tempModalCriteria.push({
+            id: 'c_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            name: `Yeni Kriter ${newIdx}`,
+            maxScore: _tempModalEvalType === 'score' ? 20 : 1
+        });
+        renderCriteriaModalRows();
+    }
+
+    function removeModalCriterion(idx) {
+        if (_tempModalCriteria.length <= 1) {
+            alert('En az bir kriter/sütun bulunmalıdır!');
+            return;
+        }
+        const crit = _tempModalCriteria[idx];
+        const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
+        let hasData = false;
+        if (item && item.evaluations) {
+            hasData = Object.values(item.evaluations).some(ev => ev && ev[crit.id] !== undefined && ev[crit.id] !== '');
+        }
+        if (hasData) {
+            if (!confirm(`"${crit.name}" kriterine ait girilmiş öğrenci değerlendirmeleri bulunmaktadır. Bu kriteri silmek istediğinizden emin misiniz?`)) {
+                return;
+            }
+        }
+        _tempModalCriteria.splice(idx, 1);
+        renderCriteriaModalRows();
+    }
+
+    function moveModalCriterion(idx, dir) {
+        const targetIdx = idx + dir;
+        if (targetIdx < 0 || targetIdx >= _tempModalCriteria.length) return;
+        const temp = _tempModalCriteria[idx];
+        _tempModalCriteria[idx] = _tempModalCriteria[targetIdx];
+        _tempModalCriteria[targetIdx] = temp;
+        renderCriteriaModalRows();
+    }
+
+    function distributeChecklistCriteriaModalScores() {
+        if (!_tempModalCriteria || _tempModalCriteria.length === 0) return;
+        const equalShare = Math.floor(100 / _tempModalCriteria.length);
+        _tempModalCriteria.forEach((c, idx) => {
+            c.maxScore = (idx === _tempModalCriteria.length - 1)
+                ? (100 - equalShare * (_tempModalCriteria.length - 1))
+                : equalShare;
+        });
+        renderCriteriaModalRows();
+    }
+
+    function saveChecklistCriteriaConfig() {
+        const item = getChecklistList().find(c => String(c.id) === String(_activeModalChecklistId));
+        if (!item) return;
+
+        if (!_tempModalCriteria || _tempModalCriteria.length === 0) {
+            alert('En az bir kriter tanımlamalısınız!');
+            return;
+        }
+
+        // Boş isim kontrolü
+        for (let i = 0; i < _tempModalCriteria.length; i++) {
+            const trimmed = (_tempModalCriteria[i].name || '').trim();
+            if (!trimmed) {
+                alert(`${i + 1}. kriterin başlığı boş bırakılamaz!`);
+                return;
+            }
+            _tempModalCriteria[i].name = trimmed;
+        }
+
+        // Kontrol modunda simgelerin doğrulaması
+        if (_tempModalEvalType === 'check') {
+            if (!_tempModalSymbols || _tempModalSymbols.length === 0) {
+                alert('En az bir değerlendirme simgesi tanımlamalısınız!');
+                return;
+            }
+            for (let i = 0; i < _tempModalSymbols.length; i++) {
+                const sym = _tempModalSymbols[i];
+                const keyTrimmed = (sym.key || '').trim();
+                if (!keyTrimmed) {
+                    alert(`${i + 1}. simgenin karakteri boş bırakılamaz!`);
+                    return;
+                }
+                sym.key = keyTrimmed;
+            }
+            item.customSymbols = JSON.parse(JSON.stringify(_tempModalSymbols));
+        }
+
+        const wasEvalType = item.evalType;
+        item.criteria = JSON.parse(JSON.stringify(_tempModalCriteria));
+        item.evalType = _tempModalEvalType;
+
+        // EvalType değiştiyse dönüşüm ve toplamları güncelle
+        if (wasEvalType !== item.evalType && item.evaluations) {
+            Object.keys(item.evaluations).forEach(studentName => {
+                const sEval = item.evaluations[studentName];
+                if (!sEval) return;
+                if (item.evalType === 'score') {
+                    // check'ten score'a geçiş: '+' veya pozitif olanlara maxScore ver
+                    const symbols = getChecklistSymbols(item);
+                    const posKeys = symbols.filter(s => s.isPositive).map(s => s.key);
+                    let total = 0;
+                    let hasAny = false;
+                    item.criteria.forEach(c => {
+                        if (posKeys.includes(sEval[c.id]) || sEval[c.id] === '+') {
+                            sEval[c.id] = c.maxScore;
+                            total += c.maxScore;
+                            hasAny = true;
+                        } else if (typeof sEval[c.id] === 'number') {
+                            total += sEval[c.id];
+                            hasAny = true;
+                        }
+                    });
+                    sEval.total = hasAny ? total : null;
+                } else {
+                    // score'dan check'e geçiş: pozitif puan varsa ilk pozitif simgeyi yap
+                    const symbols = getChecklistSymbols(item);
+                    const firstPos = symbols.find(s => s.isPositive)?.key || symbols[0]?.key || '+';
+                    item.criteria.forEach(c => {
+                        const val = sEval[c.id];
+                        if (typeof val === 'number' && val > 0) {
+                            sEval[c.id] = firstPos;
+                        }
+                    });
+                }
+            });
+        } else if (item.evalType === 'score' && item.evaluations) {
+            // Puanlı modda kriter puanları değiştiyse toplamları yeniden hesapla
+            Object.keys(item.evaluations).forEach(studentName => {
+                const sEval = item.evaluations[studentName];
+                if (!sEval) return;
+                let total = 0;
+                let hasAny = false;
+                item.criteria.forEach(c => {
+                    const val = sEval[c.id];
+                    if (val !== undefined && val !== null && !isNaN(val) && val !== '') {
+                        total += Number(val);
+                        hasAny = true;
+                    }
+                });
+                sEval.total = hasAny ? total : null;
+            });
+        }
+
+        closeChecklistCriteriaConfigModal();
+        renderChecklistModalTable();
+        renderChecklistList();
+
+        if (typeof window.invalidateChecklistSavedRef === 'function') {
+            window.invalidateChecklistSavedRef(item.firebaseKey || item.id);
+        }
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('✅ Kriterler ve değerlendirme simgeleri başarıyla güncellendi!', 'success');
         }
     }
 
@@ -958,9 +1580,11 @@
             if (item.evalType === 'score') {
                 grade = (ev && typeof ev.total === 'number') ? ev.total : '';
             } else {
+                const symbols = getChecklistSymbols(item);
+                const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
                 let plusCount = 0;
                 if (ev) {
-                    item.criteria.forEach(c => { if (ev[c.id] === '+') plusCount++; });
+                    item.criteria.forEach(c => { if (positiveKeys.includes(ev[c.id])) plusCount++; });
                 }
                 grade = item.criteria.length > 0 ? Math.round((plusCount / item.criteria.length) * 100) : '';
             }
@@ -1005,12 +1629,14 @@
                 });
                 totalText = (typeof ev.total === 'number') ? ev.total : '';
             } else {
+                const symbols = getChecklistSymbols(item);
+                const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
                 item.criteria.forEach(c => {
                     const st = ev[c.id] || '';
                     critTds += `<td style="text-align:center; padding:5px; font-weight:bold;">${st}</td>`;
                 });
                 let plus = 0;
-                item.criteria.forEach(c => { if (ev[c.id] === '+') plus++; });
+                item.criteria.forEach(c => { if (positiveKeys.includes(ev[c.id])) plus++; });
                 totalText = `${plus}/${item.criteria.length}`;
             }
 
@@ -1123,6 +1749,8 @@
             });
             text += `\n🎯 *DEĞERLENDİRME SONUÇLARI (${evaluated.length} / ${students.length}):*\n` + (evaluated.length > 0 ? evaluated.join('\n') : 'Henüz not girilmedi.');
         } else {
+            const symbols = getChecklistSymbols(item);
+            const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
             let done = [];
             let missing = [];
             students.forEach(s => {
@@ -1130,7 +1758,7 @@
                 let isFull = true;
                 if (!ev) isFull = false;
                 else {
-                    item.criteria.forEach(c => { if (ev[c.id] !== '+') isFull = false; });
+                    item.criteria.forEach(c => { if (!positiveKeys.includes(ev[c.id])) isFull = false; });
                 }
                 if (isFull) done.push(`✅ ${s.no ? s.no + ' - ' : ''}${s.adSoyad}`);
                 else missing.push(`🔸 ${s.no ? s.no + ' - ' : ''}${s.adSoyad}`);
@@ -1175,10 +1803,16 @@
             });
             text += `\n⭐ *TOPLAM PUAN:* *${ev.total !== undefined ? ev.total : 0} / 100*`;
         } else {
+            const symbols = getChecklistSymbols(item);
             text += `📊 *Durum Detayı:*\n`;
             item.criteria.forEach(c => {
-                const st = ev[c.id] || 'Belirtilmedi';
-                const stIcon = st === '+' ? '✅ Tam' : (st === '-' ? '❌ Eksik' : (st === 'G' ? '⚪ Gelmedi' : '⚠️ Unuttu'));
+                const st = ev[c.id] || '';
+                const sym = symbols.find(s => s.key === st);
+                let stIcon = 'Belirtilmedi';
+                if (st) {
+                    const label = sym ? (sym.label || sym.key) : st;
+                    stIcon = `${sym?.isPositive ? '✅' : '🔸'} ${label} (${st})`;
+                }
                 text += `▫️ ${c.name}: *${stIcon}*\n`;
             });
         }
@@ -1381,5 +2015,27 @@
     window.shareStudentChecklistResult = shareStudentChecklistResult;
     window.syncStudentsWithChecklists = syncStudentsWithChecklists;
     window.getChecklistItemStudents = getChecklistItemStudents;
+    window.promptRenameChecklistCriterion = promptRenameChecklistCriterion;
+    window.quickAddChecklistCriterion = quickAddChecklistCriterion;
+    window.batchSetColumnChecklist = batchSetColumnChecklist;
+    window.openChecklistCriteriaConfigModal = openChecklistCriteriaConfigModal;
+    window.closeChecklistCriteriaConfigModal = closeChecklistCriteriaConfigModal;
+    window.onChecklistCriteriaModalEvalTypeChange = onChecklistCriteriaModalEvalTypeChange;
+    window.renderCriteriaModalRows = renderCriteriaModalRows;
+    window.updateModalCriterionName = updateModalCriterionName;
+    window.updateModalCriterionScore = updateModalCriterionScore;
+    window.addChecklistCriteriaModalRow = addChecklistCriteriaModalRow;
+    window.removeModalCriterion = removeModalCriterion;
+    window.moveModalCriterion = moveModalCriterion;
+    window.distributeChecklistCriteriaModalScores = distributeChecklistCriteriaModalScores;
+    window.saveChecklistCriteriaConfig = saveChecklistCriteriaConfig;
+    window.renderModalSymbolsList = renderModalSymbolsList;
+    window.updateModalSymbolField = updateModalSymbolField;
+    window.addChecklistSymbolRow = addChecklistSymbolRow;
+    window.removeModalSymbolRow = removeModalSymbolRow;
+    window.applyChecklistSymbolPreset = applyChecklistSymbolPreset;
+    window.getChecklistSymbols = getChecklistSymbols;
+    window.CHECK_SYMBOL_PRESETS = CHECK_SYMBOL_PRESETS;
+    window.DEFAULT_CHECK_SYMBOLS = DEFAULT_CHECK_SYMBOLS;
 
 })();

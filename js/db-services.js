@@ -32,6 +32,90 @@ let _lastSavedRefs = {
     checklists: {}
 };
 
+window.invalidateChecklistSavedRef = function(chkId) {
+    if (_lastSavedRefs && _lastSavedRefs.checklists) {
+        if (chkId) {
+            const safeKey = encodeFirebaseKey(String(chkId)).replace(/[\/\.\#\$\/\[\]]/g, '_');
+            delete _lastSavedRefs.checklists[safeKey];
+            delete _lastSavedRefs.checklists[chkId];
+        } else {
+            _lastSavedRefs.checklists = {};
+        }
+    }
+};
+
+// Zaman Aşımı (Timeout Wrapper) - Fail-Fast Mimarisi (İsteklerin askıda kalmasını engeller)
+function withTimeout(promise, ms = 7000, errorMsg = 'Zaman Aşımı: Sunucu 7 saniye içinde yanıt vermedi.') {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+            reject(new Error(errorMsg));
+        }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+        clearTimeout(timeoutId);
+    });
+}
+window.withTimeout = withTimeout;
+
+// Çevrimiçi ve Firebase Canlı Bağlantı Kontrolü
+function isOnlineAndConnected() {
+    const isNavOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
+    if (!isNavOnline) return false;
+    // Eğer ilk el sıkışma henüz tamamlanmadıysa (null), bağlantı deneniyor demektir
+    if (window.isFirebaseConnected === null || typeof window.isFirebaseConnected === 'undefined') {
+        return true;
+    }
+    return window.isFirebaseConnected === true;
+}
+window.isOnlineAndConnected = isOnlineAndConnected;
+
+// Firebase ilk bağlantısının kurulmasını bekleyen yardımcı (Sayfa açılışındaki yarış durumunu çözer)
+function waitForFirebaseConnection(maxWaitMs = 2500) {
+    if (window.isFirebaseConnected === true) return Promise.resolve(true);
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return Promise.resolve(false);
+    return new Promise(resolve => {
+        let resolved = false;
+        const checkInterval = setInterval(() => {
+            if (window.isFirebaseConnected === true) {
+                clearInterval(checkInterval);
+                clearTimeout(timeoutId);
+                if (!resolved) {
+                    resolved = true;
+                    resolve(true);
+                }
+            } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                clearInterval(checkInterval);
+                clearTimeout(timeoutId);
+                if (!resolved) {
+                    resolved = true;
+                    resolve(false);
+                }
+            }
+        }, 50);
+
+        const timeoutId = setTimeout(() => {
+            clearInterval(checkInterval);
+            if (!resolved) {
+                resolved = true;
+                resolve(window.isFirebaseConnected === true);
+            }
+        }, maxWaitMs);
+    });
+}
+window.waitForFirebaseConnection = waitForFirebaseConnection;
+
+// Firebase Realtime DB Canlı Bağlantı Durumu Değişim Kancası
+window.onFirebaseConnectionChange = function(connected) {
+    if (connected) {
+        console.log("[Firebase RTDB] Canlı sunucu bağlantısı kuruldu.");
+        setDbSyncStatus('synced', 'Bulut Bağlantısı Aktif');
+    } else {
+        console.warn("[Firebase RTDB] Canlı sunucu bağlantısı kesildi! (Fail-Fast devrede)");
+        setDbSyncStatus('offline', 'Sunucu Bağlantısı Yok');
+    }
+};
+
 let _isSaving = false;
 let _hasPendingSave = false;
 let saveTimeout = null;
@@ -87,13 +171,13 @@ function setDbSyncStatus(status, message) {
         color = 'var(--warning, #f59e0b)';
         bgColor = 'rgba(245, 158, 11, 0.12)';
         borderColor = 'rgba(245, 158, 11, 0.35)';
-        statusDesc = message || 'Çevrimdışı (Yerel Aktif)';
+        statusDesc = message || 'Çevrimdışı (Bağlantı Yok)';
     } else if (status === 'error') {
         iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
         color = 'var(--red, #ef4444)';
         bgColor = 'rgba(239, 68, 68, 0.12)';
         borderColor = 'rgba(239, 68, 68, 0.35)';
-        statusDesc = message || 'Bağlantı Hatası';
+        statusDesc = message || 'Bağlantı / Zaman Aşımı Hatası';
     }
 
     if (el) {
@@ -111,6 +195,11 @@ function setDbSyncStatus(status, message) {
 }
 
 function manualForceSync() {
+    if (!isOnlineAndConnected()) {
+        showGlobalToast('<i class="fas fa-wifi-slash"></i> İnternet bağlantısı yok! Senkronizasyon başlatılamaz.', 'error');
+        setDbSyncStatus('offline', 'Çevrimdışı (Bağlantı Yok)');
+        return;
+    }
     showGlobalToast('<i class="fas fa-sync fa-spin"></i> Veritabanı canlı senkronizasyonu başlatıldı...', 'info');
     saveData(true);
 }
@@ -118,6 +207,14 @@ window.manualForceSync = manualForceSync;
 
 function saveData(immediate = false) {
     if (saveTimeout) clearTimeout(saveTimeout);
+    
+    // Fail-Fast Kontrolü: Çevrimdışı iken kuyruğa alıp bekletme, anında hata döndür
+    if (!isOnlineAndConnected()) {
+        setDbSyncStatus('offline', 'Çevrimdışı (İstek iletilemedi)');
+        showGlobalToast('<i class="fas fa-exclamation-circle"></i> İnternet bağlantısı yok! Değişiklikler sunucuya aktarılamadı.', 'error');
+        return Promise.reject(new Error("İnternet bağlantısı yok"));
+    }
+
     if (immediate) {
         return _queueSaveData();
     }
@@ -127,6 +224,12 @@ function saveData(immediate = false) {
 }
 
 async function _queueSaveData() {
+    if (!isOnlineAndConnected()) {
+        _isSaving = false;
+        _hasPendingSave = false;
+        setDbSyncStatus('offline', 'Çevrimdışı (İşlem iptal edildi)');
+        return;
+    }
     if (_isSaving) {
         _hasPendingSave = true;
         return;
@@ -134,42 +237,61 @@ async function _queueSaveData() {
     _isSaving = true;
     try {
         await _executeSaveData();
+    } catch (err) {
+        console.warn("[Kuyruk] Kaydetme hatası/zaman aşımı:", err.message);
+        // Hata durumunda bekleyen kayıt kuyruğunu temizle ki sessiz arka plan döngüsü oluşmasın
+        _hasPendingSave = false;
     } finally {
         _isSaving = false;
-        if (_hasPendingSave) {
+        if (_hasPendingSave && isOnlineAndConnected()) {
             _hasPendingSave = false;
             _queueSaveData();
+        } else {
+            _hasPendingSave = false;
         }
     }
 }
 
-// Çevrimdışı/Sayfa Kapanma Olayları - Veri Kaybı Önleme
+// Çevrimdışı/Sayfa Olayları - Otomatik arka plan eşitlemesi kaldırıldı (Fail-Fast)
 window.addEventListener('online', () => {
-    console.log("[Ağ] İnternet bağlantısı yeniden kuruldu, bekleyen veriler senkronize ediliyor...");
-    setDbSyncStatus('saving', 'İnternet bağlantısı kuruldu, senkronize ediliyor...');
-    saveData(true);
+    console.log("[Ağ] İnternet bağlantısı yeniden kuruldu. (Otomatik arka plan eşitlemesi yapılmaz, manuel istek beklenir).");
+    showGlobalToast('<i class="fas fa-wifi"></i> İnternet bağlantısı yeniden kuruldu. Senkronize etmek için durumu yenileyebilirsiniz.', 'info');
+    if (typeof window.isFirebaseConnected === 'undefined' || window.isFirebaseConnected) {
+        setDbSyncStatus('synced', 'Bağlantı Kuruldu (Senkronizasyon Hazır)');
+    }
 });
 
 window.addEventListener('offline', () => {
-    console.warn("[Ağ] İnternet bağlantısı kesildi, yerel depolama devrede.");
-    setDbSyncStatus('offline', 'Çevrimdışı (Yerel aktif, internet gelince aktarılacak)');
+    console.warn("[Ağ] İnternet bağlantısı kesildi. İstekler askıya alınmayacak, fail-fast uygulanacak.");
+    setDbSyncStatus('offline', 'Çevrimdışı (Bağlantı Yok - İstekler Durduruldu)');
+    showGlobalToast('<i class="fas fa-wifi-slash"></i> İnternet bağlantısı kesildi! İstekler iletilmeyecek.', 'warning');
 });
 
 window.addEventListener('beforeunload', () => {
     if (saveTimeout) {
         clearTimeout(saveTimeout);
-        _executeSaveData();
+        if (isOnlineAndConnected()) {
+            _executeSaveData().catch(() => {});
+        }
     }
 });
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && saveTimeout) {
         clearTimeout(saveTimeout);
-        _executeSaveData();
+        if (isOnlineAndConnected()) {
+            _executeSaveData().catch(() => {});
+        }
     }
 });
 
 async function _executeSaveData() {
+    // 0. Fail-Fast Ön Kontrolü: Çevrimdışı veya sunucu bağlantısı yoksa yazma işlemini anında iptal et
+    if (!isOnlineAndConnected()) {
+        setDbSyncStatus('offline', 'Çevrimdışı (Bağlantı Yok - Kaydedilemedi)');
+        showGlobalToast('<i class="fas fa-wifi-slash"></i> İnternet veya veritabanı bağlantısı yok! Kayıt işlemi iptal edildi.', 'error');
+        throw new Error("İnternet veya veritabanı bağlantısı yok");
+    }
     // 1. UI (DOM) üzerinden mevcut sınıf kümelerini çekme
     const selectedClass = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
     if (selectedClass) {
@@ -371,7 +493,8 @@ async function _executeSaveData() {
 
         // --- G. CHECKLISTS (Öğretmen Takip ve Kontrol Çizelgeleri) ---
         let currentChecklists = {};
-        (typeof checklistData !== 'undefined' ? checklistData : []).forEach((item, i) => {
+        const chkSourceList = (typeof checklistData !== 'undefined' && Array.isArray(checklistData)) ? checklistData : (window.checklistData || []);
+        chkSourceList.forEach((item, i) => {
             if (item) {
                 const chkId = item.id ? String(item.id) : ('chk_' + i);
                 const safeChkId = item.firebaseKey || encodeFirebaseKey(chkId).replace(/[\/\.\#\$\/\[\]]/g, '_');
@@ -393,7 +516,8 @@ async function _executeSaveData() {
                     evalType: item.evalType || 'score',
                     badge: item.badge || 'ÇİZELGE',
                     badgeColor: item.badgeColor || '#3b82f6',
-                    criteria: Array.isArray(item.criteria) ? item.criteria : [],
+                    criteria: Array.isArray(item.criteria) ? item.criteria : (item.criteria && typeof item.criteria === 'object' ? Object.values(item.criteria) : []),
+                    customSymbols: Array.isArray(item.customSymbols) ? item.customSymbols : (item.customSymbols && typeof item.customSymbols === 'object' ? Object.values(item.customSymbols) : null),
                     targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
                     evaluations: sanitizedEvaluations,
                     isArchived: !!item.isArchived,
@@ -419,11 +543,12 @@ async function _executeSaveData() {
         candidateRefs.checklists = currentChecklists;
     }
 
-    // 3. Değişiklikleri Firebase'e Tek Seferde Yaz (Atomik)
+    // 3. Değişiklikleri Firebase'e Tek Seferde Yaz (Atomik - Fail-Fast Zaman Aşımı Korumalı)
     try {
         const updateCount = Object.keys(updates).length;
         if (uid && window.db && updateCount > 0) {
-            await window.db.ref().update(updates);
+            // withTimeout ile 7 saniye süre tanınır, aşılırsa reject olur ve catch'e düşer
+            await withTimeout(window.db.ref().update(updates), 7000, "Sunucu zaman aşımı (7 sn): Veriler kaydedilemedi");
             console.log(`[Firebase Atomik] ${updateCount} farklı kayıt (delta) başarıyla güncellendi.`);
             
             // Başarılı yazımda referansları commit et
@@ -440,12 +565,14 @@ async function _executeSaveData() {
             // Fark yok, zaten güncel
             setDbSyncStatus('synced', 'Realtime DB Güncel');
         } else {
-            setDbSyncStatus('offline', 'Çevrimdışı / Yerel Mod');
+            setDbSyncStatus('offline', 'Çevrimdışı / Bağlantı Yok');
         }
     } catch (e) {
-        console.error("Realtime DB güncelleme hatası:", e);
-        // Hata durumunda _lastSavedRefs değiştirilmez! Bir sonraki kayıtta tekrar denenecek.
-        setDbSyncStatus('error', 'Bağlantı Hatası: ' + (e.message || 'Yeniden denenecek'));
+        console.error("Realtime DB güncelleme hatası (Fail-Fast):", e);
+        // Hata durumunda _lastSavedRefs değiştirilmez!
+        setDbSyncStatus('error', 'Kayıt Hatası: ' + (e.message || 'Zaman aşımı'));
+        showGlobalToast(`<i class="fas fa-exclamation-triangle"></i> Veri Kaydedilemedi: ${e.message || 'Zaman aşımı'}`, 'error');
+        throw e;
     }
 
     // LocalStorage Yedeği (Çevrimdışı/Hızlı Yükleme İçin - Kullanıcı Bazlı İzolasyon)
@@ -455,7 +582,7 @@ async function _executeSaveData() {
         groups: typeof groupData === 'object' ? groupData : {},
         schedule: scheduleData,
         tracking: trackingData,
-        checklists: typeof checklistData !== 'undefined' ? checklistData : [],
+        checklists: (typeof checklistData !== 'undefined' && Array.isArray(checklistData)) ? checklistData : (window.checklistData || []),
         exams: examData,
         lastUpdate: new Date().toISOString()
     };
@@ -471,7 +598,7 @@ let initialLoadComplete = false;
 
 // UI Aktif mi Kontrolü (Form doldururken tablo renderını engeller)
 function isUIActive() {
-    const activeModals = ['chart-modal', 'pg-create-modal', 'pg-detail-modal', 'evaluation-modal', 'xp-modal', 'checklist-eval-modal']
+    const activeModals = ['chart-modal', 'pg-create-modal', 'pg-detail-modal', 'evaluation-modal', 'xp-modal', 'checklist-eval-modal', 'checklist-criteria-modal']
         .some(id => {
             const el = document.getElementById(id);
             return el && (el.style.display === 'block' || el.style.display === 'flex');
@@ -480,7 +607,7 @@ function isUIActive() {
     return activeModals || activeInput;
 }
 
-// Ana Veri Yükleme (Reaktivite Modeli)
+// Ana Veri Yükleme (Doğrudan Sunucudan Okuma - Fail-Fast Modeli)
 async function loadFromLocalStorage() {
     try {
         if (!window.db) throw new Error("Firebase bağlantısı yok");
@@ -488,27 +615,31 @@ async function loadFromLocalStorage() {
         if (!currentUser) return;
         const uid = currentUser.uid;
         
-        console.log("[Veri] NoSQL mimarisi canlı dinleyicileri bağlanıyor...");
-        
-        // 1. Önce Kullanıcıya Özel LocalStorage'dan hızlıca (Ghost) verileri yükleyelim ki ekran boş kalmasın
-        const userKey = `${STORAGE_KEY}_${uid}`;
-        let savedData = localStorage.getItem(userKey) || localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-            try { 
-                const p = JSON.parse(savedData);
-                studentData = p.students || [];
-                if (typeof projeGruplariData !== 'undefined') projeGruplariData = p.projects || [];
-                groupData = p.groups || {};
-                scheduleData = p.schedule || [];
-                trackingData = p.tracking || [];
-                examData = p.exams || [];
-                fullUIRender();
-            } catch (e) {}
+        // 0. Bağlantı Ön Kontrolü: Çevrimdışı iken sunucuya gitmeyi denemeden fail-fast fırlat
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            throw new Error("İnternet bağlantısı yok.");
         }
 
-        // 2. İlk Yükleme (once 'value') - Hızlı başlangıç
+        // Firebase ilk bağlantı el sıkışmasını bekle (en fazla 2.5 sn - sayfa açılışındaki yarış durumunu çözer)
+        if (window.isFirebaseConnected !== true) {
+            await waitForFirebaseConnection(2500);
+        }
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            throw new Error("İnternet bağlantısı yok.");
+        }
+
+        setDbSyncStatus('saving', 'Canlı veriler sunucudan çekiliyor...');
+        console.log("[Veri] Doğrudan uzak sunucudan (Firebase RTDB) veri çekiliyor...");
+
+        // 1. Öğrencileri Doğrudan Sunucudan Çek (7 sn zaman aşımı wrapper)
         let studentsFound = false;
-        const snap = await window.db.ref().child('app_data/' + uid + '/students').once('value');
+        const snap = await withTimeout(
+            window.db.ref().child('app_data/' + uid + '/students').once('value'),
+            7000,
+            "Öğrenci verisi sunucudan çekilemedi (Zaman Aşımı)"
+        );
+
         if (snap.exists()) {
             const val = snap.val();
             let loadedStudents = [];
@@ -534,7 +665,11 @@ async function loadFromLocalStorage() {
         // Göç (Migration) Kontrolü: Eğer öğretmenin klasörü boşsa ve yönetici ise app_data/main_data'ya bak
         if (!studentsFound && currentUser.email === 'mremzi@gmail.com') {
             try {
-                const adminSnap = await window.db.ref('app_data/main_data/students').once('value');
+                const adminSnap = await withTimeout(
+                    window.db.ref('app_data/main_data/students').once('value'),
+                    7000,
+                    "Admin öğrenci göçü zaman aşımına uğradı"
+                );
                 if (adminSnap.exists()) {
                     const adminVal = adminSnap.val();
                     const adminStudents = Array.isArray(adminVal) ? adminVal.filter(Boolean) : Object.values(adminVal || {});
@@ -552,25 +687,24 @@ async function loadFromLocalStorage() {
             }
         }
 
-        // Eğer Firebase'de öğrenci yoksa ama yerel önbellekte öğrenci varsa, veriyi SİLME; Firebase'e senkronize et!
+        // Eğer Firebase'de öğrenci yoksa boş başlat; YEREL VERİYİ SUNUCUYA OTOMATİK EŞİTLEME!
         if (!studentsFound) {
-            if (studentData && studentData.length > 0) {
-                console.log("[Veri] Yerel depolamadaki öğrenciler Firebase'e aktarılıyor...");
-                saveData(true);
-            } else {
-                studentData = [];
-                _lastSavedRefs.students = {};
-                fullUIRender();
-            }
+            studentData = [];
+            _lastSavedRefs.students = {};
+            fullUIRender();
         }
 
-        // Ödev & Proje Takip (Tracking) Firebase'den İlk Yükleme (once 'value')
+        // 2. Ödev & Proje Takip (Tracking) Doğrudan Sunucudan Çek (7 sn zaman aşımı wrapper)
         let trackingFound = false;
         const migrationDoneKey = 'tracking_migration_done_' + uid;
         const alreadyMigrated = localStorage.getItem(migrationDoneKey) === 'true';
 
         try {
-            const trackSnap = await window.db.ref('app_data/' + uid + '/tracking').once('value');
+            const trackSnap = await withTimeout(
+                window.db.ref('app_data/' + uid + '/tracking').once('value'),
+                7000,
+                "Takip verisi sunucudan çekilemedi (Zaman Aşımı)"
+            );
             if (trackSnap.exists()) {
                 const trackVal = trackSnap.val();
                 let normalizedList = [];
@@ -602,19 +736,23 @@ async function loadFromLocalStorage() {
                 }
 
                 trackingData = normalizedList;
-                _lastSavedRefs.tracking = normalizedRefs;
+                _lastSavedRefs.tracking = JSON.parse(JSON.stringify(normalizedRefs));
                 trackingFound = true;
                 localStorage.setItem(migrationDoneKey, 'true');
                 renderTrackingList();
             }
         } catch (e) {
-            console.warn("Firebase tracking ilk yükleme hatası:", e);
+            console.warn("Firebase tracking doğrudan yükleme hatası:", e);
         }
 
-        // Göç (Migration) Kontrolü: Yalnızca ilk kurulumda (daha önce göç yapılmamışsa) bir defaya mahsus çalışır!
+        // Göç (Migration) Kontrolü (Sadece yönetici ve ilk kurulum)
         if (!trackingFound && !alreadyMigrated && currentUser.email === 'mremzi@gmail.com') {
             try {
-                const adminTrackSnap = await window.db.ref('app_data/main_data/tracking').once('value');
+                const adminTrackSnap = await withTimeout(
+                    window.db.ref('app_data/main_data/tracking').once('value'),
+                    7000,
+                    "Admin tracking göçü zaman aşımına uğradı"
+                );
                 if (adminTrackSnap.exists()) {
                     const aVal = adminTrackSnap.val();
                     let normalizedList = [];
@@ -647,28 +785,21 @@ async function loadFromLocalStorage() {
             }
         }
 
-        // Eğer Firebase'de hiç tracking düğümü yoksa ve göç daha önce yapılmamışsa yerelden bir kere aktar
-        if (!trackingFound && !alreadyMigrated) {
-            if (trackingData && trackingData.length > 0) {
-                console.log("[Veri] Yerel depolamadaki ilk ödev/takip verileri Firebase'e aktarılıyor...");
-                saveData(true);
-                localStorage.setItem(migrationDoneKey, 'true');
-            } else {
-                trackingData = [];
-                _lastSavedRefs.tracking = {};
-            }
-        } else if (!trackingFound && alreadyMigrated) {
-            // Kullanıcı daha önce çalışmış ve silmiş; eski kayıtları kesinlikle geri yükleme!
+        // Eğer Firebase'de hiç tracking yoksa boş başlat; YEREL VERİYİ OTOMATİK İTME!
+        if (!trackingFound) {
             trackingData = [];
-            window.trackingData = [];
             _lastSavedRefs.tracking = {};
             renderTrackingList();
         }
 
-        // Çizelgeler (Checklists) Firebase'den İlk Yükleme (once 'value')
+        // 3. Çizelgeler (Checklists) Doğrudan Sunucudan Çek (7 sn zaman aşımı wrapper)
         let checklistsFound = false;
         try {
-            const chkSnap = await window.db.ref('app_data/' + uid + '/checklists').once('value');
+            const chkSnap = await withTimeout(
+                window.db.ref('app_data/' + uid + '/checklists').once('value'),
+                7000,
+                "Çizelge verisi sunucudan çekilemedi (Zaman Aşımı)"
+            );
             if (chkSnap.exists()) {
                 const chkVal = chkSnap.val();
                 let normalizedList = [];
@@ -692,6 +823,17 @@ async function loadFromLocalStorage() {
                                 }
                             }
                             item.evaluations = decodedEvaluations;
+
+                            // Kriter ve simge dizilerini garantiye al (Firebase nesne dönüşümü koruması)
+                            if (item.criteria && typeof item.criteria === 'object' && !Array.isArray(item.criteria)) {
+                                item.criteria = Object.values(item.criteria);
+                            }
+                            if (!Array.isArray(item.criteria)) item.criteria = [];
+
+                            if (item.customSymbols && typeof item.customSymbols === 'object' && !Array.isArray(item.customSymbols)) {
+                                item.customSymbols = Object.values(item.customSymbols);
+                            }
+
                             normalizedList.push(item);
                             normalizedRefs[safeChkId] = item;
                         }
@@ -699,35 +841,36 @@ async function loadFromLocalStorage() {
                 }
                 checklistData = normalizedList;
                 window.checklistData = normalizedList;
-                _lastSavedRefs.checklists = normalizedRefs;
+                _lastSavedRefs.checklists = JSON.parse(JSON.stringify(normalizedRefs));
                 checklistsFound = true;
                 if (typeof renderChecklistList === 'function') renderChecklistList();
             }
         } catch (e) {
-            console.warn("Firebase checklists ilk yükleme hatası:", e);
+            console.warn("Firebase checklists doğrudan yükleme hatası:", e);
         }
 
+        // Eğer Firebase'de çizelge yoksa boş başlat; YEREL VERİYİ OTOMATİK İTME!
         if (!checklistsFound) {
-            if (checklistData && checklistData.length > 0) {
-                window.checklistData = checklistData;
-                saveData(true);
-            } else {
-                checklistData = [];
-                window.checklistData = [];
-                _lastSavedRefs.checklists = {};
-            }
+            checklistData = [];
+            window.checklistData = [];
+            _lastSavedRefs.checklists = {};
+            if (typeof renderChecklistList === 'function') renderChecklistList();
         }
 
-        // 3. Child dinleyicileri (Sadece değişeni indir - Minimum Bandwidth)
+        // 4. Canlı dinleyicileri bağla
         attachListeners(uid);
 
         initialLoadComplete = true;
+        setDbSyncStatus('synced', 'Canlı Veriler Yüklendi');
         
         // Soru takip modülü entegrasyonu
         listenToStudentForms();
         
     } catch (e) {
-        console.error("Yükleme hatası:", e);
+        console.error("Yükleme hatası (Fail-Fast):", e);
+        setDbSyncStatus('error', 'Veri Çekme Hatası: ' + (e.message || 'Sunucuya ulaşılamadı'));
+        showGlobalToast('<i class="fas fa-plug-circle-xmark"></i> Canlı veri yüklenemedi: ' + (e.message || 'Sunucu yanıt vermedi'), 'error');
+        // Kullanıcıya çevrimdışı uyarısı ver ve sadece salt-okunur yerel yedeği göster
         loadLocalFallback();
     }
 }
@@ -865,7 +1008,7 @@ function attachListeners(uid) {
                 }
             });
             trackingData = normalizedList;
-            _lastSavedRefs.tracking = normalizedRefs;
+            _lastSavedRefs.tracking = JSON.parse(JSON.stringify(normalizedRefs));
         } else {
             if (initialLoadComplete) {
                 trackingData = [];
@@ -896,13 +1039,24 @@ function attachListeners(uid) {
                         }
                     }
                     item.evaluations = decodedEvaluations;
+
+                    // Kriter ve simge dizilerini garantiye al (Firebase nesne dönüşümü koruması)
+                    if (item.criteria && typeof item.criteria === 'object' && !Array.isArray(item.criteria)) {
+                        item.criteria = Object.values(item.criteria);
+                    }
+                    if (!Array.isArray(item.criteria)) item.criteria = [];
+
+                    if (item.customSymbols && typeof item.customSymbols === 'object' && !Array.isArray(item.customSymbols)) {
+                        item.customSymbols = Object.values(item.customSymbols);
+                    }
+
                     normalizedList.push(item);
                     normalizedRefs[safeChkId] = item;
                 }
             });
             checklistData = normalizedList;
             window.checklistData = normalizedList;
-            _lastSavedRefs.checklists = normalizedRefs;
+            _lastSavedRefs.checklists = JSON.parse(JSON.stringify(normalizedRefs));
         } else {
             if (initialLoadComplete) {
                 checklistData = [];
@@ -942,6 +1096,7 @@ function fullUIRender() {
 }
 
 async function loadLocalFallback() {
+    setDbSyncStatus('offline', 'Çevrimdışı (Yerel Salt Okunur Önbellek)');
     try {
         const response = await fetch('veri.json');
         if (response.ok) {
