@@ -161,18 +161,25 @@
             const body = document.getElementById('eval-body'); body.innerHTML = '';
             students.sort((a, b) => a.sinif.localeCompare(b.sinif) || a.no - b.no).forEach(s => {
                 const res = exam.results[s.adSoyad] || { Turkce: '', Matematik: '', Sosyal: '', Fen: '', DinKulturu: '', Ingilizce: '', totalNet: '', rank: '' };
+                const safeName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(s.adSoyad) : s.adSoyad;
+                const safeNo = s.no ? ((typeof window.escapeHTML === 'function') ? window.escapeHTML(s.no) : s.no) : '';
+                const safeSinif = (typeof window.escapeHTML === 'function') ? window.escapeHTML(s.sinif) : s.sinif;
+                const attrSafeName = (s.adSoyad || '').replace(/"/g, '&quot;');
+                const jsSafeName = (s.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const safeTotalId = 'total-' + encodeURIComponent(s.adSoyad || '').replace(/%/g, '_');
+
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="font-weight:600; font-size:13px;">${s.no} - ${s.adSoyad}</td>
-                <td style="font-weight:700; color:var(--secondary); font-size:12px;">${s.sinif}</td>
-                <td><input type="number" step="0.01" class="exam-input" data-name="${s.adSoyad}" data-field="Turkce" value="${res.Turkce}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><input type="number" step="0.01" class="exam-input" data-name="${s.adSoyad}" data-field="Matematik" value="${res.Matematik}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><input type="number" step="0.01" class="exam-input" data-name="${s.adSoyad}" data-field="Sosyal" value="${res.Sosyal}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><input type="number" step="0.01" class="exam-input" data-name="${s.adSoyad}" data-field="Fen" value="${res.Fen}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><input type="number" step="0.01" class="exam-input" data-name="${s.adSoyad}" data-field="DinKulturu" value="${res.DinKulturu || ''}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><input type="number" step="0.01" class="exam-input" data-name="${s.adSoyad}" data-field="Ingilizce" value="${res.Ingilizce || ''}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><input type="number" step="0.01" id="total-${s.adSoyad.replace(/\s+/g, '')}" value="${res.totalNet}" style="width:55px; padding:4px; font-weight:700; background:var(--tab-bg);" readonly></td>
-                <td><input type="text" class="exam-input" data-name="${s.adSoyad}" data-field="rank" value="${res.rank}" style="width:38px; padding:4px;" onchange="updateManualExamCell(this)"></td>
-                <td><button class="btn" style="padding:4px 8px; font-size:10px; background:var(--secondary);" onclick="renderProgressChart('${s.adSoyad}')"><i class="fas fa-chart-line"></i> Grafik</button></td>`;
+                tr.innerHTML = `<td style="font-weight:600; font-size:13px;">${safeNo ? safeNo + ' - ' : ''}${safeName}</td>
+                <td style="font-weight:700; color:var(--secondary); font-size:12px;">${safeSinif}</td>
+                <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Turkce" value="${res.Turkce}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Matematik" value="${res.Matematik}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Sosyal" value="${res.Sosyal}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Fen" value="${res.Fen}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="DinKulturu" value="${res.DinKulturu || ''}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Ingilizce" value="${res.Ingilizce || ''}" style="width:42px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><input type="number" step="0.01" id="${safeTotalId}" value="${res.totalNet}" style="width:55px; padding:4px; font-weight:700; background:var(--tab-bg);" readonly></td>
+                <td><input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rank" value="${res.rank}" style="width:38px; padding:4px;" onchange="updateManualExamCell(this)"></td>
+                <td><button class="btn" style="padding:4px 8px; font-size:10px; background:var(--secondary);" onclick="renderProgressChart('${jsSafeName}')"><i class="fas fa-chart-line"></i> Grafik</button></td>`;
                 body.appendChild(tr);
             });
             document.getElementById('evaluation-modal').style.display = 'block';

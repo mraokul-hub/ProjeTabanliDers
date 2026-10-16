@@ -1058,16 +1058,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     omr             : '<span title="Kağıt Okutma"   style="font-size:1rem;">📄</span>',
                 }[entry.mod] || '';
 
-                // Kaynak + Konu birleştir
-                const konuStr = [entry.kaynak, entry.konu].filter(Boolean).join(' / ') || (entry.aciklama || '-');
+                // Kaynak + Konu birleştir ve güvenli kaçış uygula
+                const rawKonu = [entry.kaynak, entry.konu].filter(Boolean).join(' / ') || (entry.aciklama || '-');
+                const safeKonu = (typeof window.escapeHTML === 'function') ? window.escapeHTML(rawKonu) : rawKonu;
+                const safeTarih = (typeof window.escapeHTML === 'function') ? window.escapeHTML(entry.tarih || '-') : (entry.tarih || '-');
+                const safeDers = (typeof window.escapeHTML === 'function') ? window.escapeHTML(entry.ders || '-') : (entry.ders || '-');
+                const safeId = (entry.id || '').replace(/['"\\]/g, '');
                 const tipStr  = tipiBadge[entry.soruTipi] || '';
                 const ogrStr  = entry.ogrSoru > 0 ? `<span style="color:#F97316;font-weight:700;">🙋 ${entry.ogrSoru}</span>` : '-';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${entry.tarih || '-'}</td>
-                    <td>${entry.ders  || '-'}</td>
-                    <td style="font-size:0.82rem;color:#374151;">${konuStr}</td>
+                    <td>${safeTarih}</td>
+                    <td>${safeDers}</td>
+                    <td style="font-size:0.82rem;color:#374151;">${safeKonu}</td>
                     <td>${tipStr}</td>
                     <td style="color:#10B981;font-weight:700;">${entry.dogru  ?? '-'}</td>
                     <td style="color:#EF4444;font-weight:700;">${entry.yanlis ?? '-'}</td>
@@ -1075,13 +1079,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="text-align:center;">${ogrStr}</td>
                     <td style="text-align:center;">${modBadge}
                         ${hasFoto
-                            ? `<button onclick="window.SoruTakipUI.showPhoto('${entry.id}')"
+                            ? `<button onclick="window.SoruTakipUI.showPhoto('${safeId}')"
                                 style="font-size:10px;padding:3px 7px;background:#F97316;color:#fff;border:none;border-radius:5px;cursor:pointer;margin-left:4px;">
                                 Fotoğrafı Gör</button>`
                             : ''}
                     </td>
                     <td style="text-align:center;">
-                        <button onclick="window.SoruTakipUI.deleteEntry('${entry.id}')" style="background: none; border: none; color: var(--red); cursor: pointer; padding: 4px;" title="Bu kaydı sil">
+                        <button onclick="window.SoruTakipUI.deleteEntry('${safeId}')" style="background: none; border: none; color: var(--red); cursor: pointer; padding: 4px;" title="Bu kaydı sil">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>`;
@@ -1089,14 +1093,30 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
-        // Kural 2: Fotoğraflı soru köprüsü — fotoğraf popup
+        // Kural 2: Fotoğraflı soru köprüsü — fotoğraf popup (XSS & Protocol Injection korumalı)
         showPhoto(entryId) {
             const entry = this.currentData.find(e => e.id === entryId);
             if (!entry?.fotoBase64) return;
+            // Protokol ve veri doğrulaması (Sadece güvenli data:image/ URL'lerine izin ver)
+            if (!entry.fotoBase64.startsWith('data:image/')) {
+                alert('Güvenlik Uyarısı: Geçersiz veya desteklenmeyen görsel formatı.');
+                return;
+            }
             const win = window.open('', '_blank');
-            win.document.write(`<html><body style="margin:0;background:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;">
-                <img src="${entry.fotoBase64}" style="max-width:100%;max-height:100vh;border-radius:8px;">
-                </body></html>`);
+            if (!win) return;
+            win.document.title = 'Soru Fotoğrafı';
+            win.document.body.style.margin = '0';
+            win.document.body.style.background = '#111';
+            win.document.body.style.display = 'flex';
+            win.document.body.style.justifyContent = 'center';
+            win.document.body.style.alignItems = 'center';
+            win.document.body.style.minHeight = '100vh';
+            const img = win.document.createElement('img');
+            img.src = entry.fotoBase64;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100vh';
+            img.style.borderRadius = '8px';
+            win.document.body.appendChild(img);
         },
 
         deleteEntry(entryId) {

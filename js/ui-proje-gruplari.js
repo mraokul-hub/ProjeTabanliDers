@@ -3,6 +3,15 @@
 // Proje Grupları Sistemi (Tab 9)
 // ============================================================
 
+        const escapeHTML = window.escapeHtml || window.escapeHTML || function(str) {
+            return (str || '').toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+
         let projeGruplariData = [];       // tüm proje grupları
         let pgFormsData = [];             // öğrencilerin doldurduğu proje formları
         let pgActiveId = null;            // detay modalda açık grup id'si
@@ -164,9 +173,7 @@
                 return;
             }
 
-            const typeColors = { teori: '#3b82f6', tasarim: '#8b5cf6', uretim: '#f59e0b' };
-
-            container.innerHTML = list.map(g => {
+                     container.innerHTML = list.map(g => {
                 const color = typeColors[g.type] || '#3b82f6';
                 const members = Array.isArray(g.members) ? g.members : [];
                 const asamalar = Array.isArray(g.asamalar) ? g.asamalar : [];
@@ -176,23 +183,23 @@
                 const scoreColor = avgScore >= 70 ? '#10b981' : avgScore >= 45 ? '#f59e0b' : '#ef4444';
 
                 const phaseBar = asamalar.map(a =>
-                    `<div class="pg-phase-step ${a.durum || ''}" title="${a.label || ''}"></div>`
+                    `<div class="pg-phase-step ${escapeHTML(a.durum || '')}" title="${escapeHTML(a.label || '')}"></div>`
                 ).join('');
 
                 const chips = members.map(m => {
                     const dot = (m.score || 0) >= 70 ? 'pg-score-high' : (m.score || 0) >= 45 ? 'pg-score-medium' : 'pg-score-low';
                     return `<span class="pg-member-chip ${m.aktif ? '' : 'inactive'}">
-                    <span class="pg-score-dot ${dot}"></span>${m.name || ''}
+                    <span class="pg-score-dot ${dot}"></span>${escapeHTML(m.name || '')}
                 </span>`;
                 }).join('');
 
                 return `<div class="pg-project-card" style="border-left:4px solid ${color};">
                 <div class="pg-header">
                     <div>
-                        <p class="pg-title">${g.title}</p>
-                        <p class="pg-meta"><i class="fas fa-chalkboard me-1"></i>${g.sinif} &nbsp;|&nbsp;
-                            <i class="fas fa-book me-1"></i>${g.ders || '-'} &nbsp;|&nbsp;
-                            <span style="color:${color};font-weight:700;">${PG_TYPE_LABELS[g.type] || g.type}</span>
+                        <p class="pg-title">${escapeHTML(g.title || '')}</p>
+                        <p class="pg-meta"><i class="fas fa-chalkboard me-1"></i>${escapeHTML(g.sinif || '')} &nbsp;|&nbsp;
+                            <i class="fas fa-book me-1"></i>${escapeHTML(g.ders || '-')} &nbsp;|&nbsp;
+                            <span style="color:${color};font-weight:700;">${escapeHTML(PG_TYPE_LABELS[g.type] || g.type || '')}</span>
                         </p>
                     </div>
                     <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
@@ -242,25 +249,26 @@
             pgActiveId = id;
             const g = projeGruplariData.find(x => x.id === id);
             if (!g) return;
+
             const color = { teori: '#3b82f6', tasarim: '#8b5cf6', uretim: '#f59e0b' }[g.type] || '#3b82f6';
 
-            let safeTitle = (g.title || '').replace(/'/g, "\\'");
-            let safeSinif = (g.sinif || '').replace(/'/g, "\\'");
+            let safeTitleAttr = encodeURIComponent(g.title || '');
+            let safeSinifAttr = encodeURIComponent(g.sinif || '');
 
             document.getElementById('pg-detail-header').innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
                 <div>
-                    <h3 style="margin:0 0 4px 0;color:${color};">${g.title}</h3>
+                    <h3 style="margin:0 0 4px 0;color:${color};">${escapeHTML(g.title || '')}</h3>
                     <p style="margin:0;font-size:13px;color:var(--text-muted);">
-                        ${g.sinif} &nbsp;|&nbsp; ${PG_TYPE_LABELS[g.type]} &nbsp;|&nbsp; ${g.olusturma}
+                        ${escapeHTML(g.sinif || '')} &nbsp;|&nbsp; ${escapeHTML(PG_TYPE_LABELS[g.type] || '')} &nbsp;|&nbsp; ${escapeHTML(g.olusturma || '')}
                     </p>
                 </div>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn" onclick="pgCopyFormLink('${safeTitle}', '${safeSinif}')" style="background:#25D366;font-size:11px;padding:6px 12px;"><i class="fas fa-link me-1"></i>Grup Linkini Kopyala</button>
-                    <button class="btn" onclick="pgPrintGroupQRCodes('${safeTitle}', '${safeSinif}', '${id}')" style="background:#ef4444;font-size:11px;padding:6px 12px;"><i class="fas fa-file-pdf me-1"></i>QR PDF İndir</button>
+                    <button class="btn" onclick="pgCopyFormLink(decodeURIComponent('${safeTitleAttr}'), decodeURIComponent('${safeSinifAttr}'))" style="background:#25D366;font-size:11px;padding:6px 12px;"><i class="fas fa-link me-1"></i>Grup Linkini Kopyala</button>
+                    <button class="btn" onclick="pgPrintGroupQRCodes(decodeURIComponent('${safeTitleAttr}'), decodeURIComponent('${safeSinifAttr}'), '${id}')" style="background:#ef4444;font-size:11px;padding:6px 12px;"><i class="fas fa-file-pdf me-1"></i>QR PDF İndir</button>
                 </div>
             </div>
-            ${g.desc ? `<p style="margin:8px 0 0 0;font-size:13px;color:var(--text-main);">${g.desc}</p>` : ''}`;
+            ${g.desc ? `<p style="margin:8px 0 0 0;font-size:13px;color:var(--text-main);">${escapeHTML(g.desc)}</p>` : ''}`;
             pgSwitchInner('asamalar', document.querySelector('.pg-tab-inner-btn'));
             document.getElementById('pg-detail-modal').style.display = 'block';
         }
@@ -287,10 +295,13 @@
             const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
             const printWindow = window.open('', '_blank');
 
+            const safeGrupAdi = escapeHTML(grupAdi || '');
+            const safeSinif = escapeHTML(sinif || '');
+
             let html = `<!DOCTYPE html>
         <html>
         <head>
-            <title>${grupAdi} - Öğrenci QR Kodları</title>
+            <title>${safeGrupAdi} - Öğrenci QR Kodları</title>
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
                 h1 { text-align: center; color: #1e293b; margin-bottom: 5px; }
@@ -308,17 +319,19 @@
             </style>
         </head>
         <body>
-            <h1>${grupAdi} Grubu - Öğrenci QR Kodları</h1>
-            <h3>${sinif} Sınıfı Proje Takip Formları</h3>
+            <h1>${safeGrupAdi} Grubu - Öğrenci QR Kodları</h1>
+            <h3>${safeSinif} Sınıfı Proje Takip Formları</h3>
             <div class="grid">`;
 
             g.members.forEach(s => {
                 const formLink = `${baseUrl}/proje_grubu_takip_formu.html?grupAdi=${encodeURIComponent(grupAdi)}&sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no || '')}&ad=${encodeURIComponent(s.name)}`;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formLink)}&color=2563eb`;
+                const safeName = escapeHTML(s.name || '');
+                const safeNo = escapeHTML(s.no || '');
 
                 html += `
                 <div class="student-card">
-                    <div class="student-name">${s.no ? s.no + ' - ' : ''}${s.name}</div>
+                    <div class="student-name">${safeNo ? safeNo + ' - ' : ''}${safeName}</div>
                     <div class="qr-container">
                         <div class="qr-box">
                             <img src="${qrUrl}" alt="QR">
@@ -468,9 +481,14 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
                 ${g.members.map((m, i) => {
                 const bar = Math.max(m.score, 2);
                 const col = m.score >= 70 ? '#10b981' : m.score >= 45 ? '#f59e0b' : '#ef4444';
+                const safeName = escapeHTML(m.name || '');
+                const safeNo = escapeHTML(m.no || '');
+                const safeSonIslem = escapeHTML(m.sonIslem || '-');
+                const safeSdg = escapeHTML(m.sdg_rozeti || '');
+                const encName = encodeURIComponent(m.name || '');
                 return `<tr>
-                        <td style="font-weight:600;">${m.no ? m.no + ' - ' : ''}${m.name}</td>
-                        <td><strong style="color:${col};">${m.score}p</strong></td>
+                        <td style="font-weight:600;">${safeNo ? safeNo + ' - ' : ''}${safeName}</td>
+                        <td><strong style="color:${col};">${Number(m.score) || 0}p</strong></td>
                         <td>
                             <div class="pg-ai-score-bar">
                                 <div class="pg-ai-score-track">
@@ -482,12 +500,12 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
                             background:${m.aktif ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'};
                             color:${m.aktif ? '#10b981' : '#ef4444'};">
                             ${m.aktif ? '✅ Aktif' : '⚠️ Pasif'}</span>
-                            ${m.sdg_rozeti ? `<span style="padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(59, 130, 246, 0.1);color:#3b82f6;margin-left:5px;" title="Sürdürülebilir Kalkınma Ödülü"><i class="fas fa-globe"></i> ${m.sdg_rozeti}</span>` : ''}
+                            ${safeSdg ? `<span style="padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(59, 130, 246, 0.1);color:#3b82f6;margin-left:5px;" title="Sürdürülebilir Kalkınma Ödülü"><i class="fas fa-globe"></i> ${safeSdg}</span>` : ''}
                         </td>
-                        <td style="font-size:11px;color:var(--text-muted);">${m.sonIslem || '-'}</td>
+                        <td style="font-size:11px;color:var(--text-muted);">${safeSonIslem}</td>
                         <td style="display:flex; gap:5px; align-items:center;">
                             <button class="btn" onclick="pgAddKatilim(${i})" style="padding:4px 8px;font-size:11px;background:var(--secondary);" title="Katılım Puanı Ekle"><i class="fas fa-plus"></i></button>
-                            <button class="btn" onclick="showCBLReport('${m.name.replace(/'/g, "\\'")}')" style="padding:4px 8px;font-size:11px;background:#3b82f6;" title="Bağlam Eğilimi Karnesi Göster"><i class="fas fa-id-card"></i></button>
+                            <button class="btn" onclick="showCBLReport(decodeURIComponent('${encName}'))" style="padding:4px 8px;font-size:11px;background:#3b82f6;" title="Bağlam Eğilimi Karnesi Göster"><i class="fas fa-id-card"></i></button>
                         </td>
                     </tr>`;
             }).join('')}
@@ -563,9 +581,9 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
 
             thread.innerHTML = allMsgs.length
                 ? allMsgs.map(m => `
-                <div class="pg-msg ${m.taraf}">
-                    ${m.metin}
-                    <div class="pg-msg-meta">${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'} — ${m.zaman}</div>
+                <div class="pg-msg ${escapeHTML(m.taraf || '')}">
+                    ${m.taraf === 'teacher' ? escapeHTML(m.metin || '') : (m.metin || '')}
+                    <div class="pg-msg-meta">${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'} — ${escapeHTML(m.zaman || '')}</div>
                 </div>`).join('')
                 : '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Henüz mesaj veya rapor yok.</div>';
             thread.scrollTop = thread.scrollHeight;
@@ -610,13 +628,16 @@ Lütfen cevabını SADECE aşağıdaki JSON formatında ver, kod bloğu veya ba�
                 box.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Henüz içerik eklenmemiş.</p>';
                 return;
             }
-            box.innerHTML = g.odevLinks.map((l, i) =>
-                `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);margin-bottom:8px;">
+            box.innerHTML = g.odevLinks.map((l, i) => {
+                const rawUrl = (l.url || '').trim();
+                const safeUrl = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) ? rawUrl : '#';
+                const safeLabel = escapeHTML(l.label || l.url || 'Link');
+                return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);margin-bottom:8px;">
                 <i class="fas fa-play-circle" style="color:var(--secondary);font-size:18px;"></i>
-                <a href="${l.url}" target="_blank" style="flex:1;color:var(--secondary);font-weight:600;font-size:13px;">${l.label || l.url}</a>
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="flex:1;color:var(--secondary);font-weight:600;font-size:13px;">${safeLabel}</a>
                 <button onclick="pgRemoveOdevLink(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;"><i class="fas fa-times"></i></button>
-            </div>`
-            ).join('');
+            </div>`;
+            }).join('');
         }
 
         function pgAddOdevLink() {
@@ -654,14 +675,21 @@ window.showCBLReport = function(studentName) {
     let extraInfo = (typeof studentData !== 'undefined') ? studentData.find(s => s.no === member.no || s.adSoyad === member.name) : null;
     let ilgi = (extraInfo && extraInfo.ilgi_alanlari && extraInfo.ilgi_alanlari.length > 0) ? extraInfo.ilgi_alanlari.join(', ') : 'Belirtilmedi';
 
+    const safeMemberName = escapeHTML(member.name || '');
+    const safeMemberNo = escapeHTML(member.no || '');
+    const safeGroupTitle = escapeHTML(g.title || '');
+    const safeGroupSinif = escapeHTML(g.sinif || '');
+    const safeIlgi = escapeHTML(ilgi);
+    const safeSdg = escapeHTML(member.sdg_rozeti || '');
+
     let content = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-                <h3 style="margin:0; font-size:22px;">${member.name} ${member.no ? '('+member.no+')' : ''}</h3>
-                <span style="color:var(--text-muted); font-size:13px;"><i class="fas fa-users"></i> ${g.title} | ${g.sinif}</span>
+                <h3 style="margin:0; font-size:22px;">${safeMemberName} ${safeMemberNo ? '('+safeMemberNo+')' : ''}</h3>
+                <span style="color:var(--text-muted); font-size:13px;"><i class="fas fa-users"></i> ${safeGroupTitle} | ${safeGroupSinif}</span>
             </div>
             <div style="font-size:36px; color:${member.score >= 70 ? '#10b981' : member.score >= 45 ? '#f59e0b' : '#ef4444'}; font-weight:bold;">
-                ${member.score || 0}
+                ${Number(member.score) || 0}
                 <div style="font-size:12px; color:var(--text-muted); font-weight:normal; text-align:center; margin-top:-5px;">Performans Puanı</div>
             </div>
         </div>
@@ -669,11 +697,11 @@ window.showCBLReport = function(studentName) {
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:10px;">
             <div style="background:var(--card-bg); padding:15px; border-radius:8px; border:1px solid var(--border);">
                 <div style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Bağlam Eğilimi (İlgi Alanı)</div>
-                <div style="font-weight:600;"><i class="fas fa-compass" style="color:#8b5cf6;"></i> ${ilgi}</div>
+                <div style="font-weight:600;"><i class="fas fa-compass" style="color:#8b5cf6;"></i> ${safeIlgi}</div>
             </div>
             <div style="background:var(--card-bg); padding:15px; border-radius:8px; border:1px solid var(--border);">
                 <div style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Sürdürülebilir Kalkınma Ödülü</div>
-                <div style="font-weight:600; color:#3b82f6;">${member.sdg_rozeti ? `<i class="fas fa-globe"></i> ${member.sdg_rozeti}` : '<span style="color:var(--text-muted);"><i class="fas fa-minus"></i> Ödül Yok</span>'}</div>
+                <div style="font-weight:600; color:#3b82f6;">${safeSdg ? `<i class="fas fa-globe"></i> ${safeSdg}` : '<span style="color:var(--text-muted);"><i class="fas fa-minus"></i> Ödül Yok</span>'}</div>
             </div>
         </div>
 

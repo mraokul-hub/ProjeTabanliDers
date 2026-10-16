@@ -255,4 +255,16 @@ window.escapeHTML = function(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 };
+window.escapeHtml = window.escapeHTML;
+
+// CSV / Excel Formula Injection Önleyici (CWE-1236)
+window.sanitizeFormula = function(val) {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (/^[=\+\-@\t\r]/.test(str)) {
+        return "'" + str;
+    }
+    return str;
+};
+
 

@@ -671,7 +671,9 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             const sign = isNegative ? '' : '+';
             const toast = document.createElement('div');
             toast.style = `position:fixed; bottom:20px; right:20px; background:var(--accent); color:white; padding:12px 24px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3); z-index:9999; font-size: 13px; opacity:1; transition: opacity 0.5s ease-in-out; border-left: 5px solid ${color};`;
-            toast.innerHTML = `<i class="${isNegative ? 'fas fa-exclamation-triangle' : 'fas fa-award'} me-2" style="font-size:16px;"></i> <strong>${studentData[index].adSoyad}</strong>: <span style="color:${color}; font-weight:bold;">${sign}${amount} XP</span> <br><small style="opacity:0.8;">Kategori: ${reason}</small>`;
+            const safeStudentName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(studentData[index].adSoyad) : studentData[index].adSoyad;
+            const safeReason = (typeof window.escapeHTML === 'function') ? window.escapeHTML(reason) : reason;
+            toast.innerHTML = `<i class="${isNegative ? 'fas fa-exclamation-triangle' : 'fas fa-award'} me-2" style="font-size:16px;"></i> <strong>${safeStudentName}</strong>: <span style="color:${color}; font-weight:bold;">${sign}${amount} XP</span> <br><small style="opacity:0.8;">Kategori: ${safeReason}</small>`;
             document.body.appendChild(toast);
 
             setTimeout(() => toast.style.opacity = '0', 2000);
@@ -683,7 +685,8 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             if (index < 0 || index >= studentData.length || !studentData[index]) return;
             activeXPStudentIndex = index;
             const student = studentData[index];
-            document.getElementById('xp-modal-title').innerHTML = `<i class="fas fa-star" style="color:var(--yellow);"></i> ${student.adSoyad} (${student.xp || 0} XP) - Geçmiş ve Rubrik`;
+            const safeTitleName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(student.adSoyad) : student.adSoyad;
+            document.getElementById('xp-modal-title').innerHTML = `<i class="fas fa-star" style="color:var(--yellow);"></i> ${safeTitleName} (${student.xp || 0} XP) - Geçmiş ve Rubrik`;
 
             const logsContainer = document.getElementById('xp-logs-container');
             logsContainer.innerHTML = '';

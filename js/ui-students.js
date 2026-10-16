@@ -499,7 +499,9 @@ function updateStudentPickers() {
         availableStudents.forEach(s => {
             const lbl = document.createElement('label');
             lbl.className = 'picker-item';
-            lbl.innerHTML = `<input type="checkbox" class="picker-cb" value="${s.adSoyad}"> ${s.no} - ${s.adSoyad}`;
+            const safeName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(s.adSoyad) : s.adSoyad;
+            const safeNo = s.no ? ((typeof window.escapeHTML === 'function') ? window.escapeHTML(s.no) : s.no) + ' - ' : '';
+            lbl.innerHTML = `<input type="checkbox" class="picker-cb" value="${safeName}"> ${safeNo}${safeName}`;
             lbl.querySelector('input').addEventListener('change', function () {
                 lbl.classList.toggle('checked', this.checked);
                 updatePickerLabel(dropdown);
