@@ -1498,23 +1498,14 @@ window.openSoruTakipKagitFormu = function() {
     const weekVal    = window.SoruTakipUI?.currentWeekNo || 1;
     const teacherUid = window.currentUser?.uid || '';
     
-    let targetStudents = [];
-    const allStudents = (typeof studentData !== 'undefined' ? studentData : []);
-    
-    if (studentVal) {
-        const found = allStudents.find(s => String(s.no) === String(studentVal));
-        if (found) targetStudents = [found];
-    } else if (classVal) {
-        const norm = s => String(s || '').replace(/[\/_-]/g, '').trim().toUpperCase();
-        targetStudents = allStudents.filter(s => s.sinif === classVal || norm(s.sinif) === norm(classVal));
-        targetStudents.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
-    }
+    const allStudents = (typeof studentData !== 'undefined' ? studentData : (window.studentData || []));
     
     try {
         sessionStorage.setItem('soru_takip_print_class', classVal);
         sessionStorage.setItem('soru_takip_print_student_no', studentVal);
         sessionStorage.setItem('soru_takip_print_ders', dersVal);
-        sessionStorage.setItem('soru_takip_print_students', JSON.stringify(targetStudents));
+        sessionStorage.setItem('soru_takip_print_students', JSON.stringify(allStudents));
+        sessionStorage.setItem('soru_takip_print_all_students', JSON.stringify(allStudents));
         sessionStorage.setItem('soru_takip_print_uid', teacherUid);
         sessionStorage.setItem('soru_takip_print_start_date', startVal);
         sessionStorage.setItem('soru_takip_print_end_date', endVal);
@@ -1523,7 +1514,8 @@ window.openSoruTakipKagitFormu = function() {
         localStorage.setItem('soru_takip_print_class', classVal);
         localStorage.setItem('soru_takip_print_student_no', studentVal);
         localStorage.setItem('soru_takip_print_ders', dersVal);
-        localStorage.setItem('soru_takip_print_students', JSON.stringify(targetStudents));
+        localStorage.setItem('soru_takip_print_students', JSON.stringify(allStudents));
+        localStorage.setItem('soru_takip_print_all_students', JSON.stringify(allStudents));
         localStorage.setItem('soru_takip_print_uid', teacherUid);
         localStorage.setItem('soru_takip_print_start_date', startVal);
         localStorage.setItem('soru_takip_print_end_date', endVal);
