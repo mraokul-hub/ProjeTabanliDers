@@ -133,6 +133,34 @@
             --tab-bg: #1e293b;
         }
 
+        .theme-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .theme-chip:hover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+            transform: translateY(-1px);
+        }
+        .theme-chip.active {
+            background: #10b981 !important;
+            border-color: #10b981 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+            transform: translateY(-1px);
+        }
+
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: var(--bg);
@@ -2915,7 +2943,80 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         (Flipped Classroom)</span>
                 </label>
             </div>
-            <div style="display:flex; gap:10px;">
+
+            <!-- BAĞLAM SENARYOLARI HİBRİT TEMA PANELİ -->
+            <div id="context-theme-panel"
+                style="margin-top: 15px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; cursor: pointer;"
+                    onclick="toggleContextThemeOptions()">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                            <i class="fas fa-magic" style="font-size: 13px;"></i>
+                        </span>
+                        <strong style="font-size: 13.5px; color: var(--text-main);">Bağlam Senaryoları Teması:</strong>
+                        <span id="context-theme-badge"
+                            style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                            🤖 Otomatik (Ders ve Konuya Göre AI Seçsin)
+                        </span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); font-weight: 600;">
+                        <span>Temaları Özelleştir</span>
+                        <i id="context-theme-chevron" class="fas fa-chevron-down" style="transition: transform 0.2s;"></i>
+                    </div>
+                </div>
+
+                <!-- AÇILIR AYAR ALANI -->
+                <div id="context-theme-options-container"
+                    style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 12px;">
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; margin-bottom: 0;">
+                            <input type="radio" name="context-mode" value="auto" checked onchange="onContextModeChange()"
+                                style="width: auto; accent-color: #10b981;"> 🤖 Akıllı AI Seçimi (Otomatik)
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; margin-bottom: 0;">
+                            <input type="radio" name="context-mode" value="pool" onchange="onContextModeChange()"
+                                style="width: auto; accent-color: #10b981;"> 🏷️ Hazır Tema Havuzundan Seç
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; margin-bottom: 0;">
+                            <input type="radio" name="context-mode" value="custom" onchange="onContextModeChange()"
+                                style="width: auto; accent-color: #10b981;"> ✍️ Özel Tema Belirt
+                        </label>
+                    </div>
+
+                    <!-- HAZIR TEMA HAVUZU CHIPLERİ -->
+                    <div id="context-pool-selector" style="display: none; margin-bottom: 10px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;">
+                            İstediğiniz 1 ila 3 tema seçebilirsiniz (Tıklayarak seçin):
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="context-theme-chips">
+                            <span class="theme-chip" data-theme="Uzay ve Gelecek Teknolojileri" onclick="toggleThemeChip(this)">🚀 Uzay & Gelecek</span>
+                            <span class="theme-chip" data-theme="Yerel Çevre, Doğa ve Ekoloji" onclick="toggleThemeChip(this)">🌿 Doğa & Ekoloji</span>
+                            <span class="theme-chip" data-theme="Ekonomi, Finans ve Girişimcilik" onclick="toggleThemeChip(this)">💼 Ekonomi & Girişim</span>
+                            <span class="theme-chip" data-theme="Tarih, Kültürel Miras ve Arkeoloji" onclick="toggleThemeChip(this)">🏛️ Tarih & Miras</span>
+                            <span class="theme-chip" data-theme="Sanat, Tasarım ve Sahne Sanatları" onclick="toggleThemeChip(this)">🎨 Sanat & Tasarım</span>
+                            <span class="theme-chip" data-theme="Sağlık, Tıp ve Biyomedikal" onclick="toggleThemeChip(this)">🩺 Sağlık & Tıp</span>
+                            <span class="theme-chip" data-theme="Dijital Oyunlar, Simülasyon ve E-Spor" onclick="toggleThemeChip(this)">🎮 Oyun & Espor</span>
+                            <span class="theme-chip" data-theme="Polisiye, Dedektiflik ve Gizem Çözme" onclick="toggleThemeChip(this)">🕵️ Gizem & Dedektiflik</span>
+                            <span class="theme-chip" data-theme="Yapay Zeka, Robotik ve Siber Güvenlik" onclick="toggleThemeChip(this)">🤖 Yapay Zeka & Siber</span>
+                            <span class="theme-chip" data-theme="Günlük Hayat, Sosyal Yaşam ve Aile" onclick="toggleThemeChip(this)">🏙️ Günlük Hayat & Toplum</span>
+                            <span class="theme-chip" data-theme="Bilimsel Buluşlar, İcatlar ve Mucitler" onclick="toggleThemeChip(this)">🔬 Buluşlar & İcatlar</span>
+                            <span class="theme-chip" data-theme="Spor Bilimi, Atletik Performans ve Hareket" onclick="toggleThemeChip(this)">⚽ Spor & Hareket</span>
+                        </div>
+                    </div>
+
+                    <!-- ÖZEL TEMA GİRİŞ ALANI -->
+                    <div id="context-custom-input-box" style="display: none; margin-bottom: 10px;">
+                        <label style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">
+                            Kendi Bağlam Temanızı veya Özel Kurgunuzu Yazın:
+                        </label>
+                        <input type="text" id="context-custom-text" oninput="updateContextThemeBadge()"
+                            placeholder="Örn: Formula 1 Yarışları, Arkeolojik Kazı ve Göbeklitepe, Afet ve Deprem Çantası..."
+                            style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 13px;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top: 15px;">
                 <button class="btn" onclick="suggestAIStrategy()"><i class="fas fa-brain"></i> Planı Oluştur</button>
                 <button class="btn" style="background:#10b981; color:white;" onclick="generateContextScenarios()"><i
                         class="fas fa-bolt"></i> Bağlam Senaryoları Üret</button>
@@ -4937,7 +5038,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/db-services.js?v=6"></script>
     <script src="js/ui-controller.js?v=4"></script>
     <script src="js/curriculum.js?v=6"></script>
-    <script src="js/ui-strategy.js?v=4"></script>
+    <script src="js/ui-strategy.js?v=5"></script>
     <script src="js/ui-students.js?v=6"></script>
     <script src="js/ui-schedule.js?v=4"></script>
     <script src="js/ui-tracking.js?v=5"></script>

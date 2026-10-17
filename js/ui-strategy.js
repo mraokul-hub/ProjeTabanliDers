@@ -751,53 +751,223 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
             renderStudentTable(filtered);
         }
 
+        function toggleContextThemeOptions() {
+            const container = document.getElementById('context-theme-options-container');
+            const chevron = document.getElementById('context-theme-chevron');
+            if (!container) return;
+            const isHidden = container.style.display === 'none' || container.style.display === '';
+            container.style.display = isHidden ? 'block' : 'none';
+            if (chevron) {
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        }
+        window.toggleContextThemeOptions = toggleContextThemeOptions;
+
+        function onContextModeChange() {
+            const mode = document.querySelector('input[name="context-mode"]:checked')?.value || 'auto';
+            const poolSec = document.getElementById('context-pool-selector');
+            const customSec = document.getElementById('context-custom-input-box');
+            
+            if (poolSec) poolSec.style.display = (mode === 'pool') ? 'block' : 'none';
+            if (customSec) customSec.style.display = (mode === 'custom') ? 'block' : 'none';
+
+            updateContextThemeBadge();
+        }
+        window.onContextModeChange = onContextModeChange;
+
+        function toggleThemeChip(el) {
+            const activeChips = document.querySelectorAll('#context-theme-chips .theme-chip.active');
+            if (!el.classList.contains('active') && activeChips.length >= 3) {
+                alert('En fazla 3 farklı bağlam teması seçebilirsiniz.');
+                return;
+            }
+            el.classList.toggle('active');
+            updateContextThemeBadge();
+        }
+        window.toggleThemeChip = toggleThemeChip;
+
+        function updateContextThemeBadge() {
+            const badge = document.getElementById('context-theme-badge');
+            if (!badge) return;
+            const mode = document.querySelector('input[name="context-mode"]:checked')?.value || 'auto';
+            
+            if (mode === 'auto') {
+                badge.textContent = '🤖 Otomatik (Ders ve Konuya Göre AI Seçsin)';
+                badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                badge.style.color = '#10b981';
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            } else if (mode === 'pool') {
+                const activeChips = Array.from(document.querySelectorAll('#context-theme-chips .theme-chip.active'));
+                if (activeChips.length === 0) {
+                    badge.textContent = '🏷️ Tema Seçilmedi (AI Otomatik Seçer)';
+                    badge.style.background = 'rgba(245, 158, 11, 0.15)';
+                    badge.style.color = '#f59e0b';
+                    badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                } else {
+                    const names = activeChips.map(c => c.textContent.trim()).join(', ');
+                    badge.textContent = `🏷️ Seçilenler (${activeChips.length}): ` + (names.length > 35 ? names.substring(0, 35) + '...' : names);
+                    badge.style.background = 'rgba(59, 130, 246, 0.15)';
+                    badge.style.color = '#3b82f6';
+                    badge.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                }
+            } else if (mode === 'custom') {
+                const text = document.getElementById('context-custom-text')?.value.trim() || '';
+                if (text) {
+                    badge.textContent = `✍️ Özel Tema: "${text.length > 25 ? text.substring(0, 25) + '...' : text}"`;
+                    badge.style.background = 'rgba(139, 92, 246, 0.15)';
+                    badge.style.color = '#8b5cf6';
+                    badge.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                } else {
+                    badge.textContent = '✍️ Özel Tema (Metin Bekleniyor)';
+                    badge.style.background = 'rgba(239, 68, 68, 0.15)';
+                    badge.style.color = '#ef4444';
+                    badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                }
+            }
+        }
+        window.updateContextThemeBadge = updateContextThemeBadge;
+
         async function generateContextScenarios() {
-            const apiKey = localStorage.getItem('GEMINI_API_KEY');
+            const mode = document.querySelector('input[name="input-mode"]:checked')?.value || 'mufredat';
+            let classInput = 'Tüm Sınıflar';
+            let nameInput = 'Genel Ders';
+            let uniteInput = 'Genel Ünite';
+            let topicInput = '';
 
-
-            const mode = document.querySelector('input[name="input-mode"]:checked').value;
-            let topicInput = 'Genel Konu';
             if (mode === 'mufredat') {
+                classInput = document.getElementById('mufredat-class')?.value || 'Belirtilmedi';
+                nameInput = document.getElementById('mufredat-ders')?.value || 'Belirtilmedi';
+                uniteInput = document.getElementById('mufredat-unite')?.value || 'Genel Ünite';
                 const kSel = document.getElementById('mufredat-konu');
-                topicInput = kSel.multiple ? Array.from(kSel.selectedOptions).map(o => o.value).filter(v=>v).join(' / ') : kSel.value;
+                if (kSel) {
+                    topicInput = kSel.multiple 
+                        ? Array.from(kSel.selectedOptions).map(o => o.value).filter(v => v).join(' / ') 
+                        : kSel.value;
+                }
             } else {
-                topicInput = document.getElementById('free-topic').value;
+                classInput = document.getElementById('free-class')?.value.trim() || 'Tüm Sınıflar';
+                nameInput = document.getElementById('free-name')?.value.trim() || 'Genel Ders';
+                uniteInput = document.getElementById('free-unite')?.value.trim() || 'Genel Ünite';
+                topicInput = document.getElementById('free-topic')?.value.trim() || '';
             }
 
             if (!topicInput || topicInput.trim() === '') {
-                alert('Lütfen bir konu seçin veya girin.');
+                alert('Lütfen senaryo üretmek için bir konu seçin veya girin.');
                 return;
             }
 
+            // Bağlam teması tercihlerini oku (Hibrit Model)
+            const contextMode = document.querySelector('input[name="context-mode"]:checked')?.value || 'auto';
+            let themeInstruction = '';
+            let themeSummaryBadge = '';
+
+            if (contextMode === 'auto') {
+                themeSummaryBadge = '🤖 Akıllı AI Seçimi (Ders ve Konuya Özel)';
+                themeInstruction = `Senaryo Temaları Kuralı (Dinamik AI Seçimi):
+Bu dersin branşına ("${nameInput}"), sınıf seviyesine ("${classInput}") ve konunun özüne ("${topicInput}") pedagojik olarak en uygun, öğrencilerin yaş grubuna hitap eden ve MEB Beceri Temelli Maarif Modeli felsefesiyle örtüşen, birbirinden tamamen bağımsız 3 FARKLI 'Yaratıcı Gerçek Hayat Bağlam Teması' belirle.
+(Örn: Konunun ve dersin doğasına göre Sanat/Tasarım, Sağlık/Tıp, Kültürel Miras/Tarih, Biyomimikri, Siber Güvenlik, Doğa/Ekoloji, Dijital Oyunlar, Girişimcilik, Buluşlar vb. en vurucu 3 temayı sen belirle ve her birini başlıkta açıkça adlandır).`;
+            } else if (contextMode === 'pool') {
+                const activeChips = Array.from(document.querySelectorAll('#context-theme-chips .theme-chip.active')).map(c => c.getAttribute('data-theme'));
+                if (activeChips.length > 0) {
+                    themeSummaryBadge = '🏷️ Havuzdan Seçilenler: ' + activeChips.join(', ');
+                    themeInstruction = `Senaryo Temaları Kuralı (Öğretmen Tercihi):
+Öğretmen bu konu için özellikle şu bağlam temalarını seçmiştir:
+${activeChips.map((t, i) => `${i + 1}. Tema: ${t}`).join('\n')}
+Lütfen senaryoları tam olarak bu temalar etrafında kurgula.`;
+                } else {
+                    themeSummaryBadge = '🤖 Akıllı AI Seçimi (Varsayılan)';
+                    themeInstruction = `Senaryo Temaları Kuralı (Dinamik AI Seçimi):
+Bu dersin branşına ("${nameInput}"), sınıf seviyesine ("${classInput}") ve konunun özüne ("${topicInput}") en uygun 3 farklı gerçek hayat bağlam teması belirle ve her bir temaya uygun senaryo üret.`;
+                }
+            } else if (contextMode === 'custom') {
+                const customText = document.getElementById('context-custom-text')?.value.trim() || '';
+                if (customText) {
+                    themeSummaryBadge = `✍️ Özel Tema: "${customText}"`;
+                    themeInstruction = `Senaryo Temaları Kuralı (Öğretmenin Özel Teması):
+Öğretmen şu özel tema/bağlam odağında senaryo üretilmesini talep etmektedir:
+"${customText}"
+Lütfen bu ana tema çerçevesinde, konuyu farklı açılardan ele alan 3 ilgi çekici ve yaratıcı alt kurgu/senaryo üret.`;
+                } else {
+                    themeSummaryBadge = '🤖 Akıllı AI Seçimi (Özel metin girilmediği için)';
+                    themeInstruction = `Senaryo Temaları Kuralı:
+Dersin branşına ("${nameInput}"), sınıf seviyesine ("${classInput}") ve konunun özüne ("${topicInput}") en uygun 3 farklı yaratıcı gerçek hayat bağlam teması belirle.`;
+                }
+            }
+
             const outputDiv = document.getElementById('ai-context-output');
-            outputDiv.innerHTML = `<div style="text-align:center;padding:20px;color:#10b981;"><i class="fas fa-bolt fa-spin fa-2x" style="margin-bottom:10px;"></i><p>Bağlam Senaryoları Üretiliyor...</p></div>`;
+            outputDiv.innerHTML = `<div style="text-align:center;padding:25px;color:#10b981;">
+                <i class="fas fa-bolt fa-spin fa-2x" style="margin-bottom:10px;"></i>
+                <h4 style="margin:0 0 5px 0;">Dinamik Bağlam Senaryoları Hazırlanıyor...</h4>
+                <p style="font-size:13px;color:var(--text-muted);margin:0;">"${nameInput} - ${topicInput}" için pedagojik kancalar sentezleniyor...</p>
+            </div>`;
             outputDiv.style.display = 'block';
 
-            const prompt = `Sen uzman bir Eğitim Teknoloğu ve Bağlam Temelli Eğitim (CBL) uzmanısın.
-Öğretmen şu konuyu işleyecek: "${topicInput}"
-Senden bu konu için 3 farklı 'Gerçek Hayat Senaryosu (Bağlam Kancası)' üretmeni istiyorum.
-Senaryolar şu üç temada olmalı:
-1. Uzay / Gelecek
-2. Yerel Çevre / Doğa
-3. Ekonomi / Girişimcilik
+            const prompt = `Sen uzman bir Eğitim Teknoloğu, Kıdemli Öğretim Tasarımcısı ve Bağlam Temelli Öğrenme (CBL / Context-Based Learning) uzmanısın.
+Türkiye Yüzyılı Maarif Modeli ve Beceri Temelli Müfredat vizyonuna uygun olarak, öğrencilerin "Biz bu konuyu gerçek hayatta nerede ve niçin kullanacağız?" sorusunu ortadan kaldıran derinlikli bağlam senaryoları tasarlıyorsun.
 
-Lütfen çıktıyı aşağıdaki başlıklar altında, okunaklı, samimi ve ilham verici bir metin (markdown) olarak sun:
+### Ders ve Konu Bilgileri:
+- **Sınıf Seviyesi:** ${classInput}
+- **Ders Adı:** ${nameInput}
+- **Ünite / Alan Becerisi / Tema:** ${uniteInput}
+- **İşlenecek Konu / Öğrenim Çıktısı:** ${topicInput}
 
-### 🚀 Uzay / Gelecek Teması
+### ${themeInstruction}
+
+---
+### Beklenen Çıktı Standardı:
+Lütfen her biri için aşağıdaki şablona sadık kalarak, okunaklı, samimi, ilgi uyandırıcı ve zengin bir Markdown metni üret:
+
+### 🌟 1. [1. Tema Adı ve İkonu]
+- **Senaryo Başlığı:** (Öğrencinin merakını cezbeden film/proje adı gibi vurucu bir başlık)
+- **Gerçek Hayat Bağlam Kancası (Hook):** (Öğrencinin yaş seviyesine uygun, gerçekçi bir problem durumu, görev veya hikaye - 2-3 paragraf)
+- **❓ Derse Giriş / Tetikleyici Soru (Challenge):** (Öğrencileri düşünmeye, tartışmaya ve derse odaklanmaya sevk eden kritik soru)
+- **🎯 Kazanım ve Ders İçi Uygulama Köprüsü:** (Öğretmenin bu kurguyu dersin giriş, keşif veya derinleştirme aşamasında nasıl kullanabileceğine dair somut öneri)
+
+### 🌟 2. [2. Tema Adı ve İkonu]
 - **Senaryo Başlığı:** ...
-- **Bağlam Kancası:** ...
+- **Gerçek Hayat Bağlam Kancası (Hook):** ...
+- **❓ Derse Giriş / Tetikleyici Soru (Challenge):** ...
+- **🎯 Kazanım ve Ders İçi Uygulama Köprüsü:** ...
 
-### 🌿 Yerel Çevre / Doğa Teması
+### 🌟 3. [3. Tema Adı ve İkonu]
 - **Senaryo Başlığı:** ...
-- **Bağlam Kancası:** ...
+- **Gerçek Hayat Bağlam Kancası (Hook):** ...
+- **❓ Derse Giriş / Tetikleyici Soru (Challenge):** ...
+- **🎯 Kazanım ve Ders İçi Uygulama Köprüsü:** ...
 
-### 💼 Ekonomi / Girişimcilik Teması
-- **Senaryo Başlığı:** ...
-- **Bağlam Kancası:** ...`;
+Öğretmenin doğrudan sınıfa uygulayabileceği pratik, heyecan verici ve gerçekçi bir üslup kullan.`;
 
             window.currentGeminiPrompt = prompt;
             const btn = document.createElement('button');
             copyPromptAndOpenGemini(btn);
-            
-            outputDiv.innerHTML = `<div style="text-align:center;padding:20px;color:#10b981;"><i class="fas fa-check-circle fa-2x" style="margin-bottom:10px;"></i><p>Bağlam Senaryoları promptu kopyalandı! Lütfen açılan Gemini sekmesine yapıştırıp çalıştırın.</p></div>`;
+
+            outputDiv.innerHTML = `
+                <div style="background:var(--card-bg);border:1px solid #10b981;border-radius:10px;padding:18px;margin-top:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;border-bottom:1px dashed var(--border);padding-bottom:10px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-check-circle" style="color:#10b981;font-size:20px;"></i>
+                            <strong style="color:var(--text-main);font-size:14px;">Bağlam Senaryoları Promptu Hazırlandı ve Kopyalandı!</strong>
+                        </div>
+                        <span style="font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(16,185,129,0.15);color:#10b981;font-weight:600;border:1px solid rgba(16,185,129,0.3);">
+                            ${themeSummaryBadge}
+                        </span>
+                    </div>
+                    
+                    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;">
+                        <strong>Ders:</strong> ${nameInput} (${classInput}) &nbsp;|&nbsp; 
+                        <strong>Konu:</strong> ${topicInput} <br>
+                        Prompt panoya otomatik kopyalandı ve <strong>Gemini</strong> yeni sekmede açıldı. Açılan sekmede <code>Ctrl + V</code> yaparak senaryolarınızı anında üretebilirsiniz.
+                    </div>
+
+                    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+                        <button class="btn btn-clear" style="font-size:12px;padding:6px 12px;" onclick="document.getElementById('ai-context-output').style.display='none';">
+                            <i class="fas fa-times me-1"></i> Kapat
+                        </button>
+                        <button class="btn" style="background:#10b981;color:white;font-size:12px;padding:6px 14px;" onclick="copyPromptAndOpenGemini(this)">
+                            <i class="fas fa-copy me-1"></i> Promptu Tekrar Kopyala & Gemini'yi Aç
+                        </button>
+                    </div>
+                </div>
+            `;
         }
+        window.generateContextScenarios = generateContextScenarios;
