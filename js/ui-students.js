@@ -168,10 +168,10 @@ function generateGroups() {
     groups.forEach((group, index) => {
         let html = `<div class="group-card"><h3><input type="text" class="group-title-input" value="Küme ${index + 1}" oninput="this.setAttribute('value', this.value); saveData()"><button class="action-btn btn-delete" onclick="if(confirm('Kümeyi silmek istiyor musunuz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}" title="Küme Sil"><i class="fas fa-times"></i></button></h3><ul style="padding:0;list-style:none;">`;
         group.forEach(m => {
-            const escapedAd = (m.adSoyad || '').replace(/"/g, '&quot;');
-            const safeJsAd = (m.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const escapedAd = (typeof escapeHTML === 'function') ? escapeHTML(m.adSoyad || '') : (m.adSoyad || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeJsAd = (m.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             html += `<li style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
-                    <div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${escapedAd}" style="font-weight: 600; font-size: 14px;">${m.no} - ${escapedAd}</span>
+                    <div style="display:flex; flex-direction:column; gap:2px;"><span class="student-name-text" data-name="${escapedAd}" style="font-weight: 600; font-size: 14px;">${m.no ? (m.no + ' - ') : ''}${escapedAd}</span>
                         <div style="display:flex; align-items:center; gap:5px;"><span class="xp-badge" style="font-size:10px; padding:1px 5px;">${m.xp || 0} XP</span>
                             <button class="btn-mini-xp btn-mini-plus" onclick="addXPByName('${safeJsAd}', 1)">+</button><button class="btn-mini-xp btn-mini-minus" onclick="addXPByName('${safeJsAd}', -1)">-</button><button class="btn-mini-xp btn-mini-question" onclick="addXPByName('${safeJsAd}', 5)"><i class="fas fa-question"></i></button>
                         </div></div>
@@ -1294,6 +1294,9 @@ async function runTesseractKumeOcr(imageSource, classStudents) {
     });
 
     const fullText = data.text || '';
+    // Bellek Temizliği: 16MB bitmap canvas alanını bellekten anında serbest bırak
+    canvas.width = 0;
+    canvas.height = 0;
     return parseTesseractTextToClusters(fullText, classStudents);
 }
 

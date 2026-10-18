@@ -783,6 +783,16 @@
         let selectedWeek = 1;
         let teacherUid = '';
 
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return str.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // STANDART 1D BARKOD MOTORU (CODE 128 & VEKTÖREL SVG - DÜŞÜK ÇÖZÜNÜRLÜKTE BİLE ANINDA OKUNUR)
         const CODE128_B = [
             '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
@@ -1238,8 +1248,8 @@
                     if (bannerText) bannerText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Bu sınıfta kayıtlı öğrenci bulunamadı (Boş şablon açıldı)';
                     if (printBtn) printBtn.innerHTML = '<i class="fas fa-print"></i> Formu Yazdır (1 Sayfa)';
                 } else {
-                    const titleText = selectedClass ? `<strong>${selectedClass} Sınıfı:</strong>` : `<strong>Tüm Sınıflar:</strong>`;
-                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-layer-group"></i> ${titleText} ${targetStudents.length} A4 Sayfası Hazır &middot; 📅 ${periodDesc}`;
+                    const titleText = selectedClass ? `<strong>${escapeHTML(selectedClass)} Sınıfı:</strong>` : `<strong>Tüm Sınıflar:</strong>`;
+                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-layer-group"></i> ${titleText} ${targetStudents.length} A4 Sayfası Hazır &middot; 📅 ${escapeHTML(periodDesc)}`;
                     if (printBtn) printBtn.innerHTML = `<i class="fas fa-print"></i> Formları Yazdır (${targetStudents.length} Sayfa)`;
                 }
             } else {
@@ -1247,7 +1257,7 @@
                 targetStudents = singleStudent ? [singleStudent] : [null];
 
                 if (singleStudent) {
-                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-user-check"></i> <strong>${singleStudent.adSoyad}</strong> (${singleStudent.sinif || ''}) - 1 A4 Sayfası Hazır &middot; 📅 ${periodDesc}`;
+                    if (bannerText) bannerText.innerHTML = `<i class="fas fa-user-check"></i> <strong>${escapeHTML(singleStudent.adSoyad || '')}</strong> (${escapeHTML(singleStudent.sinif || '')}) - 1 A4 Sayfası Hazır &middot; 📅 ${escapeHTML(periodDesc)}`;
                     if (printBtn) printBtn.innerHTML = `<i class="fas fa-print"></i> Formu Yazdır (1 Sayfa)`;
                 }
             }
@@ -1513,7 +1523,7 @@
                         <div class="header-fields">
                             <div class="field-group" style="flex: 1.4;">
                                 <span class="field-lbl">ÖĞRENCİ ADI SOYADI:</span>
-                                <div class="field-line">${nameText ? nameText : '&nbsp;'}</div>
+                                <div class="field-line">${nameText ? escapeHTML(nameText) : '&nbsp;'}</div>
                             </div>
 
                             <div class="field-group">

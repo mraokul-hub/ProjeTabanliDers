@@ -10,6 +10,7 @@ let scheduleData = [];
 let trackingData = [];
 let checklistData = [];
 let examData = [];
+let koclukData = [];
 
 // window referans senkronizasyonu
 window.studentData = studentData;
@@ -18,6 +19,22 @@ window.scheduleData = scheduleData;
 window.trackingData = trackingData;
 window.checklistData = checklistData;
 window.examData = examData;
+
+// koclukData referansını window nesnesi ile iki yönlü tam senkronize et (hafıza ayrışmasını engeller)
+try {
+    Object.defineProperty(window, 'koclukData', {
+        get: function () {
+            return koclukData;
+        },
+        set: function (val) {
+            koclukData = Array.isArray(val) ? val : (val || []);
+        },
+        configurable: true,
+        enumerable: true
+    });
+} catch (e) {
+    window.koclukData = koclukData;
+}
 let myChart = null;
 let currentSort = { column: null, asc: true };
 let activeExamId = null;

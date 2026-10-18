@@ -312,8 +312,10 @@ async function openAdminStudentTransferModal() {
             const isAdmin = u.isAdmin || (u.email && u.email.toLowerCase().trim() === 'mremzi@gmail.com');
             const adminBadge = isAdmin ? ' 👑 [Yönetici]' : '';
             const statusLabel = u.onayli ? '' : ' [Onaysız]';
-            sourceOpts += `<option value="${u.uid}">${u.adSoyad} (${u.email})${adminBadge}${statusLabel}</option>`;
-            targetOpts += `<option value="${u.uid}">${u.adSoyad} (${u.email})${adminBadge}${statusLabel}</option>`;
+            const safeName = (typeof escapeHTML === 'function') ? escapeHTML(u.adSoyad || '') : (u.adSoyad || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeEmail = (typeof escapeHTML === 'function') ? escapeHTML(u.email || '') : (u.email || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            sourceOpts += `<option value="${u.uid}">${safeName} (${safeEmail})${adminBadge}${statusLabel}</option>`;
+            targetOpts += `<option value="${u.uid}">${safeName} (${safeEmail})${adminBadge}${statusLabel}</option>`;
         });
 
         if (sourceSelect) sourceSelect.innerHTML = sourceOpts;

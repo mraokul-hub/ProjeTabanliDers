@@ -17,6 +17,7 @@ const TAB_LABELS = {
     'tab8': '🌙 İleri Çalışma Grupları',
     'tab9': '🌳 Proje Grupları',
     'tab11': '📊 Soru Çözüm Takip',
+    'tab-kocluk': '🧠 LGS Bilişsel Koçluk',
     'tab10': '🧭 Sistem Kullanım Kılavuzu',
     'tab-admin': '👑 Yönetici Paneli'
 };
@@ -24,7 +25,7 @@ const TAB_LABELS = {
 // Toplam normal (admin hariç) modül sayısı
 const TAB_NUMBERS = {
     'tab1': 1, 'tab2': 2, 'tab-buz-kirma': 3, 'tab3': 4, 'tab4': 5,
-    'tab5': 6, 'tab-checklists': 7, 'tab6': 8, 'tab7': 9, 'tab8': 10, 'tab9': 11, 'tab11': 12, 'tab10': 13, 'tab-admin': ''
+    'tab5': 6, 'tab-checklists': 7, 'tab6': 8, 'tab7': 9, 'tab8': 10, 'tab9': 11, 'tab11': 12, 'tab-kocluk': 13, 'tab10': 14, 'tab-admin': ''
 };
 
 function openTab(tabId) {
@@ -54,7 +55,7 @@ function openTab(tabId) {
     const labelEl = document.getElementById('mobile-active-tab-label');
     if (labelEl) labelEl.textContent = label;
     const numEl = document.querySelector('.mobile-nav-bar > div:last-child');
-    if (numEl && num) numEl.textContent = num + '/13';
+    if (numEl && num) numEl.textContent = num + '/14';
     if (numEl && !num) numEl.textContent = '★';
 
     // Mobil panel: aktif butonu vurgula
@@ -85,6 +86,10 @@ function openTab(tabId) {
             if (typeof window.SoruTakipUI.populateClassDropdown === 'function') window.SoruTakipUI.populateClassDropdown();
             if (typeof window.SoruTakipUI.populateStudentDropdown === 'function') window.SoruTakipUI.populateStudentDropdown();
         }
+    }
+
+    if (tabId === 'tab-kocluk') {
+        if (typeof window.renderKoclukModule === 'function') window.renderKoclukModule();
     }
 
     if (tabId === 'tab-admin') {
@@ -139,12 +144,17 @@ function renderStudentTable(dataToRender = null) {
         else if (student.vak === 'Kinestetik') vakIcon = '<i class="fas fa-hand-paper" title="Kinestetik Öğrenen" style="color: #f59e0b; margin-left: 8px;"></i>';
 
         const tr = document.createElement('tr');
+        const safeSira = (typeof escapeHTML === 'function') ? escapeHTML(student.sira || '-') : (student.sira || '-');
+        const safeNo = (typeof escapeHTML === 'function') ? escapeHTML(student.no || '-') : (student.no || '-');
+        const safeAdSoyad = (typeof escapeHTML === 'function') ? escapeHTML(student.adSoyad || '-') : (student.adSoyad || '-');
+        const safeSinif = (typeof escapeHTML === 'function') ? escapeHTML(student.sinif || '-') : (student.sinif || '-');
+
         tr.innerHTML = `
                 <td><input type="checkbox" class="row-checkbox" data-index="${realIndex}"></td>
-                <td>${student.sira || '-'}</td>
-                <td>${student.no || '-'}</td>
-                <td><span style="font-weight: 600;">${student.adSoyad || '-'}</span>${vakIcon}</td>
-                <td>${student.sinif || '-'}</td>
+                <td>${safeSira}</td>
+                <td>${safeNo}</td>
+                <td><span style="font-weight: 600;">${safeAdSoyad}</span>${vakIcon}</td>
+                <td>${safeSinif}</td>
                 <td title="Geçmişi Görmek İçin Tıklayın" style="cursor:pointer;" onclick="showXPLogs(${realIndex})"><span class="xp-badge">${student.xp || 0}</span></td>
                 <td><span style="font-weight:bold; color:var(--red);">${student.artmayanNot ? '-' + student.artmayanNot : '0'}</span></td>
                 <td style="white-space: nowrap;">
@@ -215,28 +225,37 @@ function updateClassDropdown() {
             const studentsInClass = studentData.filter(s => s.sinif === c || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(c))).sort((a, b) => a.no - b.no);
             const div = document.createElement('div');
             div.className = 'track-class-card';
+            const safeClassVal = (typeof escapeHTML === 'function') ? escapeHTML(c) : c;
+            const cleanClassId = String(c).replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]/g, '_');
+
             div.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <input type="checkbox" class="track-class-checkbox" value="${c}" id="chk-${c}" style="width: 18px; height: 18px; accent-color: var(--secondary); cursor: pointer;" onchange="toggleClassAllStudents('${c}', this.checked)"> 
-                            <label for="chk-${c}" style="font-weight: 800; font-size: 15px; cursor:pointer; color: var(--secondary); margin:0;">${c} SINIFI</label>
+                            <input type="checkbox" class="track-class-checkbox" value="${safeClassVal}" id="chk-${cleanClassId}" style="width: 18px; height: 18px; accent-color: var(--secondary); cursor: pointer;" onchange="toggleClassAllStudents('${safeClassVal}', this.checked)"> 
+                            <label for="chk-${cleanClassId}" style="font-weight: 800; font-size: 15px; cursor:pointer; color: var(--secondary); margin:0;">${safeClassVal} SINIFI</label>
                         </div>
-                        <button class="btn" style="padding: 6px 14px; font-size: 12px; background: var(--secondary); display: inline-flex; align-items: center; gap: 6px;" onclick="toggleStudentListUI('${c}')">
+                        <button class="btn" style="padding: 6px 14px; font-size: 12px; background: var(--secondary); display: inline-flex; align-items: center; gap: 6px;" onclick="toggleStudentListUI('${safeClassVal}')">
                             <i class="fas fa-list-ul"></i> Öğrenci Seç
                         </button>
                     </div>
-                    <div id="student-list-${c}" style="display: none;">
+                    <div id="student-list-${cleanClassId}" style="display: none;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 5px; background: rgba(16, 185, 129, 0.1); padding: 6px 10px; border-radius: 6px;">
                             <span style="font-size: 11px; font-weight: 700; color: var(--accent);"><i class="fas fa-user-check"></i> ÖĞRENCİ BİLGİSİ</span>
-                            <button class="btn" style="padding: 4px 10px; font-size: 11px; background: var(--accent); color: white; border: none; font-weight:700;" onclick="selectAllInClass('${c}')">Tümünü Seç</button>
+                            <button class="btn" style="padding: 4px 10px; font-size: 11px; background: var(--accent); color: white; border: none; font-weight:700;" onclick="selectAllInClass('${safeClassVal}')">Tümünü Seç</button>
                         </div>
                         <div class="track-student-grid">
-                            ${studentsInClass.map(s => `
-                                <div class="track-student-item" onclick="toggleStudentCheckboxDirectly('st-${s.adSoyad.replace(/\s+/g, '')}')">
-                                    <input type="checkbox" class="track-student-checkbox" data-class="${c}" value="${s.adSoyad}" id="st-${s.adSoyad.replace(/\s+/g, '')}" onclick="event.stopPropagation()">
-                                    <label for="st-${s.adSoyad.replace(/\s+/g, '')}">${s.no} - ${s.adSoyad}</label>
+                            ${studentsInClass.map(s => {
+                                const rawName = s.adSoyad || '';
+                                const cleanStudentId = String(rawName).replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]/g, '');
+                                const safeStudentName = (typeof escapeHTML === 'function') ? escapeHTML(rawName) : rawName;
+                                const safeStudentNo = (typeof escapeHTML === 'function') ? escapeHTML(s.no || '') : (s.no || '');
+                                return `
+                                <div class="track-student-item" onclick="toggleStudentCheckboxDirectly('st-${cleanStudentId}')">
+                                    <input type="checkbox" class="track-student-checkbox" data-class="${safeClassVal}" value="${safeStudentName}" id="st-${cleanStudentId}" onclick="event.stopPropagation()">
+                                    <label for="st-${cleanStudentId}">${safeStudentNo} - ${safeStudentName}</label>
                                 </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 `;

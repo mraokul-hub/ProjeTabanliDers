@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // pdf-excel-parser.js
 // PDF ve Excel dosya ayrıştırma
 // ============================================================
@@ -81,24 +81,31 @@
             const tbody = document.getElementById("pdf-student-list-body");
             tbody.innerHTML = "";
 
+            const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+
             parsedPDFStudents.forEach(st => {
                 let isRegistered = studentData.some(s => (s.no && s.no.toString() === st.studentNo) || (s.adSoyad && s.adSoyad.toLowerCase() === st.name.toLowerCase()));
                 let bgColor = isRegistered ? "rgba(34, 197, 94, 0.08)" : "transparent";
                 let nameIcon = isRegistered ? '<i class="fas fa-check-circle" style="color:var(--secondary); margin-right:5px;" title="Sistemde Kayıtlı Öğrenci"></i>' : '<i class="fas fa-question-circle" style="color:var(--text-muted); margin-right:5px;" title="Sistemde Bulunamayan/Yeni Öğrenci"></i>';
 
+                const safeId = escapeFn(st.id);
+                const safeName = escapeFn(st.name);
+                const safeClass = escapeFn(st.className);
+                const safeNo = escapeFn(st.studentNo);
+
                 const tr = document.createElement("tr");
                 tr.style.borderBottom = "1px solid var(--border)";
                 tr.style.backgroundColor = bgColor;
                 tr.innerHTML = `
-                <td style="padding: 8px;"><input type="checkbox" class="pdf-student-checkbox" value="${st.id}" checked></td>
-                <td style="padding: 8px; font-weight: 600;">${nameIcon}${st.name}</td>
-                <td style="padding: 8px;">${st.className} / No: ${st.studentNo}</td>
-                <td style="padding: 8px; text-align: center; color: var(--teal);">${st.scores.turkce.d}D / ${st.scores.turkce.y}Y</td>
-                <td style="padding: 8px; text-align: center; color: var(--teal);">${st.scores.matematik.d}D / ${st.scores.matematik.y}Y</td>
-                <td style="padding: 8px; text-align: center; color: var(--teal);">${st.scores.fen.d}D / ${st.scores.fen.y}Y</td>
-                <td style="padding: 8px; text-align: center; color: var(--teal);">${st.scores.sosyal.d}D / ${st.scores.sosyal.y}Y</td>
-                <td style="padding: 8px; text-align: center; color: var(--teal);">${st.scores.din.d}D / ${st.scores.din.y}Y</td>
-                <td style="padding: 8px; text-align: center; color: var(--teal);">${st.scores.ingilizce.d}D / ${st.scores.ingilizce.y}Y</td>
+                <td style="padding: 8px;"><input type="checkbox" class="pdf-student-checkbox" value="${safeId}" checked></td>
+                <td style="padding: 8px; font-weight: 600;">${nameIcon}${safeName}</td>
+                <td style="padding: 8px;">${safeClass} / No: ${safeNo}</td>
+                <td style="padding: 8px; text-align: center; color: var(--teal);">${Number(st.scores.turkce.d) || 0}D / ${Number(st.scores.turkce.y) || 0}Y</td>
+                <td style="padding: 8px; text-align: center; color: var(--teal);">${Number(st.scores.matematik.d) || 0}D / ${Number(st.scores.matematik.y) || 0}Y</td>
+                <td style="padding: 8px; text-align: center; color: var(--teal);">${Number(st.scores.fen.d) || 0}D / ${Number(st.scores.fen.y) || 0}Y</td>
+                <td style="padding: 8px; text-align: center; color: var(--teal);">${Number(st.scores.sosyal.d) || 0}D / ${Number(st.scores.sosyal.y) || 0}Y</td>
+                <td style="padding: 8px; text-align: center; color: var(--teal);">${Number(st.scores.din.d) || 0}D / ${Number(st.scores.din.y) || 0}Y</td>
+                <td style="padding: 8px; text-align: center; color: var(--teal);">${Number(st.scores.ingilizce.d) || 0}D / ${Number(st.scores.ingilizce.y) || 0}Y</td>
             `;
                 tbody.appendChild(tr);
             });

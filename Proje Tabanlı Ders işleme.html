@@ -70,7 +70,9 @@
                             // ── Kullanıcı adını göster ──
                             const nameSpan = document.getElementById('user-display-name');
                             if (nameSpan) {
-                                nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${profil.adSoyad || user.email}`;
+                                const rawName = (profil.adSoyad || user.email || '');
+                                const safeName = String(rawName).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+                                nameSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${safeName}`;
                             }
 
                         }).catch(e => console.error("Kullanıcı profili alınamadı:", e));
@@ -2264,8 +2266,10 @@
                             class="mob-icon">🌳</span>11. Proje Grupları</button>
                     <button class="mobile-tab-btn" id="mob-btn-tab11" onclick="openTab('tab11')"><span
                             class="mob-icon">📊</span>12. Soru Çözüm Takip</button>
+                    <button class="mobile-tab-btn" id="mob-btn-tab-kocluk" onclick="openTab('tab-kocluk')"><span
+                            class="mob-icon">🧠</span>13. LGS Bilişsel Koçluk</button>
                     <button class="mobile-tab-btn" id="mob-btn-tab10" onclick="openTab('tab10')"><span
-                            class="mob-icon">🧭</span>13. Sistem Kullanım Kılavuzu</button>
+                            class="mob-icon">🧭</span>14. Sistem Kullanım Kılavuzu</button>
                     <button class="mobile-tab-btn" id="mob-btn-tab-admin" onclick="openTab('tab-admin')"
                         style="display:none; color:#f59e0b;"><span class="mob-icon">👑</span>Yönetici Paneli</button>
                 </div>
@@ -2286,7 +2290,8 @@
             <button class="tab-btn" onclick="openTab('tab8')">🌙 10. İleri Çalışma Grupları</button>
             <button class="tab-btn" onclick="openTab('tab9')" id="tab9-btn">🌳 11. Proje Grupları</button>
             <button class="tab-btn" onclick="openTab('tab11')">📊 12. Soru Çözüm Takip</button>
-            <button class="tab-btn" onclick="openTab('tab10')">🧭 13. Sistem Kullanım Kılavuzu</button>
+            <button class="tab-btn" onclick="openTab('tab-kocluk')">🧠 13. LGS Bilişsel Koçluk</button>
+            <button class="tab-btn" onclick="openTab('tab10')">🧭 14. Sistem Kullanım Kılavuzu</button>
             <button class="tab-btn" id="admin-tab-btn" onclick="openTab('tab-admin')"
                 style="display: none; color: #f59e0b;">👑 Yönetici Paneli</button>
         </div>
@@ -4586,6 +4591,114 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                 </ul>
             </div>
 
+            <!-- 12: Takip & Kontrol Çizelgeleri (Rubrikler) -->
+            <div class="form-box" style="border-left: 4px solid #0d9488;">
+                <h3 style="color: #0d9488; margin-top:0;"><i class="fas fa-clipboard-list"></i> 12. Takip & Kontrol Çizelgeleri (Maarif Modeli Rubrikleri)</h3>
+                <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
+                    <li><strong>Yeni Çizelge Oluşturma:</strong> "Yeni Çizelge Oluştur" butonuyla sınıf, çalışma türü (Deney, Etkinlik, Ürün Dosyası, Süreç İzleme), değerlendirme tipi (Puanlama veya Simgeli) ve MEB Maarif Modeli öğrenim çıktılarına uygun rubrik kriterlerini belirleyin.</li>
+                    <li><strong>Hızlı Değerlendirme & Özel Simgeler:</strong> Çizelge kartındaki <strong>"Değerlendir"</strong> butonuyla açılan matris tablosunda (+ / - / G / ! / ⭐️) simgeleriyle öğrencileri tek tıkla değerlendirin. <strong>"Hepsini En Yüksek Yap"</strong> veya <strong>"Tümünü Başarılı Yap"</strong> hızlı butonlarıyla zamandan tasarruf edin.</li>
+                    <li><strong>A4 Baskı & e-Okul Aktarımı:</strong> Çizelgeleri resmi MEB teftiş ve zümre dosyalarına uygun A4 yatay formatta tek tıkla yazdırın; toplam puanları e-Okul ölçeklerine doğrudan aktarın.</li>
+                </ul>
+            </div>
+
+            <!-- 13: LGS Bilişsel Koçluk & Mentorluk Sistemi (Modül 13 v3.0) -->
+            <div class="form-box" style="border-left: 4px solid #8b5cf6; background: linear-gradient(to right, rgba(139,92,246,0.04), transparent);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; border-bottom:1px solid rgba(139,92,246,0.2); padding-bottom:8px;">
+                    <h3 style="color: #8b5cf6; margin:0; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-brain"></i> 13. LGS Bilişsel Koçluk & Mentorluk Sistemi (v3.0 Hibrit Ekosistem)
+                    </h3>
+                    <span style="background:#8b5cf6; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">Pedagojik & Bilişsel Analitik</span>
+                </div>
+                
+                <p style="font-size:13.5px; color:var(--text-main); margin-bottom:14px; line-height:1.5;">
+                    Bu modül; 8. sınıf LGS hazırlık sürecindeki öğrencilerin akademik gelişimini sadece net sayarak değil; <strong>Turlama Disiplin Endeksi (TDE)</strong>, <strong>Soru Kalite Piramidi</strong>, <strong>Metabilişsel Kök Neden Teşhisi</strong> ve <strong>Aralıklı Tekrar (Spaced Repetition)</strong> bilimiyle yöneten ileri düzey hibrit bir eğitim koçluğu mimarisidir.
+                </p>
+
+                <!-- 4 Temel Adım Kartı -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-bottom:16px;">
+                    <div style="background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.25); border-radius:8px; padding:12px;">
+                        <strong style="color:#7c3aed; font-size:13px; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                            <i class="fas fa-user-plus"></i> 1. Öğrenci Kaydı & Hedef
+                        </strong>
+                        <p style="font-size:12px; margin:0; color:var(--text-muted); line-height:1.4;">
+                            "Öğrenciyi Koçluğa Ekle" butonuyla öğrenciyi seçin. Başlangıç Neti, Hedef Lise, Yüzdelik Dilim (%1.0 vb.), Hedef Net, Haftalık Soru Hedefi ve Öğrenme Stili (VAK) parametrelerini tanımlayın.
+                        </p>
+                    </div>
+
+                    <div style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:12px;">
+                        <strong style="color:#d97706; font-size:13px; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                            <i class="fas fa-bolt"></i> 2. ⚡ 60 Saniyelik Hızlı Giriş
+                        </strong>
+                        <p style="font-size:12px; margin:0; color:var(--text-muted); line-height:1.4;">
+                            Öğrenci kartındaki <strong>"⚡ 60 Sn Hızlı Giriş & Form Bas"</strong> butonuyla sekme değiştirmeden haftalık soru sayılarını, uyku saatini, yeni deneme netlerini ve canlı TDE skorunu saniyeler içinde kaydedin.
+                        </p>
+                    </div>
+
+                    <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:12px;">
+                        <strong style="color:#059669; font-size:13px; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                            <i class="fas fa-print"></i> 3. 🖨️ Hibrit Akıllı Kağıtlar
+                        </strong>
+                        <p style="font-size:12px; margin:0; color:var(--text-muted); line-height:1.4;">
+                            <strong>"Akıllı Form Merkezi"</strong> modalından öğrenciye özel önceden doldurulmuş 4 farklı tek sayfa A4 kağıt formunu (Haftalık Plan, Deneme Triyajı, Soru Ameliyathanesi, Veli Mutabakatı) tek tıkla basın.
+                        </p>
+                    </div>
+
+                    <div style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.25); border-radius:8px; padding:12px;">
+                        <strong style="color:#2563eb; font-size:13px; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                            <i class="fas fa-chart-line"></i> 4. Bilişsel Analitik Kokpiti
+                        </strong>
+                        <p style="font-size:12px; margin:0; color:var(--text-muted); line-height:1.4;">
+                            Öğrenci kartına tıklayarak açılan 5 sekmeli kokpitte; Plato Teşhis Motoru, MEB Konu Isı Haritası, Spaced Repetition takibi ve Gemini AI Veli Bültenlerini yönetin.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Detaylı Özellik Listesi -->
+                <ul style="line-height:1.65; margin:0; padding-left:20px; font-size:13.5px; color:var(--text-main);">
+                    <li>
+                        <strong>TDE (Turlama Disiplin Endeksi) Motoru:</strong>
+                        Sayısal oturumda Fen 1. tur süresi (ideal: 32 dk), Matematik 1. tur süresi (ideal: 30 dk), soruyla inatlaşma sayısı ve 2. tur net kazanımları üzerinden 0-100 arası turlama disiplini hesaplanır. Öğrencinin bilgi eksikliğinden mi yoksa strateji çöküşünden mi net kaybettiği somutlaştırılır.
+                    </li>
+                    <li>
+                        <strong>Soru Kalite Piramidi & "Konfor Alanı Tuzağı" Dedektörü:</strong>
+                        Öğrencinin çözdüğü soruların ne kadarının temel kazanım, ne kadarının yeni nesil olduğu oranlanır. Yeni nesil oranı %45'in altına düştüğünde sistem otomatik olarak <em>"⚠️ Konfor Alanı Tuzağı!"</em> alarmı verir.
+                    </li>
+                    <li>
+                        <strong>Metabilişsel Hata Defteri & 4 Kök Neden Kodu:</strong>
+                        Yanlış/boş sorular sadece kaydedilmez; 4 cerrahi kök neden koduyla sınıflandırılır:
+                        <em>[A] Bilgi Boşluğu</em> (Cerrahi Konu Tekrarı),
+                        <em>[B] Kurgu & Soru Kökü Algılama</em> (Metin Analizi & Görsel Okuma),
+                        <em>[C] Süre & Dikkat Kaybı</em> (Turlama & Zaman Yönetimi),
+                        <em>[D] Bilişsel Direnç / Önyargı</em> (Öz-Yeterlik Güçlendirme).
+                    </li>
+                    <li>
+                        <strong>Aralıklı Tekrar (Spaced Repetition) Takibi:</strong>
+                        Her yanlış soru 1. gün (24s), 3. gün (72s) ve 14. gün (336s) döngüsünde öğrenciye tekrar çözdürülür. 3 döngüsü tamamlanan soru <em>"🟢 Kalıcılaştı"</em> rozeti alarak hafızaya mühürlenir.
+                    </li>
+                    <li>
+                        <strong>MEB Müfredatı Mikro-Konu Isı Haritası (Heatmap):</strong>
+                        Öğrencinin tüm hataları MEB 8. sınıf kazanımlarına göre taranır. 3+ hatası olan konular 🔴 Cerrahi Müdahale, dikkat hataları 🟡 Strateji, tekrarları tamamlananlar 🟢 Kalıcılaştı rozetiyle görselleştirilir.
+                    </li>
+                    <li>
+                        <strong>Çift Katmanlı Plato & Doygunluk Teşhisi:</strong>
+                        Pure SVG Net ve TDE grafiği üzerinden son 3 deneme analiz edilir. 75 netin altındaki duraksamalar <em>"Strateji Çöküşü / Turlama İhmali"</em>, 85 net üstündeki dalgalanmalar ise <em>"Mikro-Kazanım Derinliği & Hata Defteri Eksikliği"</em> olarak teşhis edilir.
+                    </li>
+                    <li>
+                        <strong>Hibrit Akıllı Kağıt Formları (A4 Tek Sayfa):</strong>
+                        <ul style="margin:4px 0 6px 0; padding-left:18px; font-size:13px; color:var(--text-muted);">
+                            <li><strong>FORM-1 (Haftalık Blok Plan & Soru Piramidi):</strong> 75-80 dk'lık odak blokları, vakti gelmiş tekrar soruları ve 22:30 uyku protokolü.</li>
+                            <li><strong>FORM-2 (Deneme Sonrası Acil Triyaj):</strong> 2 turlu sınav süresi karnesi, kök neden triyajı ve 25 puanlık TDE değerlendirme rubriği.</li>
+                            <li><strong>FORM-3 (Fiziksel Soru Ameliyathanesi):</strong> 2x2 kes-yapıştır şablonu, kupür yapıştırma çerçevesi ve aralıklı tekrar kutucukları.</li>
+                            <li><strong>FORM-4 (Kapsamlı Rapor & Veli Mutabakatı):</strong> Dönemlik net tablosu, hata dağılım çubuğu ve ev içi krizsiz iletişim sözleşmesi.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Gemini AI Koçluk & 2-Modlu Veli Bülteni:</strong>
+                        Takvim ayına göre Faz 1-4 LGS periyodizasyonunu, branş netlerini, TDE skorunu ve kırmızı konu başlıklarını içeren 5 modüllü analiz promptu üretir. Veliler için deneme sonrası evde öğrenciye net sormamayı ve çaba takdirini teminat altına alan <em>"10 Dakikalık Krizsiz Analiz Rehberi"</em> bültenini tek tıkla WhatsApp veya BiP üzerinden paylaşır.
+                    </li>
+                </ul>
+            </div>
+
         </div>
     </div>
 
@@ -4998,6 +5111,477 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- 13. LGS BİLİŞSEL KOÇLUK & MENTORLUK SİSTEMİ                  -->
+    <!-- ============================================================ -->
+    <div id="tab-kocluk" class="tab-content">
+        <!-- Başlık ve Üst Aksiyon Çubuğu -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h2 style="margin: 0 0 5px 0; color: var(--text-main); font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-brain" style="color: #6366f1;"></i> 13. LGS Bilişsel Koçluk &amp; Mentorluk Sistemi
+                </h2>
+                <p style="margin: 0; font-size: 13px; color: var(--text-muted);">
+                    8. Sınıf LGS hazırlık süreçleri, hedef lise takibi, metabilişsel hata defteri (kök neden analizi) ve yapay zeka destekli pedagojik koçluk.
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="openAddKoclukModal()" style="padding: 10px 20px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(99,102,241,0.25);">
+                    <i class="fas fa-user-plus"></i> Koçluğa Öğrenci Ekle
+                </button>
+            </div>
+        </div>
+
+        <!-- 4 Özet İstatistik Kartı -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 22px;">
+            <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow);">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Koçluk Alan Öğrenci</div>
+                    <div id="koc-stat-total" style="font-size: 24px; font-weight: 800; color: var(--text-main);">0</div>
+                </div>
+            </div>
+
+            <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow);">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Ortalama Güncel Net</div>
+                    <div id="koc-stat-avg-net" style="font-size: 24px; font-weight: 800; color: var(--text-main);">0</div>
+                </div>
+            </div>
+
+            <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow);">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Ortalama Hedef Net</div>
+                    <div id="koc-stat-avg-target" style="font-size: 24px; font-weight: 800; color: var(--accent);">0</div>
+                </div>
+            </div>
+
+            <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow);">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(239, 68, 68, 0.12); color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    <i class="fas fa-book-dead"></i>
+                </div>
+                <div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Bekleyen Hata Tekrarı</div>
+                    <div id="koc-stat-pending-errors" style="font-size: 24px; font-weight: 800; color: var(--red);">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtre ve Arama Araç Çubuğu -->
+        <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow);">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px;">
+                <div style="position: relative; flex: 1;">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px;"></i>
+                    <input type="text" id="kocluk-search-input" placeholder="Öğrenci adı, okul no veya hedef lise ara..." style="width: 100%; padding: 8px 12px 8px 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); font-size: 12.5px;">
+                </div>
+                <select id="kocluk-class-filter" style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); font-size: 12.5px; font-weight: 600;">
+                    <option value="">Tüm Sınıflar</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn btn-clear" onclick="renderKoclukModule()" style="padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 8px;">
+                    <i class="fas fa-sync-alt me-1"></i> Yenile
+                </button>
+            </div>
+        </div>
+
+        <!-- Öğrenci Kartları Izgarası -->
+        <div id="kocluk-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px;">
+            <!-- Javascript (ui-kocluk.js) tarafından doldurulur -->
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: Koçluğa Öğrenci Ekleme Modalı                         -->
+    <!-- ============================================================ -->
+    <div id="kocluk-add-modal" class="modal" style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(3px);">
+        <div style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:600px; width:100%; max-height:90vh; overflow-y:auto; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.3); animation:fadeIn 0.25s ease;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+                <h3 style="margin:0; font-size:16px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-user-plus" style="color:#6366f1;"></i> LGS Koçluk Takip Havuzuna Öğrenci Ekle
+                </h3>
+                <button class="action-btn" onclick="closeModal('kocluk-add-modal')" style="background:none; border:none; font-size:16px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">SINIF SEÇİN:</label>
+                    <select id="koc-add-class-select" onchange="onKoclukClassChange()" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                        <option value="">-- Sınıf Seçin --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">ÖĞRENCİ SEÇİN:</label>
+                    <select id="koc-add-student-select" onchange="onKoclukStudentSelectChange()" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                        <option value="">-- Önce Sınıf Seçiniz --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:14px;">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">HEDEF LİSE:</label>
+                    <input type="text" id="koc-add-lise" list="hedef-liseler-list" placeholder="Örn: Ankara Fen Lisesi" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                    <datalist id="hedef-liseler-list">
+                        <option value="Galatasaray Lisesi">
+                        <option value="İstanbul Erkek Lisesi">
+                        <option value="Kabataş Erkek Lisesi">
+                        <option value="Ankara Fen Lisesi">
+                        <option value="İzmir Fen Lisesi">
+                        <option value="Konya Fen Lisesi">
+                        <option value="Meram Fen Lisesi">
+                        <option value="Selçuklu Fen Lisesi">
+                        <option value="Tofaş Fen Lisesi">
+                        <option value="Cağaloğlu Anadolu Lisesi">
+                        <option value="Kadıköy Anadolu Lisesi">
+                    </datalist>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">HEDEF DİLİM:</label>
+                    <input type="text" id="koc-add-yuzdelik" placeholder="Örn: %0.8" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">BAŞLANGIÇ NETİ:</label>
+                    <input type="number" id="koc-add-baslangic-net" placeholder="70" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">HEDEF NET:</label>
+                    <input type="number" id="koc-add-hedef-net" placeholder="88" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:11.5px; font-weight:700;">HAFTALIK SORU HEDEFİ:</label>
+                    <input type="number" id="koc-add-soru-hedef" placeholder="600" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg);">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:18px;">
+                <label style="font-size:11.5px; font-weight:700;">BİLİŞSEL GÖZLEM VE KOÇLUK NOTLARI:</label>
+                <textarea id="koc-add-notlar" rows="3" placeholder="Öğrencinin güçlü dersleri, matematikte süre veya fen deney sorularındaki odak kayıpları..." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12.5px;"></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
+                <button type="button" class="btn btn-clear" onclick="closeModal('kocluk-add-modal')" style="padding:9px 18px;">Vazgeç</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewKoclukStudent()" style="padding:9px 24px; font-weight:700; border-radius:6px;">
+                    <i class="fas fa-check me-1"></i> Öğrenciyi Koçluğa Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: Öğrenci Koçluk Yönetim Kokpiti (Detay Modalı)         -->
+    <!-- ============================================================ -->
+    <div id="kocluk-detail-modal" class="modal" style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
+        <div style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:960px; width:100%; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.35); overflow:hidden; animation:fadeIn 0.25s ease;">
+            
+            <!-- Modal Üst Başlık -->
+            <div style="padding:16px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg);">
+                <div>
+                    <h3 id="koc-detail-title" style="margin:0 0 4px 0; font-size:16px; color:var(--text-main);">Öğrenci Adı</h3>
+                    <div id="koc-detail-badge" style="font-size:12px; color:var(--text-muted); font-weight:600;">8/A • Hedef: Fen Lisesi</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button id="btn-quick-sync-modal" class="btn btn-warning btn-sm" onclick="openQuickWeeklySyncModal()" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;" title="60 Saniyelik Hızlı Haftalık Veri Giriş Sihirbazı">
+                        <i class="fas fa-bolt"></i> ⚡ Hızlı Giriş
+                    </button>
+                    <button id="btn-open-print-center" class="btn btn-outline-primary btn-sm" onclick="openKoclukPrintCenter()" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:6px; padding:6px 14px; font-size:12px; cursor:pointer;" title="Hibrit Akıllı Form ve Rapor Yazdırma Merkezi">
+                        <i class="fas fa-print"></i> 🖨️ Akıllı Form Merkezi
+                    </button>
+                    <button class="action-btn" onclick="closeModal('kocluk-detail-modal')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+
+            <!-- Alt Sekme Navigasyonu -->
+            <div style="display:flex; border-bottom:1px solid var(--border); background:var(--card-bg); overflow-x:auto;">
+                <button id="btn-tab-koc-profil" class="tab-btn koc-subtab-btn active" onclick="switchDetailSubTab('tab-koc-profil')" style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    <i class="fas fa-sliders-h me-1"></i> 1. Profil &amp; Hedefler
+                </button>
+                <button id="btn-tab-koc-hata" class="tab-btn koc-subtab-btn" onclick="switchDetailSubTab('tab-koc-hata')" style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    <i class="fas fa-book-open me-1"></i> 2. Metabilişsel Hata Defteri
+                </button>
+                <button id="btn-tab-koc-deneme" class="tab-btn koc-subtab-btn" onclick="switchDetailSubTab('tab-koc-deneme')" style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    <i class="fas fa-chart-line me-1"></i> 3. Denemeler &amp; Plato Analizi
+                </button>
+                <button id="btn-tab-koc-gorusme" class="tab-btn koc-subtab-btn" onclick="switchDetailSubTab('tab-koc-gorusme')" style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    <i class="fas fa-comments me-1"></i> 4. Mentorluk Günlüğü
+                </button>
+                <button id="btn-tab-koc-ai" class="tab-btn koc-subtab-btn" onclick="switchDetailSubTab('tab-koc-ai')" style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700; color:#8b5cf6;">
+                    <i class="fas fa-brain me-1"></i> 5. AI Rapor &amp; Veli Bülteni
+                </button>
+            </div>
+
+            <!-- Modal Gövde İçerikleri -->
+            <div style="flex:1; overflow-y:auto; padding:20px;">
+                <div id="tab-koc-profil" class="koc-subtab-content">
+                    <div id="koc-subtab-profil-body"></div>
+                </div>
+                <div id="tab-koc-hata" class="koc-subtab-content" style="display:none;">
+                    <div id="koc-subtab-hata-body"></div>
+                </div>
+                <div id="tab-koc-deneme" class="koc-subtab-content" style="display:none;">
+                    <div id="koc-subtab-deneme-body"></div>
+                </div>
+                <div id="tab-koc-gorusme" class="koc-subtab-content" style="display:none;">
+                    <div id="koc-subtab-gorusme-body"></div>
+                </div>
+                <div id="tab-koc-ai" class="koc-subtab-content" style="display:none;">
+                    <div id="koc-subtab-ai-body"></div>
+                </div>
+            </div>
+
+            <!-- Modal Alt Bilgi -->
+            <div style="padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg); font-size:12px; color:var(--text-muted);">
+                <span>💡 <em>Hata Defterinde 1 gün, 3 gün ve 14 gün aralıklı tekrarı işaretlenen sorular kalıcı hafızaya aktarılır.</em></span>
+                <div style="display:flex; gap:8px;">
+                    <button id="btn-print-kocluk-report" class="btn btn-outline-secondary btn-sm" onclick="printKoclukReport()" style="padding:6px 14px; font-size:12px;">
+                        <i class="fas fa-print me-1"></i> Rapor Yazdır (FORM-4)
+                    </button>
+                    <button class="btn btn-clear" onclick="closeModal('kocluk-detail-modal')" style="padding:6px 14px; font-size:12px;">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: Hibrit Akıllı Kağıt ve Form Yazdırma Merkezi          -->
+    <!-- ============================================================ -->
+    <div id="kocluk-print-center-modal" class="modal" style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
+        <div style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:840px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.35); overflow:hidden;">
+            <!-- Modal Header -->
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg);">
+                <div>
+                    <h3 style="margin:0; font-size:16px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-print" style="color:var(--secondary);"></i> 🖨️ Hibrit "Akıllı Kağıt" Form &amp; Rapor Merkezi
+                    </h3>
+                    <div id="koc-print-student-info" style="font-size:12px; color:var(--text-muted); font-weight:600; margin-top:2px;">Öğrenci Verileriyle Ön-Dolgulu A4 Çıktıları</div>
+                </div>
+                <button class="action-btn" onclick="closeModal('kocluk-print-center-modal')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Form Cards Grid -->
+            <div style="flex:1; overflow-y:auto; padding:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:15px;">
+                <!-- FORM-1 Card -->
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:var(--shadow);">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                            <strong style="color:var(--primary); font-size:13.5px;"><i class="fas fa-calendar-check me-1"></i> FORM-1: Haftalık Blok Çalışma &amp; Soru Piramidi</strong>
+                            <span style="background:rgba(99,102,241,0.12); color:#6366f1; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700;">Haftalık Plan</span>
+                        </div>
+                        <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.45;">
+                            Öğrencinin güncel hedefi, aktif LGS dönemi, bu haftanın tek stratejik kuralı, hata defterinden günü gelmiş aralıklı tekrar soruları ve 7 günlük blok çalışma takip çizelgesini içeren kişisel haftalık çalışma formu.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="printSmartForm(null, 1)" style="width:100%; font-weight:700; padding:8px; font-size:12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fas fa-print"></i> Form-1'i Ön-Dolgulu Yazdır
+                    </button>
+                </div>
+
+                <!-- FORM-2 Card -->
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:var(--shadow);">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                            <strong style="color:#d97706; font-size:13.5px;"><i class="fas fa-tachometer-alt me-1"></i> FORM-2: Deneme Sonrası Triyaj &amp; TDE Analiz</strong>
+                            <span style="background:rgba(245,158,11,0.12); color:#d97706; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700;">Sınav Analizi</span>
+                        </div>
+                        <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.45;">
+                            Deneme biter bitmez doldurulacak; branş net ve süreleri, 4 kök neden teşhisi, 6 satırlık aralıklı tekrar hata kütüğü ve 25 puanlık strateji/turlama öz-değerlendirme rubriğini içeren form.
+                        </p>
+                    </div>
+                    <button class="btn btn-warning" onclick="printSmartForm(null, 2)" style="width:100%; font-weight:700; padding:8px; font-size:12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:#ffffff;">
+                        <i class="fas fa-print"></i> Form-2'yi Ön-Dolgulu Yazdır
+                    </button>
+                </div>
+
+                <!-- FORM-3 Card -->
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:var(--shadow);">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                            <strong style="color:#8b5cf6; font-size:13.5px;"><i class="fas fa-cut me-1"></i> FORM-3: Fiziksel Soru Ameliyathanesi</strong>
+                            <span style="background:rgba(139,92,246,0.12); color:#8b5cf6; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700;">Kes-Yapıştır A4</span>
+                        </div>
+                        <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.45;">
+                            A4 kağıdını 4 eşit bölmeye ayıran; sol tarafı kesilen sorunun yapıştırılacağı çerçeve, sağ tarafı ise Kök Neden (A/B/C/D), Doğru Çözüm Notu ve 1-3-14. Gün tekrar onay kutularından oluşan çalışma şablonu.
+                        </p>
+                    </div>
+                    <button class="btn btn-purple" onclick="printSmartForm(null, 3)" style="width:100%; font-weight:700; padding:8px; font-size:12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fas fa-print"></i> Form-3'ü Ön-Dolgulu Yazdır
+                    </button>
+                </div>
+
+                <!-- FORM-4 Card -->
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:var(--shadow);">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                            <strong style="color:#10b981; font-size:13.5px;"><i class="fas fa-file-contract me-1"></i> FORM-4: Koçluk Raporu &amp; Veli Mutabakatı</strong>
+                            <span style="background:rgba(16,185,129,0.12); color:#10b981; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700;">Resmi Mutabakat</span>
+                        </div>
+                        <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.45;">
+                            Son denemelerdeki Net ve TDE performansı, Kök Neden Dağılım Barı, Konu Isı Haritası özeti ve alt kısımda Veli-Öğrenci Haftalık Mutabakat &amp; 22:30 Uyku Hijyeni imza fişi.
+                        </p>
+                    </div>
+                    <button class="btn" style="background:#10b981; color:white; width:100%; font-weight:700; padding:8px; font-size:12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px;" onclick="printSmartForm(null, 4)">
+                        <i class="fas fa-print"></i> Form-4'ü Ön-Dolgulu Yazdır
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; background:var(--tab-bg);">
+                <button class="btn btn-clear" onclick="closeModal('kocluk-print-center-modal')" style="padding:6px 16px;">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: 60 Saniyelik Hızlı Veri Giriş Sihirbazı              -->
+    <!-- ============================================================ -->
+    <div id="kocluk-quick-sync-modal" class="modal" style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
+        <div style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:780px; width:100%; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.35); overflow:hidden;">
+            <!-- Modal Header -->
+            <div style="padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, rgba(245,158,11,0.08), rgba(99,102,241,0.08));">
+                <div>
+                    <h3 style="margin:0; font-size:15.5px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-bolt" style="color:#f59e0b;"></i> 60 Saniyelik Hızlı Haftalık Veri Giriş Sihirbazı
+                    </h3>
+                    <div id="koc-sync-student-badge" style="font-size:12px; color:var(--secondary); font-weight:700; margin-top:2px;">Öğrenci: Yükleniyor...</div>
+                </div>
+                <button class="action-btn" onclick="closeModal('kocluk-quick-sync-modal')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Modal Content (Tab Accessible) -->
+            <div style="flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px;">
+                <!-- 1. Bölüm: Haftalık Soru Piramidi & Yaşam Ritmi -->
+                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+                    <div style="font-size:12px; font-weight:800; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-layer-group"></i> 1. Haftalık Soru Piramidi &amp; Yaşam Ritmi:
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">KAZANIM SORU ADEDİ:</label>
+                            <input type="number" id="sync-soru-kazanim" placeholder="Örn: 150" tabindex="1" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">YENİ NESİL SORU ADEDİ:</label>
+                            <input type="number" id="sync-soru-yeninesil" placeholder="Örn: 350" tabindex="2" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">UYKU ORT. (SAAT):</label>
+                            <input type="number" step="0.5" id="sync-uyku" placeholder="Örn: 8.0" tabindex="3" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">ODAK BLOK SAYISI (40/80 dk):</label>
+                            <input type="number" id="sync-blok" placeholder="Örn: 12" tabindex="4" style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Bölüm: Yeni Deneme Sonucu & Canlı TDE -->
+                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:12px; font-weight:800; color:#d97706; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-chart-line"></i> 2. Yeni Deneme Sonucu &amp; TDE Turlama (Opsiyonel):
+                        </span>
+                        <span id="sync-live-tde-badge" style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#f59e0b;">
+                            Canlı TDE: 75/100
+                        </span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">DENEME ADI:</label>
+                            <input type="text" id="sync-den-ad" placeholder="Örn: Özdebir LGS 3" tabindex="5" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">SÖZEL (50):</label>
+                            <input type="number" step="0.25" id="sync-den-sozel" oninput="syncUpdateAutoNet()" tabindex="6" placeholder="Örn: 46" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">MAT (20):</label>
+                            <input type="number" step="0.25" id="sync-den-mat" oninput="syncUpdateAutoNet()" tabindex="7" placeholder="Örn: 15" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">FEN (20):</label>
+                            <input type="number" step="0.25" id="sync-den-fen" oninput="syncUpdateAutoNet()" tabindex="8" placeholder="Örn: 17" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">TOPLAM NET:</label>
+                            <input type="number" id="sync-den-toplam" readonly style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px; font-weight:800; color:#10b981; background:rgba(16,185,129,0.1);">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(115px, 1fr)); gap:8px;">
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">FEN 1.TUR DK:</label>
+                            <input type="number" id="sync-tde-fen1" value="32" oninput="syncLiveTdePreview()" tabindex="9" placeholder="<=32" style="width:100%; padding:5px; border-radius:6px; border:1px solid var(--border); font-size:11.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">MAT 1.TUR DK:</label>
+                            <input type="number" id="sync-tde-mat1" value="30" oninput="syncLiveTdePreview()" tabindex="10" placeholder="<=30" style="width:100%; padding:5px; border-radius:6px; border:1px solid var(--border); font-size:11.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">İNATLAŞILAN (>2.5dk):</label>
+                            <input type="number" id="sync-tde-inat" value="0" oninput="syncLiveTdePreview()" tabindex="11" placeholder="0" style="width:100%; padding:5px; border-radius:6px; border:1px solid var(--border); font-size:11.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">FEN 2.TUR KAZANÇ:</label>
+                            <input type="number" id="sync-tde-fen2" value="2" oninput="syncLiveTdePreview()" tabindex="12" placeholder=">=2" style="width:100%; padding:5px; border-radius:6px; border:1px solid var(--border); font-size:11.5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">MAT 2.TUR KAZANÇ:</label>
+                            <input type="number" id="sync-tde-mat2" value="3" oninput="syncLiveTdePreview()" tabindex="13" placeholder=">=3" style="width:100%; padding:5px; border-radius:6px; border:1px solid var(--border); font-size:11.5px;">
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; padding-top:14px;">
+                            <input type="checkbox" id="sync-tde-optik" checked onchange="syncLiveTdePreview()" tabindex="14">
+                            <label for="sync-tde-optik" style="font-size:11px; font-weight:700; cursor:pointer;">Optik Kontrol (+15p)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Bölüm: Bekleyen Aralıklı Hata Tekrarları -->
+                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+                    <div style="font-size:12px; font-weight:800; color:#8b5cf6; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-check-double"></i> 3. Tamamlanan Aralıklı Tekrarlar (Tek Tıkla Onayla):
+                    </div>
+                    <div id="sync-pending-errors-list" style="max-height:140px; overflow-y:auto;">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+
+                <!-- 4. Bölüm: Yeni Haftanın Tek Stratejik Kuralı -->
+                <div style="background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.25); border-radius:8px; padding:12px;">
+                    <label style="font-size:11.5px; font-weight:800; color:#4f46e5; display:block; margin-bottom:4px;">
+                        🎯 4. BU HAFTANIN TEK STRATEJİK KURALI:
+                    </label>
+                    <input type="text" id="sync-strateji-kurali" placeholder="Örn: Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç." tabindex="15" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--border); font-size:12.5px; font-weight:700;">
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div style="padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg);">
+                <button type="button" class="btn btn-clear" onclick="closeModal('kocluk-quick-sync-modal')" style="padding:8px 16px;">Vazgeç</button>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn btn-primary" onclick="submitQuickWeeklySync(false)" style="padding:8px 16px; font-weight:700;">
+                        <i class="fas fa-save me-1"></i> Sadece Kaydet
+                    </button>
+                    <button type="button" class="btn" onclick="submitQuickWeeklySync(true)" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:white; padding:8px 20px; font-weight:800; border-radius:6px; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                        <i class="fas fa-bolt"></i> ⚡ Kaydet ve Yeni Haftanın Formunu (FORM-1) Yazdır
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Admin Panel Tab -->
     <div id="tab-admin" class="tab-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
@@ -5168,6 +5752,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="js/ui-soru-takip.js?v=2"></script>
+    <script src="js/ui-kocluk.js?v=1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Soru Takip modülünü başlat (eğer başlatılmadıysa)
@@ -5183,6 +5768,13 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     window.initChecklistModule();
                 }
             }, 500);
+
+            // LGS Bilişsel Koçluk modülünü başlat
+            setTimeout(() => {
+                if (typeof window.renderKoclukModule === 'function') {
+                    window.renderKoclukModule();
+                }
+            }, 700);
         });
     </script>
 </body>

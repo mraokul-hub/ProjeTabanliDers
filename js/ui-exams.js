@@ -77,10 +77,12 @@
                 { id: 'dinNet', label: 'Din Kültürü Net' }, { id: 'ingNet', label: 'İngilizce Net' },
                 { id: 'totalNet', label: 'Toplam Net' }, { id: 'rank', label: 'Sıra/Derece (Opsiyonel)' }
             ];
+            const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+            let allFieldsHtml = '';
             coreFields.forEach(field => {
                 let optionsHtml = `<option value="">-- Sıfır/Otomatik --</option>`;
                 tempExcelHeaders.forEach((header, index) => {
-                    let selected = ""; let cleanH = header.toLocaleLowerCase('tr-TR');
+                    let selected = ""; let cleanH = String(header || '').toLocaleLowerCase('tr-TR');
                     if (field.id === 'studentNo' && /\b(no|numara)\b/.test(cleanH)) selected = "selected";
                     else if (field.id === 'studentName' && /\b(ad|soyad|isim)\b/.test(cleanH)) selected = "selected";
                     else if (field.id === 'studentClass' && /\b(sınıf|sinif|şube|sube)\b/.test(cleanH)) selected = "selected";
@@ -92,10 +94,11 @@
                     else if (field.id === 'ingNet' && cleanH.includes('ing') && cleanH.includes('net')) selected = "selected";
                     else if (field.id === 'totalNet' && (cleanH.includes('top') || cleanH.includes('genel')) && cleanH.includes('net')) selected = "selected";
                     else if (field.id === 'rank' && /\b(sıra|sira|derece)\b/.test(cleanH)) selected = "selected";
-                    optionsHtml += `<option value="${index}" ${selected}>${header}</option>`;
+                    optionsHtml += `<option value="${index}" ${selected}>${escapeFn(header)}</option>`;
                 });
-                fieldsDiv.innerHTML += `<div style="display:flex; flex-direction:column;"><label style="font-size:11px; font-weight:600;">${field.label}:</label><select id="map-${field.id}" style="padding:6px; font-size:12px; border-radius:6px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main);">${optionsHtml}</select></div>`;
+                allFieldsHtml += `<div style="display:flex; flex-direction:column;"><label style="font-size:11px; font-weight:600;">${escapeFn(field.label)}:</label><select id="map-${field.id}" style="padding:6px; font-size:12px; border-radius:6px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main);">${optionsHtml}</select></div>`;
             });
+            fieldsDiv.innerHTML = allFieldsHtml;
         }
 
         function processMappedExcel() {
@@ -334,7 +337,7 @@
                     resultHtml += `
                         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
                             <div style="flex:1;">
-                                <div style="font-weight:600;font-size:13px;">${ogr.no ? ogr.no + ' - ' : ''}${ogr.adSoyad}</div>
+                                <div style="font-weight:600;font-size:13px;">${ogr.no ? (escapeHtml(String(ogr.no)) + ' - ') : ''}${escapeHtml(ogr.adSoyad)}</div>
                                 <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
                                     <div style="flex:1;background:var(--input-bg);border-radius:20px;height:6px;overflow:hidden;">
                                         <div style="width:${skorBar}%;height:100%;background:linear-gradient(90deg,var(--secondary),var(--accent));border-radius:20px;"></div>
@@ -360,7 +363,7 @@
                     </div>
                     <div style="padding:12px;display:flex;flex-wrap:wrap;gap:8px;">`;
                 normalOgrenciler.forEach(o => {
-                    resultHtml += `<span style="background:var(--input-bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;">${o.adSoyad} <span style="color:var(--text-muted);">${o._skor}p</span></span>`;
+                    resultHtml += `<span style="background:var(--input-bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;">${escapeHtml(o.adSoyad)} <span style="color:var(--text-muted);">${o._skor}p</span></span>`;
                 });
                 resultHtml += '</div></div>';
             }
@@ -1018,12 +1021,16 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formALink)}&color=f59e0b`;
                 const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formDELink)}&color=8b5cf6`;
 
+                const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+                const safeName = escapeFn(s.adSoyad || '-');
+                const safeNo = escapeFn(s.no || '-');
+
                 const card = document.createElement('div');
                 card.style = "background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:15px;";
 
                 card.innerHTML = `
                 <div style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                    <h5 style="margin: 0; color: var(--primary); font-size: 15px;"><i class="fas fa-user-graduate me-2"></i> ${s.no} - ${s.adSoyad}</h5>
+                    <h5 style="margin: 0; color: var(--primary); font-size: 15px;"><i class="fas fa-user-graduate me-2"></i> ${safeNo} - ${safeName}</h5>
                 </div>
                 
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -1068,10 +1075,13 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
             const printWindow = window.open('', '_blank');
 
+            const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+            const safeSinifTitle = escapeFn(sinif);
+
             let html = `<!DOCTYPE html>
         <html>
         <head>
-            <title>${sinif} Sınıfı - Öğrenci QR Kodları</title>
+            <title>${safeSinifTitle} Sınıfı - Öğrenci QR Kodları</title>
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
                 h1 { text-align: center; color: #1e293b; margin-bottom: 30px; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; }
@@ -1090,10 +1100,12 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             </style>
         </head>
         <body>
-            <h1>${sinif} Sınıfı - Öğrenci QR Kodları</h1>
+            <h1>${safeSinifTitle} Sınıfı - Öğrenci QR Kodları</h1>
             <div class="grid">`;
 
             studentsInClass.forEach(s => {
+                const safeName = escapeFn(s.adSoyad || '');
+                const safeNo = escapeFn(s.no || '');
                 const formALink = `${baseUrl}/dersten_once_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
                 const formDELink = `${baseUrl}/dersten_sonra_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
 
@@ -1103,7 +1115,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
 
                 html += `
                 <div class="student-card">
-                    <div class="student-name">${s.no} - ${s.adSoyad}</div>
+                    <div class="student-name">${safeNo} - ${safeName}</div>
                     <div class="qr-container">
                         <div class="qr-box">
                             <img src="${qrAUrl}" alt="QR">

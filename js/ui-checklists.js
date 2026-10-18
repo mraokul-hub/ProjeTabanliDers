@@ -365,7 +365,7 @@
                         ${classStudents.map(s => `
                             <div class="track-student-item" style="display:flex; align-items:center; gap:6px; font-size:11.5px; padding:3px 6px; border-radius:4px; background:rgba(0,0,0,0.02);">
                                 <input type="checkbox" class="chk-student-checkbox" data-class="${c}" value="${escapeHtml(s.adSoyad)}" id="chk-st-${c}-${s.no || s.adSoyad.replace(/\s+/g, '')}" onclick="event.stopPropagation()">
-                                <label for="chk-st-${c}-${s.no || s.adSoyad.replace(/\s+/g, '')}" style="cursor:pointer; margin:0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${s.no ? s.no + ' - ' : ''}${s.adSoyad}</label>
+                                <label for="chk-st-${c}-${s.no || s.adSoyad.replace(/\s+/g, '')}" style="cursor:pointer; margin:0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${s.no ? s.no + ' - ' : ''}${escapeHtml(s.adSoyad)}</label>
                             </div>
                         `).join('')}
                     </div>
@@ -1588,7 +1588,9 @@
                 }
                 grade = item.criteria.length > 0 ? Math.round((plusCount / item.criteria.length) * 100) : '';
             }
-            lines.push(`${s.no || ''}\t${grade}`);
+            const safeNo = (typeof window.sanitizeFormula === 'function') ? window.sanitizeFormula(s.no || '') : (s.no || '');
+            const safeGrade = (typeof window.sanitizeFormula === 'function') ? window.sanitizeFormula(grade) : grade;
+            lines.push(`${safeNo}\t${safeGrade}`);
         });
 
         const copyText = lines.join('\n');
