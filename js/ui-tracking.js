@@ -300,6 +300,7 @@
             const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
             let passiveCount = 0;
+            let activeCount = 0;
 
             trackingData.forEach(item => {
                 const isPassive = isTrackingItemPassive(item, now);
@@ -312,12 +313,26 @@
                 const badgeExtra = isPassive ? ' style="background:#6b7280;"' : '';
                 const pasifLabel = isPassive ? `<span style="font-size:10px; background:#6b7280; color:white; padding:2px 6px; border-radius:4px; margin-left:6px;">PASİF</span>` : '';
 
+                const isChecked = window._selectedTrackingCardIds && window._selectedTrackingCardIds.has(String(item.id));
+                const cardSelectHtml = (!isPassive) ? `
+                    <div class="tracking-card-checkbox-col" style="${window._trackingInlineSelectMode ? 'display:flex;' : 'display:none;'} align-items:center; margin-right:12px;">
+                        <input type="checkbox" class="tracking-card-select-chk" value="${item.id}" ${isChecked ? 'checked' : ''} onchange="onTrackingCardCheckboxChange(this)" style="width:19px; height:19px; cursor:pointer; accent-color:#ef4444;">
+                    </div>
+                ` : '';
+
                 const card = document.createElement('div');
                 card.className = 'form-box';
                 card.id = `tracking-card-${item.id}`;
-                card.style = `margin-bottom:15px; border-left: 5px solid ${borderColor}; ${isPassive ? 'opacity:0.75;' : ''}`;
+                card.style = `margin-bottom:15px; border-left: 5px solid ${borderColor}; ${isPassive ? 'opacity:0.75;' : ''} ${isChecked ? 'background:rgba(239,68,68,0.06); border-color:#ef4444;' : ''}`;
                 card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
-                <div><span class="xp-badge"${badgeExtra}>${item.type}</span>${pasifLabel}<h4 style="margin:5px 0;">${item.title} (${item.sinif})</h4><p style="font-size:12px; margin:0; color:var(--text-muted);">Teslim: ${doneCount} / ${totalCount} | Son Tarih: ${new Date(item.date).toLocaleString('tr-TR')}</p></div>
+                <div style="display:flex; align-items:flex-start;">
+                    ${cardSelectHtml}
+                    <div>
+                        <span class="xp-badge"${badgeExtra}>${item.type}</span>${pasifLabel}
+                        <h4 style="margin:5px 0;">${item.title} (${item.sinif})</h4>
+                        <p style="font-size:12px; margin:0; color:var(--text-muted);">Teslim: ${doneCount} / ${totalCount} | Son Tarih: ${new Date(item.date).toLocaleString('tr-TR')}</p>
+                    </div>
+                </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                 ${isPassive ? `<span style="font-size:10px; color:#6b7280; white-space:nowrap;"><i class="fas fa-info-circle"></i> Tarihi değiştirerek aktif edin</span>` : ''}
                 <button class="btn" style="padding:5px 12px; font-size:11px;" onclick="openEvaluation('${item.id}')">Değerlendir</button>
@@ -332,8 +347,22 @@
                     passiveCount++;
                 } else {
                     activeList.appendChild(card);
+                    activeCount++;
                 }
             });
+
+            // Aktif sayaç rozetini güncelle
+            const activeCountBadge = document.getElementById('active-tracking-count-badge');
+            if (activeCountBadge) {
+                activeCountBadge.textContent = activeCount;
+            }
+
+            if (activeCount === 0) {
+                activeList.innerHTML = `<div style="text-align:center; padding:30px 20px; color:var(--text-muted); background:var(--tab-bg); border-radius:12px; border:1px dashed var(--border);">
+                    <i class="fas fa-clipboard-check" style="font-size:28px; opacity:0.4; margin-bottom:8px;"></i>
+                    <p style="margin:0; font-size:13px;">Şu anda aktif ödev veya proje bulunmuyor.</p>
+                </div>`;
+            }
 
             // Pasif bölüm başlığını güncelle
             const pasifBtn = passiveList.previousElementSibling?.querySelector('button');
@@ -410,6 +439,319 @@
                 setDbSyncStatus('synced', 'Kayıt Başarıyla Silindi');
             }
         }
+
+        // ── TOPLU VE SEÇİMLİ ÖDEV SİLME İŞLEMLERİ ──
+        window._trackingInlineSelectMode = false;
+        window._selectedTrackingCardIds = new Set();
+
+        async function deleteMultipleTrackingItems(ids) {
+            if (!ids || ids.length === 0) return;
+            const idList = Array.from(ids).map(String);
+            const idSet = new Set(idList);
+
+            // 1. Yerel listeden kaldır
+            trackingData = trackingData.filter(i => !idSet.has(String(i.id)));
+            window.trackingData = trackingData;
+
+            // 2. Firebase'den doğrudan ve kalıcı sil
+            const currentUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+            const uid = window.activeWorkspaceUid || (!window.isAdminUser ? currentUser?.uid : null);
+
+            if (uid && window.db) {
+                try {
+                    const updates = {};
+                    idList.forEach(id => {
+                        const safeTrackId = (typeof encodeFirebaseKey === 'function')
+                            ? encodeFirebaseKey(String(id)).replace(/[\/\.\#\$\/\[\]]/g, '_')
+                            : String(id);
+                        updates[`app_data/${uid}/tracking/${safeTrackId}`] = null;
+                        if (currentUser && currentUser.email === 'mremzi@gmail.com') {
+                            updates[`app_data/main_data/tracking/${safeTrackId}`] = null;
+                        }
+                    });
+                    await window.db.ref().update(updates);
+                    console.log(`[Firebase] ${idList.length} adet görev/proje silindi.`);
+                } catch (err) {
+                    console.error("Firebase toplu silme hatası:", err);
+                }
+            }
+
+            // 3. Senkronizasyon ve Kaydetme
+            if (typeof saveData === 'function') {
+                saveData(true);
+            }
+
+            // 4. UI Yenileme
+            window._selectedTrackingCardIds.clear();
+            renderTrackingList();
+
+            // 5. Toast
+            if (typeof showGlobalToast === 'function') {
+                showGlobalToast(`🗑️ ${idList.length} adet aktif ödev başarıyla silindi.`, 'success');
+            }
+            if (typeof setDbSyncStatus === 'function') {
+                setDbSyncStatus('synced', `${idList.length} Kayıt Silindi`);
+            }
+        }
+        window.deleteMultipleTrackingItems = deleteMultipleTrackingItems;
+
+        // Kartlar üzerinden seçim modu
+        function toggleTrackingInlineSelectMode() {
+            window._trackingInlineSelectMode = !window._trackingInlineSelectMode;
+            const btn = document.getElementById('btn-toggle-tracking-cards-select');
+            const bulkBar = document.getElementById('tracking-inline-bulk-bar');
+
+            if (btn) {
+                if (window._trackingInlineSelectMode) {
+                    btn.innerHTML = '<i class="fas fa-times"></i> Seçimi Kapat';
+                    btn.style.background = '#fee2e2';
+                    btn.style.color = '#ef4444';
+                    btn.style.borderColor = '#fca5a5';
+                } else {
+                    btn.innerHTML = '<i class="fas fa-check-square"></i> Kartlardan Seç';
+                    btn.style.background = '#f1f5f9';
+                    btn.style.color = '#475569';
+                    btn.style.borderColor = '#cbd5e1';
+                }
+            }
+
+            if (bulkBar) {
+                bulkBar.style.display = window._trackingInlineSelectMode ? 'inline-flex' : 'none';
+            }
+
+            // Tüm kartlardaki checkbox sütunlarını göster/gizle
+            document.querySelectorAll('.tracking-card-checkbox-col').forEach(el => {
+                el.style.display = window._trackingInlineSelectMode ? 'flex' : 'none';
+            });
+
+            if (!window._trackingInlineSelectMode) {
+                window._selectedTrackingCardIds.clear();
+                document.querySelectorAll('.tracking-card-select-chk').forEach(c => c.checked = false);
+                document.querySelectorAll('#tracking-list-active .form-box').forEach(c => {
+                    c.style.background = '';
+                });
+                const cnt = document.getElementById('checked-cards-count');
+                if (cnt) cnt.textContent = '0';
+            }
+        }
+        window.toggleTrackingInlineSelectMode = toggleTrackingInlineSelectMode;
+
+        function onTrackingCardCheckboxChange(el) {
+            if (!el) return;
+            const id = String(el.value);
+            if (el.checked) {
+                window._selectedTrackingCardIds.add(id);
+            } else {
+                window._selectedTrackingCardIds.delete(id);
+            }
+
+            const card = document.getElementById(`tracking-card-${id}`);
+            if (card) {
+                card.style.background = el.checked ? 'rgba(239,68,68,0.06)' : '';
+            }
+
+            const cnt = document.getElementById('checked-cards-count');
+            if (cnt) cnt.textContent = window._selectedTrackingCardIds.size;
+        }
+        window.onTrackingCardCheckboxChange = onTrackingCardCheckboxChange;
+
+        function toggleSelectAllActiveTrackingCards() {
+            const chks = Array.from(document.querySelectorAll('.tracking-card-select-chk'));
+            const anyUnchecked = chks.some(c => !c.checked);
+
+            chks.forEach(c => {
+                c.checked = anyUnchecked;
+                const id = String(c.value);
+                if (anyUnchecked) {
+                    window._selectedTrackingCardIds.add(id);
+                } else {
+                    window._selectedTrackingCardIds.delete(id);
+                }
+                const card = document.getElementById(`tracking-card-${id}`);
+                if (card) {
+                    card.style.background = anyUnchecked ? 'rgba(239,68,68,0.06)' : '';
+                }
+            });
+
+            const cnt = document.getElementById('checked-cards-count');
+            if (cnt) cnt.textContent = window._selectedTrackingCardIds.size;
+        }
+        window.toggleSelectAllActiveTrackingCards = toggleSelectAllActiveTrackingCards;
+
+        async function deleteCheckedTrackingCards() {
+            const count = window._selectedTrackingCardIds.size;
+            if (count === 0) {
+                alert("Lütfen silmek istediğiniz en az bir ödev seçiniz.");
+                return;
+            }
+
+            if (!confirm(`Seçilen ${count} adet aktif ödev kalıcı olarak silinecek. Onaylıyor musunuz?`)) {
+                return;
+            }
+
+            const ids = Array.from(window._selectedTrackingCardIds);
+            await deleteMultipleTrackingItems(ids);
+            toggleTrackingInlineSelectMode(); // Seçim modunu kapat
+        }
+        window.deleteCheckedTrackingCards = deleteCheckedTrackingCards;
+
+        // ── LİSTE HALİNDE SEÇİMLİ SİLME MODALI KONTROLLERİ ──
+        function openSelectiveDeleteTrackingModal() {
+            const modal = document.getElementById('modal-selective-delete-tracking');
+            if (!modal) return;
+
+            const now = new Date();
+            const activeItems = (trackingData || []).filter(item => !isTrackingItemPassive(item, now));
+
+            const totalBadge = document.getElementById('selective-tracking-total-badge');
+            if (totalBadge) totalBadge.textContent = `${activeItems.length} Aktif Ödev`;
+
+            const searchInput = document.getElementById('selective-tracking-search');
+            if (searchInput) searchInput.value = '';
+
+            renderSelectiveTrackingModalRows(activeItems);
+
+            const masterChk = document.getElementById('chk-selective-tracking-all');
+            if (masterChk) masterChk.checked = false;
+
+            updateModalTrackingSelectedCount();
+            modal.style.display = 'flex';
+        }
+        window.openSelectiveDeleteTrackingModal = openSelectiveDeleteTrackingModal;
+
+        function closeSelectiveDeleteTrackingModal() {
+            const modal = document.getElementById('modal-selective-delete-tracking');
+            if (modal) modal.style.display = 'none';
+        }
+        window.closeSelectiveDeleteTrackingModal = closeSelectiveDeleteTrackingModal;
+
+        function renderSelectiveTrackingModalRows(items) {
+            const tbody = document.getElementById('selective-tracking-table-body');
+            if (!tbody) return;
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);"><i class="fas fa-info-circle" style="margin-right:6px;"></i>Silinebilecek aktif ödev bulunmuyor.</td></tr>`;
+                return;
+            }
+
+            // Tarihe göre sırala
+            const sorted = [...items].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let html = '';
+            sorted.forEach(item => {
+                const assignedStudents = getTrackingItemStudents(item);
+                const totalCount = assignedStudents.length;
+                const doneCount = item.submissions ? assignedStudents.filter(s => item.submissions[s.adSoyad]?.done).length : 0;
+                const safeTitle = (item.title || '-').replace(/</g, "&lt;");
+                const safeClass = (item.sinif || '-').replace(/</g, "&lt;");
+                const safeType = (item.type || 'Ödev').replace(/</g, "&lt;");
+                const dateStr = item.date ? new Date(item.date).toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
+
+                html += `
+                    <tr class="selective-tracking-row" data-title="${safeTitle.toLowerCase()}" data-class="${safeClass.toLowerCase()}">
+                        <td style="text-align:center;">
+                            <input type="checkbox" class="modal-tracking-chk" value="${item.id}" onchange="updateModalTrackingSelectedCount()" style="width:17px; height:17px; accent-color:#ef4444; cursor:pointer;">
+                        </td>
+                        <td><span class="xp-badge" style="font-size:10.5px;">${safeType}</span></td>
+                        <td style="font-weight:600;">${safeTitle}</td>
+                        <td style="text-align:center;"><span style="background:rgba(59,130,246,0.1); color:#2563eb; padding:2px 8px; border-radius:8px; font-weight:700; font-size:11px;">${safeClass}</span></td>
+                        <td style="font-size:11.5px; color:var(--text-muted);">${dateStr}</td>
+                        <td style="text-align:center; font-weight:700; font-size:11.5px;">${doneCount} / ${totalCount}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function filterSelectiveTrackingList() {
+            const query = (document.getElementById('selective-tracking-search')?.value || '').trim().toLowerCase();
+            document.querySelectorAll('.selective-tracking-row').forEach(row => {
+                const t = row.getAttribute('data-title') || '';
+                const c = row.getAttribute('data-class') || '';
+                if (!query || t.includes(query) || c.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            updateModalTrackingSelectedCount();
+        }
+        window.filterSelectiveTrackingList = filterSelectiveTrackingList;
+
+        function onSelectAllModalTrackingCheckboxChange(checked) {
+            document.querySelectorAll('.selective-tracking-row').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const chk = row.querySelector('.modal-tracking-chk');
+                    if (chk) chk.checked = checked;
+                }
+            });
+            updateModalTrackingSelectedCount();
+        }
+        window.onSelectAllModalTrackingCheckboxChange = onSelectAllModalTrackingCheckboxChange;
+
+        function toggleSelectAllModalTracking() {
+            const visibleChks = Array.from(document.querySelectorAll('.selective-tracking-row'))
+                .filter(r => r.style.display !== 'none')
+                .map(r => r.querySelector('.modal-tracking-chk'))
+                .filter(Boolean);
+
+            const anyUnchecked = visibleChks.some(c => !c.checked);
+            visibleChks.forEach(c => c.checked = anyUnchecked);
+
+            const masterChk = document.getElementById('chk-selective-tracking-all');
+            if (masterChk) masterChk.checked = anyUnchecked;
+
+            updateModalTrackingSelectedCount();
+        }
+        window.toggleSelectAllModalTracking = toggleSelectAllModalTracking;
+
+        function updateModalTrackingSelectedCount() {
+            const checkedBoxes = document.querySelectorAll('.modal-tracking-chk:checked');
+            const count = checkedBoxes.length;
+
+            const countEl = document.getElementById('modal-tracking-selected-count');
+            if (countEl) countEl.textContent = count;
+
+            const btn = document.getElementById('btn-execute-selective-tracking-delete');
+            if (btn) {
+                btn.disabled = count === 0;
+                btn.style.opacity = count > 0 ? '1' : '0.6';
+                btn.innerHTML = `<i class="fas fa-trash-alt"></i> Seçilenleri Sil (${count})`;
+            }
+        }
+        window.updateModalTrackingSelectedCount = updateModalTrackingSelectedCount;
+
+        async function executeSelectiveDeleteTracking() {
+            const checkedBoxes = Array.from(document.querySelectorAll('.modal-tracking-chk:checked'));
+            const count = checkedBoxes.length;
+            if (count === 0) {
+                alert("Lütfen silinecek en az bir ödev seçiniz.");
+                return;
+            }
+
+            if (!confirm(`Seçilen ${count} adet aktif ödev kalıcı olarak silinecektir. Bu işlem geri alınamaz.\n\nDevam etmek istiyor musunuz?`)) {
+                return;
+            }
+
+            const ids = checkedBoxes.map(cb => cb.value);
+            const btn = document.getElementById('btn-execute-selective-tracking-delete');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Siliniyor...`;
+            }
+
+            try {
+                await deleteMultipleTrackingItems(ids);
+                closeSelectiveDeleteTrackingModal();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-trash-alt"></i> Seçilenleri Sil`;
+                }
+            }
+        }
+        window.executeSelectiveDeleteTracking = executeSelectiveDeleteTracking;
 
         function editTrackingItem(id) {
             const item = trackingData.find(i => String(i.id) === String(id));
@@ -619,6 +961,8 @@
 
                 body.appendChild(tr);
             });
+            const finishBtn = document.getElementById('finish-evaluation-btn');
+            if (finishBtn) finishBtn.style.display = 'inline-block';
             document.getElementById('evaluation-modal').style.display = 'block';
         }
 

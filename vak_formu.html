@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAK Bilişsel Öğrenme Stili Envanteri | Yabgu Eğitim Sistemi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase Uyumluluk Kütüphaneleri -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="js/vak-engine.js"></script>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --visual: #3b82f6;
+            --auditory: #8b5cf6;
+            --kinesthetic: #f59e0b;
+            --radius: 14px;
+        }
+        [data-theme='light'] {
+            --bg: #f0f9ff;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --input-bg: #f8fafc;
+            --shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.1);
+        }
+        [data-theme='dark'] {
+            --bg: #0b132b;
+            --card-bg: #1c2541;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --input-bg: #0f172a;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            padding: 24px 12px;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            border-top: 8px solid var(--primary);
+            overflow: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .header {
+            padding: 24px 20px 18px 20px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 21px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tier-badge {
+            display: inline-block;
+            background: rgba(2, 132, 199, 0.12);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .student-bar {
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .student-bar input {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+        .content { padding: 20px; }
+        .question-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 18px;
+            transition: all 0.2s ease;
+        }
+        .question-card:hover { border-color: rgba(2, 132, 199, 0.4); }
+        .question-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.45;
+            display: flex;
+            gap: 8px;
+        }
+        .question-number {
+            background: var(--primary);
+            color: #fff;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+        .options-list { display: flex; flex-direction: column; gap: 8px; }
+        .option-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1.4;
+            transition: all 0.2s ease;
+        }
+        .option-label:hover { border-color: var(--primary); background: rgba(2, 132, 199, 0.04); }
+        .option-label input[type="radio"] { margin-top: 2px; }
+        .option-label.selected {
+            border-color: var(--primary);
+            background: rgba(2, 132, 199, 0.08);
+            font-weight: 600;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+        .btn-submit:hover { background: var(--primary-hover); }
+        .result-box {
+            padding: 24px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <div class="header">
+            <h1><i class="fas fa-brain"></i> VAK Bilişsel Öğrenme Stili Envanteri</h1>
+            <p style="margin:4px 0 0 0; font-size:13px; color:var(--text-muted);">
+                Kendine en uygun hissettiğin seçenekleri işaretle; öğrenme tarzını birlikte keşfedelim!
+            </p>
+            <div id="tier-badge" class="tier-badge">Kademe Belirleniyor...</div>
+        </div>
+
+        <div class="student-bar">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:700;">Ad Soyad:</span>
+                <input type="text" id="stu-ad" placeholder="Öğrenci Adı Soyadı">
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:700;">No:</span>
+                <input type="text" id="stu-no" style="width:70px;" placeholder="No">
+                <span style="font-weight:700;">Sınıf:</span>
+                <input type="text" id="stu-sinif" style="width:75px;" placeholder="8/A" onchange="onClassInputChange()">
+            </div>
+        </div>
+
+        <div class="content" id="form-content">
+            <div id="questions-container">
+                <!-- Javascript ile doldurulur -->
+            </div>
+
+            <button type="button" class="btn-submit" onclick="submitVakForm()">
+                <i class="fas fa-paper-plane"></i> Yanıtlarımı Gönder & Analizimi Al
+            </button>
+        </div>
+
+        <div class="result-box" id="result-box">
+            <div style="width:64px; height:64px; border-radius:50%; background:rgba(16,185,129,0.12); color:#10b981; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 14px auto;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 style="margin:0 0 6px 0; color:var(--text-main);">Öğrenme Stilin Başarıyla Belirlendi!</h2>
+            <div id="dominant-badge" style="display:inline-block; padding:6px 18px; border-radius:20px; font-weight:800; font-size:16px; margin-bottom:16px;"></div>
+
+            <!-- Dağılım Çubukları -->
+            <div style="background:var(--input-bg); border-radius:10px; padding:16px; margin-bottom:20px; text-align:left;">
+                <div style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; margin-bottom:4px;">
+                        <span><i class="fas fa-eye" style="color:var(--visual);"></i> Görsel (Visual)</span>
+                        <span id="res-v-perc">%0</span>
+                    </div>
+                    <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden;">
+                        <div id="bar-v" style="height:100%; width:0%; background:var(--visual); transition:width 0.6s ease;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; margin-bottom:4px;">
+                        <span><i class="fas fa-headphones" style="color:var(--auditory);"></i> İşitsel (Auditory)</span>
+                        <span id="res-a-perc">%0</span>
+                    </div>
+                    <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden;">
+                        <div id="bar-a" style="height:100%; width:0%; background:var(--auditory); transition:width 0.6s ease;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; margin-bottom:4px;">
+                        <span><i class="fas fa-hand-paper" style="color:var(--kinesthetic);"></i> Kinestetik (Kinesthetic)</span>
+                        <span id="res-k-perc">%0</span>
+                    </div>
+                    <div style="height:8px; background:var(--border); border-radius:4px; overflow:hidden;">
+                        <div id="bar-k" style="height:100%; width:0%; background:var(--kinesthetic); transition:width 0.6s ease;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <p id="res-summary" style="font-size:13.5px; line-height:1.5; color:var(--text-main); margin-bottom:18px;"></p>
+
+            <div style="text-align:left; background:rgba(2,132,199,0.06); border-left:4px solid var(--primary); padding:12px 16px; border-radius:8px; font-size:12.5px; line-height:1.5;">
+                <strong>💡 Sana Özel Koçluk Tavsiyesi:</strong>
+                <ul id="res-recommendations" style="margin:6px 0 0 0; padding-left:18px;"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGrade = 8;
+        let currentQuestions = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const sinifParam = params.get('sinif') || '8/A';
+            const noParam = params.get('no') || '';
+            const adParam = params.get('ad') || '';
+
+            document.getElementById('stu-sinif').value = sinifParam;
+            document.getElementById('stu-no').value = noParam;
+            document.getElementById('stu-ad').value = adParam;
+
+            loadQuestionsForCurrentClass();
+        });
+
+        function onClassInputChange() {
+            loadQuestionsForCurrentClass();
+        }
+
+        function loadQuestionsForCurrentClass() {
+            const sinifVal = document.getElementById('stu-sinif').value || '8';
+            currentGrade = window.VakEngine ? window.VakEngine.parseGradeLevel(sinifVal) : parseInt(sinifVal) || 8;
+
+            const badge = document.getElementById('tier-badge');
+            if (currentGrade <= 4) {
+                badge.textContent = `🎯 1-4. Sınıf (İlkokul / Somut İşlemler) Modu`;
+            } else if (currentGrade <= 8) {
+                badge.textContent = `🎯 5-8. Sınıf (Ortaokul / LGS & Akran) Modu`;
+            } else {
+                badge.textContent = `🎯 9-12. Sınıf (Lise / YKS & Üstbilişsel) Modu`;
+            }
+
+            currentQuestions = window.VakEngine ? window.VakEngine.getQuestionsForGrade(currentGrade) : [];
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            if (!container) return;
+
+            let html = '';
+            currentQuestions.forEach((q, idx) => {
+                html += `
+                <div class="question-card">
+                    <div class="question-title">
+                        <span class="question-number">${idx + 1}</span>
+                        <span>${q.question}</span>
+                    </div>
+                    <div class="options-list">
+                        ${q.options.map(opt => `
+                            <label class="option-label" onclick="highlightOption(this)">
+                                <input type="radio" name="q_${q.id}" value="${opt.key}" required>
+                                <span>${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function highlightOption(labelEl) {
+            const parent = labelEl.closest('.options-list');
+            if (parent) {
+                parent.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+            }
+            labelEl.classList.add('selected');
+        }
+
+        function submitVakForm() {
+            const ad = document.getElementById('stu-ad').value.trim();
+            const no = document.getElementById('stu-no').value.trim();
+            const sinif = document.getElementById('stu-sinif').value.trim();
+
+            if (!ad || !no) {
+                alert('Lütfen adınızı ve okul numaranızı eksiksiz yazınız.');
+                return;
+            }
+
+            const answers = [];
+            for (const q of currentQuestions) {
+                const checked = document.querySelector(`input[name="q_${q.id}"]:checked`);
+                if (!checked) {
+                    alert(`Lütfen tüm soruları yanıtlayınız (Soru ${answers.length + 1} eksik).`);
+                    return;
+                }
+                answers.push(checked.value);
+            }
+
+            // VakEngine ile hesapla
+            const assessment = window.VakEngine.calculateVakScores(answers, currentGrade, {
+                no: no,
+                adSoyad: ad,
+                sinif: sinif
+            });
+
+            // Firebase student_forms tablosuna kaydet
+            try {
+                if (window.db) {
+                    const formsRef = window.db.ref('student_forms');
+                    const formPayload = {
+                        type: 'BEFORE',
+                        formTitle: 'VAK Bilişsel Öğrenme Stili Envanteri',
+                        adSoyad: ad,
+                        ogrenciNo: no,
+                        sinif: sinif,
+                        tarih: new Date().toLocaleDateString('tr-TR'),
+                        timestamp: Date.now(),
+                        formResponse: {
+                            'Öğrenme Stili Envanteri': answers.map(a => `(${a === 'V' ? 'görsel' : (a === 'A' ? 'işitsel' : 'kinestetik')})`).join(' '),
+                            'Baskın Stil': assessment.vak_scores.dominant_style,
+                            'VAK Detay': JSON.stringify(assessment)
+                        }
+                    };
+                    formsRef.push(formPayload);
+                }
+            } catch (err) {
+                console.error('Firebase save error:', err);
+            }
+
+            // Sonuç ekranını doldur ve göster
+            document.getElementById('form-content').style.display = 'none';
+            const resBox = document.getElementById('result-box');
+            resBox.style.display = 'block';
+
+            const scores = assessment.vak_scores;
+            const domEl = document.getElementById('dominant-badge');
+            domEl.textContent = scores.dominant_style;
+            if (scores.dominant_key.includes('Görsel')) {
+                domEl.style.background = 'rgba(59,130,246,0.15)';
+                domEl.style.color = '#3b82f6';
+            } else if (scores.dominant_key.includes('İşitsel')) {
+                domEl.style.background = 'rgba(139,92,246,0.15)';
+                domEl.style.color = '#8b5cf6';
+            } else if (scores.dominant_key.includes('Kinestetik')) {
+                domEl.style.background = 'rgba(245,158,11,0.15)';
+                domEl.style.color = '#d97706';
+            } else {
+                domEl.style.background = 'rgba(16,185,129,0.15)';
+                domEl.style.color = '#10b981';
+            }
+
+            document.getElementById('res-v-perc').textContent = `%${scores.visual_percentage}`;
+            document.getElementById('res-a-perc').textContent = `%${scores.auditory_percentage}`;
+            document.getElementById('res-k-perc').textContent = `%${scores.kinesthetic_percentage}`;
+
+            document.getElementById('bar-v').style.width = `${scores.visual_percentage}%`;
+            document.getElementById('bar-a').style.width = `${scores.auditory_percentage}%`;
+            document.getElementById('bar-k').style.width = `${scores.kinesthetic_percentage}%`;
+
+            document.getElementById('res-summary').textContent = assessment.pedagogical_insights.summary;
+
+            const recsEl = document.getElementById('res-recommendations');
+            recsEl.innerHTML = (assessment.actionable_recommendations.for_student || []).map(r => `<li>${r}</li>`).join('');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

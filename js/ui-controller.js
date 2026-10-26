@@ -18,6 +18,7 @@ const TAB_LABELS = {
     'tab9': '🌳 Proje Grupları',
     'tab11': '📊 Soru Çözüm Takip',
     'tab-kocluk': '🧠 LGS Bilişsel Koçluk',
+    'tab-yks-kocluk': '🎯 YKS Bilişsel Koçluk',
     'tab10': '🧭 Sistem Kullanım Kılavuzu',
     'tab-admin': '👑 Yönetici Paneli'
 };
@@ -25,7 +26,7 @@ const TAB_LABELS = {
 // Toplam normal (admin hariç) modül sayısı
 const TAB_NUMBERS = {
     'tab1': 1, 'tab2': 2, 'tab-buz-kirma': 3, 'tab3': 4, 'tab4': 5,
-    'tab5': 6, 'tab-checklists': 7, 'tab6': 8, 'tab7': 9, 'tab8': 10, 'tab9': 11, 'tab11': 12, 'tab-kocluk': 13, 'tab10': 14, 'tab-admin': ''
+    'tab5': 6, 'tab-checklists': 7, 'tab6': 8, 'tab7': 9, 'tab8': 10, 'tab9': 11, 'tab11': 12, 'tab-kocluk': 13, 'tab-yks-kocluk': 14, 'tab10': 15, 'tab-admin': ''
 };
 
 function openTab(tabId) {
@@ -55,7 +56,7 @@ function openTab(tabId) {
     const labelEl = document.getElementById('mobile-active-tab-label');
     if (labelEl) labelEl.textContent = label;
     const numEl = document.querySelector('.mobile-nav-bar > div:last-child');
-    if (numEl && num) numEl.textContent = num + '/14';
+    if (numEl && num) numEl.textContent = num + '/15';
     if (numEl && !num) numEl.textContent = '★';
 
     // Mobil panel: aktif butonu vurgula
@@ -76,9 +77,31 @@ function openTab(tabId) {
         if (typeof renderExams === 'function') renderExams();
     }
 
-    if (tabId === 'tab9') {
-        if (typeof pgLoad === 'function') pgLoad();
-        if (typeof pgRenderList === 'function') pgRenderList();
+    if (tabId === 'tab7') {
+        if (typeof updateEvalClassDropdown === 'function') updateEvalClassDropdown();
+        if (window.VakEngine && typeof window.VakEngine.renderVakReportsTable === 'function') {
+            window.VakEngine.renderVakReportsTable();
+        }
+    }
+
+    if (tabId === 'tab8' || tabId === 'tab-ileri-gruplar') {
+        if (typeof window.initIleriGruplarModule === 'function') {
+            window.initIleriGruplarModule();
+        } else {
+            if (typeof window.ileriSinifDoldur === 'function') window.ileriSinifDoldur();
+            if (typeof window.ileriGrupRenderExisting === 'function') window.ileriGrupRenderExisting();
+        }
+    }
+
+    if (tabId === 'tab9' || tabId === 'tab-proje-gruplari') {
+        if (typeof window.initProjeGruplariModule === 'function') {
+            window.initProjeGruplariModule();
+        } else {
+            if (typeof window.pgLoad === 'function') window.pgLoad();
+            if (typeof window.pgFillSinifDropdowns === 'function') window.pgFillSinifDropdowns();
+            if (typeof window.pgRenderList === 'function') window.pgRenderList();
+            if (typeof window.pgUpdateTypeCounts === 'function') window.pgUpdateTypeCounts();
+        }
     }
 
     if (tabId === 'tab11') {
@@ -89,7 +112,13 @@ function openTab(tabId) {
     }
 
     if (tabId === 'tab-kocluk') {
+        if (typeof window.syncAllExamsToKocluk === 'function') window.syncAllExamsToKocluk(true);
         if (typeof window.renderKoclukModule === 'function') window.renderKoclukModule();
+    }
+
+    if (tabId === 'tab-yks-kocluk') {
+        if (typeof window.syncAllExamsToKocluk === 'function') window.syncAllExamsToKocluk(true);
+        if (typeof window.renderYksKoclukModule === 'function') window.renderYksKoclukModule();
     }
 
     if (tabId === 'tab-admin') {

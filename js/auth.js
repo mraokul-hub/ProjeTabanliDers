@@ -47,31 +47,46 @@ function loadUsersAdmin() {
             }
 
             let userCount = 0;
+            const collectedUsers = [];
             snapshot.forEach(childSnapshot => {
                 userCount++;
                 const uid = childSnapshot.key;
                 const data = childSnapshot.val() || {};
+                const safeName = (typeof window.escapeHtml === 'function') ? window.escapeHtml(data.adSoyad || '-') : (data.adSoyad || '-').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeEmail = (typeof window.escapeHtml === 'function') ? window.escapeHtml(data.email || '-') : (data.email || '-').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const emailParam = (typeof window.escapeJs === 'function') ? window.escapeJs(data.email || '') : (data.email || '').replace(/['"]/g, '');
+                const nameParam = (typeof window.escapeJs === 'function') ? window.escapeJs(data.adSoyad || data.email || 'Öğretmen') : (data.adSoyad || data.email || 'Öğretmen').replace(/['"]/g, '');
+                const isOnayli = (data.onayli === true || data.onayli === 'true');
+
+                collectedUsers.push({
+                    uid,
+                    adSoyad: data.adSoyad || data.email || 'Öğretmen',
+                    email: data.email || '',
+                    onayli: isOnayli
+                });
 
                 const tr = document.createElement('tr');
                 const tarih = data.kayitTarihi ? new Date(data.kayitTarihi).toLocaleDateString('tr-TR') : '-';
-                const isOnayli = (data.onayli === true || data.onayli === 'true');
                 const durumBadge = isOnayli
                     ? `<span class="xp-badge" style="background:#10b981; color:white; padding:4px 9px; border-radius:12px; font-size:11px; font-weight:600;">Onaylı</span>`
                     : `<span class="xp-badge" style="background:#ef4444; color:white; padding:4px 9px; border-radius:12px; font-size:11px; font-weight:600;">Onaysız</span>`;
 
-                const safeName = (data.adSoyad || '-').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const safeEmail = (data.email || '-').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const emailParam = (data.email || '').replace(/'/g, "\\'");
-
                 let buttons = '';
+                // 1. Hesaba Gir (Öğretmen Çalışma Alanını İncele)
+                buttons += `<button class="btn" style="padding: 6px 11px; font-size: 11.5px; margin-right: 5px; flex: initial; background:linear-gradient(135deg, #4f46e5, #6366f1); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:700; box-shadow:0 2px 6px rgba(79,70,229,0.3);" onclick="viewTeacherWorkspace('${uid}', '${nameParam}', '${emailParam}')" title="Bu öğretmenin hesabına gir ve tüm verilerini gör"><i class="fas fa-eye"></i> Hesaba Gir</button>`;
+
+                // 2. Veri Aktar (Hesaplar Arası Klonlama/Birleştirme)
+                buttons += `<button class="btn" style="padding: 6px 11px; font-size: 11.5px; margin-right: 5px; flex: initial; background:linear-gradient(135deg, #0284c7, #0ea5e9); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:700; box-shadow:0 2px 6px rgba(2,132,199,0.3);" onclick="openAdminDataTransferModal('${uid}', '')" title="Bu öğretmenin verilerini başka bir hesaba aktar"><i class="fas fa-share-nodes"></i> Veri Aktar</button>`;
+
+                // 3. İsmi Değiştir
                 buttons += `<button class="btn btn-primary" style="padding: 6px 10px; font-size: 11px; margin-right: 5px; flex: initial; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="editUserNameAdmin('${uid}')"><i class="fas fa-edit"></i> İsmi Değiştir</button>`;
-                
+
                 if (!isOnayli) {
                     buttons += `<button class="btn btn-save" style="padding: 6px 10px; font-size: 11px; margin-right: 5px; flex: initial; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="approveUser('${uid}')"><i class="fas fa-check"></i> Onayla</button>`;
                 } else {
                     buttons += `<button class="btn" style="padding: 6px 10px; font-size: 11px; margin-right: 5px; flex: initial; background:#f59e0b; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="suspendUser('${uid}')"><i class="fas fa-ban"></i> Askıya Al</button>`;
                 }
-                
+
                 buttons += `<button class="btn btn-reset" style="padding: 6px 10px; font-size: 11px; margin-right: 5px; flex: initial; margin-top: 0; width: auto; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="rejectUser('${uid}')"><i class="fas fa-trash"></i> Sil</button>`;
                 buttons += `<button class="btn btn-purple" style="padding: 6px 10px; font-size: 11px; flex: initial; background:#8b5cf6; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="sendPasswordResetAdmin('${emailParam}')"><i class="fas fa-key"></i> Şifre Sıfırla</button>`;
 
@@ -87,6 +102,11 @@ function loadUsersAdmin() {
 
             if (countBadge) {
                 countBadge.textContent = `${userCount} Kullanıcı`;
+            }
+
+            // Selector ve modal seçim listelerini güncelle
+            if (typeof populateAdminTeacherSelector === 'function') {
+                populateAdminTeacherSelector(collectedUsers);
             }
         }, error => {
             console.error("Yönetici paneli kullanıcı yükleme hatası:", error);
@@ -114,7 +134,7 @@ function editUserNameAdmin(uid) {
         const data = snapshot.val() || {};
         const currentName = data.adSoyad || '';
         const newName = prompt(`"${data.email || 'Kullanıcı'}" için yeni Ad Soyad giriniz:`, currentName);
-        
+
         if (newName === null) return; // İptal edildi
         const trimmed = newName.trim();
         if (!trimmed) {
@@ -261,7 +281,7 @@ async function openAdminStudentTransferModal() {
         if (currentAuthUser) {
             const adminEmail = (currentAuthUser.email || 'mremzi@gmail.com').toLowerCase().trim();
             const existingAdmin = users.find(u => u.uid === currentAuthUser.uid || (u.email && u.email.toLowerCase().trim() === adminEmail));
-            
+
             if (existingAdmin) {
                 existingAdmin.isAdmin = true;
                 existingAdmin.onayli = true;
@@ -275,8 +295,8 @@ async function openAdminStudentTransferModal() {
                     if (pSnap.exists() && pSnap.val() && pSnap.val().adSoyad) {
                         adminName = pSnap.val().adSoyad;
                     }
-                } catch(e) {}
-                
+                } catch (e) { }
+
                 if (!adminName) {
                     const nameSpan = document.getElementById('user-display-name');
                     if (nameSpan) {
@@ -385,8 +405,8 @@ async function onAdminTransferSourceChange() {
             const currentAuth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
             const sourceUser = _adminCachedUsers.find(u => u.uid === sourceUid);
             const isSourceAdmin = (sourceUser && (sourceUser.isAdmin || (sourceUser.email && sourceUser.email.toLowerCase().trim() === 'mremzi@gmail.com'))) ||
-                                  (currentAuth && (currentAuth.uid === sourceUid || currentAuth.email?.toLowerCase().trim() === 'mremzi@gmail.com'));
-            
+                (currentAuth && (currentAuth.uid === sourceUid || currentAuth.email?.toLowerCase().trim() === 'mremzi@gmail.com'));
+
             if (isSourceAdmin) {
                 // 1. Firebase app_data/main_data/students
                 try {
@@ -395,7 +415,7 @@ async function onAdminTransferSourceChange() {
                         const mVal = mainSnap.val();
                         students = Array.isArray(mVal) ? mVal.filter(Boolean) : Object.values(mVal || {}).filter(Boolean);
                     }
-                } catch(e) {}
+                } catch (e) { }
 
                 // 2. Aktif oturum belleği ve yerel depolama
                 if (students.length === 0) {
@@ -413,7 +433,7 @@ async function onAdminTransferSourceChange() {
                                     students = list.slice();
                                 }
                             }
-                        } catch(e) {}
+                        } catch (e) { }
                     }
                 }
             }
@@ -646,7 +666,7 @@ async function executeAdminStudentTransfer() {
         // Eğer hedef öğretmen o anda oturum açan yönetici ise yerel belleği ve main_data'yı da güncelle
         const currentAuthUser = firebase.auth().currentUser;
         if (currentAuthUser && (currentAuthUser.uid === targetUid || currentAuthUser.email?.toLowerCase().trim() === 'mremzi@gmail.com' && targetUid === currentAuthUser.uid)) {
-            window.db.ref('app_data/main_data/students').set(finalStudentsPayload).catch(() => {});
+            window.db.ref('app_data/main_data/students').set(finalStudentsPayload).catch(() => { });
             studentData = Object.values(finalStudentsPayload);
             if (typeof saveData === 'function') saveData();
             if (typeof fullUIRender === 'function') {
@@ -675,19 +695,328 @@ async function executeAdminStudentTransfer() {
     }
 }
 
-// Global scope export
-window.loadUsersAdmin = loadUsersAdmin;
-window.editUserNameAdmin = editUserNameAdmin;
-window.approveUser = approveUser;
-window.suspendUser = suspendUser;
-window.rejectUser = rejectUser;
-window.sendPasswordResetAdmin = sendPasswordResetAdmin;
-window.openAdminStudentTransferModal = openAdminStudentTransferModal;
-window.closeAdminStudentTransferModal = closeAdminStudentTransferModal;
-window.onAdminTransferSourceChange = onAdminTransferSourceChange;
-window.onAdminTransferClassFilterChange = onAdminTransferClassFilterChange;
-window.renderAdminTransferPreview = renderAdminTransferPreview;
-window.executeAdminStudentTransfer = executeAdminStudentTransfer;
+// ── YÖNETİCİ: ÖĞRETMEN HESABINI İNCELEME (IMPERSONATION) ──
+function viewTeacherWorkspace(uid, name, email) {
+    if (!uid) return;
+    window.activeWorkspaceUid = uid;
+    window.activeTeacherInfo = { uid, name, email };
+
+    // Banner'ı göster ve güncelle
+    const banner = document.getElementById('admin-viewing-banner');
+    const teacherNameEl = document.getElementById('admin-viewing-teacher-name');
+    if (banner) banner.style.display = 'flex';
+    if (teacherNameEl) teacherNameEl.textContent = `${name} (${email})`;
+
+    // Header selector'ı senkronize et
+    const select = document.getElementById('admin-teacher-select');
+    if (select) select.value = uid;
+
+    // Verileri yükle
+    if (typeof loadFromLocalStorage === 'function') {
+        loadFromLocalStorage(uid);
+    }
+
+    // Tab 1'e geç ve toast göster
+    if (typeof openTab === 'function') openTab('tab1');
+    if (typeof showGlobalToast === 'function') {
+        showGlobalToast(`👁️ <b>${name}</b> öğretmeninin hesabı açıldı. Tüm veriler yüklendi.`, 'success');
+    }
+}
+window.viewTeacherWorkspace = viewTeacherWorkspace;
+
+function exitTeacherWorkspace() {
+    window.activeWorkspaceUid = null;
+    window.activeTeacherInfo = null;
+
+    // Banner'ı gizle
+    const banner = document.getElementById('admin-viewing-banner');
+    if (banner) banner.style.display = 'none';
+
+    // Header selector'ı sıfırla
+    const select = document.getElementById('admin-teacher-select');
+    if (select) select.value = '';
+
+    // Çalışma alanını temizle
+    if (typeof clearWorkspaceData === 'function') {
+        clearWorkspaceData();
+    }
+    if (typeof detachListeners === 'function') {
+        detachListeners();
+    }
+
+    // Yönetici paneli sekmesine dön
+    if (typeof openTab === 'function') openTab('tab-admin');
+    if (typeof showGlobalToast === 'function') {
+        showGlobalToast('👑 Yönetici görünümüne dönüldü.', 'info');
+    }
+}
+window.exitTeacherWorkspace = exitTeacherWorkspace;
+
+function onAdminTeacherSelectChange(val) {
+    if (!val) {
+        exitTeacherWorkspace();
+    } else {
+        const users = window._allUsersAdminCache || [];
+        const u = users.find(x => x.uid === val);
+        const name = u ? (u.adSoyad || u.email) : 'Öğretmen';
+        const email = u ? u.email : '';
+        viewTeacherWorkspace(val, name, email);
+    }
+}
+window.onAdminTeacherSelectChange = onAdminTeacherSelectChange;
+
+function populateAdminTeacherSelector(users) {
+    window._allUsersAdminCache = users || [];
+    const select = document.getElementById('admin-teacher-select');
+    const box = document.getElementById('admin-teacher-selector-box');
+    if (select) {
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">👑 Yönetici Görünümü (Boş)</option>';
+        users.forEach(u => {
+            const label = `${u.adSoyad || 'İsimsiz'} (${u.email || '-'})`;
+            select.innerHTML += `<option value="${u.uid}">${label}</option>`;
+        });
+        if (window.activeWorkspaceUid) {
+            select.value = window.activeWorkspaceUid;
+        } else if (currentVal) {
+            select.value = currentVal;
+        }
+    }
+    if (box) {
+        box.style.display = 'inline-flex';
+    }
+}
+window.populateAdminTeacherSelector = populateAdminTeacherSelector;
+
+// ── YÖNETİCİ: HESAPLAR ARASI TÜM VERİLERİ AKTARMA (CROSS-TEACHER TRANSFER) ──
+async function openAdminDataTransferModal(preselectedSrcUid = '', preselectedTgtUid = '') {
+    const modal = document.getElementById('admin-full-data-transfer-modal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+
+    const srcSelect = document.getElementById('transfer-src-teacher');
+    const tgtSelect = document.getElementById('transfer-tgt-teacher');
+
+    if (!srcSelect || !tgtSelect) return;
+
+    srcSelect.innerHTML = '<option value="">-- Kaynak Öğretmen Seçiniz --</option>';
+    tgtSelect.innerHTML = '<option value="">-- Hedef Öğretmen Seçiniz --</option>';
+
+    let users = window._allUsersAdminCache;
+    if (!users || users.length === 0) {
+        try {
+            const snap = await window.db.ref('kullanicilar').once('value');
+            users = [];
+            snap.forEach(c => {
+                const val = c.val() || {};
+                users.push({ uid: c.key, adSoyad: val.adSoyad || val.email, email: val.email || '', onayli: val.onayli });
+            });
+            window._allUsersAdminCache = users;
+        } catch (e) {
+            users = [];
+        }
+    }
+
+    users.forEach(u => {
+        const label = `${u.adSoyad || 'Öğretmen'} (${u.email || ''})`;
+        srcSelect.innerHTML += `<option value="${u.uid}">${label}</option>`;
+        tgtSelect.innerHTML += `<option value="${u.uid}">${label} ${u.onayli ? '' : '⚠️ (Onaysız)'}</option>`;
+    });
+
+    if (preselectedSrcUid) {
+        srcSelect.value = preselectedSrcUid;
+    } else if (window.activeWorkspaceUid) {
+        srcSelect.value = window.activeWorkspaceUid;
+    }
+
+    if (preselectedTgtUid) {
+        tgtSelect.value = preselectedTgtUid;
+    }
+
+    if (srcSelect.value) {
+        onTransferSourceChange(srcSelect.value);
+    } else {
+        resetTransferModuleBadges();
+    }
+}
+window.openAdminDataTransferModal = openAdminDataTransferModal;
+
+function openAdminDataTransferModalWithCurrent() {
+    if (window.activeWorkspaceUid) {
+        openAdminDataTransferModal(window.activeWorkspaceUid, '');
+    } else {
+        openAdminDataTransferModal('', '');
+    }
+}
+window.openAdminDataTransferModalWithCurrent = openAdminDataTransferModalWithCurrent;
+
+function closeAdminDataTransferModal() {
+    const modal = document.getElementById('admin-full-data-transfer-modal');
+    if (modal) modal.style.display = 'none';
+}
+window.closeAdminDataTransferModal = closeAdminDataTransferModal;
+
+function resetTransferModuleBadges() {
+    document.querySelectorAll('.transfer-mod-count').forEach(el => el.textContent = '-');
+}
+
+async function onTransferSourceChange(sourceUid) {
+    resetTransferModuleBadges();
+    if (!sourceUid || !window.db) return;
+
+    try {
+        const snap = await window.db.ref('app_data/' + sourceUid).once('value');
+        const data = snap.val() || {};
+
+        const getLen = (obj) => {
+            if (!obj) return 0;
+            if (Array.isArray(obj)) return obj.length;
+            if (typeof obj === 'object') return Object.keys(obj).length;
+            return 1;
+        };
+
+        const setCount = (id, count) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = count;
+        };
+
+        setCount('tcount-students', getLen(data.students));
+        setCount('tcount-exams', getLen(data.exams));
+        setCount('tcount-projects', getLen(data.projects || data.projeGruplariData));
+        setCount('tcount-adv-groups', getLen(data.advanced_groups || data.advancedGroupData));
+        setCount('tcount-groups', getLen(data.regular_groups || data.groups));
+        setCount('tcount-schedule', getLen(data.schedule));
+        setCount('tcount-tracking', getLen(data.tracking));
+        setCount('tcount-checklists', getLen(data.checklists));
+        setCount('tcount-kocluk', getLen(data.kocluk));
+        setCount('tcount-yks', getLen(data.yks_kocluk || data.yksKocluk));
+    } catch (e) {
+        console.warn("Kaynak veri sayılamadı:", e);
+    }
+}
+window.onTransferSourceChange = onTransferSourceChange;
+
+function toggleAllTransferModules() {
+    const chks = document.querySelectorAll('.transfer-module-checkbox');
+    const anyUnchecked = Array.from(chks).some(c => !c.checked);
+    chks.forEach(c => c.checked = anyUnchecked);
+}
+window.toggleAllTransferModules = toggleAllTransferModules;
+
+async function startAdminCrossTransfer() {
+    const srcSelect = document.getElementById('transfer-src-teacher');
+    const tgtSelect = document.getElementById('transfer-tgt-teacher');
+    const srcUid = srcSelect ? srcSelect.value : '';
+    const tgtUid = tgtSelect ? tgtSelect.value : '';
+
+    if (!srcUid) {
+        alert("Lütfen kaynak öğretmeni seçiniz.");
+        return;
+    }
+    if (!tgtUid) {
+        alert("Lütfen hedef öğretmeni seçiniz.");
+        return;
+    }
+    if (srcUid === tgtUid) {
+        alert("Kaynak ve hedef öğretmen aynı hesap olamaz.");
+        return;
+    }
+
+    const srcName = srcSelect.options[srcSelect.selectedIndex].text;
+    const tgtName = tgtSelect.options[tgtSelect.selectedIndex].text;
+
+    const selectedKeys = [];
+    document.querySelectorAll('.transfer-module-checkbox:checked').forEach(c => {
+        selectedKeys.push(c.getAttribute('data-key'));
+    });
+
+    if (selectedKeys.length === 0) {
+        alert("Lütfen aktarılacak en az bir modül seçiniz.");
+        return;
+    }
+
+    const mode = document.querySelector('input[name="admin-transfer-mode"]:checked')?.value || 'clone';
+    const modeText = (mode === 'clone') ? 'TAM KLONLAMA (Hedef veritabanı eşitlenir)' : 'BİRLEŞTİRME (Mevcutlar korunur)';
+
+    const confirmMsg =
+        `🚀 HESAPLAR ARASI VERİ AKTARIMI:\n\n` +
+        `Kaynak: ${srcName}\n` +
+        `Hedef: ${tgtName}\n` +
+        `Yöntem: ${modeText}\n` +
+        `Seçili Modül Sayısı: ${selectedKeys.length}\n\n` +
+        `Kaynak öğretmenin seçili tüm verileri hedef öğretmenin hesabına kopyalanacaktır. Devam etmek istiyor musunuz?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const btn = document.getElementById('btn-execute-cross-transfer');
+    if (btn) btn.disabled = true;
+
+    try {
+        // 1. Kaynak veriyi çek
+        const srcSnap = await window.db.ref('app_data/' + srcUid).once('value');
+        const srcData = srcSnap.val() || {};
+
+        // 2. Hedef veriyi güvenlik için yedekle
+        const tgtSnap = await window.db.ref('app_data/' + tgtUid).once('value');
+        const tgtCurrentData = tgtSnap.val();
+        if (tgtCurrentData) {
+            const bKey = `backup_${Date.now()}`;
+            await window.db.ref(`app_data_backups/${tgtUid}/${bKey}`).set(tgtCurrentData);
+        }
+
+        // 3. Hedef kullanıcıyı otomatik onayla
+        await window.db.ref('kullanicilar/' + tgtUid + '/onayli').set(true);
+
+        // 4. Modülleri kopyala
+        for (const modKey of selectedKeys) {
+            let val = srcData[modKey];
+
+            // Özel eşleşmeler
+            if (modKey === 'advanced_groups' && !val && srcData.advancedGroupData) val = srcData.advancedGroupData;
+            if (modKey === 'projects' && !val && srcData.projeGruplariData) val = srcData.projeGruplariData;
+            if (modKey === 'yks_kocluk' && !val && srcData.yksKocluk) val = srcData.yksKocluk;
+
+            if (val !== undefined && val !== null) {
+                if (mode === 'clone') {
+                    await window.db.ref(`app_data/${tgtUid}/${modKey}`).set(val);
+                } else {
+                    const exSnap = await window.db.ref(`app_data/${tgtUid}/${modKey}`).once('value');
+                    const exVal = exSnap.val();
+                    if (Array.isArray(val)) {
+                        const merged = (Array.isArray(exVal) ? exVal : []).concat(val);
+                        await window.db.ref(`app_data/${tgtUid}/${modKey}`).set(merged);
+                    } else if (typeof val === 'object') {
+                        const merged = Object.assign({}, exVal || {}, val);
+                        await window.db.ref(`app_data/${tgtUid}/${modKey}`).set(merged);
+                    } else {
+                        await window.db.ref(`app_data/${tgtUid}/${modKey}`).set(val);
+                    }
+                }
+            }
+        }
+
+        // Zaman damgası
+        await window.db.ref(`app_data/${tgtUid}/lastUpdate`).set(new Date().toISOString());
+        await window.db.ref(`app_data/${tgtUid}/transferredFromUid`).set(srcUid);
+
+        // Eğer şu anda hedef öğretmen inceleniyorsa yeniden yükle
+        if (window.activeWorkspaceUid === tgtUid) {
+            await loadFromLocalStorage(tgtUid);
+        }
+
+        alert(`🎉 AKTARIM TAMAMLANDI!\n\n${srcName} öğretmeninin verileri başarıyla ${tgtName} hesabına aktarılmıştır.`);
+        closeAdminDataTransferModal();
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('✅ Veri aktarımı başarıyla tamamlandı.', 'success');
+        }
+    } catch (err) {
+        alert("Aktarım sırasında hata oluştu: " + err.message);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+window.startAdminCrossTransfer = startAdminCrossTransfer;
 
 // auth.js yüklendiğinde kullanıcı yönetici ise veya admin tabı açıksa otomatik yükle
 (function initAdminAutoLoad() {

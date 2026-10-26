@@ -4,18 +4,19 @@
 // ============================================================
 
 // Firebase Realtime DB anahtar kısıtlamaları için güvenli encode/decode
-// Yasaklı karakterler: . # $ / [ ]
+// Yasaklı karakterler: . # $ / [ ] ve ayrıştırma belirteci %
 function encodeFirebaseKey(key) {
     if (typeof key !== 'string') return String(key || '');
-    return key.replace(/[\.\#\$\/\[\]]/g, match => '%' + match.charCodeAt(0).toString(16).toUpperCase());
+    return key
+        .replace(/%/g, '%25')
+        .replace(/[\.\#\$\/\[\]]/g, match => '%' + match.charCodeAt(0).toString(16).toUpperCase());
 }
 
 function decodeFirebaseKey(key) {
     if (typeof key !== 'string') return String(key || '');
-    return key.replace(/%[0-9A-Fa-f]{2}/g, match => {
-        const char = String.fromCharCode(parseInt(match.substring(1), 16));
-        return ['.', '#', '$', '/', '[', ']'].includes(char) ? char : match;
-    });
+    return key
+        .replace(/%(2E|23|24|2F|5B|5D)/gi, match => String.fromCharCode(parseInt(match.substring(1), 16)))
+        .replace(/%25/g, '%');
 }
 window.encodeFirebaseKey = encodeFirebaseKey;
 window.decodeFirebaseKey = decodeFirebaseKey;
@@ -30,7 +31,9 @@ let _lastSavedRefs = {
     schedule: null,
     tracking: {},
     checklists: {},
-    kocluk: {}
+    kocluk: {},
+    yksKocluk: {},
+    advanced_groups: {}
 };
 
 window.invalidateChecklistSavedRef = function(chkId) {
@@ -214,27 +217,40 @@ function getKoclukSourceList() {
 }
 window.getKoclukSourceList = getKoclukSourceList;
 
+// YKS Koçluk veri kaynağını güvenli ve dinamik olarak çöz (12. Sınıf TYT-AYT)
+function getYksKoclukSourceList() {
+    if (Array.isArray(window.yksKoclukData) && window.yksKoclukData.length > 0) return window.yksKoclukData;
+    if (typeof yksKoclukData !== 'undefined' && Array.isArray(yksKoclukData) && yksKoclukData.length > 0) return yksKoclukData;
+    return (Array.isArray(window.yksKoclukData) ? window.yksKoclukData : (typeof yksKoclukData !== 'undefined' && Array.isArray(yksKoclukData) ? yksKoclukData : []));
+}
+window.getYksKoclukSourceList = getYksKoclukSourceList;
+
 // LocalStorage Yedeği (Çevrimdışı / Hızlı Yükleme İçin - Kullanıcı Bazlı İzolasyon)
 function saveLocalData() {
     const currentUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
-    const uid = currentUser?.uid || '';
+    const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+    const uid = window.activeWorkspaceUid || (!isUserAdmin ? currentUser?.uid : null);
+    if (!uid) {
+        return; // Yönetici kişisel veri tutmaz
+    }
     const dataToSaveLocal = {
         students: (typeof studentData !== 'undefined' && Array.isArray(studentData)) ? studentData : (window.studentData || []),
-        projects: typeof projeGruplariData !== 'undefined' ? projeGruplariData : [],
+        projects: (window.projeGruplariData || window.projectGroupsData || (typeof projeGruplariData !== 'undefined' ? projeGruplariData : [])),
         groups: typeof groupData === 'object' ? groupData : {},
         schedule: (typeof scheduleData !== 'undefined' && Array.isArray(scheduleData)) ? scheduleData : (window.scheduleData || []),
         tracking: (typeof trackingData !== 'undefined' && Array.isArray(trackingData)) ? trackingData : (window.trackingData || []),
         checklists: (typeof checklistData !== 'undefined' && Array.isArray(checklistData)) ? checklistData : (window.checklistData || []),
         kocluk: getKoclukSourceList(),
+        yksKocluk: getYksKoclukSourceList(),
         exams: (typeof examData !== 'undefined' && Array.isArray(examData)) ? examData : (window.examData || []),
-        advancedGroups: typeof advancedGroupData !== 'undefined' ? advancedGroupData : [],
+        advancedGroups: (window.advancedGroupData || window.regularGroupsData || (typeof advancedGroupData !== 'undefined' ? advancedGroupData : [])),
         lastUpdate: new Date().toISOString()
     };
     try {
         const serialized = JSON.stringify(dataToSaveLocal);
-        const userKey = uid ? `${STORAGE_KEY}_${uid}` : STORAGE_KEY;
+        const userKey = `${STORAGE_KEY}_${uid}`;
         localStorage.setItem(userKey, serialized);
-        localStorage.setItem(STORAGE_KEY, serialized);
+        if (!isUserAdmin) localStorage.setItem(STORAGE_KEY, serialized);
     } catch (e) {
         console.warn("[LocalStorage] Yerel önbellek yazma hatası:", e);
     }
@@ -369,7 +385,15 @@ async function _executeSaveData() {
     // 2. Firebase Atomik Diff (Karşılaştırma) Motoru
     let updates = {};
     const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
-    const uid = currentUser ? currentUser.uid : null;
+    const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+    const uid = window.activeWorkspaceUid || (!isUserAdmin ? (currentUser ? currentUser.uid : null) : null);
+
+    if (!uid) {
+        // Yönetici modunda kişisel veri kaydedilmez
+        _isSaving = false;
+        _hasPendingSave = false;
+        return;
+    }
 
     // Aday referanslar (Sadece başarılı Firebase yazımında commit edilecek!)
     let candidateRefs = {
@@ -380,7 +404,9 @@ async function _executeSaveData() {
         schedule: null,
         tracking: null,
         checklists: null,
-        kocluk: null
+        kocluk: null,
+        yksKocluk: null,
+        advanced_groups: null
     };
 
     if (uid && window.db) {
@@ -410,10 +436,13 @@ async function _executeSaveData() {
         
         // --- B. PROJECTS (Proje Grupları) ---
         let currentProjects = {};
-        if (typeof projeGruplariData !== 'undefined') {
-            projeGruplariData.forEach((g, i) => {
-                const gId = g.id || `project_${i}`;
-                currentProjects[gId] = g;
+        const pList = window.projeGruplariData || window.projectGroupsData || (typeof projeGruplariData !== 'undefined' ? projeGruplariData : []);
+        if (Array.isArray(pList)) {
+            pList.forEach((g, i) => {
+                if (g) {
+                    const gId = g.id ? String(g.id) : `project_${i}`;
+                    currentProjects[gId] = g;
+                }
             });
         }
         
@@ -635,6 +664,82 @@ async function _executeSaveData() {
             }
         }
         candidateRefs.kocluk = currentKocluk;
+
+        // --- H. YKS BİLİŞSEL KOÇLUK & MENTORLUK (12. Sınıf TYT-AYT) ---
+        let currentYks = {};
+        const activeYksList = getYksKoclukSourceList();
+        activeYksList.forEach((item, idx) => {
+            if (item) {
+                const rawKocId = item.id ? String(item.id) : ('yks_' + (item.studentNo || idx));
+                const safeKocId = encodeFirebaseKey(rawKocId).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                currentYks[safeKocId] = {
+                    id: item.id || safeKocId,
+                    studentNo: item.studentNo || '',
+                    adSoyad: item.adSoyad || '',
+                    sinif: item.sinif || '12. Sınıf',
+                    alan: item.alan || 'SAY',
+                    obp: Number(item.obp) || 0,
+                    hedefSiralama: Number(item.hedefSiralama) || 0,
+                    hedefTytNet: Number(item.hedefTytNet) || 0,
+                    hedefAytNet: Number(item.hedefAytNet) || 0,
+                    baslangicTytNet: Number(item.baslangicTytNet) || 0,
+                    baslangicAytNet: Number(item.baslangicAytNet) || 0,
+                    haftalikHedefSoru: Number(item.haftalikHedefSoru) || 800,
+                    vakStili: item.vakStili || 'Görsel',
+                    aktifFaz: Number(item.aktifFaz) || 1,
+                    bilesenNotu: item.bilesenNotu || '',
+                    hataDefteri: Array.isArray(item.hataDefteri) ? item.hataDefteri : [],
+                    denemeler: Array.isArray(item.denemeler) ? item.denemeler : [],
+                    haftalikSoruSayisi: item.haftalikSoruSayisi || { duzey1: 0, duzey2: 0, duzey3: 0, duzey4: 0, toplam: 0, kaiSkor: 0 },
+                    haftalikPlan: item.haftalikPlan || null,
+                    haftalikTakip: Array.isArray(item.haftalikTakip) ? item.haftalikTakip : [],
+                    createdAt: item.createdAt || new Date().toISOString()
+                };
+            }
+        });
+
+        if (!_lastSavedRefs.yksKocluk || typeof _lastSavedRefs.yksKocluk !== 'object') {
+            _lastSavedRefs.yksKocluk = {};
+        }
+
+        for (let safeKocId in currentYks) {
+            if (JSON.stringify(currentYks[safeKocId]) !== JSON.stringify(_lastSavedRefs.yksKocluk[safeKocId])) {
+                updates[`app_data/${uid}/yks_kocluk/${safeKocId}`] = currentYks[safeKocId];
+            }
+        }
+        for (let safeKocId in _lastSavedRefs.yksKocluk) {
+            if (!currentYks[safeKocId]) {
+                updates[`app_data/${uid}/yks_kocluk/${safeKocId}`] = null;
+            }
+        }
+        candidateRefs.yksKocluk = currentYks;
+
+        // --- I. ADVANCED GROUPS (İleri Çalışma Grupları) ---
+        let currentAdv = {};
+        const advList = window.advancedGroupData || window.regularGroupsData || (typeof advancedGroupData !== 'undefined' ? advancedGroupData : []);
+        if (Array.isArray(advList)) {
+            advList.forEach((ag, idx) => {
+                if (ag) {
+                    const rawId = ag.id || `adv_${ag.sinif || 'all'}_${idx}`;
+                    const safeAgId = encodeFirebaseKey(String(rawId)).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                    currentAdv[safeAgId] = ag;
+                }
+            });
+        }
+
+        if (!_lastSavedRefs.advanced_groups || typeof _lastSavedRefs.advanced_groups !== 'object') {
+            _lastSavedRefs.advanced_groups = {};
+        }
+
+        for (let agId in currentAdv) {
+            if (JSON.stringify(currentAdv[agId]) !== JSON.stringify(_lastSavedRefs.advanced_groups[agId])) {
+                updates[`app_data/${uid}/advanced_groups/${agId}`] = currentAdv[agId];
+            }
+        }
+        for (let agId in _lastSavedRefs.advanced_groups) {
+            if (!currentAdv[agId]) updates[`app_data/${uid}/advanced_groups/${agId}`] = null;
+        }
+        candidateRefs.advanced_groups = currentAdv;
     }
 
     // 3. Değişiklikleri Firebase'e Tek Seferde Yaz (Atomik - Fail-Fast Zaman Aşımı Korumalı)
@@ -654,6 +759,8 @@ async function _executeSaveData() {
             if (candidateRefs.tracking) _lastSavedRefs.tracking = JSON.parse(JSON.stringify(candidateRefs.tracking));
             if (candidateRefs.checklists) _lastSavedRefs.checklists = JSON.parse(JSON.stringify(candidateRefs.checklists));
             if (candidateRefs.kocluk) _lastSavedRefs.kocluk = JSON.parse(JSON.stringify(candidateRefs.kocluk));
+            if (candidateRefs.yksKocluk) _lastSavedRefs.yksKocluk = JSON.parse(JSON.stringify(candidateRefs.yksKocluk));
+            if (candidateRefs.advanced_groups) _lastSavedRefs.advanced_groups = JSON.parse(JSON.stringify(candidateRefs.advanced_groups));
 
             setDbSyncStatus('synced', `Realtime DB Güncel (${updateCount} delta)`);
         } else if (uid && window.db) {
@@ -687,13 +794,73 @@ function isUIActive() {
     return activeModals || activeInput;
 }
 
+// Çalışma Alanını Tamamen Temizleme (Yönetici Modu / Hesap Değişimi)
+function clearWorkspaceData() {
+    studentData = [];
+    window.studentData = [];
+    examData = [];
+    window.examData = [];
+    scheduleData = [];
+    window.scheduleData = [];
+    trackingData = [];
+    window.trackingData = [];
+    checklistData = [];
+    window.checklistData = [];
+    koclukData = [];
+    window.koclukData = [];
+    yksKoclukData = [];
+    window.yksKoclukData = [];
+    advancedGroupData = [];
+    window.advancedGroupData = [];
+    projeGruplariData = [];
+    window.projeGruplariData = [];
+    groupData = {};
+    window.groupData = {};
+
+    _lastSavedRefs = {
+        students: {},
+        projects: {},
+        regular_groups: {},
+        exams: {},
+        schedule: null,
+        tracking: {},
+        checklists: {},
+        kocluk: {},
+        yksKocluk: {},
+        advanced_groups: {}
+    };
+
+    if (typeof fullUIRender === 'function') fullUIRender();
+    if (typeof renderKoclukModule === 'function') renderKoclukModule();
+    if (typeof renderYksKoclukModule === 'function') renderYksKoclukModule();
+    if (typeof renderChecklistList === 'function') renderChecklistList();
+    if (typeof renderTrackingList === 'function') renderTrackingList();
+    if (typeof renderSchedule === 'function') renderSchedule();
+    if (typeof pgRenderList === 'function') pgRenderList();
+    if (typeof ileriSinifDoldur === 'function') ileriSinifDoldur();
+}
+window.clearWorkspaceData = clearWorkspaceData;
+
 // Ana Veri Yükleme (Doğrudan Sunucudan Okuma - Fail-Fast Modeli)
-async function loadFromLocalStorage() {
+async function loadFromLocalStorage(uidOverride = null) {
     try {
         if (!window.db) throw new Error("Firebase bağlantısı yok");
         const currentUser = firebase.auth().currentUser;
         if (!currentUser) return;
-        const uid = currentUser.uid;
+        
+        const isUserAdmin = (currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+        const targetUid = uidOverride || window.activeWorkspaceUid || (!isUserAdmin ? currentUser.uid : null);
+
+        // Eğer yönetici ise ve henüz bir öğretmen seçilmemişse yöneticinin hesabında veri TUTMA / YÜKLEME!
+        if (!targetUid) {
+            console.log("[Yönetici Modu] Yönetici kendi hesabında kişisel veri tutmaz. Temiz çalışma alanı sağlandı.");
+            clearWorkspaceData();
+            detachListeners();
+            setDbSyncStatus('synced', '👑 Yönetici Modu (Öğretmen hesabı seçin)');
+            return;
+        }
+
+        const uid = targetUid;
         
         // 0. Bağlantı Ön Kontrolü: Çevrimdışı iken sunucuya gitmeyi denemeden fail-fast fırlat
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -710,7 +877,7 @@ async function loadFromLocalStorage() {
         }
 
         setDbSyncStatus('saving', 'Canlı veriler sunucudan çekiliyor...');
-        console.log("[Veri] Doğrudan uzak sunucudan (Firebase RTDB) veri çekiliyor...");
+        console.log(`[Veri] Doğrudan uzak sunucudan (Firebase RTDB - app_data/${uid}) veri çekiliyor...`);
 
         // 1. Öğrencileri Doğrudan Sunucudan Çek (7 sn zaman aşımı wrapper)
         let studentsFound = false;
@@ -739,31 +906,6 @@ async function loadFromLocalStorage() {
                 _lastSavedRefs.students = JSON.parse(JSON.stringify(normalizedRefs));
                 studentsFound = true;
                 fullUIRender();
-            }
-        }
-
-        // Göç (Migration) Kontrolü: Eğer öğretmenin klasörü boşsa ve yönetici ise app_data/main_data'ya bak
-        if (!studentsFound && currentUser.email === 'mremzi@gmail.com') {
-            try {
-                const adminSnap = await withTimeout(
-                    window.db.ref('app_data/main_data/students').once('value'),
-                    7000,
-                    "Admin öğrenci göçü zaman aşımına uğradı"
-                );
-                if (adminSnap.exists()) {
-                    const adminVal = adminSnap.val();
-                    const adminStudents = Array.isArray(adminVal) ? adminVal.filter(Boolean) : Object.values(adminVal || {});
-                    if (adminStudents.length > 0) {
-                        console.log("[Göç] Yönetici verileri main_data üzerinden içe aktarılıyor...");
-                        studentData = adminStudents;
-                        _lastSavedRefs.students = Array.isArray(adminVal) ? {} : adminVal;
-                        studentsFound = true;
-                        fullUIRender();
-                        saveData();
-                    }
-                }
-            } catch (err) {
-                console.warn("Admin migration check hatası:", err);
             }
         }
 
@@ -815,7 +957,19 @@ async function loadFromLocalStorage() {
                     });
                 }
 
-                trackingData = normalizedList;
+                // Tekrarlanan ödevleri engelle (Deduplication)
+                const seenTrackKeys = new Set();
+                const cleanTrackingList = [];
+                normalizedList.forEach(item => {
+                    const uniqueKey = String(item.id || item.firebaseKey || `${item.title}_${item.sinif}_${item.date}`);
+                    if (!seenTrackKeys.has(uniqueKey)) {
+                        seenTrackKeys.add(uniqueKey);
+                        cleanTrackingList.push(item);
+                    }
+                });
+
+                trackingData = cleanTrackingList;
+                window.trackingData = cleanTrackingList;
                 _lastSavedRefs.tracking = JSON.parse(JSON.stringify(normalizedRefs));
                 trackingFound = true;
                 localStorage.setItem(migrationDoneKey, 'true');
@@ -825,45 +979,6 @@ async function loadFromLocalStorage() {
             console.warn("Firebase tracking doğrudan yükleme hatası:", e);
         }
 
-        // Göç (Migration) Kontrolü (Sadece yönetici ve ilk kurulum)
-        if (!trackingFound && !alreadyMigrated && currentUser.email === 'mremzi@gmail.com') {
-            try {
-                const adminTrackSnap = await withTimeout(
-                    window.db.ref('app_data/main_data/tracking').once('value'),
-                    7000,
-                    "Admin tracking göçü zaman aşımına uğradı"
-                );
-                if (adminTrackSnap.exists()) {
-                    const aVal = adminTrackSnap.val();
-                    let normalizedList = [];
-                    let normalizedRefs = {};
-                    if (aVal && typeof aVal === 'object') {
-                        const entries = Array.isArray(aVal) ? aVal.map((v, i) => [String(i), v]).filter(([_, v]) => Boolean(v)) : Object.entries(aVal);
-                        entries.forEach(([fbKey, item]) => {
-                            if (item) {
-                                const trackId = item.id ? String(item.id) : ('trk_' + fbKey);
-                                const safeTrackId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
-                                item.id = trackId;
-                                item.firebaseKey = safeTrackId;
-                                normalizedList.push(item);
-                                normalizedRefs[safeTrackId] = item;
-                            }
-                        });
-                    }
-                    if (normalizedList.length > 0) {
-                        console.log("[Göç] Yönetici tracking verileri ilk kez main_data üzerinden içe aktarılıyor...");
-                        trackingData = normalizedList;
-                        _lastSavedRefs.tracking = normalizedRefs;
-                        trackingFound = true;
-                        localStorage.setItem(migrationDoneKey, 'true');
-                        renderTrackingList();
-                        saveData(true);
-                    }
-                }
-            } catch (err) {
-                console.warn("Admin tracking migration hatası:", err);
-            }
-        }
 
         // Eğer Firebase'de hiç tracking yoksa boş başlat; YEREL VERİYİ OTOMATİK İTME!
         if (!trackingFound) {
@@ -1007,6 +1122,75 @@ async function loadFromLocalStorage() {
             }
         }
 
+        // 3.6. YKS Koçluk Verilerini (12. Sınıf TYT-AYT) Doğrudan Sunucudan Çek
+        let yksFound = false;
+        try {
+            const yksSnap = await withTimeout(
+                window.db.ref('app_data/' + uid + '/yks_kocluk').once('value'),
+                7000,
+                "YKS Koçluk verisi sunucudan çekilemedi (Zaman Aşımı)"
+            );
+            if (yksSnap.exists()) {
+                const yksVal = yksSnap.val();
+                let normalizedList = [];
+                let normalizedRefs = {};
+                if (yksVal && typeof yksVal === 'object') {
+                    const entries = Array.isArray(yksVal)
+                        ? yksVal.map((v, i) => [String(i), v]).filter(([_, v]) => Boolean(v))
+                        : Object.entries(yksVal);
+
+                    entries.forEach(([fbKey, item]) => {
+                        if (item) {
+                            const kocId = item.id ? String(item.id) : ('yks_' + fbKey);
+                            const safeKocId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                            item.id = kocId;
+                            item.firebaseKey = safeKocId;
+                            normalizedList.push(item);
+                            normalizedRefs[safeKocId] = item;
+                        }
+                    });
+                }
+                yksKoclukData = normalizedList;
+                window.yksKoclukData = normalizedList;
+                _lastSavedRefs.yksKocluk = JSON.parse(JSON.stringify(normalizedRefs));
+                yksFound = true;
+                if (typeof renderYksKoclukModule === 'function') renderYksKoclukModule();
+            }
+        } catch (e) {
+            console.warn("Firebase yks_kocluk doğrudan yükleme hatası:", e);
+        }
+
+        if (!yksFound) {
+            // LocalStorage'da YKS yedeğini kontrol et
+            let localYks = [];
+            try {
+                const userKey = uid ? `${STORAGE_KEY}_${uid}` : STORAGE_KEY;
+                const cachedRaw = localStorage.getItem(userKey) || localStorage.getItem(STORAGE_KEY);
+                if (cachedRaw) {
+                    const parsed = JSON.parse(cachedRaw);
+                    if (Array.isArray(parsed.yksKocluk) && parsed.yksKocluk.length > 0) {
+                        localYks = parsed.yksKocluk;
+                    }
+                }
+            } catch (err) {}
+
+            if (localYks.length > 0) {
+                console.log("[YKS Koçluk Kurtarma] Firebase verisi hazır değil, yerel önbellekteki " + localYks.length + " öğrenci geri yüklendi.");
+                yksKoclukData = localYks;
+                window.yksKoclukData = localYks;
+                _lastSavedRefs.yksKocluk = {};
+                yksFound = true;
+                if (typeof renderYksKoclukModule === 'function') renderYksKoclukModule();
+                saveData(true);
+            } else {
+                const emptyYks = [];
+                yksKoclukData = emptyYks;
+                window.yksKoclukData = emptyYks;
+                _lastSavedRefs.yksKocluk = {};
+                if (typeof renderYksKoclukModule === 'function') renderYksKoclukModule();
+            }
+        }
+
         // 4. Canlı dinleyicileri bağla
         attachListeners(uid);
 
@@ -1045,6 +1229,10 @@ function detachListeners() {
     if (window._studentFormsRef) {
         try { window._studentFormsRef.off(); } catch (e) {}
         window._studentFormsRef = null;
+    }
+    if (window._pgFormsRef) {
+        try { window._pgFormsRef.off(); } catch (e) {}
+        window._pgFormsRef = null;
     }
 }
 window.detachListeners = detachListeners;
@@ -1114,16 +1302,100 @@ function attachListeners(uid) {
     _activeDbListeners.push(projectsRef);
     projectsRef.on('value', snap => {
         const val = snap.val() || {};
-        const projects = Object.values(val).map(p => ({
-            ...p,
-            members: p.members || [],
-            asamalar: p.asamalar || [],
-            odevLinks: p.odevLinks || [],
-            mesajlar: p.mesajlar || []
-        }));
+        const projects = Object.values(val).map((p, idx) => {
+            const rawMembers = Array.isArray(p.members) && p.members.length ? p.members : (Array.isArray(p.uyeler) ? p.uyeler : []);
+            const pType = p.type || p.grupTipi || 'tasarim';
+            const pTitle = p.title || p.projeAdi || ('Proje Takımı ' + (idx + 1));
+            return {
+                ...p,
+                id: String(p.id || ('proj_' + idx)),
+                title: pTitle,
+                projeAdi: pTitle,
+                type: pType,
+                grupTipi: pType,
+                members: rawMembers,
+                uyeler: rawMembers,
+                asamalar: Array.isArray(p.asamalar) ? p.asamalar : [],
+                odevLinks: Array.isArray(p.odevLinks) ? p.odevLinks : [],
+                mesajlar: Array.isArray(p.mesajlar) ? p.mesajlar : []
+            };
+        });
         if (typeof projeGruplariData !== 'undefined') projeGruplariData = projects;
+        window.projeGruplariData = projects;
+        window.projectGroupsData = projects;
         _lastSavedRefs.projects = JSON.parse(JSON.stringify(val));
-        if (!isUIActive() && initialLoadComplete && typeof pgRenderList === 'function') pgRenderList();
+        if (typeof pgFillSinifDropdowns === 'function') pgFillSinifDropdowns();
+        // initialLoadComplete kontrolü kaldırıldı - veri hazır olunca her zaman render et (modal kapalıysa)
+        if (!isUIActive() && typeof pgRenderList === 'function') {
+            pgRenderList();
+            if (typeof pgUpdateTypeCounts === 'function') pgUpdateTypeCounts();
+        }
+    });
+
+    const advGroupsRef = db.ref(`app_data/${uid}/advanced_groups`);
+    _activeDbListeners.push(advGroupsRef);
+    advGroupsRef.on('value', snap => {
+        const val = snap.val() || {};
+        const rawList = Object.values(val);
+        // Modern nesne şemasını koru, eski dizi formatı varsa geriye dönük destekle
+        const advList = rawList.map((g, idx) => {
+            if (!g) return null;
+            if (typeof g === 'object' && (g.grupAdi || g.ogrenciler || g.tierKey || g.seviye || g.istasyonTipi)) {
+                const ogrs = Array.isArray(g.ogrenciler) ? g.ogrenciler : (Array.isArray(g.members) ? g.members : (Array.isArray(g.uyeler) ? g.uyeler : []));
+                return {
+                    ...g,
+                    id: g.id || ('adv_grp_' + idx),
+                    ogrenciler: ogrs,
+                    members: ogrs,
+                    gorevler: Array.isArray(g.gorevler) ? g.gorevler : []
+                };
+            }
+            if (Array.isArray(g)) {
+                const first = g[0] || {};
+                return {
+                    id: 'adv_grp_' + Date.now() + '_' + idx,
+                    sinif: first.sinif || 'Genel',
+                    grupAdi: `🚀 İleri Çalışma Grubu ${idx + 1}`,
+                    seviye: 'Temel Kavrama Grubu',
+                    tierKey: 'temel',
+                    odakKonu: 'Müfredat kazanımlarının pekiştirilmesi',
+                    istasyonTipi: 'Problem Çözüm İstasyonu',
+                    bloomSeviyesi: 'Uygulama & Çözümleme',
+                    ogrenciler: g.map(o => ({
+                        id: o.id || o.no || '',
+                        no: o.no || '',
+                        adSoyad: o.adSoyad || o.name || 'Öğrenci',
+                        sinif: o.sinif || first.sinif || '',
+                        score: Number(o._skor || o.score || 75),
+                        vak: o.vak || 'Görsel'
+                    })),
+                    gorevler: [
+                        { id: 't1_' + idx, baslik: 'İstasyon Giriş Analizi', durum: 'tamamlandi' },
+                        { id: 't2_' + idx, baslik: 'ZPD Derinleşme Etkinliği', durum: 'bekliyor' }
+                    ]
+                };
+            }
+            if (g && Array.isArray(g.members)) {
+                return {
+                    ...g,
+                    ogrenciler: g.members,
+                    gorevler: Array.isArray(g.gorevler) ? g.gorevler : []
+                };
+            }
+            return null;
+        }).filter(Boolean);
+
+        if (typeof advancedGroupData !== 'undefined') advancedGroupData = advList;
+        window.advancedGroupData = advList;
+        window.regularGroupsData = advList;
+        _lastSavedRefs.advanced_groups = JSON.parse(JSON.stringify(val));
+        if (!isUIActive()) {
+            if (typeof renderIleriGruplarModule === 'function') {
+                renderIleriGruplarModule(advList);
+            } else if (typeof ileriGrupRenderExisting === 'function') {
+                ileriGrupRenderExisting();
+            }
+        }
     });
 
     const regGroupsRef = db.ref(`app_data/${uid}/regular_groups`);
@@ -1297,6 +1569,43 @@ function attachListeners(uid) {
             renderKoclukModule();
         }
     });
+
+    // 12. Sınıf YKS Koçluk Dinleyicisi
+    const yksKoclukRef = db.ref(`app_data/${uid}/yks_kocluk`);
+    _activeDbListeners.push(yksKoclukRef);
+    yksKoclukRef.on('value', snap => {
+        const val = snap.val();
+        if (val) {
+            let entries = Object.entries(val);
+            let normalizedList = [];
+            let normalizedRefs = {};
+            entries.forEach(([fbKey, item]) => {
+                if (item) {
+                    const kocId = item.id ? String(item.id) : ('yks_' + fbKey);
+                    const safeKocId = encodeFirebaseKey(fbKey).replace(/[\/\.\#\$\/\[\]]/g, '_');
+                    item.id = kocId;
+                    item.firebaseKey = safeKocId;
+                    normalizedList.push(item);
+                    normalizedRefs[safeKocId] = item;
+                }
+            });
+            yksKoclukData = normalizedList;
+            window.yksKoclukData = normalizedList;
+            _lastSavedRefs.yksKocluk = JSON.parse(JSON.stringify(normalizedRefs));
+        } else {
+            if (initialLoadComplete) {
+                if (!window.yksKoclukData || window.yksKoclukData.length === 0) {
+                    const emptyYks = [];
+                    yksKoclukData = emptyYks;
+                    window.yksKoclukData = emptyYks;
+                    _lastSavedRefs.yksKocluk = {};
+                }
+            }
+        }
+        if (!isUIActive() && initialLoadComplete && typeof renderYksKoclukModule === 'function') {
+            renderYksKoclukModule();
+        }
+    });
 }
 
 function fullUIRender() {
@@ -1306,15 +1615,19 @@ function fullUIRender() {
     if (typeof updateChecklistClassContainer === 'function') updateChecklistClassContainer();
     if (typeof renderChecklistList === 'function') renderChecklistList();
     if (typeof renderKoclukModule === 'function') renderKoclukModule();
+    if (typeof renderYksKoclukModule === 'function') renderYksKoclukModule();
     renderExams();
     updateClassDropdown();
     if (typeof ileriSinifDoldur === 'function') ileriSinifDoldur();
+    if (typeof ileriGrupRenderExisting === 'function') ileriGrupRenderExisting();
     const selectedClass = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
     if (selectedClass) {
         loadClassGroups(selectedClass);
         if (typeof updateStudentPickers === 'function') updateStudentPickers();
     }
     if (typeof pgFillSinifDropdowns === 'function') pgFillSinifDropdowns();
+    if (typeof pgRenderList === 'function') pgRenderList();
+    if (typeof pgUpdateTypeCounts === 'function') pgUpdateTypeCounts();
     if (window.SoruTakipUI) {
         if (typeof window.SoruTakipUI.populateClassDropdown === 'function') {
             window.SoruTakipUI.populateClassDropdown();
@@ -1339,9 +1652,12 @@ async function loadLocalFallback() {
             window.studentData = studentData;
             if (typeof advancedGroupData !== 'undefined') {
                 advancedGroupData = p.advancedGroups || [];
-            } else {
-                window.advancedGroupData = p.advancedGroups || [];
             }
+            window.advancedGroupData = p.advancedGroups || [];
+            if (typeof projeGruplariData !== 'undefined') {
+                projeGruplariData = p.projects || p.projeGruplari || [];
+            }
+            window.projeGruplariData = p.projects || p.projeGruplari || [];
             groupData = p.groups || {};
             window.groupData = groupData;
             scheduleData = p.schedule || [];
@@ -1381,33 +1697,31 @@ function listenToStudentForms() {
         const formsArray = Object.keys(formsObj).map(key => ({ id: key, ...formsObj[key] })).reverse();
 
         function escapeHTML(str) {
-            return (str || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
+            return (str || '').toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
         }
 
+        const fragment = document.createDocumentFragment();
         formsArray.forEach(data => {
             const typeText = data.type === 'BEFORE' ? '<span style="color:var(--yellow); font-weight:bold;"><i class="fas fa-home"></i> Dersten Önce</span>' : '<span style="color:#8b5cf6; font-weight:bold;"><i class="fas fa-graduation-cap"></i> Dersten Sonra</span>';
 
             if (data.type === 'BEFORE' && data.formResponse) {
-                let vCount = 0; let aCount = 0; let kCount = 0;
+                let vakAnswers = [];
                 for (const [key, val] of Object.entries(data.formResponse)) {
                     if (key.includes("Öğrenme Stili")) {
                         const answer = val.toString().toLowerCase();
-                        if (answer.includes('(görsel)')) vCount++;
-                        else if (answer.includes('(işitsel)')) aCount++;
-                        else if (answer.includes('(kinestetik)')) kCount++;
+                        if (answer.includes('(görsel)') || answer.includes('görsel')) vakAnswers.push('V');
+                        else if (answer.includes('(işitsel)') || answer.includes('işitsel')) vakAnswers.push('A');
+                        else if (answer.includes('(kinestetik)') || answer.includes('kinestetik')) vakAnswers.push('K');
                     }
                 }
-                let vakSecimi = null;
-                if (vCount > aCount && vCount > kCount) vakSecimi = 'Görsel';
-                else if (aCount > vCount && aCount > kCount) vakSecimi = 'İşitsel';
-                else if (kCount > vCount && kCount > aCount) vakSecimi = 'Kinestetik';
-                else if (vCount + aCount + kCount > 0) {
-                    if (vCount >= aCount && vCount >= kCount) vakSecimi = 'Görsel';
-                    else if (aCount >= vCount && aCount >= kCount) vakSecimi = 'İşitsel';
-                    else vakSecimi = 'Kinestetik';
-                }
 
-                if (vakSecimi && data.ogrenciNo) {
+                if (vakAnswers.length > 0 && data.ogrenciNo) {
                     const sIdx = studentData.findIndex(s => {
                         const noMatch = s.no && s.no.toString() === data.ogrenciNo.toString();
                         const classMatch = s.sinif && (s.sinif === data.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(data.sinif)));
@@ -1419,10 +1733,24 @@ function listenToStudentForms() {
                         }
                         return true;
                     });
-                    if (sIdx !== -1 && studentData[sIdx].vak !== vakSecimi) {
-                        studentData[sIdx].vak = vakSecimi;
-                        saveData(); // Atomik güncelleme motorunu tetikler
-                        if(!isUIActive()) renderStudentTable();
+
+                    if (sIdx !== -1) {
+                        const gradeLevel = (window.VakEngine && window.VakEngine.parseGradeLevel) 
+                            ? window.VakEngine.parseGradeLevel(studentData[sIdx].sinif || data.sinif) 
+                            : 8;
+                        const assessment = (window.VakEngine && window.VakEngine.calculateVakScores) 
+                            ? window.VakEngine.calculateVakScores(vakAnswers, gradeLevel, studentData[sIdx])
+                            : null;
+
+                        const newVak = assessment ? assessment.vak_scores.dominant_key : 'Görsel';
+
+                        if (studentData[sIdx].vak !== newVak || !studentData[sIdx].vakDetails) {
+                            studentData[sIdx].vak = newVak;
+                            studentData[sIdx].ogrenmeStili = newVak;
+                            if (assessment) studentData[sIdx].vakDetails = assessment;
+                            saveData(); // Atomik güncelleme motorunu tetikler
+                            if (!isUIActive() && typeof renderStudentTable === 'function') renderStudentTable();
+                        }
                     }
                 }
             }
@@ -1459,22 +1787,23 @@ function listenToStudentForms() {
                 <div style="font-size: 13px;">${typeText}</div>
             </div>
             ${answersHTML}`;
-            listContainer.appendChild(div);
+            fragment.appendChild(div);
         });
+        listContainer.appendChild(fragment);
     });
 }
 
 function exportToJson() {
     const dataToSave = {
         students: studentData,
-        projects: typeof projeGruplariData !== 'undefined' ? projeGruplariData : [],
+        projects: window.projeGruplariData || window.projectGroupsData || (typeof projeGruplariData !== 'undefined' ? projeGruplariData : []),
         groups: typeof groupData === 'object' ? groupData : {},
         schedule: scheduleData,
         tracking: trackingData,
         checklists: typeof checklistData !== 'undefined' ? checklistData : (window.checklistData || []),
         kocluk: getKoclukSourceList(),
         exams: examData,
-        advancedGroups: typeof advancedGroupData !== 'undefined' ? advancedGroupData : [],
+        advancedGroups: window.advancedGroupData || window.regularGroupsData || (typeof advancedGroupData !== 'undefined' ? advancedGroupData : []),
         lastUpdate: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
@@ -1524,6 +1853,8 @@ function resetAllData() {
             window.checklistData = [];
             koclukData = [];
             window.koclukData = [];
+            yksKoclukData = [];
+            window.yksKoclukData = [];
             scheduleData = [];
             if (typeof projeGruplariData !== 'undefined') projeGruplariData = [];
             if (typeof advancedGroupData !== 'undefined') advancedGroupData = [];

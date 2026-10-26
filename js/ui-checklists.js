@@ -834,6 +834,35 @@
         const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
         const primaryPositiveKey = positiveKeys[0] || symbols[0]?.key || '+';
 
+        // Genel sınıf simge toplamları
+        const grandTotals = {};
+        if (item.evalType === 'check') {
+            symbols.forEach(sym => { grandTotals[sym.key] = 0; });
+            students.forEach(s => {
+                const sEval = item.evaluations?.[s.adSoyad] || {};
+                item.criteria.forEach(crit => {
+                    const v = sEval[crit.id];
+                    if (v !== undefined && v !== null && v !== '') {
+                        const vStr = String(v).trim();
+                        if (grandTotals[vStr] !== undefined) {
+                            grandTotals[vStr]++;
+                        } else {
+                            const matched = symbols.find(sym =>
+                                sym.key === vStr ||
+                                (sym.key === '✗' && (vStr === 'X' || vStr === 'x')) ||
+                                ((sym.key === 'X' || sym.key === 'x') && vStr === '✗') ||
+                                (sym.key === '✓' && vStr === '+') ||
+                                (sym.key === '+' && vStr === '✓')
+                            );
+                            if (matched && grandTotals[matched.key] !== undefined) {
+                                grandTotals[matched.key]++;
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
         const infoEl = document.getElementById('chk-modal-info');
         if (infoEl) {
             infoEl.innerHTML = `
@@ -842,6 +871,16 @@
                 <span><strong>Mevcut:</strong> ${students.length} Öğrenci</span>
                 <span><strong>Tarih:</strong> ${item.date || '-'}</span>
                 <span><strong>Format:</strong> ${item.evalType === 'score' ? 'Puanlı (0-100)' : 'Kontrol (' + symbols.map(s => escapeHtml(s.key)).join(' / ') + ')'}</span>
+                ${item.evalType === 'check' ? `
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:var(--input-bg); padding:2px 8px; border-radius:6px; border:1px solid var(--border);">
+                        <strong>Sınıf Toplamı:</strong>
+                        ${symbols.map(sym => `
+                            <span style="display:inline-flex; align-items:center; gap:2px; font-weight:800; color:${sym.color || 'var(--text-main)'}; font-size:11px;" title="${escapeAttr(sym.label || sym.key)} Toplamı">
+                                <span>${escapeHtml(sym.key)}</span>:<span>${grandTotals[sym.key] || 0}</span>
+                            </span>
+                        `).join('<span style="opacity:0.3; margin:0 2px;">•</span>')}
+                    </span>
+                ` : ''}
             `;
         }
 
@@ -862,12 +901,70 @@
                     <th style="min-width:160px; cursor:pointer;" onclick="setChecklistEvalSort('name')" title="Ada göre sırala">
                         ÖĞRENCİ ADI SOYADI ${_chkSortMode === 'name' ? (_chkSortAsc ? '▲' : '▼') : '↕'}
                     </th>
-                    ${item.criteria.map((c, cIdx) => `
+                    ${item.criteria.map((c, cIdx) => {
+                        // Kriter sütunundaki simge sayılarını hesapla
+                        const colCounts = {};
+                        symbols.forEach(sym => { colCounts[sym.key] = 0; });
+                        let colScoreSum = 0;
+                        let colScoreCount = 0;
+
+                        students.forEach(s => {
+                            const val = item.evaluations?.[s.adSoyad]?.[c.id];
+                            if (val !== undefined && val !== null && val !== '') {
+                                if (item.evalType === 'score') {
+                                    colScoreSum += Number(val);
+                                    colScoreCount++;
+                                } else {
+                                    const valStr = String(val).trim();
+                                    if (colCounts[valStr] !== undefined) {
+                                        colCounts[valStr]++;
+                                    } else {
+                                        // Esnek karakter eşleştirme (X / ✗, + / ✓, vb.)
+                                        const matched = symbols.find(sym =>
+                                            sym.key === valStr ||
+                                            (sym.key === '✗' && (valStr === 'X' || valStr === 'x')) ||
+                                            ((sym.key === 'X' || sym.key === 'x') && valStr === '✗') ||
+                                            (sym.key === '✓' && valStr === '+') ||
+                                            (sym.key === '+' && valStr === '✓')
+                                        );
+                                        if (matched && colCounts[matched.key] !== undefined) {
+                                            colCounts[matched.key]++;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        const symbolStatsHtml = (item.evalType === 'check') ? `
+                            <div class="chk-col-stats-row" style="display:flex; align-items:center; justify-content:center; gap:3px; margin:4px 0 2px 0; flex-wrap:wrap;" title="Sütun Simge Toplamları">
+                                ${symbols.map(sym => {
+                                    const cnt = colCounts[sym.key] || 0;
+                                    const col = sym.color || 'var(--secondary)';
+                                    const isNonZero = cnt > 0;
+                                    return `
+                                        <span class="chk-col-stat-badge" 
+                                            onclick="event.stopPropagation(); if(confirm('${escapeJs(c.name)} sütunundaki tüm öğrencilere \"${escapeJs(sym.key)}\" simgesini uygulamak istiyor musunuz?')) batchSetColumnChecklist('${c.id}', '${escapeJs(sym.key)}');"
+                                            style="display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:800; padding:1px 4px; border-radius:5px; background:${col}${isNonZero ? '22' : '10'}; color:${col}; border:1px solid ${col}${isNonZero ? '66' : '26'}; opacity:${isNonZero ? '1' : '0.65'}; cursor:pointer; transition:all 0.15s ease;" 
+                                            title="${escapeAttr(sym.label || sym.key)} Toplamı: ${cnt} öğrenci (Tüm sütuna uygulamak için tıklayın)">
+                                            <span style="font-size:11px; line-height:1; font-weight:900;">${escapeHtml(sym.key)}</span>
+                                            <span style="font-size:9.5px; line-height:1; background:${col}; color:#ffffff; padding:1px 3px; border-radius:6px; margin-left:1px; min-width:10px; text-align:center; font-weight:800;">${cnt}</span>
+                                        </span>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : (item.evalType === 'score' && colScoreCount > 0 ? `
+                            <div style="font-size:10.5px; color:var(--text-muted); margin:3px 0 1px 0;">
+                                Ort: <strong style="color:var(--secondary); font-size:11px;">${(colScoreSum / colScoreCount).toFixed(1)}</strong> <span style="font-size:9.5px; opacity:0.8;">(${colScoreCount}/${students.length})</span>
+                            </div>
+                        ` : '');
+
+                        return `
                         <th style="text-align:center; min-width:115px; position:relative; padding:8px 6px;" class="chk-criterion-header" title="${escapeHtml(c.name)} - Tıklayarak adını düzenleyebilirsiniz">
                             <div style="display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;" onclick="promptRenameChecklistCriterion('${c.id}')" title="Kriter adını hızlıca değiştirmek için tıklayın">
                                 <span style="font-size:12px; font-weight:700; border-bottom:1px dashed currentColor; padding-bottom:1px;">${escapeHtml(c.name)}</span>
                                 <i class="fas fa-pen" style="font-size:10px; color:var(--secondary); opacity:0.8;"></i>
                             </div>
+                            ${symbolStatsHtml}
                             <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-top:3px;">
                                 ${item.evalType === 'score' ? `<span style="font-size:10px; opacity:0.85; font-weight:normal;">(Maks: ${c.maxScore} P)</span>` : ''}
                                 ${item.evalType === 'check' ? `
@@ -876,7 +973,8 @@
                                 ` : ''}
                             </div>
                         </th>
-                    `).join('')}
+                        `;
+                    }).join('')}
                     <th style="text-align:center; width:45px; vertical-align:middle; background:rgba(59,130,246,0.04);">
                         <button type="button" class="btn" onclick="quickAddChecklistCriterion()" style="padding:4px 8px; font-size:11px; background:rgba(59,130,246,0.15); color:var(--secondary); border:1px dashed var(--secondary); border-radius:6px; font-weight:700;" title="Yeni Kriter Sütunu Ekle">
                             <i class="fas fa-plus"></i>
@@ -920,7 +1018,7 @@
                                 value="${score}" 
                                 placeholder="0-${crit.maxScore}"
                                 style="width:58px; text-align:center; font-weight:700; font-size:12px; padding:4px; border:1px solid var(--border); border-radius:6px; background:var(--input-bg); color:var(--text-main);"
-                                onchange="updateChecklistScoreCell('${escapeAttr(s.adSoyad)}', '${crit.id}', this.value, ${crit.maxScore})">
+                                onchange="updateChecklistScoreCell('${escapeJs(s.adSoyad)}', '${escapeJs(crit.id)}', this.value, ${crit.maxScore})">
                         </td>
                     `;
                 } else {
@@ -934,7 +1032,7 @@
                         const activeStyle = isActive
                             ? `background:${sym.color || 'var(--secondary)'} !important; color:#ffffff !important; border-color:${sym.color || 'var(--secondary)'} !important; box-shadow:0 2px 6px ${(sym.color || '#3b82f6')}66;`
                             : '';
-                        return `<button type="button" class="btn-chk-status ${isActive ? 'active-custom' : ''}" style="${activeStyle}" onclick="updateChecklistStatusCell('${escapeAttr(s.adSoyad)}', '${crit.id}', '${escapeAttr(sym.key)}')" title="${escapeAttr(sym.label || sym.key)} (${escapeAttr(sym.key)})">${escapeHtml(sym.key)}</button>`;
+                        return `<button type="button" class="btn-chk-status ${isActive ? 'active-custom' : ''}" style="${activeStyle}" onclick="updateChecklistStatusCell('${escapeJs(s.adSoyad)}', '${escapeJs(crit.id)}', '${escapeJs(sym.key)}')" title="${escapeAttr(sym.label || sym.key)} (${escapeAttr(sym.key)})">${escapeHtml(sym.key)}</button>`;
                     }).join('');
 
                     criteriaCellsHtml += `
@@ -970,12 +1068,12 @@
                     <input type="text" value="${escapeAttr(studentEval.note || '')}" 
                         placeholder="Öğretmen notu..."
                         style="width:100%; font-size:11.5px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:var(--input-bg); color:var(--text-main);"
-                        onchange="updateChecklistNote('${escapeAttr(s.adSoyad)}', this.value)">
+                        onchange="updateChecklistNote('${escapeJs(s.adSoyad)}', this.value)">
                 </td>
                 <td style="text-align:center;">
                     <div style="display:inline-flex; gap:4px;">
-                        <button type="button" class="action-btn" style="color:#25D366; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeAttr(s.adSoyad)}', 'wa')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                        <button type="button" class="action-btn" style="color:#00B2FF; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeAttr(s.adSoyad)}', 'bip')" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                        <button type="button" class="action-btn" style="color:#25D366; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeJs(s.adSoyad)}', 'wa')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button type="button" class="action-btn" style="color:#00B2FF; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeJs(s.adSoyad)}', 'bip')" title="BiP"><i class="fas fa-comment-dots"></i></button>
                     </div>
                 </td>
             `;
@@ -1917,7 +2015,22 @@
     }
     function escapeAttr(str) {
         if (!str) return '';
-        return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+    function escapeJs(str) {
+        if (typeof window.escapeJs === 'function') return window.escapeJs(str);
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/</g, '\\x3C')
+            .replace(/>/g, '\\x3E');
     }
 
     function distributeChecklistCriteriaEqually() {
