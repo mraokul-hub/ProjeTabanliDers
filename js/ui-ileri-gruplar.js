@@ -478,6 +478,11 @@
         const container = document.getElementById('ileri-result-panel');
         if (!container) return;
 
+        if (!groups || groups.length === 0) {
+            renderExistingData();
+            return;
+        }
+
         const ozetPanel = document.getElementById('ileri-ozet-panel');
         const ozetContent = document.getElementById('ileri-ozet-content');
         if (ozetPanel && ozetContent) {
@@ -506,7 +511,7 @@
                     <i class="fas fa-satellite-dish"></i>
                     <span>Farklılaştırılmış İstasyon Takımları (${groups.length} Grup)</span>
                 </h4>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                     <button class="btn" style="font-size:12px;padding:7px 13px;background:#8b5cf6;" onclick="window.ileriGrupProjeAktar()" title="İleri Grupları 11. Proje Grupları sekmesine aktarır">
                         <i class="fas fa-project-diagram me-1"></i>Proje Gruplarına Aktar
                     </button>
@@ -521,6 +526,32 @@
                     </button>
                     <button class="btn" style="font-size:12px;padding:7px 13px;background:#00B2FF;" onclick="window.ileriGrupBip()">
                         <i class="fas fa-comment-dots me-1"></i>BiP Paylaş
+                    </button>
+                    <!-- Liste Halinde Yönet & Sil Butonu -->
+                    <button class="btn" style="font-size:12px;padding:7px 13px;background:#0284c7;color:#fff;" onclick="window.ileriGrupListeYonetModalAc()" title="İstasyon gruplarını liste tablosunda inceleyin, tek tek veya seçerek silin">
+                        <i class="fas fa-list-check me-1"></i>Grupları Liste Olarak Yönet &amp; Sil
+                    </button>
+                    <!-- Tüm Grupları Sil Butonu -->
+                    <button class="btn" style="font-size:12px;padding:7px 13px;background:#ef4444;color:#fff;" onclick="window.ileriGrupTumunuSil()" title="Tüm istasyon gruplarını kalıcı olarak temizler">
+                        <i class="fas fa-trash-alt me-1"></i>Tüm Grupları Sil
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toplu İşlem & Seçim Çubuğu -->
+            <div id="ileri-toplu-islem-bar" style="display:flex;justify-content:space-between;align-items:center;background:var(--input-bg);padding:8px 14px;border-radius:10px;border:1px solid var(--border);margin-bottom:15px;flex-wrap:wrap;gap:10px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px;font-weight:600;margin:0;user-select:none;">
+                        <input type="checkbox" id="ileri-tumunu-sec-cb" onchange="window.ileriGrupTumunuSecToggle(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--secondary);">
+                        <span>Tümünü Seç</span>
+                    </label>
+                    <span id="ileri-secili-bilgi" style="font-size:11.5px;color:var(--text-muted);display:none;">
+                        (<strong>0</strong> / ${groups.length} grup seçildi)
+                    </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button class="btn" id="btn-ileri-secilenleri-sil" onclick="window.ileriGrupSecilenleriSil()" style="display:none;font-size:12px;padding:6px 14px;background:#ef4444;color:#fff;border-radius:6px;border:none;cursor:pointer;font-weight:700;box-shadow:0 2px 6px rgba(239,68,68,0.25);">
+                        <i class="fas fa-trash-alt me-1"></i>Seçilenleri Sil (<span id="btn-secili-sayi">0</span>)
                     </button>
                 </div>
             </div>
@@ -552,15 +583,18 @@
             const gorevler = g.gorevler || [];
 
             html += `
-                <div class="card" style="border-top:4px solid ${tier.color};padding:16px;border-radius:12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow);background:var(--card-bg);">
+                <div class="card" style="border-top:4px solid ${tier.color};padding:16px;border-radius:12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow);background:var(--card-bg);position:relative;">
                     <div>
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-                            <div>
-                                <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:${tier.bg};color:${tier.color};">
-                                    ${esc(g.seviye || tier.title)}
-                                </span>
-                                <h4 style="margin:6px 0 2px;font-size:15px;color:var(--text-main);">${esc(g.grupAdi)}</h4>
-                                <div style="font-size:11px;color:var(--text-muted);"><i class="fas fa-school me-1"></i>${esc(g.sinif)} Sınıfı</div>
+                            <div style="display:flex;align-items:flex-start;gap:10px;">
+                                <input type="checkbox" class="adv-group-cb" value="${esc(g.id)}" onchange="window.ileriGrupSecimGuncelle()" style="margin-top:4px;accent-color:var(--secondary);width:17px;height:17px;cursor:pointer;" title="Bu grubu seç">
+                                <div>
+                                    <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:${tier.bg};color:${tier.color};">
+                                        ${esc(g.seviye || tier.title)}
+                                    </span>
+                                    <h4 style="margin:6px 0 2px;font-size:15px;color:var(--text-main);">${esc(g.grupAdi)}</h4>
+                                    <div style="font-size:11px;color:var(--text-muted);"><i class="fas fa-school me-1"></i>${esc(g.sinif)} Sınıfı</div>
+                                </div>
                             </div>
                             <button class="btn btn-clear" onclick="window.ileriGrupSil('${esc(g.id)}')" title="Grubu Sil" style="color:var(--red);padding:4px 8px;">
                                 <i class="fas fa-trash-alt"></i>
@@ -696,13 +730,325 @@
         if (typeof window.saveData === 'function') window.saveData(true);
     };
 
+    // ── Tekil Grup Silme ──
     window.ileriGrupSil = function (groupId) {
-        if (!confirm('Bu istasyon grubunu silmek istediğinize emin misiniz?')) return;
         let groups = getAdvData();
+        const target = groups.find(g => g && g.id === groupId);
+        const name = target ? target.grupAdi : 'Bu istasyon grubu';
+        if (!confirm(`"${name}" takımını silmek istediğinize emin misiniz?`)) return;
+
         groups = groups.filter(g => g && g.id !== groupId);
         setAdvData(groups);
         renderIleriGruplarModule(groups);
         if (typeof window.saveData === 'function') window.saveData(true);
+
+        if (typeof window.ileriGrupListeRenderTablo === 'function') {
+            window.ileriGrupListeRenderTablo();
+        }
+    };
+
+    // ── Tüm Grupları Toplu Silme ──
+    window.ileriGrupTumunuSil = function () {
+        const groups = getAdvData();
+        if (!groups || groups.length === 0) {
+            alert('Silinecek aktif istasyon takımı bulunamadı.');
+            return;
+        }
+
+        const count = groups.length;
+        if (!confirm(`⚠️ DİKKAT!\n\nOluşturulmuş olan tüm Farklılaştırılmış İstasyon Takımlarını (${count} Grup) silmek istediğinize emin misiniz?\n\nBu işlem kalıcıdır ve tüm istasyon kayıtları temizlenecektir.`)) {
+            return;
+        }
+
+        setAdvData([]);
+        renderExistingData();
+        if (typeof window.saveData === 'function') window.saveData(true);
+
+        if (typeof window.ileriGrupListeModalKapat === 'function') {
+            window.ileriGrupListeModalKapat();
+        }
+
+        alert(`Tüm istasyon takımları (${count} grup) başarıyla silindi.`);
+    };
+
+    // ── Seçilenleri Toplu Silme ──
+    window.ileriGrupSecilenleriSil = function () {
+        const checkedBoxes = Array.from(document.querySelectorAll('.adv-group-cb:checked, .adv-modal-group-cb:checked'));
+        const uniqueIds = [...new Set(checkedBoxes.map(cb => cb.value))];
+
+        if (uniqueIds.length === 0) {
+            alert('Lütfen silmek istediğiniz en az bir istasyon takımı seçin.');
+            return;
+        }
+
+        if (!confirm(`Seçilen ${uniqueIds.length} adet istasyon takımını silmek istediğinize emin misiniz?`)) {
+            return;
+        }
+
+        let groups = getAdvData();
+        groups = groups.filter(g => g && !uniqueIds.includes(g.id));
+        setAdvData(groups);
+        renderIleriGruplarModule(groups);
+        if (typeof window.saveData === 'function') window.saveData(true);
+
+        if (typeof window.ileriGrupListeRenderTablo === 'function') {
+            window.ileriGrupListeRenderTablo();
+        }
+
+        alert(`${uniqueIds.length} adet istasyon takımı silindi.`);
+    };
+
+    // ── Checkbox Seçim Durumunu Güncelleme (Grid Görünümü) ──
+    window.ileriGrupSecimGuncelle = function () {
+        const allBoxes = Array.from(document.querySelectorAll('.adv-group-cb'));
+        const checkedBoxes = allBoxes.filter(cb => cb.checked);
+        const count = checkedBoxes.length;
+
+        const infoSpan = document.getElementById('ileri-secili-bilgi');
+        const silBtn = document.getElementById('btn-ileri-secilenleri-sil');
+        const countSpan = document.getElementById('btn-secili-sayi');
+        const tumunuSecCb = document.getElementById('ileri-tumunu-sec-cb');
+
+        if (infoSpan) {
+            if (count > 0) {
+                infoSpan.style.display = 'inline';
+                infoSpan.innerHTML = `(<strong>${count}</strong> / ${allBoxes.length} grup seçildi)`;
+            } else {
+                infoSpan.style.display = 'none';
+            }
+        }
+
+        if (silBtn && countSpan) {
+            countSpan.textContent = count;
+            silBtn.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+
+        if (tumunuSecCb) {
+            tumunuSecCb.checked = (allBoxes.length > 0 && count === allBoxes.length);
+            tumunuSecCb.indeterminate = (count > 0 && count < allBoxes.length);
+        }
+    };
+
+    // ── Tümünü Seç / Seçimi Kaldır (Grid Görünümü) ──
+    window.ileriGrupTumunuSecToggle = function (isChecked) {
+        document.querySelectorAll('.adv-group-cb').forEach(cb => {
+            cb.checked = !!isChecked;
+        });
+        window.ileriGrupSecimGuncelle();
+    };
+
+    // ── Liste Halinde Yönetim & Silme Modalı ──
+    window.ileriGrupListeYonetModalAc = function () {
+        const groups = getAdvData();
+        if (!groups || groups.length === 0) {
+            alert('Henüz oluşturulmuş bir istasyon takımı bulunmuyor.');
+            return;
+        }
+
+        let modal = document.getElementById('ileri-grup-liste-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'ileri-grup-liste-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;';
+            modal.innerHTML = `
+                <div style="background:var(--card-bg, #ffffff);border-radius:16px;border:1px solid var(--border, #e2e8f0);width:100%;max-width:960px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);overflow:hidden;">
+                    <!-- Başlık Çubuğu -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--border, #e2e8f0);background:var(--input-bg, #f8fafc);">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="background:linear-gradient(135deg, #0284c7, #0369a1);color:white;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(2,132,199,0.3);flex-shrink:0;">
+                                <i class="fas fa-list-check"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">
+                                    Farklılaştırılmış İstasyon Takımları — Liste Yönetimi &amp; Silme
+                                </h3>
+                                <p style="margin:2px 0 0 0;font-size:12px;color:var(--text-muted);">
+                                    Grupları liste halinde görüntüleyin, tek tek veya seçerek toplu silme yapın.
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="window.ileriGrupListeModalKapat()" title="Kapat (ESC)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:24px;line-height:1;padding:4px 8px;border-radius:6px;">
+                            &times;
+                        </button>
+                    </div>
+
+                    <!-- Filtre ve Aksiyon Araç Çubuğu -->
+                    <div style="padding:14px 22px;border-bottom:1px solid var(--border, #e2e8f0);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:var(--card-bg);">
+                        <div style="flex:1;min-width:240px;position:relative;">
+                            <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+                            <input type="text" id="ileri-modal-search" placeholder="Grup adı, sınıf veya öğrenci adına göre ara..." oninput="window.ileriGrupListeFiltrele(this.value)" style="width:100%;padding:8px 12px 8px 34px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text-main);font-size:12.5px;box-sizing:border-box;outline:none;">
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <button type="button" class="btn" id="btn-modal-secilenleri-sil" onclick="window.ileriGrupSecilenleriSil()" style="font-size:12px;padding:7px 14px;background:#ef4444;color:#fff;border-radius:8px;font-weight:700;display:none;">
+                                <i class="fas fa-trash-alt me-1"></i>Seçilenleri Sil (<span id="modal-secili-sayi">0</span>)
+                            </button>
+                            <button type="button" class="btn" onclick="window.ileriGrupTumunuSil()" style="font-size:12px;padding:7px 14px;background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-weight:700;" title="Tüm istasyon gruplarını sil">
+                                <i class="fas fa-bomb me-1"></i>Tümünü Temizle
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Liste Tablo Alanı -->
+                    <div style="padding:0;overflow-y:auto;flex:1;max-height:calc(90vh - 190px);">
+                        <div id="ileri-modal-tablo-container"></div>
+                    </div>
+
+                    <!-- Alt Bilgi ve Kapat Çubuğu -->
+                    <div style="padding:12px 22px;border-top:1px solid var(--border, #e2e8f0);background:var(--input-bg);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                        <span id="ileri-modal-alt-bilgi" style="font-size:12px;color:var(--text-muted);"></span>
+                        <button type="button" class="btn btn-clear" onclick="window.ileriGrupListeModalKapat()" style="padding:7px 18px;font-size:12px;">
+                            Kapat
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) window.ileriGrupListeModalKapat();
+            });
+        }
+
+        modal.style.display = 'flex';
+        const searchInput = document.getElementById('ileri-modal-search');
+        if (searchInput) searchInput.value = '';
+        window.ileriGrupListeRenderTablo();
+    };
+
+    window.ileriGrupListeModalKapat = function () {
+        const modal = document.getElementById('ileri-grup-liste-modal');
+        if (modal) modal.style.display = 'none';
+        window.ileriGrupSecimGuncelle();
+    };
+
+    window.ileriGrupListeFiltrele = function (term) {
+        window.ileriGrupListeRenderTablo(term);
+    };
+
+    window.ileriGrupListeRenderTablo = function (filterTerm) {
+        const container = document.getElementById('ileri-modal-tablo-container');
+        if (!container) return;
+
+        let groups = getAdvData();
+        if (!groups || groups.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+                    <i class="fas fa-info-circle fa-2x mb-2" style="opacity:0.5;"></i>
+                    <p style="margin:0;font-weight:600;">Aktif istasyon grubu bulunmuyor.</p>
+                </div>`;
+            const altBilgi = document.getElementById('ileri-modal-alt-bilgi');
+            if (altBilgi) altBilgi.textContent = 'Toplam 0 grup';
+            return;
+        }
+
+        const term = (filterTerm || '').trim().toLowerCase();
+        let filtered = groups;
+        if (term) {
+            filtered = groups.filter(g => {
+                const gName = (g.grupAdi || '').toLowerCase();
+                const gSinif = (g.sinif || '').toLowerCase();
+                const gSeviye = (g.seviye || '').toLowerCase();
+                const ogrNames = (g.ogrenciler || []).map(o => (typeof o === 'string' ? o : (o.adSoyad || '')).toLowerCase()).join(' ');
+                return gName.includes(term) || gSinif.includes(term) || gSeviye.includes(term) || ogrNames.includes(term);
+            });
+        }
+
+        const altBilgi = document.getElementById('ileri-modal-alt-bilgi');
+        if (altBilgi) {
+            altBilgi.innerHTML = `Toplam <strong>${groups.length}</strong> grup listeleniyor ${term ? `(Filtre: ${filtered.length} sonuç)` : ''}`;
+        }
+
+        let tableHtml = `
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                <thead>
+                    <tr style="background:var(--input-bg);border-bottom:1px solid var(--border);color:var(--text-muted);font-size:11.5px;">
+                        <th style="padding:10px 14px;width:36px;text-align:center;">
+                            <input type="checkbox" id="modal-tumunu-sec-cb" onchange="window.ileriGrupModalTumunuSecToggle(this.checked)" style="accent-color:var(--secondary);width:16px;height:16px;cursor:pointer;">
+                        </th>
+                        <th style="padding:10px 14px;">Grup &amp; Seviye</th>
+                        <th style="padding:10px 14px;">Sınıf</th>
+                        <th style="padding:10px 14px;">İstasyon / Odak</th>
+                        <th style="padding:10px 14px;">Takım Üyeleri</th>
+                        <th style="padding:10px 14px;text-align:center;width:80px;">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        filtered.forEach((g) => {
+            const tier = TOMLINSON_TIERS[g.tierKey] || TOMLINSON_TIERS.temel;
+            const ogrList = g.ogrenciler || [];
+
+            const ogrTags = ogrList.map(rawOgr => {
+                const name = typeof rawOgr === 'string' ? rawOgr : (rawOgr.adSoyad || 'Öğrenci');
+                const vak = typeof rawOgr === 'object' ? (rawOgr.vak || 'Görsel') : 'Görsel';
+                const score = typeof rawOgr === 'object' ? (rawOgr.score || 75) : 75;
+                const vakIco = vak === 'İşitsel' ? '🎧' : (vak === 'Kinestetik' ? '✋' : '👁️');
+                return `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;padding:2px 6px;margin:2px;font-size:11px;">
+                    ${vakIco} <strong>${esc(name)}</strong> <span style="color:${tier.color};font-weight:700;">(${score}p)</span>
+                </span>`;
+            }).join('');
+
+            tableHtml += `
+                <tr style="border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:10px 14px;text-align:center;vertical-align:middle;">
+                        <input type="checkbox" class="adv-modal-group-cb" value="${esc(g.id)}" onchange="window.ileriGrupModalSecimGuncelle()" style="accent-color:var(--secondary);width:16px;height:16px;cursor:pointer;">
+                    </td>
+                    <td style="padding:10px 14px;vertical-align:middle;">
+                        <div style="font-weight:700;color:var(--text-main);font-size:13px;">${esc(g.grupAdi)}</div>
+                        <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:${tier.bg};color:${tier.color};display:inline-block;margin-top:2px;">
+                            ${esc(g.seviye || tier.title)}
+                        </span>
+                    </td>
+                    <td style="padding:10px 14px;vertical-align:middle;color:var(--text-muted);font-weight:600;">
+                        ${esc(g.sinif)}
+                    </td>
+                    <td style="padding:10px 14px;vertical-align:middle;max-width:220px;">
+                        <div style="font-weight:600;font-size:11.5px;color:var(--text-main);">${esc(g.istasyonTipi || tier.istasyon)}</div>
+                        <div style="font-size:10.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(g.odakKonu || tier.hedef)}</div>
+                    </td>
+                    <td style="padding:10px 14px;vertical-align:middle;">
+                        <div style="display:flex;flex-wrap:wrap;max-width:320px;">
+                            ${ogrTags || '<span style="color:var(--text-muted);font-size:11px;">Öğrenci yok</span>'}
+                        </div>
+                    </td>
+                    <td style="padding:10px 14px;text-align:center;vertical-align:middle;">
+                        <button type="button" class="btn btn-clear" onclick="window.ileriGrupSil('${esc(g.id)}')" title="Bu grubu sil" style="color:var(--red);padding:6px 10px;border-radius:6px;font-size:12px;background:rgba(239,68,68,0.08);">
+                            <i class="fas fa-trash-alt me-1"></i>Sil
+                        </button>
+                    </td>
+                </tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+        container.innerHTML = tableHtml;
+        window.ileriGrupModalSecimGuncelle();
+    };
+
+    window.ileriGrupModalTumunuSecToggle = function (isChecked) {
+        document.querySelectorAll('.adv-modal-group-cb').forEach(cb => {
+            cb.checked = !!isChecked;
+        });
+        window.ileriGrupModalSecimGuncelle();
+    };
+
+    window.ileriGrupModalSecimGuncelle = function () {
+        const allBoxes = Array.from(document.querySelectorAll('.adv-modal-group-cb'));
+        const checkedBoxes = allBoxes.filter(cb => cb.checked);
+        const count = checkedBoxes.length;
+
+        const silBtn = document.getElementById('btn-modal-secilenleri-sil');
+        const countSpan = document.getElementById('modal-secili-sayi');
+        const tumunuSecCb = document.getElementById('modal-tumunu-sec-cb');
+
+        if (silBtn && countSpan) {
+            countSpan.textContent = count;
+            silBtn.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+
+        if (tumunuSecCb) {
+            tumunuSecCb.checked = (allBoxes.length > 0 && count === allBoxes.length);
+            tumunuSecCb.indeterminate = (count > 0 && count < allBoxes.length);
+        }
     };
 
     // ── Rotasyon Zamanlayıcı Mantığı ──
@@ -1148,6 +1494,25 @@
     window.ileriSinifDoldur = populateClassDropdown;
     window.ileriGrupRenderExisting = renderExistingData;
     window.ileriGrupAnalizEt = ileriGrupAnalizEt;
+    window.ileriGrupSil = window.ileriGrupSil;
+    window.ileriGrupTumunuSil = window.ileriGrupTumunuSil;
+    window.ileriGrupSecilenleriSil = window.ileriGrupSecilenleriSil;
+    window.ileriGrupSecimGuncelle = window.ileriGrupSecimGuncelle;
+    window.ileriGrupTumunuSecToggle = window.ileriGrupTumunuSecToggle;
+    window.ileriGrupListeYonetModalAc = window.ileriGrupListeYonetModalAc;
+    window.ileriGrupListeModalKapat = window.ileriGrupListeModalKapat;
+    window.ileriGrupListeFiltrele = window.ileriGrupListeFiltrele;
+    window.ileriGrupListeRenderTablo = window.ileriGrupListeRenderTablo;
+
+    // ESC Tuşu ile Modal Kapatma
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('ileri-grup-liste-modal');
+            if (modal && modal.style.display === 'flex') {
+                window.ileriGrupListeModalKapat();
+            }
+        }
+    });
 
     // Sayfa ve Sekme Açılışında Otomatik Başlat
     if (document.readyState === 'loading') {
