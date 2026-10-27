@@ -1626,11 +1626,37 @@
             direction: 'asc'
         };
 
+        let activeExamSubjectFilter = 'ALL';
+        window.activeExamSubjectFilter = activeExamSubjectFilter;
+
+        function setExamSubjectFilter(subjectKey) {
+            activeExamSubjectFilter = subjectKey || 'ALL';
+            window.activeExamSubjectFilter = activeExamSubjectFilter;
+            // Eğer ders netine göre filtre seçildiyse başlangıçta o dersin netine göre azalan sırala
+            if (activeExamSubjectFilter !== 'ALL') {
+                currentExamSort.field = 'subjectNet';
+                currentExamSort.direction = 'desc';
+            } else {
+                currentExamSort.field = 'sinif';
+                currentExamSort.direction = 'asc';
+            }
+            openExamEvaluation(activeExamId);
+        }
+        window.setExamSubjectFilter = setExamSubjectFilter;
+
         function getExamSortIcon(field) {
             if (currentExamSort.field === field) {
+                if (field === 'ogrenci' || field === 'adSoyad') {
+                    return currentExamSort.direction === 'asc'
+                        ? `<i class="fas fa-sort-alpha-down ms-1" style="color:var(--secondary); font-size:12px;" title="A-Z Sıralı"></i>`
+                        : `<i class="fas fa-sort-alpha-up-alt ms-1" style="color:var(--secondary); font-size:12px;" title="Z-A Sıralı"></i>`;
+                }
                 return currentExamSort.direction === 'asc'
                     ? `<i class="fas fa-sort-up ms-1" style="color:var(--secondary); font-size:12px;"></i>`
                     : `<i class="fas fa-sort-down ms-1" style="color:var(--secondary); font-size:12px;"></i>`;
+            }
+            if (field === 'ogrenci' || field === 'adSoyad') {
+                return `<i class="fas fa-sort-alpha-down ms-1" style="opacity:0.3; font-size:10px;" title="A-Z sıralamak için tıklayın"></i>`;
             }
             return `<i class="fas fa-sort ms-1" style="opacity:0.3; font-size:10px;"></i>`;
         }
@@ -1640,7 +1666,8 @@
                 currentExamSort.direction = (currentExamSort.direction === 'asc' ? 'desc' : 'asc');
             } else {
                 currentExamSort.field = field;
-                currentExamSort.direction = (['Turkce', 'Matematik', 'Sosyal', 'Fen', 'DinKulturu', 'Ingilizce', 'totalNet'].includes(field) ? 'desc' : 'asc');
+                // Ders netleri, toplam net ve derse özel netler için varsayılan yön 'desc' (büyükten küçüğe), isim ve sıra için 'asc'
+                currentExamSort.direction = (['Turkce', 'Matematik', 'Sosyal', 'Fen', 'DinKulturu', 'Ingilizce', 'totalNet', 'subjectNet'].includes(field) ? 'desc' : 'asc');
             }
             openExamEvaluation(activeExamId);
         }
@@ -1808,8 +1835,156 @@
             };
             const colL = exam.columnLabels;
 
+            // ── DERS BAZLI FİLTRELEME & İZOLASYON KONFİGÜRASYONU ──
+            const examSubjects = [
+                { key: 'ALL', label: 'Tüm Dersler', icon: 'fa-layer-group', color: 'var(--teal)' },
+                { key: 'Turkce', label: colL.Turkce || 'Türkçe', colKey: 'Turkce', icon: 'fa-book', color: '#ef4444' },
+                { key: 'Matematik', label: colL.Matematik || 'Matematik', colKey: 'Matematik', icon: 'fa-calculator', color: '#3b82f6' },
+                { key: 'Sosyal', label: colL.Sosyal || 'Sosyal / İnkılap', colKey: 'Sosyal', icon: 'fa-compass', color: '#f59e0b' },
+                { key: 'Fen', label: colL.Fen || 'Fen Bilimleri', colKey: 'Fen', icon: 'fa-atom', color: '#10b981' },
+                { key: 'DinKulturu', label: colL.DinKulturu || 'Din Kültürü', colKey: 'DinKulturu', icon: 'fa-mosque', color: '#8b5cf6' },
+                { key: 'Ingilizce', label: colL.Ingilizce || 'İngilizce', colKey: 'Ingilizce', icon: 'fa-globe', color: '#ec4899' }
+            ];
+            const isSingleSubject = (activeExamSubjectFilter !== 'ALL');
+            const activeSubConfig = examSubjects.find(s => s.key === activeExamSubjectFilter) || examSubjects[0];
+
+            // Seçili derse özel istatistiklerin ve derse özel derecelerin hesaplanması
+            let subjectStatsHtml = '';
+            if (isSingleSubject) {
+                const validNets = [];
+                const classNets = {};
+
+                allStudents.forEach(s => {
+                    const r = (exam.results && exam.results[s.adSoyad]) || {};
+                    const netVal = r[activeExamSubjectFilter];
+                    if (netVal !== undefined && netVal !== null && netVal !== '' && !isNaN(parseFloat(netVal))) {
+                        const num = parseFloat(netVal);
+                        validNets.push({ name: s.adSoyad, no: s.no, sinif: s.sinif, net: num });
+                        const cName = s.sinif || 'Genel';
+                        if (!classNets[cName]) classNets[cName] = [];
+                        classNets[cName].push(num);
+                    }
+                });
+
+                const count = validNets.length;
+                let avgNet = '0.00';
+                let maxNet = '0.00';
+                let minNet = '0.00';
+                let topStudents = [];
+
+                if (count > 0) {
+                    const sum = validNets.reduce((acc, cur) => acc + cur.net, 0);
+                    avgNet = (sum / count).toFixed(2);
+                    const maxVal = Math.max(...validNets.map(v => v.net));
+                    const minVal = Math.min(...validNets.map(v => v.net));
+                    maxNet = maxVal.toFixed(2);
+                    minNet = minVal.toFixed(2);
+                    topStudents = validNets.filter(v => Math.abs(v.net - maxVal) < 0.001).map(v => v.name);
+                }
+
+                let classBadgesHtml = '';
+                const cNames = Object.keys(classNets).sort();
+                if (cNames.length > 1) {
+                    classBadgesHtml = `<div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:8px; font-size:11px;">
+                        <strong style="color:var(--text-muted);"><i class="fas fa-sitemap me-1"></i>Şube Ortalamaları:</strong>`;
+                    cNames.forEach(cn => {
+                        const arr = classNets[cn];
+                        const cAvg = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
+                        classBadgesHtml += `
+                            <span style="background:var(--tab-bg); border:1px solid var(--border); padding:2px 8px; border-radius:10px; font-weight:700; color:var(--text-main);">
+                                ${escapeFn(cn)}: <span style="color:${activeSubConfig.color};">${cAvg}</span> Net
+                            </span>
+                        `;
+                    });
+                    classBadgesHtml += `</div>`;
+                }
+
+                subjectStatsHtml = `
+                    <div style="background:var(--card-bg); border:1px solid ${activeSubConfig.color}44; border-left:4px solid ${activeSubConfig.color}; border-radius:8px; padding:10px 14px; margin-top:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:34px; height:34px; border-radius:8px; background:${activeSubConfig.color}22; color:${activeSubConfig.color}; display:flex; align-items:center; justify-content:center; font-size:16px;">
+                                        <i class="fas ${activeSubConfig.icon}"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${escapeFn(activeSubConfig.label)} Ortalaması</div>
+                                        <div style="font-size:17px; font-weight:800; color:${activeSubConfig.color}; line-height:1.1;">${avgNet} <span style="font-size:11px; font-weight:600; color:var(--text-muted);">Net</span></div>
+                                    </div>
+                                </div>
+                                <div style="border-left:1px solid var(--border); padding-left:14px;">
+                                    <div style="font-size:10.5px; font-weight:700; color:#10b981; text-transform:uppercase;"><i class="fas fa-trophy me-1"></i>En Yüksek Net (Zirve)</div>
+                                    <div style="font-size:15px; font-weight:800; color:#10b981;">${maxNet} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">(${escapeFn(topStudents.slice(0, 2).join(', '))}${topStudents.length > 2 ? ' +' + (topStudents.length - 2) : ''})</span></div>
+                                </div>
+                                <div style="border-left:1px solid var(--border); padding-left:14px;">
+                                    <div style="font-size:10.5px; font-weight:700; color:#ef4444; text-transform:uppercase;"><i class="fas fa-arrow-down me-1"></i>En Düşük Net</div>
+                                    <div style="font-size:15px; font-weight:800; color:#ef4444;">${minNet} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">Net</span></div>
+                                </div>
+                                <div style="border-left:1px solid var(--border); padding-left:14px;">
+                                    <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;"><i class="fas fa-users me-1"></i>Sonuç Girilen</div>
+                                    <div style="font-size:15px; font-weight:800; color:var(--text-main);">${count} / ${allStudents.length} <span style="font-size:11px; font-weight:500; color:var(--text-muted);">Öğrenci</span></div>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm" onclick="setExamSubjectFilter('ALL')" style="font-size:11px; padding:4px 10px; background:var(--tab-bg); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); cursor:pointer;">
+                                    <i class="fas fa-times me-1"></i> İzolasyonu Kapat
+                                </button>
+                            </div>
+                        </div>
+                        ${classBadgesHtml}
+                    </div>
+                `;
+
+                // Her öğrenciye derse özel sıra (_subjectRank) ata
+                const sortedBySub = validNets.slice().sort((a, b) => b.net - a.net);
+                let curSubRank = 1;
+                const subRankMap = new Map();
+                sortedBySub.forEach((item, idx) => {
+                    if (idx > 0 && item.net < sortedBySub[idx - 1].net) {
+                        curSubRank = idx + 1;
+                    }
+                    subRankMap.set(item.name, curSubRank);
+                });
+
+                allStudents.forEach(s => {
+                    s._subjectRank = subRankMap.has(s.adSoyad) ? subRankMap.get(s.adSoyad) : 999999;
+                });
+            }
+
+            // Ders Filtresi Buton Grubu Çubuğu
+            let filterButtonsHtml = `
+                <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span style="font-size:11.5px; font-weight:800; color:var(--text-main); margin-right:4px;">
+                            <i class="fas fa-filter text-teal me-1"></i> Ders Görünümü:
+                        </span>
+            `;
+
+            examSubjects.forEach(sub => {
+                const isActive = (activeExamSubjectFilter === sub.key);
+                const activeStyle = isActive 
+                    ? `background:${sub.color}; color:#fff; border-color:${sub.color}; font-weight:800; box-shadow:0 2px 6px rgba(0,0,0,0.18); transform:translateY(-1px);`
+                    : `background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); font-weight:600; opacity:0.85;`;
+                filterButtonsHtml += `
+                    <button type="button" class="btn btn-sm" onclick="setExamSubjectFilter('${sub.key}')" 
+                        style="padding:5px 12px; font-size:11.5px; border-radius:20px; transition:all 0.15s ease; display:inline-flex; align-items:center; gap:5px; cursor:pointer; ${activeStyle}">
+                        <i class="fas ${sub.icon}"></i> ${escapeFn(sub.label)}
+                    </button>
+                `;
+            });
+
+            filterButtonsHtml += `
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted); font-weight:600;">
+                        ${activeExamSubjectFilter === 'ALL' 
+                            ? '📋 <span style="color:var(--teal); font-weight:700;">Genel Net Tablosu</span> (Tüm Branşlar)' 
+                            : `🎯 <span style="color:${activeSubConfig.color}; font-weight:800;">${escapeFn(activeSubConfig.label)}</span> Odaklı İzolasyon Görünümü`}
+                    </div>
+                </div>
+            `;
+
             document.getElementById('eval-title').innerHTML = `
-                <span id="eval-title-display"><i class="fas fa-edit me-1" style="color:var(--teal);"></i> ${escapeFn(exam.title)} - Ortak Sınav Sonuç Tablosu</span>
+                <span id="eval-title-display"><i class="fas fa-edit me-1" style="color:var(--teal);"></i> ${escapeFn(exam.title)} - ${isSingleSubject ? escapeFn(activeSubConfig.label) + ' Odaklı Sonuç Görünümü' : 'Ortak Sınav Sonuç Tablosu'}</span>
             `;
             document.getElementById('eval-info').innerHTML = `
                 <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
@@ -1850,70 +2025,101 @@
                         <span>Dahil Sınıflar: <strong>${escapeFn(exam.classes.join(', ') || 'Tümü')}</strong> | Toplam Öğrenci: <strong>${allStudents.length}</strong></span>
                         <span style="color:var(--secondary); font-weight:600;"><i class="fas fa-info-circle me-1"></i>Sütun başlıklarına tıklayarak sıralayabilir, öğrenci seçip toplu veya tekil silebilirsiniz.</span>
                     </div>
+                    ${filterButtonsHtml}
+                    ${subjectStatsHtml}
                 </div>
             `;
 
             // Tablo Başlıkları (Sıralanabilir ve Değiştirilebilir)
-            document.querySelector('#evaluation-modal thead tr').innerHTML = `
-                <th style="width:36px; text-align:center; padding:8px;">
-                    <input type="checkbox" id="exam-select-all" onclick="toggleAllExamStudentCheckboxes(this)" title="Tümünü Seç / Seçimi Kaldır" style="cursor:pointer; transform:scale(1.15);">
-                </th>
-                <th style="cursor:pointer; user-select:none; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('ogrenci')" title="Öğrenciye göre sıralamak için tıklayın">
-                    ÖĞRENCİ &amp; EŞLEŞME ${getExamSortIcon('ogrenci')}
-                </th>
-                <th style="cursor:pointer; user-select:none; width:75px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('sinif')" title="Sınıfa göre sıralamak için tıklayın">
-                    SINIF ${getExamSortIcon('sinif')}
-                </th>
-                <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Turkce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                        <span>${escapeFn(colL.Turkce)}</span>
-                        <span onclick="event.stopPropagation(); editExamColumnHeader('Turkce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                        ${getExamSortIcon('Turkce')}
-                    </div>
-                </th>
-                <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Matematik')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                        <span>${escapeFn(colL.Matematik)}</span>
-                        <span onclick="event.stopPropagation(); editExamColumnHeader('Matematik');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                        ${getExamSortIcon('Matematik')}
-                    </div>
-                </th>
-                <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Sosyal')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                        <span>${escapeFn(colL.Sosyal)}</span>
-                        <span onclick="event.stopPropagation(); editExamColumnHeader('Sosyal');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                        ${getExamSortIcon('Sosyal')}
-                    </div>
-                </th>
-                <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Fen')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                        <span>${escapeFn(colL.Fen)}</span>
-                        <span onclick="event.stopPropagation(); editExamColumnHeader('Fen');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                        ${getExamSortIcon('Fen')}
-                    </div>
-                </th>
-                <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('DinKulturu')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                        <span>${escapeFn(colL.DinKulturu)}</span>
-                        <span onclick="event.stopPropagation(); editExamColumnHeader('DinKulturu');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                        ${getExamSortIcon('DinKulturu')}
-                    </div>
-                </th>
-                <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Ingilizce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                        <span>${escapeFn(colL.Ingilizce)}</span>
-                        <span onclick="event.stopPropagation(); editExamColumnHeader('Ingilizce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                        ${getExamSortIcon('Ingilizce')}
-                    </div>
-                </th>
-                <th style="cursor:pointer; user-select:none; width:75px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('totalNet')" title="Toplam Nete göre sıralamak için tıklayın">
-                    TOP.NET ${getExamSortIcon('totalNet')}
-                </th>
-                <th style="cursor:pointer; user-select:none; width:55px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('rank')" title="Derece / Sıraya göre sıralamak için tıklayın">
-                    SIRA ${getExamSortIcon('rank')}
-                </th>
-                <th style="width:115px; text-align:center; padding:8px;">İŞLEM</th>
-            `;
+            if (isSingleSubject) {
+                const subLabel = activeSubConfig.label;
+                document.querySelector('#evaluation-modal thead tr').innerHTML = `
+                    <th style="width:36px; text-align:center; padding:8px;">
+                        <input type="checkbox" id="exam-select-all" onclick="toggleAllExamStudentCheckboxes(this)" title="Tümünü Seç / Seçimi Kaldır" style="cursor:pointer; transform:scale(1.15);">
+                    </th>
+                    <th style="cursor:pointer; user-select:none; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('ogrenci')" title="Yalnızca öğrenci isim ve soyismine göre alfabetik sıralar (A-Z / Z-A)">
+                        ÖĞRENCİ (A-Z) ${getExamSortIcon('ogrenci')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:85px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('sinif')" title="Sınıfa göre sıralamak için tıklayın">
+                        SINIF ${getExamSortIcon('sinif')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:130px; text-align:center; white-space:nowrap; padding:8px; background:rgba(0,0,0,0.04);" onclick="sortExamEvaluationTable('subjectNet')" title="Bu dersteki nete göre sıralamak için tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+                            <i class="fas ${activeSubConfig.icon}" style="color:${activeSubConfig.color};"></i>
+                            <span style="color:${activeSubConfig.color}; font-weight:800;">${escapeFn(subLabel)} NETİ</span>
+                            ${getExamSortIcon('subjectNet')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:110px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('subjectRank')" title="Ders başarı sırasına göre sıralamak için tıklayın">
+                        DERS SIRASI ${getExamSortIcon('subjectRank')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:150px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('totalNet')" title="Genel Toplam Nete göre sıralamak için tıklayın">
+                        GENEL SINAV (NET &amp; SIRA) ${getExamSortIcon('totalNet')}
+                    </th>
+                    <th style="width:115px; text-align:center; padding:8px;">İŞLEM</th>
+                `;
+            } else {
+                document.querySelector('#evaluation-modal thead tr').innerHTML = `
+                    <th style="width:36px; text-align:center; padding:8px;">
+                        <input type="checkbox" id="exam-select-all" onclick="toggleAllExamStudentCheckboxes(this)" title="Tümünü Seç / Seçimi Kaldır" style="cursor:pointer; transform:scale(1.15);">
+                    </th>
+                    <th style="cursor:pointer; user-select:none; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('ogrenci')" title="Yalnızca öğrenci isim ve soyismine göre alfabetik sıralar (A-Z / Z-A)">
+                        ÖĞRENCİ (A-Z) ${getExamSortIcon('ogrenci')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:75px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('sinif')" title="Sınıfa göre sıralamak için tıklayın">
+                        SINIF ${getExamSortIcon('sinif')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Turkce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                            <span>${escapeFn(colL.Turkce)}</span>
+                            <span onclick="event.stopPropagation(); editExamColumnHeader('Turkce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
+                            ${getExamSortIcon('Turkce')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Matematik')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                            <span>${escapeFn(colL.Matematik)}</span>
+                            <span onclick="event.stopPropagation(); editExamColumnHeader('Matematik');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
+                            ${getExamSortIcon('Matematik')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Sosyal')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                            <span>${escapeFn(colL.Sosyal)}</span>
+                            <span onclick="event.stopPropagation(); editExamColumnHeader('Sosyal');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
+                            ${getExamSortIcon('Sosyal')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Fen')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                            <span>${escapeFn(colL.Fen)}</span>
+                            <span onclick="event.stopPropagation(); editExamColumnHeader('Fen');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
+                            ${getExamSortIcon('Fen')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('DinKulturu')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                            <span>${escapeFn(colL.DinKulturu)}</span>
+                            <span onclick="event.stopPropagation(); editExamColumnHeader('DinKulturu');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
+                            ${getExamSortIcon('DinKulturu')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Ingilizce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                            <span>${escapeFn(colL.Ingilizce)}</span>
+                            <span onclick="event.stopPropagation(); editExamColumnHeader('Ingilizce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
+                            ${getExamSortIcon('Ingilizce')}
+                        </div>
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:75px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('totalNet')" title="Toplam Nete göre sıralamak için tıklayın">
+                        TOP.NET ${getExamSortIcon('totalNet')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; width:55px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('rank')" title="Derece / Sıraya göre sıralamak için tıklayın">
+                        SIRA ${getExamSortIcon('rank')}
+                    </th>
+                    <th style="width:115px; text-align:center; padding:8px;">İŞLEM</th>
+                `;
+            }
 
             // Datalist oluştur: Sistemdeki tüm kayıtlı sınıflar
             const classOptionsHtml = Array.from(new Set(masterList.map(st => st.sinif).filter(Boolean))).sort().map(c => `<option value="${escapeFn(c)}">`).join('');
@@ -1925,19 +2131,31 @@
             }
             datalistEl.innerHTML = classOptionsHtml;
 
-            // Sıralama motoru
+            // ── SIRALAMA MOTORU (TÜRKÇE ALFABETİK A-Z / Z-A & DERSE ÖZEL SIRALAMA) ──
             const getSortVal = (s, fld) => {
                 const r = (exam.results && exam.results[s.adSoyad]) || {};
-                if (fld === 'ogrenci') {
+                if (fld === 'ogrenci' || fld === 'adSoyad' || fld === 'name') {
+                    // YALNIZCA ÖĞRENCİ AD VE SOYADINA GÖRE ALFABETİK SIRALAMA (A-Z / Z-A)
+                    return String(s.adSoyad || '').trim();
+                }
+                if (fld === 'no') {
                     const noNum = parseInt(s.no) || 0;
-                    return noNum > 0 ? noNum : (s.adSoyad || '');
+                    return noNum > 0 ? noNum : (s.no || '');
                 }
                 if (fld === 'sinif') {
-                    return (s.sinif || r.sinif || '').toUpperCase();
+                    return String(s.sinif || r.sinif || '').toUpperCase();
                 }
                 if (fld === 'rank') {
                     const val = parseInt(r.rank);
                     return isNaN(val) ? 999999 : val;
+                }
+                if (fld === 'subjectRank') {
+                    const val = parseInt(s._subjectRank);
+                    return isNaN(val) ? 999999 : val;
+                }
+                if (fld === 'subjectNet') {
+                    const val = parseFloat(r[activeExamSubjectFilter]);
+                    return isNaN(val) ? -9999 : val;
                 }
                 if (fld === 'totalNet') {
                     const val = parseFloat(r.totalNet);
@@ -1955,7 +2173,7 @@
                 const valB = getSortVal(b, currentExamSort.field);
                 let comp = 0;
                 if (typeof valA === 'string' || typeof valB === 'string') {
-                    comp = String(valA).localeCompare(String(valB), 'tr', { numeric: true, sensitivity: 'base' });
+                    comp = String(valA).localeCompare(String(valB), 'tr-TR', { numeric: true, sensitivity: 'base' });
                 } else {
                     comp = valA - valB;
                 }
@@ -1985,30 +2203,76 @@
                 }
 
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="text-align:center; padding:6px 4px;">
-                        <input type="checkbox" class="exam-student-checkbox" value="${attrSafeName}" onchange="updateExamSelectedCount()" style="cursor:pointer; transform:scale(1.15);">
-                    </td>
-                    <td style="font-weight:600; font-size:13px; white-space:nowrap;">
-                        <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:48px; text-align:center; padding:3px 5px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; margin-right:6px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
-                        ${safeName}${koclukBadge}
-                    </td>
-                    <td style="text-align:center; padding:4px;">
-                        <input type="text" class="exam-input exam-sinif-input" data-name="${attrSafeName}" data-field="sinif" value="${safeSinif}" list="exam-class-options" style="width:58px; text-align:center; padding:4px; font-weight:700; color:var(--secondary); border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınıfı düzenleyebilirsiniz">
-                    </td>
-                    <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Turkce" value="${res.Turkce}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                    <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Matematik" value="${res.Matematik}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                    <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Sosyal" value="${res.Sosyal}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                    <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Fen" value="${res.Fen}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                    <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="DinKulturu" value="${res.DinKulturu || ''}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                    <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Ingilizce" value="${res.Ingilizce || ''}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                    <td><input type="number" step="0.01" id="${safeTotalId}" class="exam-input" data-name="${attrSafeName}" data-field="totalNet" value="${res.totalNet}" style="width:58px; padding:4px; font-weight:800; color:var(--primary); text-align:center; border:1px solid var(--border); border-radius:4px; background:var(--tab-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Toplam Net (Değiştirebilirsiniz veya ders netlerinden otomatik hesaplanır)"></td>
-                    <td><input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rank" value="${res.rank}" style="width:42px; padding:4px; text-align:center; font-weight:700; border:1px solid var(--border); border-radius:4px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınav Sırası (Değiştirebilirsiniz)"></td>
-                    <td style="text-align:center; white-space:nowrap; padding:4px;">
-                        <button class="btn" style="padding:4px 7px; font-size:10px; background:var(--secondary); margin-right:3px;" onclick="renderProgressChart('${jsSafeName}')" title="Gelişim Grafiği"><i class="fas fa-chart-line"></i> Grafik</button>
-                        <button class="btn" style="padding:4px 7px; font-size:10px; background:#ef4444; color:#fff; border-radius:4px;" onclick="deleteStudentFromExam('${exam.id}', '${jsSafeName}')" title="Bu öğrenciyi sınavdan sil"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                `;
+
+                if (isSingleSubject) {
+                    // ── DERS BAZLI İZOLASYON MODU SATIRI ──
+                    const subVal = res[activeExamSubjectFilter] !== undefined ? res[activeExamSubjectFilter] : '';
+                    let subRankBadge = '<span style="color:var(--text-muted); font-size:11px;">-</span>';
+                    if (s._subjectRank && s._subjectRank < 999999) {
+                        if (s._subjectRank === 1) {
+                            subRankBadge = `<span style="background:rgba(245,158,11,0.18); color:#d97706; font-weight:800; font-size:11px; padding:3px 9px; border-radius:12px; border:1px solid rgba(245,158,11,0.3); white-space:nowrap;"><i class="fas fa-medal me-1"></i>1. Sıra</span>`;
+                        } else if (s._subjectRank === 2) {
+                            subRankBadge = `<span style="background:rgba(100,116,139,0.18); color:#475569; font-weight:800; font-size:11px; padding:3px 9px; border-radius:12px; border:1px solid rgba(100,116,139,0.3); white-space:nowrap;"><i class="fas fa-medal me-1"></i>2. Sıra</span>`;
+                        } else if (s._subjectRank === 3) {
+                            subRankBadge = `<span style="background:rgba(180,83,9,0.15); color:#b45309; font-weight:800; font-size:11px; padding:3px 9px; border-radius:12px; border:1px solid rgba(180,83,9,0.3); white-space:nowrap;"><i class="fas fa-medal me-1"></i>3. Sıra</span>`;
+                        } else {
+                            subRankBadge = `<span style="background:var(--tab-bg); color:var(--text-main); font-weight:700; font-size:11px; padding:2px 8px; border-radius:12px; border:1px solid var(--border); white-space:nowrap;">#${s._subjectRank}</span>`;
+                        }
+                    }
+
+                    tr.innerHTML = `
+                        <td style="text-align:center; padding:6px 4px;">
+                            <input type="checkbox" class="exam-student-checkbox" value="${attrSafeName}" onchange="updateExamSelectedCount()" style="cursor:pointer; transform:scale(1.15);">
+                        </td>
+                        <td style="font-weight:600; font-size:13px; white-space:nowrap;">
+                            <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:48px; text-align:center; padding:3px 5px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; margin-right:6px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
+                            ${safeName}${koclukBadge}
+                        </td>
+                        <td style="text-align:center; padding:4px;">
+                            <input type="text" class="exam-input exam-sinif-input" data-name="${attrSafeName}" data-field="sinif" value="${safeSinif}" list="exam-class-options" style="width:58px; text-align:center; padding:4px; font-weight:700; color:var(--secondary); border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınıfı düzenleyebilirsiniz">
+                        </td>
+                        <td style="text-align:center; padding:4px; background:rgba(0,0,0,0.02);">
+                            <input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="${activeExamSubjectFilter}" value="${subVal}" style="width:72px; text-align:center; padding:5px 6px; border-radius:6px; border:1.5px solid ${activeSubConfig.color}; font-weight:800; font-size:13px; color:${activeSubConfig.color}; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Hücre içi hızlı net düzenleme">
+                        </td>
+                        <td style="text-align:center; padding:4px;">
+                            ${subRankBadge}
+                        </td>
+                        <td style="text-align:center; padding:4px; font-size:12px;">
+                            <span style="font-weight:700; color:var(--primary);">${res.totalNet || '0'} Net</span>
+                            <span style="color:var(--text-muted); font-size:11px; margin-left:4px;">(${res.rank ? 'Genel Sıra: #' + res.rank : 'Sırasız'})</span>
+                        </td>
+                        <td style="text-align:center; white-space:nowrap; padding:4px;">
+                            <button class="btn" style="padding:4px 7px; font-size:10px; background:var(--secondary); margin-right:3px;" onclick="renderProgressChart('${jsSafeName}')" title="Gelişim Grafiği"><i class="fas fa-chart-line"></i> Grafik</button>
+                            <button class="btn" style="padding:4px 7px; font-size:10px; background:#ef4444; color:#fff; border-radius:4px;" onclick="deleteStudentFromExam('${exam.id}', '${jsSafeName}')" title="Bu öğrenciyi sınavdan sil"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    `;
+                } else {
+                    // ── TÜM DERSLER GENEL TABLO SATIRI ──
+                    tr.innerHTML = `
+                        <td style="text-align:center; padding:6px 4px;">
+                            <input type="checkbox" class="exam-student-checkbox" value="${attrSafeName}" onchange="updateExamSelectedCount()" style="cursor:pointer; transform:scale(1.15);">
+                        </td>
+                        <td style="font-weight:600; font-size:13px; white-space:nowrap;">
+                            <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:48px; text-align:center; padding:3px 5px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; margin-right:6px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
+                            ${safeName}${koclukBadge}
+                        </td>
+                        <td style="text-align:center; padding:4px;">
+                            <input type="text" class="exam-input exam-sinif-input" data-name="${attrSafeName}" data-field="sinif" value="${safeSinif}" list="exam-class-options" style="width:58px; text-align:center; padding:4px; font-weight:700; color:var(--secondary); border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınıfı düzenleyebilirsiniz">
+                        </td>
+                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Turkce" value="${res.Turkce}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Matematik" value="${res.Matematik}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Sosyal" value="${res.Sosyal}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Fen" value="${res.Fen}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="DinKulturu" value="${res.DinKulturu || ''}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Ingilizce" value="${res.Ingilizce || ''}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        <td><input type="number" step="0.01" id="${safeTotalId}" class="exam-input" data-name="${attrSafeName}" data-field="totalNet" value="${res.totalNet}" style="width:58px; padding:4px; font-weight:800; color:var(--primary); text-align:center; border:1px solid var(--border); border-radius:4px; background:var(--tab-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Toplam Net (Değiştirebilirsiniz veya ders netlerinden otomatik hesaplanır)"></td>
+                        <td><input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rank" value="${res.rank}" style="width:42px; padding:4px; text-align:center; font-weight:700; border:1px solid var(--border); border-radius:4px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınav Sırası (Değiştirebilirsiniz)"></td>
+                        <td style="text-align:center; white-space:nowrap; padding:4px;">
+                            <button class="btn" style="padding:4px 7px; font-size:10px; background:var(--secondary); margin-right:3px;" onclick="renderProgressChart('${jsSafeName}')" title="Gelişim Grafiği"><i class="fas fa-chart-line"></i> Grafik</button>
+                            <button class="btn" style="padding:4px 7px; font-size:10px; background:#ef4444; color:#fff; border-radius:4px;" onclick="deleteStudentFromExam('${exam.id}', '${jsSafeName}')" title="Bu öğrenciyi sınavdan sil"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    `;
+                }
                 body.appendChild(tr);
             });
             updateExamSelectedCount();
@@ -3326,6 +3590,8 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         window.syncAllExamsToKocluk = syncAllExamsToKocluk;
         window.syncSingleStudentExamToKocluk = syncSingleStudentExamToKocluk;
         window.sortExamEvaluationTable = sortExamEvaluationTable;
+        window.setExamSubjectFilter = setExamSubjectFilter;
+        window.activeExamSubjectFilter = activeExamSubjectFilter;
         window.editExamColumnHeader = editExamColumnHeader;
         window.openEditExamHeadersModal = openEditExamHeadersModal;
         window.autoAssignExamRanks = autoAssignExamRanks;

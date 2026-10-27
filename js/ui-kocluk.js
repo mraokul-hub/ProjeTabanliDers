@@ -1,6 +1,6 @@
 // ============================================================
-// ui-kocluk.js (v2.0 İleri Düzey Mimari & Pedagojik Sürüm)
-// 8. Sınıf LGS Bilişsel Koçluk, TDE Motoru, Hata Defteri & Mentorluk Sistemi
+// ui-kocluk.js (v3.0 Bilişsel Kademeli LGS Mimarlık Sistemi)
+// 5, 6, 7 ve 8. Sınıf K-12 Bilişsel Koçluk, TDE Motoru, Hata Defteri & Mentorluk Sistemi
 // ============================================================
 
 (function () {
@@ -14,8 +14,141 @@
     };
 
     // ─────────────────────────────────────────────────────────────
-    // 0. TDE (TURLAMA DİSİPLİN ENDEKSİ) VE ARALIKLI TEKRAR MOTORLARI
+    // 0. BİLİŞSEL KADEMELİ PEDAGOJİ, TDE VE ARALIKLI TEKRAR MOTORLARI
     // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Sınıf Düzeyine Duyarlı Bilişsel Pedagoji Konfigürasyonu
+     * (Sweller Bilişsel Yük, Bloom Taksonomisi & MEB Müfredatı Uyumlu)
+     * 5, 6, 7 ve 8. sınıf kademeleri için ideal soru piramidi, konfor alanı eşiği,
+     * odak blok süreleri, hedef soru ve müfredat ders eşlemesini döner.
+     */
+    function getGradeCognitiveConfig(sinifStr) {
+        const s = String(sinifStr || '').trim();
+        if (s.startsWith('5')) {
+            return {
+                sinifNo: 5,
+                grade: 5,
+                gradeLabel: '5. Sınıf',
+                stageTitle: 'Bilişsel Temel & Okuma Dayanıklılığı',
+                piramit: { kavrama: 60, orta: 25, yeniNesil: 15, kavramaCount: 240, ortaCount: 100, yeniNesilCount: 60 },
+                idealPiramit: { kavrama: 60, orta: 25, yeniNesil: 15 },
+                konforThreshold: 10, // Yeni Nesil < %10 ise alarm
+                konforRatio: 0.10,
+                pomodoroOdakDk: 25,
+                blokOdakDk: 40,
+                odakDakika: 25,
+                molaDakika: 5,
+                odakBlok: '25 dk çalışma + 5 dk mola (Pomodoro Modeli)',
+                hedefSoruVarsayilan: 400,
+                hedefSoruMin: 350,
+                hedefSoruMax: 450,
+                defaultHedefSoru: 400,
+                defaultHedefOkul: 'Bursluluk (İOKBS) & Proje Ortaokulu Başarısı',
+                defaultBaslangicNet: 65,
+                defaultHedefNet: 80,
+                maxNet: 90,
+                tdeIdealFen: 28,
+                tdeIdealMat: 25,
+                dersler: ['Türkçe', 'Matematik', 'Fen Bilimleri', 'Sosyal Bilgiler', 'Din Kültürü', 'İngilizce'],
+                sosyalDersAdi: 'Sosyal Bilgiler',
+                sosyalDersIcon: 'fa-compass',
+                isLgsFinal: false
+            };
+        } else if (s.startsWith('6')) {
+            return {
+                sinifNo: 6,
+                grade: 6,
+                gradeLabel: '6. Sınıf',
+                stageTitle: 'Muhakeme & Analitik Genişleme',
+                piramit: { kavrama: 45, orta: 35, yeniNesil: 20, kavramaCount: 225, ortaCount: 175, yeniNesilCount: 100 },
+                idealPiramit: { kavrama: 45, orta: 35, yeniNesil: 20 },
+                konforThreshold: 20, // Yeni Nesil < %20 ise alarm
+                konforRatio: 0.20,
+                pomodoroOdakDk: 30,
+                blokOdakDk: 50,
+                odakDakika: 30,
+                molaDakika: 5,
+                odakBlok: '30 dk çalışma + 5 dk mola',
+                hedefSoruVarsayilan: 500,
+                hedefSoruMin: 450,
+                hedefSoruMax: 550,
+                defaultHedefSoru: 500,
+                defaultHedefOkul: 'Bursluluk (İOKBS) & Fen/Sosyal Bilimler Lisesi Altyapısı',
+                defaultBaslangicNet: 68,
+                defaultHedefNet: 82,
+                maxNet: 90,
+                tdeIdealFen: 28,
+                tdeIdealMat: 25,
+                dersler: ['Türkçe', 'Matematik', 'Fen Bilimleri', 'Sosyal Bilgiler', 'Din Kültürü', 'İngilizce'],
+                sosyalDersAdi: 'Sosyal Bilgiler',
+                sosyalDersIcon: 'fa-compass',
+                isLgsFinal: false
+            };
+        } else if (s.startsWith('7')) {
+            return {
+                sinifNo: 7,
+                grade: 7,
+                gradeLabel: '7. Sınıf',
+                stageTitle: 'Ön LGS Çıraklığı & Zırhlanma',
+                piramit: { kavrama: 30, orta: 35, yeniNesil: 35, kavramaCount: 180, ortaCount: 210, yeniNesilCount: 210 },
+                idealPiramit: { kavrama: 30, orta: 35, yeniNesil: 35 },
+                konforThreshold: 30, // Yeni Nesil < %30 ise alarm
+                konforRatio: 0.30,
+                pomodoroOdakDk: 40,
+                blokOdakDk: 60,
+                odakDakika: 40,
+                molaDakika: 10,
+                odakBlok: '40 dk çalışma + 10 dk mola (Derin Odaklanma)',
+                hedefSoruVarsayilan: 600,
+                hedefSoruMin: 550,
+                hedefSoruMax: 650,
+                defaultHedefSoru: 600,
+                defaultHedefOkul: 'Hedef Fen Lisesi / Nitelikli Anadolu Lisesi (Ön LGS Çıraklığı)',
+                defaultBaslangicNet: 70,
+                defaultHedefNet: 85,
+                maxNet: 90,
+                tdeIdealFen: 30,
+                tdeIdealMat: 28,
+                dersler: ['Türkçe', 'Matematik', 'Fen Bilimleri', 'Sosyal Bilgiler', 'Din Kültürü', 'İngilizce'],
+                sosyalDersAdi: 'Sosyal Bilgiler',
+                sosyalDersIcon: 'fa-compass',
+                isLgsFinal: false
+            };
+        } else {
+            // 8. Sınıf (Varsayılan)
+            return {
+                sinifNo: 8,
+                grade: 8,
+                gradeLabel: '8. Sınıf',
+                stageTitle: 'LGS Ustalığı & Sınav Otomasyonu',
+                piramit: { kavrama: 20, orta: 30, yeniNesil: 50, kavramaCount: 120, ortaCount: 180, yeniNesilCount: 300 },
+                idealPiramit: { kavrama: 20, orta: 30, yeniNesil: 50 },
+                konforThreshold: 45, // Yeni Nesil < %45 ise alarm
+                konforRatio: 0.45,
+                pomodoroOdakDk: 40,
+                blokOdakDk: 80,
+                odakDakika: 40,
+                molaDakika: 10,
+                odakBlok: '40+10 dk veya LGS Simülasyon Blokları (75 dk Sözel / 80 dk Sayısal)',
+                hedefSoruVarsayilan: 700,
+                hedefSoruMin: 600,
+                hedefSoruMax: 800,
+                defaultHedefSoru: 700,
+                defaultHedefOkul: 'Galatasaray / Kabataş / Ankara Fen / Nitelikli Fen Lisesi',
+                defaultBaslangicNet: 72,
+                defaultHedefNet: 88,
+                maxNet: 90,
+                tdeIdealFen: 32,
+                tdeIdealMat: 30,
+                dersler: ['Türkçe', 'Matematik', 'Fen Bilimleri', 'T.C. İnkılap', 'Din Kültürü', 'İngilizce'],
+                sosyalDersAdi: 'T.C. İnkılap',
+                sosyalDersIcon: 'fa-landmark',
+                isLgsFinal: true
+            };
+        }
+    }
+    window.getGradeCognitiveConfig = getGradeCognitiveConfig;
 
     /**
      * Net değerinden ve soru sayısından Doğru (D), Yanlış (Y) ve Boş (B) sayılarını çözümler.
@@ -58,10 +191,11 @@
     window.resolveDybFromNet = resolveDybFromNet;
 
     /**
-     * Turlama Disiplin Endeksi (TDE) Hesaplama Motoru (0-100 Puan)
-     * Pedagojik kriterler: Fen/Mat 1. tur süreleri, inatlaşma, 2. tur kazanımları, optik kontrol
+     * Turlama Disiplin Endeksi (TDE) ve Strateji Disiplin Skoru Motoru (0-100 Puan)
+     * 8. Sınıf: LGS Sayısal 80 dk (Fen <= 32 dk, Mat <= 30 dk, inatlaşma cezası, 2. tur kazanımları, optik kontrol)
+     * 5, 6, 7. Sınıflar: Kademeye uyarlanmış Süre ve Strateji Disiplin Skoru (Ders başı süre aşımı, inatlaşılan soru sayısı, kontrol protokolü)
      */
-    function calculateTDE(deneme) {
+    function calculateTDE(deneme, sinifStr) {
         if (!deneme) {
             return {
                 tdePuan: 75,
@@ -78,29 +212,44 @@
             };
         }
 
-        const fen1Tur = (deneme.fen1TurSure !== undefined && deneme.fen1TurSure !== null && deneme.fen1TurSure !== '') ? Number(deneme.fen1TurSure) : 32;
-        const mat1Tur = (deneme.mat1TurSure !== undefined && deneme.mat1TurSure !== null && deneme.mat1TurSure !== '') ? Number(deneme.mat1TurSure) : 30;
+        const config = getGradeCognitiveConfig(sinifStr || deneme.sinif);
         const inatlasma = Number(deneme.inatlasmaSayisi) || 0;
-        const fen2Tur = Number(deneme.fen2TurKazanc) || 0;
-        const mat2Tur = Number(deneme.mat2TurKazanc) || 0;
         const optik = !!deneme.optikKontrol;
 
-        // 1. Fen 1. Tur Zaman Puanı (İdeal <= 32 dk, her 3 dk aşımda -5p, maks 15p)
-        const fenZamanPuan = Math.max(0, 15 - Math.floor(Math.max(0, fen1Tur - 32) / 3) * 5);
+        let fenZamanPuan = 15;
+        let matZamanPuan = 15;
+        let fen2TurPuan = 0;
+        let mat2TurPuan = 0;
 
-        // 2. Mat 1. Tur Zaman Puanı (İdeal <= 30 dk, her 3 dk aşımda -5p, maks 15p)
-        const matZamanPuan = Math.max(0, 15 - Math.floor(Math.max(0, mat1Tur - 30) / 3) * 5);
+        if (config.isLgsFinal) {
+            // 8. Sınıf LGS 80 dk Sayısal Oturumu
+            const fen1Tur = (deneme.fen1TurSure !== undefined && deneme.fen1TurSure !== null && deneme.fen1TurSure !== '') ? Number(deneme.fen1TurSure) : 32;
+            const mat1Tur = (deneme.mat1TurSure !== undefined && deneme.mat1TurSure !== null && deneme.mat1TurSure !== '') ? Number(deneme.mat1TurSure) : 30;
+            const fen2Tur = Number(deneme.fen2TurKazanc) || 0;
+            const mat2Tur = Number(deneme.mat2TurKazanc) || 0;
 
-        // 3. İnatlaşma Cezası (İdeal: 0 soru, her inatlaşılan soru -10p, maks 30p)
+            fenZamanPuan = Math.max(0, 15 - Math.floor(Math.max(0, fen1Tur - 32) / 3) * 5);
+            matZamanPuan = Math.max(0, 15 - Math.floor(Math.max(0, mat1Tur - 30) / 3) * 5);
+            fen2TurPuan = fen2Tur >= 2 ? 10 : (fen2Tur === 1 ? 5 : 0);
+            mat2TurPuan = mat2Tur >= 3 ? 15 : (mat2Tur === 2 ? 10 : (mat2Tur === 1 ? 5 : 0));
+        } else {
+            // 5, 6 ve 7. Sınıf Kademeli Süre & Strateji Disiplin Skoru
+            const idealSure = config.grade === 5 ? 25 : 28;
+            const fen1Tur = (deneme.fen1TurSure !== undefined && deneme.fen1TurSure !== null && deneme.fen1TurSure !== '') ? Number(deneme.fen1TurSure) : idealSure;
+            const mat1Tur = (deneme.mat1TurSure !== undefined && deneme.mat1TurSure !== null && deneme.mat1TurSure !== '') ? Number(deneme.mat1TurSure) : idealSure;
+            const fen2Tur = Number(deneme.fen2TurKazanc) || 0;
+            const mat2Tur = Number(deneme.mat2TurKazanc) || 0;
+
+            fenZamanPuan = Math.max(0, 15 - Math.floor(Math.max(0, fen1Tur - idealSure) / 3) * 5);
+            matZamanPuan = Math.max(0, 15 - Math.floor(Math.max(0, mat1Tur - idealSure) / 3) * 5);
+            fen2TurPuan = fen2Tur >= 1 ? 10 : 0;
+            mat2TurPuan = mat2Tur >= 2 ? 15 : (mat2Tur === 1 ? 8 : 0);
+        }
+
+        // İnatlaşma Cezası (İdeal: 0 soru, her inatlaşılan soru -10p, maks 30p)
         const inatlasmaPuan = Math.max(0, 30 - (inatlasma * 10));
 
-        // 4. Fen 2. Tur Kazanç Puanı (>=2 net -> 10p, 1 net -> 5p, 0 -> 0p, maks 10p)
-        const fen2TurPuan = fen2Tur >= 2 ? 10 : (fen2Tur === 1 ? 5 : 0);
-
-        // 5. Mat 2. Tur Kazanç Puanı (>=3 net -> 15p, 2 net -> 10p, 1 net -> 5p, 0 -> 0p, maks 15p)
-        const mat2TurPuan = mat2Tur >= 3 ? 15 : (mat2Tur === 2 ? 10 : (mat2Tur === 1 ? 5 : 0));
-
-        // 6. Optik Kontrol Puanı (Son 3 dk yapıldı mı: Evet 15p, Hayır 0p)
+        // Optik / Son Kontrol Protokolü (Son 3-5 dk yapıldı mı: Evet 15p, Hayır 0p)
         const optikPuan = optik ? 15 : 0;
 
         const totalPuan = Math.min(100, Math.max(0, fenZamanPuan + matZamanPuan + inatlasmaPuan + fen2TurPuan + mat2TurPuan + optikPuan));
@@ -111,12 +260,12 @@
         let badgeBorder = '#f59e0b';
 
         if (totalPuan >= 85) {
-            badgeText = 'Üst Düzey Stratejik Olgunluk';
+            badgeText = config.isLgsFinal ? 'Üst Düzey Stratejik Olgunluk' : 'Mükemmel Strateji Disiplini';
             badgeColor = '#065f46';
             badgeBg = '#d1fae5';
             badgeBorder = '#10b981';
         } else if (totalPuan < 70) {
-            badgeText = 'Kırmızı Alarm: Süre Yönetimi Çöküşü';
+            badgeText = config.isLgsFinal ? 'Kırmızı Alarm: Süre Yönetimi Çöküşü' : 'Dikkat: Süre & İnatlaşma Kaybı';
             badgeColor = '#991b1b';
             badgeBg = '#fee2e2';
             badgeBorder = '#ef4444';
@@ -136,6 +285,7 @@
             badgeBorder
         };
     }
+    window.calculateTDE = calculateTDE;
 
     /**
      * Spaced Repetition (Aralıklı Tekrar) Durum Belirleyici
@@ -155,7 +305,6 @@
         if (hata.createdAt) {
             createdMs = new Date(hata.createdAt).getTime();
         } else if (hata.tarih) {
-            // "18.10.2026" veya ISO
             const parts = String(hata.tarih).split('.');
             if (parts.length === 3) {
                 createdMs = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
@@ -188,55 +337,99 @@
 
         return { status: 'completed', label: '🟢 Kalıcılaştı', isDue: false, badgeColor: '#10b981', badgeBg: 'rgba(16,185,129,0.12)' };
     }
+    window.getHataRepeatStatus = getHataRepeatStatus;
 
     /**
-     * LGS Dönemsel Faz (Periyodizasyon) Algılayıcısı
-     * Sistem tarihine göre aktif pedagojik fazı ve odak hedeflerini belirler.
+     * Kademeli Periyodizasyon (Faz Algılayıcı)
+     * Öğrencinin sınıfına ve takvim ayına göre dinamik faz tespiti yapar:
+     * - 8. Sınıf: Faz 1 (Eyl-Oca: Temel İnşa), Faz 2 (Şub-Mar: Branş Denemeleri & TDE), Faz 3 (Nis-May: Hata Eritme), Faz 4 (May-Haz: Biyolojik Ritim)
+     * - 5-7. Sınıflar: Faz 1 (Eyl-Kas: Kitap Okuma & Rutin), Faz 2 (Ara-Oca: Mantık/Grafik & Yarıyıl), Faz 3 (Şub-Nis: Beceri Temelli & İOKBS), Faz 4 (May-Haz: Yıl Sonu & Üst Sınıf)
      */
-    function getCurrentLgsPhase() {
+    function getCurrentLgsPhase(sinifStr) {
+        const config = getGradeCognitiveConfig(sinifStr);
         const month = new Date().getMonth(); // 0: Ocak, 1: Şubat, ..., 11: Aralık
-        // Faz 2 (Şubat-Mart): 1, 2
-        // Faz 3 (Nisan-Mayıs): 3, 4
-        // Faz 4 (Mayıs Sonu-Haziran): 5
-        // Faz 1 (Eylül-Ocak): 8, 9, 10, 11, 0
-        if (month === 1 || month === 2) {
-            return {
-                id: 2,
-                name: 'Faz 2 (Şubat-Mart)',
-                title: 'Branş Denemeleri & Turlama Otomasyonu (Hedef: TDE >= 85)',
-                focus: 'Fen 32 dk / Mat 30 dk turlama otomasyonu, inatlaşma terki',
-                badgeBg: 'rgba(245, 158, 11, 0.12)',
-                badgeColor: '#d97706'
-            };
-        } else if (month === 3 || month === 4) {
-            return {
-                id: 3,
-                name: 'Faz 3 (Nisan-Mayıs)',
-                title: 'Genel Deneme, Hata Eritme & Plato Kırma (%50 İleri Muhakeme)',
-                focus: 'Genel denemeler, aralıklı tekrar hata eritme, %50 ileri düzey beceri temelli sorular',
-                badgeBg: 'rgba(99, 102, 241, 0.12)',
-                badgeColor: '#6366f1'
-            };
-        } else if (month === 5) {
-            return {
-                id: 4,
-                name: 'Faz 4 (Mayıs Sonu-Haziran)',
-                title: 'Biyolojik Ritim, Sabah 09:30 Zihin Açıklığı & Zihinsel Regülasyon',
-                focus: 'Sınav saatinde biyolojik uyanıklık, stres ve zihinsel regülasyon',
-                badgeBg: 'rgba(239, 68, 68, 0.12)',
-                badgeColor: '#ef4444'
-            };
+
+        if (config.isLgsFinal) {
+            // 8. Sınıf LGS Periyodizasyonu
+            if (month === 1 || month === 2) {
+                return {
+                    id: 2,
+                    name: 'Faz 2 (Şubat-Mart)',
+                    title: 'Branş Denemeleri & Turlama Otomasyonu (Hedef: TDE >= 85)',
+                    focus: 'Fen 32 dk / Mat 30 dk turlama otomasyonu, inatlaşma terki',
+                    badgeBg: 'rgba(245, 158, 11, 0.12)',
+                    badgeColor: '#d97706'
+                };
+            } else if (month === 3 || month === 4) {
+                return {
+                    id: 3,
+                    name: 'Faz 3 (Nisan-Mayıs)',
+                    title: 'Genel Deneme, Hata Eritme & Plato Kırma (%50+ İleri Muhakeme)',
+                    focus: 'Genel denemeler, aralıklı tekrar hata eritme, %50+ ileri düzey beceri temelli sorular',
+                    badgeBg: 'rgba(99, 102, 241, 0.12)',
+                    badgeColor: '#6366f1'
+                };
+            } else if (month === 5) {
+                return {
+                    id: 4,
+                    name: 'Faz 4 (Mayıs Sonu-Haziran)',
+                    title: '09:30 Biyolojik Ritim, Sınav Zihni & Regülasyon',
+                    focus: 'Sınav saatinde biyolojik uyanıklık, stres ve zihinsel regülasyon',
+                    badgeBg: 'rgba(239, 68, 68, 0.12)',
+                    badgeColor: '#ef4444'
+                };
+            } else {
+                return {
+                    id: 1,
+                    name: 'Faz 1 (Eylül-Ocak)',
+                    title: 'Temel İnşa & Okuma Direnci (40+10 dk Blok Odaklı)',
+                    focus: 'Temel kavram inşası, uzun soru okuma direnci, derin odak blokları',
+                    badgeBg: 'rgba(16, 185, 129, 0.12)',
+                    badgeColor: '#10b981'
+                };
+            }
         } else {
-            return {
-                id: 1,
-                name: 'Faz 1 (Eylül-Ocak)',
-                title: 'Temel İnşa & Okuma Direnci (40+10 dk Blok Odaklı)',
-                focus: 'Temel kavram inşası, uzun soru okuma direnci, odak blokları',
-                badgeBg: 'rgba(16, 185, 129, 0.12)',
-                badgeColor: '#10b981'
-            };
+            // 5, 6 ve 7. Sınıf Kademeli Bilişsel Periyodizasyonu
+            if (month === 11 || month === 0) {
+                return {
+                    id: 2,
+                    name: 'Faz 2 (Aralık-Ocak)',
+                    title: 'Mantık/Grafik Temelleri & Yarıyıl Pekiştirme Kampı',
+                    focus: 'Tablo/grafik okuma becerileri, analitik muhakeme ve yarıyıl eksik kapatma',
+                    badgeBg: 'rgba(245, 158, 11, 0.12)',
+                    badgeColor: '#d97706'
+                };
+            } else if (month >= 1 && month <= 3) {
+                return {
+                    id: 3,
+                    name: 'Faz 3 (Şubat-Nisan)',
+                    title: 'Beceri Temelliye Geçiş & İOKBS Bursluluk Deneme Provası',
+                    focus: 'MEB beceri temelli soru çözümü, süre disiplini ve bursluluk provası',
+                    badgeBg: 'rgba(99, 102, 241, 0.12)',
+                    badgeColor: '#6366f1'
+                };
+            } else if (month === 4 || month === 5) {
+                return {
+                    id: 4,
+                    name: 'Faz 4 (Mayıs-Haziran)',
+                    title: 'Yıl Sonu Kazanım Yetkinliği & Bir Üst Sınıfa Hazırlık',
+                    focus: 'Yıl sonu kazanım taraması, LGS temeli ve bir üst sınıfa güçlü zırhlanma',
+                    badgeBg: 'rgba(239, 68, 68, 0.12)',
+                    badgeColor: '#ef4444'
+                };
+            } else {
+                return {
+                    id: 1,
+                    name: 'Faz 1 (Eylül-Kasım)',
+                    title: 'Kitap Okuma & Bilişsel Rutin İnşası',
+                    focus: 'Günlük okuma dayanıklılığı, Pomodoro odak blokları ve temel kavramlar',
+                    badgeBg: 'rgba(16, 185, 129, 0.12)',
+                    badgeColor: '#10b981'
+                };
+            }
         }
     }
+    window.getCurrentLgsPhase = getCurrentLgsPhase;
 
     // ─────────────────────────────────────────────────────────────
     // 1. ANA MODÜL RENDER VE KARTLARI LİSTELEME
@@ -260,7 +453,7 @@
                 return false;
             }
             if (phaseFilter) {
-                const sPhase = k.activePhase || getCurrentLgsPhase().id;
+                const sPhase = k.activePhase || getCurrentLgsPhase(k.sinif).id;
                 if (String(sPhase) !== String(phaseFilter)) return false;
             }
             if (searchInput) {
@@ -275,8 +468,8 @@
                 <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: var(--card-bg); border-radius: 12px; border: 2px dashed var(--border);">
                     <div style="font-size: 3rem; margin-bottom: 12px; opacity: 0.6;">🧠</div>
                     <h3 style="margin: 0 0 8px 0; color: var(--text-main); font-size: 1.15rem;">Koçluk Listesinde Öğrenci Bulunmuyor</h3>
-                    <p style="margin: 0 0 18px 0; color: var(--text-muted); font-size: 13px; max-width: 480px; margin-inline: auto;">
-                        LGS hazırlık sürecindeki 8. sınıf öğrencilerinizi koçluk havuzuna ekleyerek; hedef net, TDE turlama endeksi, metabilişsel hata defteri ve yapay zeka destekli rehberlik süreçlerini yönetebilirsiniz.
+                    <p style="margin: 0 0 18px 0; color: var(--text-muted); font-size: 13px; max-width: 520px; margin-inline: auto;">
+                        Ortaokul 5, 6, 7 ve 8. sınıf öğrencilerinizi koçluk havuzuna ekleyerek; kademeli soru kalite piramidi (Sweller &amp; Bloom), TDE süre disiplini, metabilişsel 4 kök neden teşhisi (John Flavell) ve yapay zeka destekli pedagojik rehberlik süreçlerini yönetebilirsiniz.
                     </p>
                     <button class="btn btn-primary" onclick="openAddKoclukModal()" style="padding: 10px 22px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
                         <i class="fas fa-user-plus"></i> Yeni Öğrenci Ekle
@@ -292,8 +485,9 @@
             const safeName = escapeFn(item.adSoyad);
             const safeNo = escapeFn(item.studentNo || '-');
             const safeSinif = escapeFn(item.sinif || '8. Sınıf');
-            const safeLise = escapeFn(item.hedefLise || 'Nitelikli Lise Hedefi');
-            const safeYuzdelik = escapeFn(item.hedefYuzdelik || '%1.0');
+            const config = getGradeCognitiveConfig(item.sinif);
+            const safeLise = escapeFn(item.hedefLise || config.defaultHedefOkul);
+            const safeYuzdelik = escapeFn(item.hedefYuzdelik || (config.isLgsFinal ? '%1.0' : (config.grade === 7 ? '%2.0' : '%3.5')));
             
             // Öğrencinin güncel VAK öğrenme stilini çek
             let currentVak = item.vak || 'Analitik / Görsel';
@@ -306,15 +500,15 @@
             }
             const safeVak = escapeFn(currentVak);
 
-            const baslangic = Number(item.baslangicNeti) || 65;
-            const hedef = Number(item.hedefNet) || 85;
+            const baslangic = Number(item.baslangicNeti) || config.defaultBaslangicNet;
+            const hedef = Number(item.hedefNet) || config.defaultHedefNet;
 
-            // Son Net ve Son TDE Verisi
+            // Son Net ve Son TDE Verisi (Sınıfa duyarlı motor)
             const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
             const sonNet = getStudentLatestNet(item);
             const progressPercent = Math.min(100, Math.max(0, Math.round(((sonNet - baslangic) / (Math.max(hedef - baslangic, 1))) * 100)));
 
-            const tdeInfo = lastDeneme ? calculateTDE(lastDeneme) : { tdePuan: 75, badgeText: 'Henüz Deneme Yok', badgeColor: '#6b7280', badgeBg: 'rgba(107,114,128,0.1)' };
+            const tdeInfo = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Henüz Deneme Yok', badgeColor: '#6b7280', badgeBg: 'rgba(107,114,128,0.1)' };
 
             // Bekleyen ve Gecikmiş Hata Tekrarları
             const allErrors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
@@ -366,17 +560,17 @@
                         </div>
                     </div>
 
-                    <!-- Hedef Lise & TDE Rozetleri -->
+                    <!-- Hedef Lise/Okul & TDE Rozetleri -->
                     <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; margin-bottom: 12px;">
                         <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: #4f46e5; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
-                            <span><i class="fas fa-bullseye me-1"></i> HEDEF LİSE</span>
+                            <span><i class="fas fa-bullseye me-1"></i> ${config.isLgsFinal ? 'HEDEF LİSE' : 'HEDEF OKUL / LİSE'}</span>
                             <span style="color: #4338ca; font-size: 11px; font-weight: 800; background: rgba(99, 102, 241, 0.12); padding: 2px 7px; border-radius: 5px;">Dilim: ${safeYuzdelik}</span>
                         </div>
                         <div style="font-size: 13.5px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 7px; display: flex; align-items: center; gap: 6px;" title="${safeLise}">
                             <i class="fas fa-school" style="color: #6366f1;"></i> ${safeLise}
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:7px; font-size:11.5px; flex-wrap: wrap; gap: 4px;">
-                            <span style="color:var(--text-muted); font-weight:700;"><i class="fas fa-stopwatch me-1"></i> Son TDE Skoru:</span>
+                            <span style="color:var(--text-muted); font-weight:700;"><i class="fas fa-stopwatch me-1"></i> ${config.isLgsFinal ? 'Son TDE Skoru' : 'Süre & Strateji Skoru'}:</span>
                             <span style="background:${tdeInfo.badgeBg}; color:${tdeInfo.badgeColor}; border:1px solid ${tdeInfo.badgeBorder}; font-weight:800; padding:3px 9px; border-radius:6px; font-size:11px;">
                                 ${lastDeneme ? `${tdeInfo.tdePuan}/100` : 'Belirsiz'} • ${tdeInfo.badgeText}
                             </span>
@@ -387,7 +581,7 @@
                     <div style="margin-bottom: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; margin-bottom: 6px;">
                             <span style="color: var(--text-muted); font-weight: 600;">
-                                Mevcut Net: <strong style="color: #059669; font-size: 15px; font-weight: 800;">${sonNet}</strong> <span style="font-size:11px; color:var(--text-muted);">/ 90</span>
+                                Mevcut Net: <strong style="color: #059669; font-size: 15px; font-weight: 800;">${sonNet}</strong> <span style="font-size:11px; color:var(--text-muted);">/ ${config.maxNet || 90}</span>
                             </span>
                             <span style="color: var(--text-muted); font-weight: 600;">
                                 Hedef: <strong style="color: #4f46e5; font-size: 15px; font-weight: 800;">${hedef}</strong> <span style="font-size:11px; color:var(--text-muted);">Net</span>
@@ -398,7 +592,7 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 5px;">
                             <span>Başlangıç: <strong style="color: var(--text-main); font-weight: 800;">${baslangic} Net</strong></span>
-                            <span>Haftalık Soru: <strong style="color: #d97706; font-weight: 800;">${item.haftalikHedefSoru || 600}</strong></span>
+                            <span>Haftalık Soru: <strong style="color: #d97706; font-weight: 800;">${item.haftalikHedefSoru || config.defaultHedefSoru}</strong></span>
                         </div>
                     </div>
                 </div>
@@ -467,7 +661,7 @@
             });
             if (Array.isArray(k.denemeler) && k.denemeler.length > 0) {
                 const last = k.denemeler[k.denemeler.length - 1];
-                const res = calculateTDE(last);
+                const res = calculateTDE(last, k.sinif);
                 totalTde += res.tdePuan;
                 tdeCount++;
             }
@@ -525,10 +719,16 @@
         if (classSelect && typeof studentData !== 'undefined') {
             const classes = new Set();
             studentData.forEach(s => { if (s.sinif) classes.add(s.sinif); });
-            let classOpts = '<option value="">-- Sınıf Seçin --</option>';
+            let classOpts = '<option value="">-- Sınıf Seçin (5-8) --</option>';
             Array.from(classes).sort().forEach(c => {
-                const isEight = c.includes('8');
-                classOpts += `<option value="${escapeFn(c)}" ${isEight ? 'style="font-weight:bold;color:var(--secondary);"' : ''}>${escapeFn(c)} ${isEight ? '🎯 (LGS Grubu)' : ''}</option>`;
+                const sStr = String(c).trim();
+                let badge = '';
+                if (sStr.startsWith('8')) badge = '🎯 (8. Sınıf LGS Grubu)';
+                else if (sStr.startsWith('7')) badge = '🛡️ (7. Sınıf Ön LGS Çıraklığı)';
+                else if (sStr.startsWith('6')) badge = '📐 (6. Sınıf Analitik Muhakeme)';
+                else if (sStr.startsWith('5')) badge = '🌱 (5. Sınıf Bilişsel Temel)';
+                const isEight = sStr.startsWith('8');
+                classOpts += `<option value="${escapeFn(c)}" ${isEight ? 'style="font-weight:bold;color:var(--secondary);"' : ''}>${escapeFn(c)} ${badge}</option>`;
             });
             classSelect.innerHTML = classOpts;
         }
@@ -537,11 +737,12 @@
             studentSelect.innerHTML = '<option value="">-- Önce Sınıf Seçiniz --</option>';
         }
 
-        document.getElementById('koc-add-lise').value = 'Fen Lisesi';
+        const defaultCfg = getGradeCognitiveConfig('8. Sınıf');
+        document.getElementById('koc-add-lise').value = defaultCfg.defaultHedefOkul;
         document.getElementById('koc-add-yuzdelik').value = '%1.0';
-        document.getElementById('koc-add-baslangic-net').value = 70;
-        document.getElementById('koc-add-hedef-net').value = 88;
-        document.getElementById('koc-add-soru-hedef').value = 600;
+        document.getElementById('koc-add-baslangic-net').value = defaultCfg.defaultBaslangicNet;
+        document.getElementById('koc-add-hedef-net').value = defaultCfg.defaultHedefNet;
+        document.getElementById('koc-add-soru-hedef').value = defaultCfg.defaultHedefSoru;
         document.getElementById('koc-add-notlar').value = '';
 
         modal.style.display = 'flex';
@@ -557,6 +758,20 @@
             studentSelect.innerHTML = '<option value="">-- Önce Sınıf Seçiniz --</option>';
             return;
         }
+
+        // Seçilen kademeye göre hedef ve soru parametrelerini dinamik yükle
+        const cfg = getGradeCognitiveConfig(selClass);
+        const liseInput = document.getElementById('koc-add-lise');
+        const yuzdelikInput = document.getElementById('koc-add-yuzdelik');
+        const baslangicInput = document.getElementById('koc-add-baslangic-net');
+        const hedefInput = document.getElementById('koc-add-hedef-net');
+        const soruHedefInput = document.getElementById('koc-add-soru-hedef');
+
+        if (liseInput) liseInput.value = cfg.defaultHedefOkul;
+        if (yuzdelikInput) yuzdelikInput.value = cfg.isLgsFinal ? '%1.0' : (cfg.grade === 7 ? '%2.0' : '%3.5');
+        if (baslangicInput) baslangicInput.value = cfg.defaultBaslangicNet;
+        if (hedefInput) hedefInput.value = cfg.defaultHedefNet;
+        if (soruHedefInput) soruHedefInput.value = cfg.defaultHedefSoru;
 
         const norm = window.normSinif || (s => s);
         const filtered = studentData.filter(s => norm(s.sinif) === norm(selClass));
@@ -578,6 +793,8 @@
         const student = (typeof studentData !== 'undefined') ? studentData.find(s => String(s.no) === String(sid)) : null;
         if (!student) return;
 
+        const cfg = getGradeCognitiveConfig(student.sinif);
+
         if (typeof examData !== 'undefined' && Array.isArray(examData) && examData.length > 0) {
             let totalNetSum = 0;
             let count = 0;
@@ -592,9 +809,9 @@
             if (count > 0) {
                 const avg = Math.round(totalNetSum / count);
                 document.getElementById('koc-add-baslangic-net').value = avg;
-                document.getElementById('koc-add-hedef-net').value = Math.min(90, avg + 14);
+                document.getElementById('koc-add-hedef-net').value = Math.min(cfg.maxNet, avg + (cfg.isLgsFinal ? 14 : 10));
                 if (typeof showGlobalToast === 'function') {
-                    showGlobalToast(`📊 8. Sınav Analiz modülünden ${student.adSoyad} için ${count} adet deneme sınavı tespit edildi ve netleri aktarıldı.`, 'info');
+                    showGlobalToast(`📊 ${student.sinif || 'Sınav'} Analiz kayıtlarından ${student.adSoyad} için ${count} adet sınav tespit edildi ve netleri aktarıldı.`, 'info');
                 }
             }
         }
@@ -614,14 +831,15 @@
             return;
         }
 
-        const lise = document.getElementById('koc-add-lise')?.value.trim() || 'Nitelikli Lise';
-        const yuzdelik = document.getElementById('koc-add-yuzdelik')?.value.trim() || '%1.0';
-        const baslangic = Number(document.getElementById('koc-add-baslangic-net')?.value) || 70;
-        const hedef = Number(document.getElementById('koc-add-hedef-net')?.value) || 88;
-        const soruHedef = Number(document.getElementById('koc-add-soru-hedef')?.value) || 600;
+        const cfg = getGradeCognitiveConfig(student.sinif);
+        const lise = document.getElementById('koc-add-lise')?.value.trim() || cfg.defaultHedefOkul;
+        const yuzdelik = document.getElementById('koc-add-yuzdelik')?.value.trim() || (cfg.isLgsFinal ? '%1.0' : '%2.5');
+        const baslangic = Number(document.getElementById('koc-add-baslangic-net')?.value) || cfg.defaultBaslangicNet;
+        const hedef = Number(document.getElementById('koc-add-hedef-net')?.value) || cfg.defaultHedefNet;
+        const soruHedef = Number(document.getElementById('koc-add-soru-hedef')?.value) || cfg.defaultHedefSoru;
         const notlar = document.getElementById('koc-add-notlar')?.value.trim() || '';
 
-        // 8. Sınav Analiz modülünden bu öğrenciye ait tüm geçmiş denemeleri topla
+        // Sınav Analiz modülünden bu öğrenciye ait tüm geçmiş denemeleri topla
         const studentExams = [];
         if (typeof examData !== 'undefined' && Array.isArray(examData)) {
             examData.forEach(exam => {
@@ -657,12 +875,13 @@
                             toplamNet: topNet,
                             turkce: tr,
                             inkilap: sos,
+                            sosyal: sos,
                             din: din,
                             ingilizce: ing,
                             rank: res.rank || '-',
                             cozumSirasi: 'Fen-Mat',
-                            fen1TurSure: 32,
-                            mat1TurSure: 30,
+                            fen1TurSure: cfg.grade === 5 ? 25 : (cfg.grade === 8 ? 32 : 28),
+                            mat1TurSure: cfg.grade === 5 ? 25 : (cfg.grade === 8 ? 30 : 28),
                             inatlasmaSayisi: 0,
                             fen2TurKazanc: 2,
                             mat2TurKazanc: 2,
@@ -670,7 +889,7 @@
                             tdePuan: 75
                         };
                         if (typeof calculateTDE === 'function') {
-                            denObj.tdePuan = calculateTDE(denObj).tdePuan;
+                            denObj.tdePuan = calculateTDE(denObj, student.sinif).tdePuan;
                         }
                         studentExams.push(denObj);
                     }
@@ -690,23 +909,23 @@
 
         const initialDeneme = {
             id: 'den_' + Date.now(),
-            ad: 'Başlangıç Düzey Tespit Denemesi',
+            ad: `${cfg.gradeLabel} Başlangıç Düzey Tespit Denemesi`,
             tarih: new Date().toLocaleDateString('tr-TR'),
-            sozelNet: 45,
-            sayisalNet: 25,
-            matNet: 12,
-            fenNet: 13,
+            sozelNet: Math.round(baslangic * 0.6),
+            sayisalNet: Math.round(baslangic * 0.4),
+            matNet: Math.round(baslangic * 0.2),
+            fenNet: Math.round(baslangic * 0.2),
             toplamNet: baslangic,
             cozumSirasi: 'Fen-Mat',
-            fen1TurSure: 32,
-            mat1TurSure: 33,
+            fen1TurSure: cfg.grade === 5 ? 25 : (cfg.grade === 8 ? 32 : 28),
+            mat1TurSure: cfg.grade === 5 ? 25 : (cfg.grade === 8 ? 30 : 28),
             inatlasmaSayisi: 1,
             fen2TurKazanc: 1,
-            mat2TurKazanc: 2,
+            mat2TurKazanc: 1,
             optikKontrol: true,
             tdePuan: 75
         };
-        initialDeneme.tdePuan = calculateTDE(initialDeneme).tdePuan;
+        initialDeneme.tdePuan = calculateTDE(initialDeneme, student.sinif).tdePuan;
 
         const initialDenemeler = studentExams.length > 0 ? studentExams : [initialDeneme];
 
@@ -727,8 +946,8 @@
                 {
                     id: 'g_' + Date.now(),
                     tarih: new Date().toLocaleDateString('tr-TR'),
-                    konu: 'LGS Koçluk Başlangıç & Hedef Analiz Toplantısı',
-                    notlar: `Öğrencinin başlangıç neti ${baslangic}, hedefi ${hedef} net (${lise}) olarak belirlendi. TDE turlama stratejisi devreye alındı.`,
+                    konu: cfg.isLgsFinal ? 'LGS Koçluk Başlangıç & Hedef Analiz Toplantısı' : `${cfg.gradeLabel} Bilişsel Koçluk Başlangıç & Hedef Analizi`,
+                    notlar: `Öğrencinin başlangıç neti ${baslangic}, hedefi ${hedef} net (${lise}) olarak belirlendi. Kademeli soru kalitesi piramidi ve TDE stratejisi devreye alındı.`,
                     dayaniklikPuani: 4
                 }
             ],
@@ -742,7 +961,7 @@
 
         if (typeof saveData === 'function') saveData(true);
         if (typeof showGlobalToast === 'function') {
-            showGlobalToast(`🎯 ${student.adSoyad} başarıyla LGS Koçluk havuzuna eklendi!`, 'success');
+            showGlobalToast(`🎯 ${student.adSoyad} (${student.sinif}) başarıyla Bilişsel Koçluk havuzuna eklendi!`, 'success');
         }
 
         closeModal('kocluk-add-modal');
@@ -879,18 +1098,24 @@
         const container = document.getElementById('koc-subtab-profil-body');
         if (!container) return;
 
-        // Soru Kalite Piramidi & Konfor Alanı Hesabı (3 Kademeli)
+        const config = getGradeCognitiveConfig(item.sinif);
+
+        // Soru Kalite Piramidi & Konfor Alanı Hesabı (Sınıf Kademesine Duyarlı)
         const lastTakip = (Array.isArray(item.haftalikTakip) && item.haftalikTakip.length > 0) ? item.haftalikTakip[item.haftalikTakip.length - 1] : null;
-        const kavrama = lastTakip ? (Number(lastTakip.kavramaCount) || Math.round((Number(lastTakip.kazanimSoru) || 120) * 0.4)) : 120;
-        const orta = lastTakip ? (Number(lastTakip.ortaCount) || Math.round((Number(lastTakip.kazanimSoru) || 180) * 0.6)) : 180;
-        const yeniNesil = lastTakip ? (Number(lastTakip.yeniNesilCount) || Number(lastTakip.yeniNesilSoru) || 300) : 300;
+        const defaultKavrama = Math.round(config.defaultHedefSoru * (config.idealPiramit.kavrama / 100));
+        const defaultOrta = Math.round(config.defaultHedefSoru * (config.idealPiramit.orta / 100));
+        const defaultYeni = Math.round(config.defaultHedefSoru * (config.idealPiramit.yeniNesil / 100));
+
+        const kavrama = lastTakip ? (Number(lastTakip.kavramaCount) || Math.round((Number(lastTakip.kazanimSoru) || defaultKavrama) * 0.4)) : defaultKavrama;
+        const orta = lastTakip ? (Number(lastTakip.ortaCount) || Math.round((Number(lastTakip.kazanimSoru) || defaultOrta) * 0.6)) : defaultOrta;
+        const yeniNesil = lastTakip ? (Number(lastTakip.yeniNesilCount) || Number(lastTakip.yeniNesilSoru) || defaultYeni) : defaultYeni;
         const totalHaftalikSoru = Math.max(1, kavrama + orta + yeniNesil);
         const kavramaYuzde = Math.round((kavrama / totalHaftalikSoru) * 100);
         const ortaYuzde = Math.round((orta / totalHaftalikSoru) * 100);
         const yeniNesilYuzde = Math.round((yeniNesil / totalHaftalikSoru) * 100);
-        const isKonforAlani = (yeniNesil / totalHaftalikSoru) < 0.45;
+        const isKonforAlani = (yeniNesil / totalHaftalikSoru) < config.konforThreshold;
 
-        const phase = getCurrentLgsPhase();
+        const phase = getCurrentLgsPhase(item.sinif);
 
         let konforAlaniHtml = '';
         if (isKonforAlani) {
@@ -898,10 +1123,10 @@
             <div style="background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; border-radius:8px; padding:12px 14px; margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong style="color:#ef4444; font-size:12.5px;"><i class="fas fa-exclamation-triangle me-1"></i> ⚠️ Konfor Alanı Tuzağı / Psödo-Çalışma Alarmı!</strong>
-                    <span style="background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:800;">Yeni Nesil: %${yeniNesilYuzde} &lt; %45</span>
+                    <span style="background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:800;">Yeni Nesil: %${yeniNesilYuzde} &lt; %${Math.round(config.konforThreshold * 100)}</span>
                 </div>
                 <p style="margin:4px 0 0 0; font-size:12px; color:var(--text-main); line-height:1.45;">
-                    Öğrenci haftalık soru sayısını kolay/orta kazanım sorularıyla şişirmektedir. <strong>Plato kırmak için Beceri Temelli Yeni Nesil soru oranı acilen minimum %50'ye çıkarılmalıdır.</strong>
+                    Öğrenci haftalık soru sayısını kolay/orta kazanım sorularıyla şişirmektedir. <strong>${config.stageTitle} gereği, Beceri Temelli Yeni Nesil soru oranı minimum %${config.idealPiramit.yeniNesil}'e çıkarılmalıdır.</strong>
                 </p>
             </div>`;
         }
@@ -911,7 +1136,7 @@
             <div style="background:linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.06)); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                     <span style="background:${phase.badgeBg}; color:${phase.badgeColor}; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase;">
-                        📅 ${phase.name}
+                        📅 ${phase.name} • ${config.stageTitle}
                     </span>
                     <h4 style="margin:4px 0 0 0; font-size:13.5px; color:var(--text-main);">${phase.title}</h4>
                     <p style="margin:2px 0 0 0; font-size:11.5px; color:var(--text-muted);">${phase.focus}</p>
@@ -932,30 +1157,30 @@
                         <label style="font-size:11.5px; font-weight:800; color:#4f46e5; display:flex; align-items:center; gap:6px;">
                             <i class="fas fa-flag"></i> BU HAFTANIN TEK STRATEJİK KURALI:
                         </label>
-                        <input type="text" id="koc-edit-strateji" value="${escapeFn(item.aktifStratejiKurali || 'Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç.')}" placeholder="Örn: 120 saniyeyi aşan soruya [?] koyup geç." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:var(--text-main); font-size:12px;">
+                        <input type="text" id="koc-edit-strateji" value="${escapeFn(item.aktifStratejiKurali || (config.isLgsFinal ? 'Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç.' : 'Çözemediğin soruyla 2 dakikadan fazla inatlaşma, işaretleyip turlamaya devam et.'))}" placeholder="Örn: 120 saniyeyi aşan soruya [?] koyup geç." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:var(--text-main); font-size:12px;">
                     </div>
 
                     <div class="form-group" style="margin-bottom:10px;">
-                        <label style="font-size:11.5px; font-weight:700;">HEDEF LİSE:</label>
-                        <input type="text" id="koc-edit-lise" value="${escapeFn(item.hedefLise || '')}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
+                        <label style="font-size:11.5px; font-weight:700;">${config.isLgsFinal ? 'HEDEF LİSE:' : 'HEDEF OKUL / LİSE:'}</label>
+                        <input type="text" id="koc-edit-lise" value="${escapeFn(item.hedefLise || config.defaultHedefOkul)}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
                     </div>
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-size:11.5px; font-weight:700;">HEDEF YÜZDELİK DİLİM:</label>
-                        <input type="text" id="koc-edit-yuzdelik" value="${escapeFn(item.hedefYuzdelik || '')}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
+                        <input type="text" id="koc-edit-yuzdelik" value="${escapeFn(item.hedefYuzdelik || (config.isLgsFinal ? '%1.0' : '%2.5'))}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
                     </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                         <div class="form-group" style="margin:0;">
                             <label style="font-size:11.5px; font-weight:700;">BAŞLANGIÇ NET:</label>
-                            <input type="number" id="koc-edit-baslangic" value="${item.baslangicNeti || 70}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
+                            <input type="number" id="koc-edit-baslangic" value="${item.baslangicNeti || config.defaultBaslangicNet}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label style="font-size:11.5px; font-weight:700;">HEDEF NET:</label>
-                            <input type="number" id="koc-edit-hedef" value="${item.hedefNet || 88}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
+                            <input type="number" id="koc-edit-hedef" value="${item.hedefNet || config.defaultHedefNet}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
                         </div>
                     </div>
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-size:11.5px; font-weight:700;">HAFTALIK HEDEF SORU SAYISI:</label>
-                        <input type="number" id="koc-edit-soru-hedef" value="${item.haftalikHedefSoru || 600}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
+                        <input type="number" id="koc-edit-soru-hedef" value="${item.haftalikHedefSoru || config.defaultHedefSoru}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border);">
                     </div>
                 </div>
 
@@ -964,7 +1189,7 @@
                     <div>
                         <h5 style="margin:0 0 12px 0; color:var(--secondary); font-size:13.5px;"><i class="fas fa-layer-group me-2"></i> Soru Kalite Piramidi &amp; Odak Dengesi</h5>
                         
-                        <!-- Soru Piramidi Dağılımı (3 Kademeli) -->
+                        <!-- Soru Piramidi Dağılımı (Sınıfa Göre 3 Kademeli) -->
                         <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
                                 <span style="font-weight:700; color:#3b82f6;">Kavrama: ${kavrama} (%${kavramaYuzde})</span>
@@ -972,14 +1197,14 @@
                                 <span style="font-weight:700; color:#8b5cf6;">Yeni Nesil: ${yeniNesil} (%${yeniNesilYuzde})</span>
                             </div>
                             <div style="width:100%; height:12px; background:var(--border); border-radius:6px; overflow:hidden; display:flex;">
-                                <div style="width:${kavramaYuzde}%; background:#3b82f6;" title="Kavrama/Temel (%20 İdeal)"></div>
-                                <div style="width:${ortaYuzde}%; background:#d97706;" title="Uygulama/Orta (%30 İdeal)"></div>
-                                <div style="width:${yeniNesilYuzde}%; background:#8b5cf6;" title="Yeni Nesil İleri (%50 İdeal)"></div>
+                                <div style="width:${kavramaYuzde}%; background:#3b82f6;" title="Kavrama/Temel (%${config.idealPiramit.kavrama} İdeal)"></div>
+                                <div style="width:${ortaYuzde}%; background:#d97706;" title="Uygulama/Orta (%${config.idealPiramit.orta} İdeal)"></div>
+                                <div style="width:${yeniNesilYuzde}%; background:#8b5cf6;" title="Yeni Nesil Beceri Temelli (%${config.idealPiramit.yeniNesil} İdeal)"></div>
                             </div>
                             <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top:4px;">
-                                <span>Hedef: %20 Kavrama</span>
-                                <span>Hedef: %30 Orta</span>
-                                <span>Hedef: %50 Yeni Nesil</span>
+                                <span>Hedef: %${config.idealPiramit.kavrama} Kavrama</span>
+                                <span>Hedef: %${config.idealPiramit.orta} Orta</span>
+                                <span>Hedef: %${config.idealPiramit.yeniNesil} Beceri Temelli</span>
                             </div>
                             ${konforAlaniHtml}
                         </div>
@@ -1207,23 +1432,27 @@
             <!-- Yeni Hata Ekleme Paneli -->
             <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:18px;">
                 <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; font-weight:700;">
-                    <i class="fas fa-plus-circle me-1"></i> Yeni Yanlış/Boş Soru Kaydı Ekle (Metabilişsel Teşhis)
+                    <i class="fas fa-plus-circle me-1"></i> Yeni Yanlış/Boş Soru Kaydı Ekle (${escapeFn(config.gradeLabel)} Metabilişsel Teşhis)
                 </h5>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-bottom:10px;">
                     <div>
                         <label style="font-size:11px; font-weight:700;">DERS:</label>
                         <select id="koc-new-err-ders" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                            <option value="Matematik">📘 Matematik</option>
-                            <option value="Fen Bilimleri">🔬 Fen Bilimleri</option>
-                            <option value="Türkçe">📕 Türkçe</option>
-                            <option value="T.C. İnkılap">🇹🇷 T.C. İnkılap Tarihi</option>
-                            <option value="İngilizce">🇬🇧 İngilizce</option>
-                            <option value="Din Kültürü">🕌 Din Kültürü</option>
+                            ${config.dersler.map(d => {
+                                let icon = '📘';
+                                if (d.includes('Fen')) icon = '🔬';
+                                else if (d.includes('Türkçe')) icon = '📕';
+                                else if (d.includes('İnkılap')) icon = '🇹🇷';
+                                else if (d.includes('Sosyal')) icon = '🌍';
+                                else if (d.includes('İngilizce')) icon = '🇬🇧';
+                                else if (d.includes('Din')) icon = '🕌';
+                                return `<option value="${escapeFn(d)}">${icon} ${escapeFn(d)}</option>`;
+                            }).join('')}
                         </select>
                     </div>
                     <div>
                         <label style="font-size:11px; font-weight:700;">KONU / KAZANIM:</label>
-                        <input type="text" id="koc-new-err-konu" placeholder="Örn: EBOB-EKOK / Basınç" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                        <input type="text" id="koc-new-err-konu" placeholder="${config.grade === 5 ? 'Örn: Doğal Sayılar / Kuvvetin Ölçülmesi' : (config.grade === 8 ? 'Örn: EBOB-EKOK / Basınç' : 'Örn: Cebirsel İfadeler / Saf Maddeler')}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
                     </div>
                     <div style="grid-column: span 2;">
                         <label style="font-size:11px; font-weight:700; display:block; margin-bottom:6px;">4 KÖK NEDEN KODU (METABİLİŞSEL TEŞHİS &amp; AÇIKLAMA):</label>
@@ -1441,9 +1670,24 @@
         const err = item.hataDefteri.find(e => String(e.id) === String(errId));
         if (!err) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
+        const dersSelect = document.getElementById('edit-hata-ders');
+        if (dersSelect) {
+            dersSelect.innerHTML = config.dersler.map(d => {
+                let icon = '📘';
+                if (d.includes('Fen')) icon = '🔬';
+                else if (d.includes('Türkçe')) icon = '📕';
+                else if (d.includes('İnkılap')) icon = '🇹🇷';
+                else if (d.includes('Sosyal')) icon = '🌍';
+                else if (d.includes('İngilizce')) icon = '🇬🇧';
+                else if (d.includes('Din')) icon = '🕌';
+                return `<option value="${escapeFn(d)}">${icon} ${escapeFn(d)}</option>`;
+            }).join('');
+        }
+
         document.getElementById('edit-hata-koc-id').value = kocId;
         document.getElementById('edit-hata-id').value = errId;
-        document.getElementById('edit-hata-ders').value = err.ders || 'Matematik';
+        if (dersSelect) dersSelect.value = err.ders || config.dersler[0];
         document.getElementById('edit-hata-konu').value = err.konu || '';
         document.getElementById('edit-hata-kok').value = err.kokNeden || 'A';
         document.getElementById('edit-hata-not').value = err.soruNotu || '';
@@ -1628,26 +1872,30 @@
         const container = document.getElementById('koc-subtab-deneme-body');
         if (!container) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
         const denemeler = Array.isArray(item.denemeler) ? item.denemeler : [];
 
-        // Çift Katmanlı Akıllı Plato & TDE Tespiti
+        // Çift Katmanlı Akıllı Plato & TDE Tespiti (Sınıf Kademesine Duyarlı)
         let platoTehisHtml = '';
         if (denemeler.length >= 3) {
             const last3 = denemeler.slice(-3);
             const netSpread = Math.max(...last3.map(d => Number(d.toplamNet) || 0)) - Math.min(...last3.map(d => Number(d.toplamNet) || 0));
-            const avgTde = last3.reduce((acc, d) => acc + (d.tdePuan || calculateTDE(d).tdePuan), 0) / 3;
+            const avgTde = last3.reduce((acc, d) => acc + (d.tdePuan || calculateTDE(d, item.sinif).tdePuan), 0) / 3;
 
             if (netSpread <= 3) {
                 if (avgTde < 75) {
+                    const platoMudahele = config.isLgsFinal
+                        ? '1. Turda Fen 32 dk / Mat 30 dk blok kuralı uygulanmalı ve 120 saniyeyi geçen sorular derhal işaretlenip geçilmelidir.'
+                        : `Süre ve Strateji Disiplini çerçevesinde soru başına en fazla 90-120 saniye tanınmalı, takılınan sorulara takılmadan turlama taktiği uygulanmalıdır. (${config.stageTitle})`;
                     platoTehisHtml = `
                     <div style="background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; border-radius:8px; padding:14px; margin-bottom:16px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <strong style="color:#ef4444; font-size:13.5px;"><i class="fas fa-exclamation-triangle me-1"></i> Süreç Teşhisi: Turlama Disiplini Çöküşü</strong>
+                            <strong style="color:#ef4444; font-size:13.5px;"><i class="fas fa-exclamation-triangle me-1"></i> Süreç Teşhisi: Turlama &amp; Süre Disiplini Tıkanıklığı</strong>
                             <span style="background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 8px; border-radius:6px; font-weight:800; font-size:11px;">Ort. TDE: ${avgTde.toFixed(1)} / 100</span>
                         </div>
                         <p style="margin:0; font-size:12.5px; color:var(--text-main); line-height:1.5;">
                             Öğrencinin son netleri <strong>${last3.map(d => d.toplamNet).join(' → ')}</strong> aralığında sıkışmıştır. Bu tıkanıklık <strong>bilgi eksiğinden değil</strong>, süre yetiştirememe ve soru inatlaşmasından (Düşük TDE) kaynaklanmaktadır. 
-                            <em>Müdahale:</em> 1. Turda Fen 32 dk / Mat 30 dk blok kuralı uygulanmalı ve 120 saniyeyi geçen sorular derhal işaretlenip geçilmelidir.
+                            <em>Müdahale:</em> ${platoMudahele}
                         </p>
                     </div>`;
                 } else if (avgTde >= 85) {
@@ -1658,15 +1906,15 @@
                             <span style="background:rgba(59,130,246,0.15); color:#3b82f6; padding:2px 8px; border-radius:6px; font-weight:800; font-size:11px;">Ort. TDE: ${avgTde.toFixed(1)} / 100</span>
                         </div>
                         <p style="margin:0; font-size:12.5px; color:var(--text-main); line-height:1.5;">
-                            Öğrencinin sınav turlama stratejisi ve süre yönetimi kusursuzdur (TDE Yüksek). 70'li netlerdeki plato <strong>üst düzey beceri temelli sorulardaki kavramsal derinlik</strong> eksikliğindendir.
-                            <em>Müdahale:</em> Hata defterindeki <strong>Kod A (Bilgi)</strong> ve <strong>Kod B (Kurgu/Öncül)</strong> sorularına cerrahi derinleşme uygulanmalı, çok adımlı deney soruları analiz edilmelidir.
+                            Öğrencinin sınav turlama stratejisi ve süre yönetimi kusursuzdur (TDE Yüksek). Netlerdeki plato <strong>üst düzey beceri temelli sorulardaki kavramsal derinlik</strong> eksikliğindendir.
+                            <em>Müdahale:</em> Hata defterindeki <strong>Kod A (Bilgi)</strong> ve <strong>Kod B (Kurgu/Öncül)</strong> sorularına cerrahi derinleşme uygulanmalı, çok adımlı deney ve analiz soruları incelenmelidir.
                         </p>
                     </div>`;
                 } else {
                     platoTehisHtml = `
                     <div style="background:rgba(245,158,11,0.08); border-left:4px solid #f59e0b; border-radius:8px; padding:14px; margin-bottom:16px;">
                         <strong style="color:#f59e0b; font-size:13px;"><i class="fas fa-chart-line me-1"></i> Standart Plato Uyarısı:</strong>
-                        <p style="margin:4px 0 0 0; font-size:12.5px; color:var(--text-main);">Öğrencinin son netleri <strong>${last3.map(d => d.toplamNet).join(' → ')}</strong> aralığında dalgalanmaktadır. Hem 120 sn kuralı hem de hata defteri analizi birlikte yürütülmelidir.</p>
+                        <p style="margin:4px 0 0 0; font-size:12.5px; color:var(--text-main);">Öğrencinin son netleri <strong>${last3.map(d => d.toplamNet).join(' → ')}</strong> aralığında dalgalanmaktadır. Hem süre kontrolü hem de hata defteri analizi birlikte yürütülmelidir.</p>
                     </div>`;
                 }
             }
@@ -1681,7 +1929,7 @@
                 let anySub = false;
                 [
                     { dKey: 'turkceD', yKey: 'turkceY', bKey: 'turkceB', net: d.turkce, q: 20 },
-                    { dKey: 'inkilapD', yKey: 'inkilapY', bKey: 'inkilapB', net: (d.inkilap ?? d.inkNet), q: 10 },
+                    { dKey: 'inkilapD', yKey: 'inkilapY', bKey: 'inkilapB', net: (d.inkilap ?? d.sosyal ?? d.inkNet), q: 10 },
                     { dKey: 'dinD', yKey: 'dinY', bKey: 'dinB', net: (d.din ?? d.dinNet), q: 10 },
                     { dKey: 'ingilizceD', yKey: 'ingilizceY', bKey: 'ingilizceB', net: (d.ingilizce ?? d.ingNet), q: 10 }
                 ].forEach(sub => {
@@ -1726,17 +1974,19 @@
                 d.toplamB = (d.sozelB || 0) + (d.sayisalB || 0);
             }
 
-            const tde = calculateTDE(d);
+            const tde = calculateTDE(d, item.sinif);
             const sozelDetay = (d.sozelD != null && d.sozelD !== '') ? `<div style="font-size:10.5px; color:var(--text-muted); font-weight:600; margin-top:2px;">${d.sozelD}D ${d.sozelY || 0}Y ${d.sozelB || 0}B</div>` : '';
             const matDetay = (d.matD != null && d.matD !== '') ? `<div style="font-size:10.5px; color:var(--text-muted); font-weight:600; margin-top:2px;">${d.matD}D ${d.matY || 0}Y ${d.matB || 0}B</div>` : '';
             const fenDetay = (d.fenD != null && d.fenD !== '') ? `<div style="font-size:10.5px; color:var(--text-muted); font-weight:600; margin-top:2px;">${d.fenD}D ${d.fenY || 0}Y ${d.fenB || 0}B</div>` : '';
             const topDetay = (d.toplamD != null && d.toplamD !== '') ? `<div style="font-size:11px; font-weight:700; color:#059669; margin-top:2px;">${d.toplamD}D ${d.toplamY || 0}Y ${d.toplamB || 0}B</div>` : '';
 
-            const hasSubLessons = (d.turkce != null || d.inkilap != null || d.din != null || d.ingilizce != null);
+            const hasSubLessons = (d.turkce != null || d.inkilap != null || d.sosyal != null || d.din != null || d.ingilizce != null);
+            const inkOrSosNet = d.inkilap ?? d.sosyal ?? '-';
+            const inkOrSosLabel = config.isLgsFinal ? 'İnk' : 'Sos';
             const subBadge = hasSubLessons ? `
                 <div style="font-size:9.5px; color:var(--text-muted); margin-top:3px; display:flex; gap:3px; justify-content:center; flex-wrap:wrap;">
                     <span title="Türkçe Net" style="background:rgba(239,68,68,0.1); color:#ef4444; padding:1px 3px; border-radius:3px; font-weight:700;">Tr:${d.turkce ?? '-'}</span>
-                    <span title="İnkılap Net" style="background:rgba(245,158,11,0.1); color:#d97706; padding:1px 3px; border-radius:3px; font-weight:700;">İnk:${d.inkilap ?? '-'}</span>
+                    <span title="${config.sosyalDersAdi} Net" style="background:rgba(245,158,11,0.1); color:#d97706; padding:1px 3px; border-radius:3px; font-weight:700;">${inkOrSosLabel}:${inkOrSosNet}</span>
                     <span title="Din Net" style="background:rgba(16,185,129,0.1); color:#059669; padding:1px 3px; border-radius:3px; font-weight:700;">Din:${d.din ?? '-'}</span>
                     <span title="İngilizce Net" style="background:rgba(139,92,246,0.1); color:#7c3aed; padding:1px 3px; border-radius:3px; font-weight:700;">İng:${d.ingilizce ?? '-'}</span>
                 </div>
@@ -1751,7 +2001,7 @@
                 <td style="padding:10px; font-weight:700;">${escapeFn(d.ad)}${sourceBadge}</td>
                 <td style="padding:10px; color:var(--text-muted); font-size:11.5px;">${escapeFn(d.tarih)}</td>
                 <td style="padding:10px; text-align:center;">
-                    <strong style="color:#6366f1; font-size:13px;">${d.sozelNet ?? (d.turkce ? (Number(d.turkce) + Number(d.inkilap || 0) + Number(d.din || 0) + Number(d.ingilizce || 0)) : '-')}</strong>
+                    <strong style="color:#6366f1; font-size:13px;">${d.sozelNet ?? (d.turkce ? (Number(d.turkce) + Number(d.inkilap || d.sosyal || 0) + Number(d.din || 0) + Number(d.ingilizce || 0)) : '-')}</strong>
                     ${sozelDetay}
                     ${subBadge}
                 </td>
@@ -1787,14 +2037,14 @@
             <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:18px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
                     <h5 style="margin:0; font-size:13.5px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-plus-circle" style="color:var(--secondary);"></i> Yeni Deneme ve TDE Strateji Girişi
+                        <i class="fas fa-plus-circle" style="color:var(--secondary);"></i> Yeni Deneme ve ${config.isLgsFinal ? 'TDE Strateji' : 'Süre & Strateji'} Girişi
                     </h5>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <button type="button" class="btn btn-clear" onclick="if (typeof window.syncAllExamsToKocluk === 'function') { window.syncAllExamsToKocluk(false); const cur = (window.koclukData||[]).find(k=>k.id==='${item.id}'); if(cur) renderSubTabDenemeler(cur); }" style="font-size:11.5px; padding:5px 11px; border:1px solid rgba(2,132,199,0.35); border-radius:6px; background:rgba(2,132,199,0.08); color:#0284c7; font-weight:700;">
                             <i class="fas fa-sync-alt me-1"></i> 🦅 8. Sınav Analizden Güncelle
                         </button>
                         <button type="button" class="btn btn-clear" onclick="toggleTdeDetailsPanel()" style="font-size:11.5px; padding:5px 11px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg);">
-                            <i class="fas fa-cog me-1" style="color:var(--secondary);"></i> <span id="tde-toggle-text">TDE Turlama Detaylarını Göster</span>
+                            <i class="fas fa-cog me-1" style="color:var(--secondary);"></i> <span id="tde-toggle-text">${config.isLgsFinal ? 'TDE Turlama Detaylarını Göster' : 'Süre & Turlama Detaylarını Göster'}</span>
                         </button>
                     </div>
                 </div>
@@ -1844,10 +2094,10 @@
                                 </td>
                             </tr>
 
-                            <!-- 2. İnkılap Tarihi (10 Soru) -->
+                            <!-- 2. Sosyal Bilgiler / İnkılap Tarihi (10 Soru) -->
                             <tr style="border-bottom:1px solid var(--border);">
                                 <td style="padding:7px 12px; font-weight:700; color:#f59e0b;">
-                                    <i class="fas fa-landmark me-1" style="color:#f59e0b;"></i> T.C. İnkılap Tarihi <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
+                                    <i class="${config.sosyalDersIcon} me-1" style="color:#f59e0b;"></i> ${config.sosyalDersAdi} <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
                                 </td>
                                 <td style="padding:5px; text-align:center;">
                                     <input type="number" id="koc-sub-ink-d" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
@@ -1980,7 +2230,7 @@
                             <!-- GENEL TOPLAM Satırı -->
                             <tr style="background:rgba(16,185,129,0.06); font-weight:800;">
                                 <td style="padding:10px 12px; color:var(--primary); font-size:12.5px;">
-                                    <i class="fas fa-award me-1" style="color:#10b981;"></i> TOPLAM LGS <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(90 Soru)</span>
+                                    <i class="fas fa-award me-1" style="color:#10b981;"></i> TOPLAM ${config.isLgsFinal ? 'LGS' : config.stageTitle.toUpperCase()} <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(90 Soru)</span>
                                 </td>
                                 <td style="padding:8px 6px; text-align:center; color:#10b981; font-size:13px;" id="koc-den-toplam-d">0</td>
                                 <td style="padding:8px 6px; text-align:center; color:#ef4444; font-size:13px;" id="koc-den-toplam-y">0</td>
@@ -1996,7 +2246,7 @@
                 <!-- Katlanabilir TDE Metrik Paneli -->
                 <div id="koc-tde-details-panel" style="display:none; background:var(--card-bg); border:1px dashed var(--secondary); border-radius:8px; padding:14px; margin-bottom:12px;">
                     <div style="font-size:12px; font-weight:700; color:var(--secondary); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                        <span><i class="fas fa-stopwatch me-1"></i> Turlama Disiplin Endeksi (TDE) Parametreleri</span>
+                        <span><i class="fas fa-stopwatch me-1"></i> ${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru (TDE)'} Parametreleri</span>
                         <span id="koc-live-tde-badge" style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#f59e0b;">
                             Hesaplanan TDE: 75/100
                         </span>
@@ -2013,14 +2263,14 @@
                         </div>
                         <div>
                             <label style="font-size:11px; font-weight:700;">FEN 1. TUR SÜRE (DK):</label>
-                            <input type="number" id="koc-tde-fen1" value="32" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= 32" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            <input type="number" id="koc-tde-fen1" value="${config.isLgsFinal ? 32 : 28}" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= ${config.isLgsFinal ? 32 : 28}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
                         </div>
                         <div>
                             <label style="font-size:11px; font-weight:700;">MAT 1. TUR SÜRE (DK):</label>
-                            <input type="number" id="koc-tde-mat1" value="30" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= 30" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            <input type="number" id="koc-tde-mat1" value="${config.isLgsFinal ? 30 : 25}" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= ${config.isLgsFinal ? 30 : 25}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
                         </div>
                         <div>
-                            <label style="font-size:11px; font-weight:700;">İNATLAŞILAN SORU (&gt;2.5 DK):</label>
+                            <label style="font-size:11px; font-weight:700;">İNATLAŞILAN SORU (&gt;2 DK):</label>
                             <input type="number" id="koc-tde-inat" value="0" oninput="liveCalculateTdePreview()" placeholder="İdeal: 0" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
                         </div>
                         <div>
@@ -2036,7 +2286,7 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" id="koc-tde-optik" checked onchange="liveCalculateTdePreview()" style="width:16px; height:16px;">
                         <label for="koc-tde-optik" style="font-size:12px; font-weight:600; cursor:pointer;">
-                            Sınavın son 3 dakikasında sayfa sayfa optik kontrol protokolü uygulandı (+15p)
+                            Sınavın son 3 dakikasında sayfa sayfa optik kontrol ve turlama kontrolü uygulandı (+15p)
                         </label>
                     </div>
                 </div>
@@ -2059,7 +2309,7 @@
                             <th style="padding:10px; text-align:center;">Mat (20)</th>
                             <th style="padding:10px; text-align:center;">Fen (20)</th>
                             <th style="padding:10px; text-align:center;">Toplam Net</th>
-                            <th style="padding:10px; text-align:center;">TDE Skoru &amp; Teşhis</th>
+                            <th style="padding:10px; text-align:center;">${config.isLgsFinal ? 'TDE Skoru &amp; Teşhis' : 'Strateji Skoru &amp; Teşhis'}</th>
                             <th style="padding:10px; text-align:right;">İşlem</th>
                         </tr>
                     </thead>
@@ -2304,6 +2554,7 @@
         const badge = document.getElementById('koc-live-tde-badge');
         if (!badge) return;
 
+        const curItem = (window.koclukData || []).find(k => String(k.id) === String(activeKoclukId));
         const dummy = {
             fen1TurSure: Number(document.getElementById('koc-tde-fen1')?.value) || 32,
             mat1TurSure: Number(document.getElementById('koc-tde-mat1')?.value) || 30,
@@ -2312,7 +2563,7 @@
             mat2TurKazanc: Number(document.getElementById('koc-tde-mat2')?.value) || 0,
             optikKontrol: document.getElementById('koc-tde-optik')?.checked
         };
-        const res = calculateTDE(dummy);
+        const res = calculateTDE(dummy, curItem?.sinif);
         badge.textContent = `Hesaplanan TDE: ${res.tdePuan}/100 • ${res.badgeText}`;
         badge.style.background = res.badgeBg;
         badge.style.color = res.badgeColor;
@@ -2384,6 +2635,8 @@
         const mat2TurKazanc = Number(document.getElementById('koc-tde-mat2')?.value) || 0;
         const optikKontrol = !!document.getElementById('koc-tde-optik')?.checked;
 
+        const inkilapNet = !isNaN(inkilapD) ? Math.round((inkilapD - ((inkilapY || 0) / 3)) * 100) / 100 : null;
+
         const denemeObj = {
             id: 'den_' + Date.now(),
             ad,
@@ -2416,7 +2669,8 @@
             inkilapD: !isNaN(inkilapD) ? inkilapD : null,
             inkilapY: !isNaN(inkilapY) ? inkilapY : null,
             inkilapB: !isNaN(inkilapB) ? inkilapB : null,
-            inkilap: !isNaN(inkilapD) ? Math.round((inkilapD - ((inkilapY || 0) / 3)) * 100) / 100 : null,
+            inkilap: inkilapNet,
+            sosyal: inkilapNet, // 5-7. Sınıflar İçin Sosyal Bilgiler Uyumu
 
             dinD: !isNaN(dinD) ? dinD : null,
             dinY: !isNaN(dinY) ? dinY : null,
@@ -2437,7 +2691,7 @@
             tdePuan: 0
         };
 
-        denemeObj.tdePuan = calculateTDE(denemeObj).tdePuan;
+        denemeObj.tdePuan = calculateTDE(denemeObj, item.sinif).tdePuan;
 
         if (!Array.isArray(item.denemeler)) item.denemeler = [];
         item.denemeler.push(denemeObj);
@@ -2469,10 +2723,18 @@
         const den = item.denemeler.find(d => String(d.id) === String(denId));
         if (!den) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
+
         document.getElementById('edit-den-koc-id').value = kocId;
         document.getElementById('edit-den-id').value = denId;
         document.getElementById('edit-den-ad').value = den.ad || '';
         document.getElementById('edit-den-tarih').value = den.tarih || new Date().toLocaleDateString('tr-TR');
+
+        // Modal Sözel Branş Etiketini Sınıfa Göre Güncelle (Sosyal Bilgiler vs İnkılap)
+        const inkLabel = document.getElementById('edit-sub-ink-label');
+        if (inkLabel) {
+            inkLabel.innerHTML = `<i class="${config.sosyalDersIcon} me-1" style="color:#f59e0b;"></i> ${config.sosyalDersAdi} <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>`;
+        }
 
         // Sözel Alt Branşları Çözümle ve Doldur
         let sumSubD = 0, sumSubY = 0, sumSubB = 0;
@@ -2480,7 +2742,7 @@
 
         const editSubList = [
             { key: 'tr', dProp: 'turkceD', yProp: 'turkceY', bProp: 'turkceB', netProp: 'turkce', max: 20 },
-            { key: 'ink', dProp: 'inkilapD', yProp: 'inkilapY', bProp: 'inkilapB', netProp: 'inkilap', altNet: 'inkNet', max: 10 },
+            { key: 'ink', dProp: 'inkilapD', yProp: 'inkilapY', bProp: 'inkilapB', netProp: 'inkilap', altNet: 'sosyal', fallbackNet: 'inkNet', max: 10 },
             { key: 'din', dProp: 'dinD', yProp: 'dinY', bProp: 'dinB', netProp: 'din', altNet: 'dinNet', max: 10 },
             { key: 'ing', dProp: 'ingilizceD', yProp: 'ingilizceY', bProp: 'ingilizceB', netProp: 'ingilizce', altNet: 'ingNet', max: 10 }
         ];
@@ -2489,7 +2751,9 @@
             let curD = den[s.dProp];
             let curY = den[s.yProp];
             let curB = den[s.bProp];
-            let curNet = (den[s.netProp] != null && den[s.netProp] !== '') ? den[s.netProp] : (s.altNet ? den[s.altNet] : null);
+            let curNet = (den[s.netProp] != null && den[s.netProp] !== '') 
+                ? den[s.netProp] 
+                : (s.altNet && den[s.altNet] != null ? den[s.altNet] : (s.fallbackNet ? den[s.fallbackNet] : null));
 
             // Eğer D veya Y boş ama Net varsa, otomatik DYB çöz
             if ((curD == null || curD === '') && (curY == null || curY === '') && curNet != null && curNet !== '') {
@@ -2900,6 +3164,9 @@
     }
 
     function editLiveTdePreview() {
+        const kocId = document.getElementById('edit-den-koc-id')?.value;
+        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
+
         const fen1 = Number(document.getElementById('edit-tde-fen1')?.value) || 32;
         const mat1 = Number(document.getElementById('edit-tde-mat1')?.value) || 30;
         const inat = Number(document.getElementById('edit-tde-inat')?.value) || 0;
@@ -2914,7 +3181,7 @@
             fen2TurKazanc: fen2,
             mat2TurKazanc: mat2,
             optikKontrol: optik
-        });
+        }, item?.sinif);
 
         const badge = document.getElementById('edit-live-tde-badge');
         if (badge) {
@@ -2996,7 +3263,7 @@
             fen2TurKazanc: fen2,
             mat2TurKazanc: mat2,
             optikKontrol: optik
-        });
+        }, item.sinif);
 
         den.ad = ad;
         den.tarih = tarih;
@@ -3034,7 +3301,12 @@
         den.inkilapD = !isNaN(inkilapD) ? inkilapD : null;
         den.inkilapY = !isNaN(inkilapY) ? inkilapY : null;
         den.inkilapB = !isNaN(inkilapB) ? inkilapB : null;
-        den.inkilap = !isNaN(inkilapD) ? Math.round((inkilapD - ((inkilapY || 0) / 3)) * 100) / 100 : (!isNaN(subInkNet) ? subInkNet : den.inkilap);
+        const finalInkNet = !isNaN(inkilapD) ? Math.round((inkilapD - ((inkilapY || 0) / 3)) * 100) / 100 : (!isNaN(subInkNet) ? subInkNet : den.inkilap);
+        den.inkilap = finalInkNet;
+        den.sosyal = finalInkNet; // 5-7. Sınıflar İçin Sosyal Bilgiler Uyumu
+        den.sosyalD = den.inkilapD;
+        den.sosyalY = den.inkilapY;
+        den.sosyalB = den.inkilapB;
 
         den.dinD = !isNaN(dinD) ? dinD : null;
         den.dinY = !isNaN(dinY) ? dinY : null;
@@ -3250,15 +3522,16 @@
         const container = document.getElementById('koc-subtab-ai-body');
         if (!container) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
-        const tde = lastDeneme ? calculateTDE(lastDeneme) : { tdePuan: 75 };
+        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75 };
 
         container.innerHTML = `
             <div style="background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08)); border: 2px dashed #6366f1; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 2.5rem; margin-bottom: 8px;">🧠</div>
-                <h4 style="margin: 0 0 8px 0; color: #4f46e5; font-size: 16px;">5 Modüllük LGS Bilişsel Koçluk &amp; TDE Raporu (Google Gemini)</h4>
+                <h4 style="margin: 0 0 8px 0; color: #4f46e5; font-size: 16px;">5 Modüllük ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk &amp; ${config.isLgsFinal ? 'TDE' : 'Strateji'} Raporu (Google Gemini)</h4>
                 <p style="margin: 0 0 16px 0; color: var(--text-muted); font-size: 13px; max-width: 600px; margin-inline: auto;">
-                    <strong>${escapeFn(item.adSoyad)}</strong> için branş netleri (Sözel, Mat, Fen), <strong>TDE Skoru (${tde.tdePuan}/100)</strong>, baskın hata kök neden kodu ve hedef lise parametreleri tam otomatik enjekte edilerek profesyonel prompt hazırlanmıştır.
+                    <strong>${escapeFn(item.adSoyad)}</strong> (${escapeFn(item.sinif)}) için branş netleri (Sözel, Mat, Fen), <strong>${config.isLgsFinal ? 'TDE Skoru' : 'Süre & Strateji Skoru'} (${tde.tdePuan}/100)</strong>, baskın hata kök neden kodu ve ${config.isLgsFinal ? 'hedef lise' : 'hedef okul / lise'} parametreleri kademe seviyesine uygun olarak tam otomatik enjekte edilmiştir.
                 </p>
                 <button class="btn btn-purple" onclick="runAiCoachingForStudent('${item.id}')" style="padding: 12px 24px; font-size: 13.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
                     <i class="fas fa-brain"></i> Promptu Panoya Kopyala &amp; Gemini'yi Aç
@@ -3316,15 +3589,16 @@
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 6. GELİŞMİŞ GEMINI AI PROMPT ENTEGRASYONU
+    // 6. GELİŞMİŞ GEMINI AI PROMPT ENTEGRASYONU (5-8. SINIF KADEMELİ)
     // ─────────────────────────────────────────────────────────────
     async function runAiCoachingForStudent(kocId) {
         const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
         if (!item) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
         const latestNet = getStudentLatestNet(item);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
-        const tde = lastDeneme ? calculateTDE(lastDeneme) : { tdePuan: 75, badgeText: 'Normal' };
+        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Normal' };
 
         // Hata Defteri Baskın Kök Neden Analizi
         const errors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
@@ -3348,7 +3622,7 @@
             'A': 'Kod A (Bilgi & Kavram Eksikliği: Kavram/formül hatırlanamadı veya bilinmiyor)',
             'B': 'Kod B (Kurgu & Soru Kökü Hatası: Olumsuz kök, grafik veya öncül yanlış okundu)',
             'C': 'Kod C (Süre Baskısı & İşlem Hatası: Zaman baskısıyla acele, dört işlem veya kaydırma)',
-            'D': 'Kod D (Bilişsel Direnç & İnatlaşma: Soruyla 2.5+ dakika inatlaşıldı, taktiksel pas geçilemedi)'
+            'D': 'Kod D (Bilişsel Direnç & İnatlaşma: Soruyla 2+ dakika inatlaşıldı, taktiksel pas geçilemedi)'
         };
 
         const dueErrors = errors.filter(h => getHataRepeatStatus(h).isDue);
@@ -3362,11 +3636,14 @@
             hataAnalizMetni = '  (Günü gelmiş gecikmiş hata yok, pekiştirme döngüsü düzenli işliyor)';
         }
 
-        const phase = getCurrentLgsPhase();
+        const phase = getCurrentLgsPhase(item.sinif);
         const lastTakip = (Array.isArray(item.haftalikTakip) && item.haftalikTakip.length > 0) ? item.haftalikTakip[item.haftalikTakip.length - 1] : null;
-        const kazanim = lastTakip ? (Number(lastTakip.kazanimSoru) || 0) : 150;
-        const yeniNesil = lastTakip ? (Number(lastTakip.yeniNesilSoru) || 0) : 350;
-        const piramidYuzde = Math.round((yeniNesil / Math.max(1, kazanim + yeniNesil)) * 100);
+        const kavrama = lastTakip ? (Number(lastTakip.kavramaCount ?? lastTakip.kazanimSoru) || 0) : 150;
+        const orta = lastTakip ? (Number(lastTakip.ortaCount) || 0) : 150;
+        const yeniNesil = lastTakip ? (Number(lastTakip.yeniNesilCount ?? lastTakip.yeniNesilSoru) || 0) : 200;
+        const totalQ = kavrama + orta + yeniNesil;
+        const piramidYuzde = totalQ > 0 ? Math.round((yeniNesil / totalQ) * 100) : 0;
+        const isComfortZone = piramidYuzde < config.konforThreshold;
 
         const topicMap = {};
         errors.forEach(err => {
@@ -3379,68 +3656,71 @@
             .map(t => `${t.ders} (${t.konu})`)
             .join(', ') || 'Kritik kırmızı konu yok (Pekiştirme süreci dengeli)';
 
-        const prompt = `Sen; 8. sınıf LGS hazırlık süreçlerinde uzmanlaşmış, gelişim psikolojisi, bilişsel koçluk, ergenlik dönemi pedagojisi ve sınav stratejileri alanında 15+ yıl deneyimli kıdemli bir Pedagog ve Bilişsel Eğitim Koçusun.
-Yaklaşımın; ezberci veya baskıcı değil, "içsel motivasyonu tetikleyen", "bilişsel yükü optimize eden" ve "metabilişsel (öğrenmeyi öğrenme) becerileri geliştiren" modern eğitim bilimleri ilkelerine dayanır.
+        const roleIntroduction = config.isLgsFinal
+            ? `Sen; 8. sınıf LGS hazırlık süreçlerinde uzmanlaşmış, gelişim psikolojisi, bilişsel koçluk, ergenlik dönemi pedagojisi ve sınav stratejileri alanında 15+ yıl deneyimli kıdemli bir Pedagog ve Bilişsel Eğitim Koçusun.`
+            : `Sen; ortaokul ${config.stageTitle} kademesinde uzmanlaşmış, gelişim psikolojisi (somut işlemlerden soyut işlemlere geçiş), bilişsel koçluk, odaklanma disiplini ve ${config.examFocus} alanında 15+ yıl deneyimli kıdemli bir Pedagog ve Bilişsel Mentor koçusun.`;
+
+        const prompt = `${roleIntroduction}
+Yaklaşımın; ezberci veya baskıcı değil, "içsel motivasyonu tetikleyen", "Sweller Bilişsel Yük Kuramı ile zihinsel kapasiteyi optimize eden", "Bloom Taksonomisi ile aşamalı derinleşen" ve "metabilişsel (öğrenmeyi öğrenme) becerileri geliştiren" modern eğitim bilimleri ilkelerine dayanır.
 
 ════════════════════════════════════════════════════════════════════
-ÖĞRENCİ PROFİLİ VE GÜNCEL TDE / DENEME VERİLERİ
+ÖĞRENCİ PROFİLİ VE GÜNCEL BİLİŞSEL / DENEME VERİLERİ
 ════════════════════════════════════════════════════════════════════
-- Öğrenci Adı Soyadı : ${item.adSoyad} (Sınıf: ${item.sinif}, No: ${item.studentNo})
-- Aktif LGS Fazı     : ${phase.name} - ${phase.title}
-- Haftanın Stratejisi: "${item.aktifStratejiKurali || 'Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç.'}"
+- Öğrenci Adı Soyadı : ${item.adSoyad} (Sınıf Kademesi: ${item.sinif}, No: ${item.studentNo})
+- Kademe ve Faz      : ${config.stageTitle} | Aktif Faz: ${phase.name} (${phase.title})
+- Haftanın Stratejisi: "${item.aktifStratejiKurali || 'Süre baskısında takılınan soruya [?] koyup derhal geç.'}"
 - Öğrenme Stili (VAK): ${item.vak || 'Analitik / Görsel'}
-- Mevcut Genel Net   : 90 soru üzerinden ${latestNet} Net
-- Son Deneme Branşları: Sözel: ${lastDeneme?.sozelNet ?? 45}/50 | Mat: ${lastDeneme?.matNet ?? 13}/20 | Fen: ${lastDeneme?.fenNet ?? 15}/20
-- Turlama Disiplin Endeksi (TDE): ${tde.tdePuan}/100 (${tde.badgeText})
+- Mevcut Net Düzeyi  : 90 soru üzerinden ${latestNet} Net (Hedef: ${item.hedefNet} Net | Başlangıç: ${item.baslangicNeti} Net)
+- Son Deneme Branşları: Sözel: ${lastDeneme?.sozelNet ?? 45}/50 [${config.sosyalDersAdi} dahil] | Mat: ${lastDeneme?.matNet ?? 13}/20 | Fen: ${lastDeneme?.fenNet ?? 15}/20
+- ${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru'}: ${tde.tdePuan}/100 (${tde.badgeText})
   * Çözüm Sırası: ${lastDeneme?.cozumSirasi || 'Fen-Mat'}
-  * Fen 1. Tur Süresi: ${lastDeneme?.fen1TurSure || 32} dk | Mat 1. Tur Süresi: ${lastDeneme?.mat1TurSure || 30} dk
-  * İnatlaşılan Soru (>2.5 dk): ${lastDeneme?.inatlasmaSayisi || 0} adet
+  * Fen 1. Tur Süresi: ${lastDeneme?.fen1TurSure || (config.isLgsFinal ? 32 : 28)} dk | Mat 1. Tur Süresi: ${lastDeneme?.mat1TurSure || (config.isLgsFinal ? 30 : 25)} dk
+  * İnatlaşılan Soru (>2 dk): ${lastDeneme?.inatlasmaSayisi || 0} adet
   * 2. Tur Net Kazancı: Fen +${lastDeneme?.fen2TurKazanc || 0}, Mat +${lastDeneme?.mat2TurKazanc || 0}
-- Hedef Lise & Dilim : ${item.hedefLise} (Dilim: ${item.hedefYuzdelik || '%1.0'})
-- Hedef Net          : ${item.hedefNet} Net (Başlangıç: ${item.baslangicNeti} Net)
-- Soru Kalite Piramidi: %${100 - piramidYuzde} Kazanım / %${piramidYuzde} Yeni Nesil Beceri Temelli ${piramidYuzde < 45 ? '(⚠️ Konfor Alanı Tuzağı: Kolay soru ağırlıklı!)' : '(Dengeli Dağılım)'}
-- Haftalık Soru Hedefi: ${item.haftalikHedefSoru || 600} Soru
-- Bilişsel Gözlem    : ${item.bilesenNotu || 'Sayısal oturumda çok adımlı sorularda zaman baskısı hissediyor, sözel muhakemesi kuvvetli.'}
+- Hedef Okul / Lise  : ${item.hedefLise} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
+- Soru Kalite Piramidi: %${Math.max(0, 100 - piramidYuzde)} Temel/Uygulama / %${piramidYuzde} Yeni Nesil Beceri Temelli ${isComfortZone ? `(⚠️ Konfor Alanı Tuzağı: Seviye eşiği %${config.konforThreshold}'nin altında, kolay soru ağırlıklı!)` : '(Dengeli Dağılım)'}
+- Haftalık Soru Hedefi: ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} Soru
+- Bilişsel Gözlem    : ${item.bilesenNotu || 'Çok adımlı analitik sorularda dikkat ve odak dalgalanması yaşayabiliyor, okuduğunu anlama kapasitesi yüksek.'}
 
 Metabilişsel Hata Defteri & Isı Haritası Durumu:
-- Toplam Kayıt: ${errors.length} adet hatalı soru
+- Toplam Kayıt: ${errors.length} adet hatalı/boş soru
 - Baskın Kök Neden: %${dominantPercent} ile ${dominantMap[dominantCode]}
 - Isı Haritasında Kırmızı (Cerrahi) Konular: ${redTopics}
 - Günü Gelmiş / Gecikmiş Tekrar Sayısı: ${dueErrors.length} adet
 ${hataAnalizMetni}
 
 ════════════════════════════════════════════════════════════════════
-GÖREV VE BEKLENEN ÇIKTI MODÜLLERİ
+GÖREV VE BEKLENEN ÇIKTI MODÜLLERİ (${config.stageTitle.toUpperCase()})
 ════════════════════════════════════════════════════════════════════
-Bu öğrenci için aşağıdaki 5 ana modülü içeren somut, pedagojik ve doğrudan uygulanabilir bir "LGS Hazırlık ve Rehberlik Sistemi" hazırla:
+Bu öğrenci için aşağıdaki 5 ana modülü içeren somut, pedagojik ve doğrudan uygulanabilir bir "Bilişsel Koçluk ve Gelişim Sistemi" hazırla:
 
 ---
 MODÜL 1: STRATEJİK HAFTALIK ÇALIŞMA VE DERS DAĞILIM MODELİ
-- Haftalık toplam çalışma süresi ve oturum blokları (40+10 veya 75+15 LGS adaptasyon blokları).
-- Seviye Piramidi: %20 Kavrama/Tekrar, %30 Orta Seviye Yeni Nesil, %50 İleri Düzey Beceri Temelli/Muhakeme.
-- Öğrencinin ${item.haftalikHedefSoru || 600} soru hedefine uygun 7 günlük dengeli program (zihinsel deşarj pencereleri dahil).
+- Oturum Blokları: ${config.pomodoroDk} dk derin odak + ${config.molaDk} dk zihinsel deşarj pencereleri (${config.focusDesc}).
+- Kademeli Soru Piramidi: %${config.piramit.kavrama} Kavrama/Temel Bilgi, %${config.piramit.orta} Beceri & Uygulama, %${config.piramit.yeniNesil} Üst Düzey Yeni Nesil / Muhakeme.
+- Öğrencinin ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} soru hedefine uygun 7 günlük dengeli program (derslerde Türkçe, Matematik, Fen Bilimleri ve ${config.sosyalDersAdi} dengesini koruyarak).
 
 ---
 MODÜL 2: METABİLİŞSEL HATA DEFTERİ VE CERRAHİ REÇETE
 - Öğrencinin baskın kök nedeni olan "${dominantMap[dominantCode]}" teşhisine yönelik cerrahi müdahale adımları.
-- 1 gün, 3 gün ve 14 gün aralıklı tekrar (Spaced Repetition) için pratik çalışma yönergesi.
+- Ebbinghaus Unutma Eğrisi gereği 1. Gün, 3. Gün ve 14. Gün aralıklı tekrar (Spaced Repetition) için pratik çalışma yönergesi.
 
 ---
-MODÜL 3: SINAV STRATEJİLERİ VE TDE SÜRE YÖNETİMİ
-- Öğrencinin ${tde.tdePuan}/100 olan TDE puanını 90 üzerine çıkarmak için dakika dakika turlama planı (Fen 1. tur <= 32 dk, Mat 1. tur <= 30 dk).
-- 120. saniyede soruyu terk etme (turlama işareti koyup geçme) kronometre antrenmanı.
-- Sınavda zihinsel donma yaşandığında uygulanacak 30 saniyelik mikro regülasyon (nefes ve resetleme) manevrası.
+MODÜL 3: SINAV STRATEJİLERİ VE TDE SÜRE YÖNETİMİ (${config.examFocus.toUpperCase()})
+- Öğrencinin ${tde.tdePuan}/100 olan strateji puanını 90 üzerine çıkarmak için süre ve taktik reçetesi.
+- Takılınan soruyla inatlaşmama, soru köküne turlama işareti [?] koyup geçme refleksi geliştirme antrenmanı.
+- Sınavda zihinsel yorgunluk ve donma yaşandığında uygulanacak 30 saniyelik mikro regülasyon (diyafram nefesi ve zihinsel resetleme).
 
 ---
-MODÜL 4: SINAV PSİKOLOJİSİ, MOTİVASYON VE ÖZ-DÜZENLEME
-- ${latestNet} net bandındaki platoyu aşıp ${item.hedefNet} nete ulaşmak için psikolojik dayanıklılık (mental toughness) adımları.
-- Başarısızlık korkusu ve mükemmeliyetçilikle baş etme.
-- Pazar akşamı öğrencinin kendini değerlendireceği 5 maddelik rubrik.
+MODÜL 4: GELİŞİM PSİKOLOJİSİ, MOTİVASYON VE ÖZ-DÜZENLEME
+- ${latestNet} net bandından ${item.hedefNet} nete ulaşmak için içsel motivasyonu canlı tutma yöntemleri.
+- Hata yapmaktan korkmama (hatayı öğrenme fırsatı olarak kodlama) ve öz-yeterlilik geliştirme.
+- Hafta sonu öğrencinin kendini değerlendireceği 5 maddelik somut rubrik.
 
 ---
 MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
-- Evdeki huzur, uyku ve beslenme standartları.
-- Haftalık 10-15 dakikalık "Krizsiz Değerlendirme Çemberi" konuşma taslağı (Öğrenciye asla söylenmemesi gereken tetikleyici cümleler ve yapıcı sorular).
+- Evdeki çalışma ortamı, uyku hijyeni (${config.sinifNo <= 6 ? '21:30 - 22:00' : '22:30'} yatak saati) ve ekran detoksu standartları.
+- Haftalık 10-15 dakikalık "Krizsiz Değerlendirme Çemberi" konuşma taslağı (Öğrenciye kesinlikle söylenmemesi gereken tetikleyici cümleler ve yapıcı sorular).
 
 ════════════════════════════════════════════════════════════════════
 ÇIKTI FORMATI VE DİL KURALI
@@ -3465,7 +3745,7 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         window.open('https://gemini.google.com/', '_blank');
 
         if (typeof showGlobalToast === 'function') {
-            showGlobalToast('🧠 Gelişmiş LGS & TDE Koçluk Promptu Panoya Kopyalandı ve Gemini Açıldı!', 'success');
+            showGlobalToast(`🧠 ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk Promptu Panoya Kopyalandı ve Gemini Açıldı!`, 'success');
         }
     }
 
@@ -3481,9 +3761,10 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
         if (!item) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
         const latestNet = getStudentLatestNet(item);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
-        const tde = lastDeneme ? calculateTDE(lastDeneme) : { tdePuan: 75 };
+        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Dengeli' };
         const errors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
         const completedErrors = errors.filter(h => h.tekrar1 && h.tekrar3 && h.tekrar14).length;
         const dueErrors = errors.filter(h => getHataRepeatStatus(h).isDue).length;
@@ -3492,39 +3773,39 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
 
         if (mode === 'krizsiz') {
             // Mod 2: TDE < 70 / Plato Krizsiz Analiz Modu
-            msg = `🛡️ *LGS Hazırlık Süreci: Veli Krizsiz Rehberlik Bülteni* 🛡️
+            msg = `🛡️ *${config.isLgsFinal ? 'LGS Hazırlık Süreci' : config.stageTitle + ' Süreci'}: Veli Krizsiz Rehberlik Bülteni* 🛡️
 
 Değerli Velimiz,
-Öğrencimiz *${item.adSoyad}* ile yürüttüğümüz son deneme analizinde önemli bir pedagojik bulgu tespit ettik.
+Öğrencimiz *${item.adSoyad}* (${item.sinif}) ile yürüttüğümüz son çalışma ve deneme analizinde önemli bir pedagojik bulgu tespit ettik.
 
 📊 *Süreç Teşhisi:*
-Öğrencimizin konu bilgi eksiği değil; sınav anında turlama stratejisi ve süre yönetimi dalgalanması (TDE Skoru: ${tde.tdePuan}/100) yaşadığını gözlemledik.
+Öğrencimizin konu bilgi eksiği değil; sınav/soru çözümü esnasında süre yönetimi ve turlama stratejisi dalgalanması (${config.isLgsFinal ? 'TDE Skoru' : 'Strateji Skoru'}: ${tde.tdePuan}/100) yaşadığını gözlemledik.
 
 ⚠️ *ÇOK ÖNEMLİ RİCA:*
 Lütfen öğrencimizle bu akşam *kesinlikle net, doğru/yanlış sayısı veya sıralama konuşmayınız!*
 
 🏠 *Evde Uygulanacak 10 Dakikalık "Krizsiz Analiz" Konuşma Rehberi:*
-1. *Güvenli Alan:* "Bugünkü deneme sonucun ne olursa olsun bizim için çok kıymetlisin. Bu sadece bir taktik tatbikatı."
-2. *Nesnel Süre İncelemesi:* "Hangi sorularda 2.5 dakikadan fazla inatlaştın? O sorulardan bir iki tanesini birlikte inceleyelim mi?"
-3. *Batık Maliyet Farkındalığı:* "Zor bir soruyla inatlaşmayıp 'işaret koyup geçmek' puan kaybettirmez; arkadaki kolay 3 soruyu kurtarır."
-4. *Gelecek Deneme İçin Tek Kural:* "Gelecek sınavda senden tek bir hedef istiyoruz: 2 dakikayı geçen soruyu hemen turlayıp geçmek."
+1. *Güvenli Alan:* "Bugünkü sonucun ne olursa olsun bizim için çok kıymetlisin. Bu sadece bir taktik ve odaklanma tatbikatı."
+2. *Nesnel Süre İncelemesi:* "Hangi sorularda gereğinden fazla inatlaştın? O sorulardan bir iki tanesini birlikte inceleyelim mi?"
+3. *Batık Maliyet Farkındalığı:* "Zor bir soruyla inatlaşmayıp 'işaret koyup geçmek' kayıp değil; arkadaki çözebileceğin soruları kurtarır."
+4. *Gelecek Uygulama İçin Tek Kural:* "Gelecek çalışmada senden tek bir hedef istiyoruz: Takıldığın soruyu hemen turlayıp geçmek."
 
-Unutmayınız; şampiyonlar hiç hata yapmayanlar değil, hatalarından en hızlı strateji üretenlerdir. Birlikte aşacağız! 🚀`;
+Unutmayınız; başarı hiç hata yapmamak değil, hatalardan en hızlı strateji üretebilmektir. Birlikte aşacağız! 🚀`;
         } else {
             // Mod 1: Standart Haftalık Gelişim Bülteni
-            msg = `🌟 *LGS Hazırlık & Bilişsel Gelişim Bülteni* 🌟
+            msg = `🌟 *${config.isLgsFinal ? 'LGS Hazırlık' : config.stageTitle} & Bilişsel Gelişim Bülteni* 🌟
 
 Değerli Velimiz,
-Öğrencimiz *${item.adSoyad}* ile yürüttüğümüz LGS hazırlık ve bilişsel koçluk sürecine dair bu haftaki değerlendirme özetimiz:
+Öğrencimiz *${item.adSoyad}* (${item.sinif}) ile yürüttüğümüz bilişsel koçluk ve gelişim sürecine dair bu haftaki değerlendirme özetimiz:
 
-🎯 *Hedef Lise:* ${item.hedefLise} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
+🎯 *${config.isLgsFinal ? 'Hedef Lise' : 'Hedef Okul / Lise'}:* ${item.hedefLise} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
 📊 *Son Net Seviyesi:* ${latestNet} Net (Hedef: ${item.hedefNet} Net)
-⏱️ *Turlama Disiplin Endeksi (TDE):* ${tde.tdePuan}/100 (${tde.badgeText})
-📚 *Haftalık Soru Disiplini:* Hedeflenen ${item.haftalikHedefSoru || 600} soru temposunda ilerliyor.
-📕 *Metabilişsel Hata Defteri:* Toplam ${errors.length} analiz edilmiş sorudan *${completedErrors} adedi kalıcı hafızaya alındı.* (${dueErrors} soru tekrar havuzunda).
+⏱️ *${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru'}:* ${tde.tdePuan}/100 (${tde.badgeText})
+📚 *Haftalık Soru Disiplini:* Hedeflenen ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} soru temposunda ilerliyor.
+📕 *Metabilişsel Hata Defteri:* Toplam ${errors.length} analiz edilmiş sorudan *${completedErrors} adedi kalıcı hafızaya alındı.* (${dueErrors} soru aralıklı tekrar havuzunda).
 
 💡 *Ev İçi Koçluk Tavsiyemiz:*
-Lütfen net sayısından ziyade, öğrencinin soru çözerken gösterdiği odaklanma süresini ve gayretini takdir ediniz. Dinlenme saatlerinde ekran yerine zihinsel dinlenme sağlayan aktivitelere teşvik edelim.
+Lütfen net sayısından ziyade, öğrencimizin soru çözerken gösterdiği odaklanma süresini ve gösterdiği gayreti takdir ediniz. Dinlenme saatlerinde ekran yerine zihinsel dinlenme sağlayan aktivitelere teşvik edelim.
 
 Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         }
@@ -3576,12 +3857,13 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             return;
         }
 
+        const config = getGradeCognitiveConfig(item.sinif);
         const latestNet = getStudentLatestNet(item);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
-        const tde = lastDeneme ? calculateTDE(lastDeneme) : { tdePuan: 75, badgeText: 'Orta Düzey' };
-        const phase = getCurrentLgsPhase();
+        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Orta Düzey' };
+        const phase = getCurrentLgsPhase(item.sinif);
         const errors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
-        const strategyRule = item.aktifStratejiKurali || 'Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç.';
+        const strategyRule = item.aktifStratejiKurali || 'Süre baskısında takılınan soruya [?] koyup derhal geç.';
 
         let html = '';
 
@@ -3641,16 +3923,16 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     <div class="hdr">
         <div>
             <h2>📋 FORM-1: Kişiselleştirilmiş Haftalık Blok Çalışma &amp; Soru Piramidi</h2>
-            <div style="font-size:10px; color:#64748b;">${phase.name}: ${phase.title}</div>
+            <div style="font-size:10px; color:#64748b;">${config.stageTitle} | ${phase.name}: ${phase.title}</div>
         </div>
         <div style="text-align:right; font-size:9.5px; color:#64748b;">Hafta: ${new Date().toLocaleDateString('tr-TR')}</div>
     </div>
 
     <div class="info-grid">
         <div><strong>Öğrenci:</strong> ${escapeFn(item.adSoyad)} (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)})</div>
-        <div><strong>Hedef Lise:</strong> ${escapeFn(item.hedefLise)} (${escapeFn(item.hedefYuzdelik || '%1.0')})</div>
+        <div><strong>Hedef Okul / Lise:</strong> ${escapeFn(item.hedefLise)} (${escapeFn(item.hedefYuzdelik || '%1.0')})</div>
         <div><strong>Mevcut / Hedef:</strong> ${latestNet} Net / ${item.hedefNet} Net</div>
-        <div><strong>Haftalık Hedef:</strong> ${item.haftalikHedefSoru || 600} Soru (%50 Yeni Nesil)</div>
+        <div><strong>Haftalık Hedef:</strong> ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} Soru (%${config.piramit.yeniNesil} Yeni Nesil)</div>
     </div>
 
     <div class="rule-box">
@@ -3682,28 +3964,28 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 
     <!-- 2. Bölüm: 7 Günlük Blok Çalışma & Soru Piramidi Tablosu -->
     <div class="sec-title">
-        <span>⏱️ 7 Günlük Blok Odaklanma (75/80 dk) &amp; Soru Kalite Piramidi</span>
-        <span style="font-size:9.5px; color:#64748b;">İdeal: %20 Kazanım | %30 Orta Yeni Nesil | %50 İleri Beceri Temelli</span>
+        <span>⏱️ 7 Günlük Blok Odaklanma (${config.pomodoroDk} dk Odak) &amp; Soru Kalite Piramidi</span>
+        <span style="font-size:9.5px; color:#64748b;">İdeal: %${config.piramit.kavrama} Temel | %${config.piramit.orta} Beceri/Uygulama | %${config.piramit.yeniNesil} Yeni Nesil</span>
     </div>
     <table>
         <thead>
             <tr>
                 <th style="width:12%;">Gün</th>
-                <th style="width:23%;">1. Oturum (Sözel 75 dk)</th>
-                <th style="width:23%;">2. Oturum (Sayısal 80 dk)</th>
-                <th style="width:14%; text-align:center;">Kazanım Soru</th>
+                <th style="width:23%;">1. Oturum (Sözel ${config.pomodoroDk} dk)</th>
+                <th style="width:23%;">2. Oturum (Sayısal ${config.pomodoroDk} dk)</th>
+                <th style="width:14%; text-align:center;">Kavrama Soru</th>
                 <th style="width:14%; text-align:center;">Yeni Nesil Soru</th>
                 <th style="width:7%; text-align:center;">Toplam</th>
                 <th style="width:7%; text-align:center;">Odak</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td style="font-weight:bold;">Pazartesi</td><td>Türkçe + Din Kültürü</td><td>Matematik (EBOB-EKOK / Üslü)</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
-            <tr><td style="font-weight:bold;">Salı</td><td>İnkılap Tarihi + İngilizce</td><td>Fen Bilimleri (Mevsimler/İklim)</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
-            <tr><td style="font-weight:bold;">Çarşamba</td><td>Türkçe Paragraf / Muhakeme</td><td>Matematik Çok Adımlı Problemler</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
-            <tr><td style="font-weight:bold;">Perşembe</td><td>Din + İnkılap Kavrama</td><td>Fen Bilimleri DNA &amp; Genetik</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
-            <tr><td style="font-weight:bold;">Cuma</td><td>İngilizce Kelime &amp; Okuma</td><td>Matematik Geometrik Olasılık</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
-            <tr><td style="font-weight:bold; background:#fef3c7;">Cumartesi</td><td colspan="2" style="text-align:center; font-weight:bold; color:#b45309;">🎯 GENEL LGS DENEME PROVASI (Sözel 75 dk + Sayısal 80 dk)</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">90 S</td><td style="text-align:center;">⭐</td></tr>
+            <tr><td style="font-weight:bold;">Pazartesi</td><td>Türkçe + Din Kültürü</td><td>Matematik Konu Kavrama &amp; Problem</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
+            <tr><td style="font-weight:bold;">Salı</td><td>${config.sosyalDersAdi} + İngilizce</td><td>Fen Bilimleri Analiz &amp; Deney Soruları</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
+            <tr><td style="font-weight:bold;">Çarşamba</td><td>Türkçe Paragraf / Anlam Bilgisi</td><td>Matematik Çok Adımlı Beceri Soruları</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
+            <tr><td style="font-weight:bold;">Perşembe</td><td>Din + ${config.sosyalDersAdi} Kavrama</td><td>Fen Bilimleri Kavram Haritası &amp; Test</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
+            <tr><td style="font-weight:bold;">Cuma</td><td>İngilizce Kelime &amp; Okuduğunu Anlama</td><td>Matematik Akıl Yürütme Pratiği</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
+            <tr><td style="font-weight:bold; background:#fef3c7;">Cumartesi</td><td colspan="2" style="text-align:center; font-weight:bold; color:#b45309;">${config.isLgsFinal ? '🎯 GENEL LGS DENEME PROVASI (Sözel 75 dk + Sayısal 80 dk)' : '🎯 HAFTALIK KONU &amp; BECERİ TARAMA DENEMESİ (' + config.examFocus + ')'}</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">90 S</td><td style="text-align:center;">⭐</td></tr>
             <tr><td style="font-weight:bold; background:#f1f5f9;">Pazar</td><td>Hata Defteri Aralıklı Tekrarları</td><td>Haftalık Değerlendirme &amp; Zihinsel Deşarj</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">.......</td><td style="text-align:center;">⭐</td></tr>
         </tbody>
     </table>
@@ -3746,6 +4028,9 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
                 </tr>`;
             }).join('');
 
+            const idealFenSure = config.isLgsFinal ? 32 : 28;
+            const idealMatSure = config.isLgsFinal ? 30 : 25;
+
             html = `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -3772,10 +4057,10 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 <body>
     <div class="hdr">
         <div>
-            <h2>⏱️ FORM-2: Deneme Sonrası Acil Triyaj ve TDE Analiz Formu</h2>
-            <div style="font-size:9.5px; color:#64748b;">Öğrenci: ${escapeFn(item.adSoyad)} (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}) | Son TDE: ${tde.tdePuan}/100</div>
+            <h2>⏱️ FORM-2: Deneme Sonrası Acil Triyaj ve ${config.isLgsFinal ? 'TDE' : 'Strateji'} Analiz Formu</h2>
+            <div style="font-size:9.5px; color:#64748b;">Öğrenci: ${escapeFn(item.adSoyad)} (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}) | ${config.isLgsFinal ? 'Son TDE' : 'Strateji Skoru'}: ${tde.tdePuan}/100</div>
         </div>
-        <div style="text-align:right; font-size:9px; color:#64748b;">Deneme: ${escapeFn(lastDeneme?.ad || 'LGS Deneme')} (${lastDeneme?.tarih || new Date().toLocaleDateString('tr-TR')})</div>
+        <div style="text-align:right; font-size:9px; color:#64748b;">Deneme: ${escapeFn(lastDeneme?.ad || (config.isLgsFinal ? 'LGS Deneme' : 'Gelişim Denemesi'))} (${lastDeneme?.tarih || new Date().toLocaleDateString('tr-TR')})</div>
     </div>
 
     <!-- Branş Net & Süre Tablosu -->
@@ -3788,14 +4073,14 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         </thead>
         <tbody>
             <tr><td style="font-weight:bold;">Türkçe</td><td style="text-align:center;">20</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">.......</td><td style="text-align:center;">30 dk</td><td></td><td></td></tr>
-            <tr><td style="font-weight:bold;">T.C. İnkılap</td><td style="text-align:center;">10</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">.......</td><td style="text-align:center;">12 dk</td><td></td><td></td></tr>
+            <tr><td style="font-weight:bold;">${config.sosyalDersAdi}</td><td style="text-align:center;">10</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">.......</td><td style="text-align:center;">12 dk</td><td></td><td></td></tr>
             <tr><td style="font-weight:bold;">Din Kültürü</td><td style="text-align:center;">10</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">.......</td><td style="text-align:center;">10 dk</td><td></td><td></td></tr>
             <tr><td style="font-weight:bold;">İngilizce</td><td style="text-align:center;">10</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">.......</td><td style="text-align:center;">12 dk</td><td></td><td></td></tr>
             <tr style="background:#f8fafc;"><td style="font-weight:bold; color:#1e3a8a;">SÖZEL TOPLAM</td><td style="text-align:center; font-weight:bold;">50</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold; color:#1e3a8a;">${lastDeneme?.sozelNet ?? '.......'}</td><td style="text-align:center; font-weight:bold;">64-70 dk</td><td></td><td></td></tr>
-            <tr><td style="font-weight:bold; color:#b45309;">Fen Bilimleri</td><td style="text-align:center;">20</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">${lastDeneme?.fenNet ?? '.......'}</td><td style="text-align:center;">32 dk</td><td style="text-align:center;">${lastDeneme?.fen1TurSure ? lastDeneme.fen1TurSure + ' dk' : ''}</td><td></td></tr>
-            <tr><td style="font-weight:bold; color:#4338ca;">Matematik</td><td style="text-align:center;">20</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">${lastDeneme?.matNet ?? '.......'}</td><td style="text-align:center;">30 dk</td><td style="text-align:center;">${lastDeneme?.mat1TurSure ? lastDeneme.mat1TurSure + ' dk' : ''}</td><td></td></tr>
+            <tr><td style="font-weight:bold; color:#b45309;">Fen Bilimleri</td><td style="text-align:center;">20</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">${lastDeneme?.fenNet ?? '.......'}</td><td style="text-align:center;">${idealFenSure} dk</td><td style="text-align:center;">${lastDeneme?.fen1TurSure ? lastDeneme.fen1TurSure + ' dk' : ''}</td><td></td></tr>
+            <tr><td style="font-weight:bold; color:#4338ca;">Matematik</td><td style="text-align:center;">20</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold;">${lastDeneme?.matNet ?? '.......'}</td><td style="text-align:center;">${idealMatSure} dk</td><td style="text-align:center;">${lastDeneme?.mat1TurSure ? lastDeneme.mat1TurSure + ' dk' : ''}</td><td></td></tr>
             <tr style="background:#f0f9ff;"><td style="font-weight:bold; color:#0369a1;">SAYISAL TOPLAM</td><td style="text-align:center; font-weight:bold;">40</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold; color:#0369a1;">${(lastDeneme?.sayisalNet ?? (lastDeneme?.matNet != null && lastDeneme?.fenNet != null ? (Number(lastDeneme.matNet) + Number(lastDeneme.fenNet)).toFixed(2).replace(/\.00$/, '') : '.......'))}</td><td style="text-align:center; font-weight:bold;">80 dk</td><td></td><td></td></tr>
-            <tr style="background:#fef3c7;"><td style="font-weight:bold; color:#b45309;">GENEL TOPLAM</td><td style="text-align:center; font-weight:bold;">90</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold; color:#b45309; font-size:11px;">${lastDeneme?.toplamNet ?? latestNet} Net</td><td style="text-align:center; font-weight:bold;">155 dk</td><td colspan="2" style="text-align:center; font-weight:bold;">TDE: ${tde.tdePuan}/100</td></tr>
+            <tr style="background:#fef3c7;"><td style="font-weight:bold; color:#b45309;">GENEL TOPLAM</td><td style="text-align:center; font-weight:bold;">90</td><td></td><td></td><td></td><td style="text-align:center; font-weight:bold; color:#b45309; font-size:11px;">${lastDeneme?.toplamNet ?? latestNet} Net</td><td style="text-align:center; font-weight:bold;">155 dk</td><td colspan="2" style="text-align:center; font-weight:bold;">${config.isLgsFinal ? 'TDE' : 'Strateji'}: ${tde.tdePuan}/100</td></tr>
         </tbody>
     </table>
 
@@ -3816,7 +4101,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         </div>
         <div class="cause-box" style="border-left:3px solid #8b5cf6;">
             <strong style="color:#8b5cf6;">Kod D: Bilişsel Direnç</strong>
-            <div>Soruyla 2.5 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu.</div>
+            <div>Soruyla 2 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu.</div>
         </div>
     </div>
 
@@ -3839,12 +4124,12 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 
     <!-- 25 Puanlık TDE Rubriği -->
     <div class="rubrik">
-        <strong style="color:#b45309;">📊 25 Puanlık Sınav Taktik &amp; Turlama Öz-Değerlendirmesi:</strong>
+        <strong style="color:#b45309;">📊 25 Puanlık Sınav Taktik &amp; Süre Yönetimi Öz-Değerlendirmesi:</strong>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:3px;">
-            <div>☐ 1. Fen Bilimleri 1. turu 32 dakikada tamamlandı mı? (+5p)</div>
-            <div>☐ 2. Matematik 1. turu 30 dakikada tamamlandı mı? (+5p)</div>
-            <div>☐ 3. 120 saniyeyi geçen hiçbir soruyla inatlaşılmadı mı? (+5p)</div>
-            <div>☐ 4. 2. turda geri dönülüp en az 3 net kazanıldı mı? (+5p)</div>
+            <div>☐ 1. Fen Bilimleri 1. turu ${idealFenSure} dakikada tamamlandı mı? (+5p)</div>
+            <div>☐ 2. Matematik 1. turu ${idealMatSure} dakikada tamamlandı mı? (+5p)</div>
+            <div>☐ 3. Takılınan hiçbir soruyla inatlaşmadan işaret konup geçildi mi? (+5p)</div>
+            <div>☐ 4. 2. turda geri dönülüp en az 2-3 soru tekrar analiz edildi mi? (+5p)</div>
             <div>☐ 5. Sınavın son 3 dakikasında sayfa sayfa optik kontrol yapıldı mı? (+5p)</div>
             <div><strong>Toplam Taktik Skoru: ....... / 25 Puan</strong></div>
         </div>
@@ -3941,7 +4226,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     <div class="hdr">
         <div>
             <h2>🔬 FORM-3: Fiziksel Soru Ameliyathanesi (Kes-Yapıştır Şablonu)</h2>
-            <div style="font-size:9.5px; color:#64748b;">Öğrenci: ${escapeFn(item.adSoyad)} (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}) | Hedef: ${escapeFn(item.hedefLise)}</div>
+            <div style="font-size:9.5px; color:#64748b;">Öğrenci: ${escapeFn(item.adSoyad)} (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}) | ${config.stageTitle}</div>
         </div>
         <div style="text-align:right; font-size:9px; color:#64748b;">Tarih: ${new Date().toLocaleDateString('tr-TR')}</div>
     </div>
@@ -3972,7 +4257,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             const denemeler = (Array.isArray(item.denemeler) ? item.denemeler : []).slice(-4);
             let denRows = '';
             denemeler.forEach(d => {
-                const dTde = calculateTDE(d);
+                const dTde = calculateTDE(d, item.sinif);
                 denRows += `
                 <tr>
                     <td>${escapeFn(d.ad)}</td>
@@ -4009,7 +4294,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>FORM-4: LGS Koçluk & Mutabakat Raporu - ${escapeFn(item.adSoyad)}</title>
+    <title>FORM-4: Bilişsel Koçluk & Mutabakat Raporu - ${escapeFn(item.adSoyad)}</title>
     <style>
         @page { size: A4 portrait; margin: 6mm 8mm; }
         * { box-sizing: border-box; }
@@ -4033,8 +4318,8 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 <body>
     <div class="hdr">
         <div>
-            <h2>🧠 FORM-4: LGS Bilişsel Koçluk Raporu &amp; Veli-Öğrenci Mutabakatı</h2>
-            <div style="font-size:10px; color:#64748b;">Dönem: ${phase.name} | Strateji Kuralı: "${escapeFn(strategyRule)}"</div>
+            <h2>🧠 FORM-4: ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk Raporu &amp; Veli-Öğrenci Mutabakatı</h2>
+            <div style="font-size:10px; color:#64748b;">Kademe: ${config.stageTitle} | Dönem: ${phase.name} | Strateji Kuralı: "${escapeFn(strategyRule)}"</div>
         </div>
         <div style="text-align:right; font-size:9.5px; color:#64748b;">Tarih: ${new Date().toLocaleDateString('tr-TR')}</div>
     </div>
@@ -4042,21 +4327,21 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     <div class="grid-info">
         <div class="info-cell"><strong>Öğrenci Adı Soyadı</strong><span>${escapeFn(item.adSoyad)}</span></div>
         <div class="info-cell"><strong>Sınıf / No</strong><span>${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}</span></div>
-        <div class="info-cell"><strong>Hedef Lise / Dilim</strong><span>${escapeFn(item.hedefLise)} (${escapeFn(item.hedefYuzdelik || '%1.0')})</span></div>
+        <div class="info-cell"><strong>Hedef Okul / Lise</strong><span>${escapeFn(item.hedefLise)} (${escapeFn(item.hedefYuzdelik || '%1.0')})</span></div>
         <div class="info-cell"><strong>Güncel Net / Hedef</strong><span>${latestNet} Net / ${item.hedefNet} Net</span></div>
         <div class="info-cell"><strong>Öğrenme Stili (VAK)</strong><span>${escapeFn(item.vak || 'Analitik / Görsel')}</span></div>
-        <div class="info-cell"><strong>Haftalık Soru Hedefi</strong><span>${item.haftalikHedefSoru || 600} Soru</span></div>
-        <div class="info-cell"><strong>Son TDE Skoru</strong><span style="color:#d97706; font-weight:bold;">${tde.tdePuan}/100 (${escapeFn(tde.badgeText)})</span></div>
+        <div class="info-cell"><strong>Haftalık Soru Hedefi</strong><span>${item.haftalikHedefSoru || config.hedefSoruVarsayilan} Soru</span></div>
+        <div class="info-cell"><strong>${config.isLgsFinal ? 'Son TDE Skoru' : 'Süre & Strateji Skoru'}</strong><span style="color:#d97706; font-weight:bold;">${tde.tdePuan}/100 (${escapeFn(tde.badgeText)})</span></div>
         <div class="info-cell"><strong>Kayıtlı Hata Sayısı</strong><span>${totalErr} Soru</span></div>
     </div>
 
     <!-- Deneme Tablosu -->
     <div class="sec-box">
-        <div class="sec-title"><span>📈 Deneme Sınavları &amp; Turlama Disiplin Endeksi (TDE)</span><span>Maks Net: 90</span></div>
+        <div class="sec-title"><span>📈 Deneme Sınavları &amp; ${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Endeksi'}</span><span>Maks Net: 90</span></div>
         <table>
             <thead>
                 <tr>
-                    <th>Deneme Adı</th><th>Tarih</th><th style="text-align:center;">Sözel (50)</th><th style="text-align:center;">Mat (20)</th><th style="text-align:center;">Fen (20)</th><th style="text-align:center;">Toplam</th><th style="text-align:center;">TDE Skoru</th>
+                    <th>Deneme Adı</th><th>Tarih</th><th style="text-align:center;">Sözel (50)</th><th style="text-align:center;">Mat (20)</th><th style="text-align:center;">Fen (20)</th><th style="text-align:center;">Toplam</th><th style="text-align:center;">${config.isLgsFinal ? 'TDE Skoru' : 'Strateji Skoru'}</th>
                 </tr>
             </thead>
             <tbody>${denRows}</tbody>
@@ -4073,7 +4358,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             <div style="width:${pA}%; background:#ef4444;" title="Kod A: Bilgi Eksikliği (%${pA}) - Kavramı hatırlayamadım, formülü veya kazanımı bilmiyordum."></div>
             <div style="width:${pB}%; background:#f59e0b;" title="Kod B: Kurgu &amp; Soru Kökü Hatası (%${pB}) - Soruyu bilmeme rağmen olumsuz kökü veya öncülü yanlış okudum."></div>
             <div style="width:${pC}%; background:#ea580c;" title="Kod C: Süre Baskısı &amp; İşlem Hatası (%${pC}) - Süre baskısıyla acele, dört işlem veya kaydırma."></div>
-            <div style="width:${pD}%; background:#8b5cf6;" title="Kod D: Bilişsel Direnç &amp; İnatlaşma (%${pD}) - Soruyla 2.5+ dakika inatlaşıldı."></div>
+            <div style="width:${pD}%; background:#8b5cf6;" title="Kod D: Bilişsel Direnç &amp; İnatlaşma (%${pD}) - Soruyla 2+ dakika inatlaşıldı."></div>
         </div>
         <table>
             <thead>
@@ -4093,10 +4378,10 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 
     <!-- Mutabakat & Protokol -->
     <div class="mutabakat">
-        <strong style="color:#15803d; font-size:10.5px;">🤝 Veli - Öğrenci Haftalık Mutabakatı &amp; Uyku Hijyeni Protokolü:</strong>
+        <strong style="color:#15803d; font-size:10.5px;">🤝 Veli - Öğrenci Haftalık Mutabakatı &amp; Yaşam Hijyeni Protokolü:</strong>
         <p style="margin:3px 0 0 0; line-height:1.4;">
-            1. <strong>Uyku Hijyeni:</strong> Öğrenci zihinsel toparlanma için her akşam en geç <strong>22:30'da</strong> yatakta olacak; mavi ışık (telefon/tablet) kapatılacaktır.<br>
-            2. <strong>Ev İçi İletişim:</strong> Evde kesinlikle net sayısı, sıralama ve kıyaslama konuşulmayacak; sadece soru çözme disiplini ve odak takdir edilecektir.<br>
+            1. <strong>Uyku Hijyeni:</strong> Öğrenci zihinsel toparlanma için her akşam en geç <strong>${config.sinifNo <= 6 ? '21:30 - 22:00\'de' : '22:30\'da'}</strong> yatakta olacak; mavi ışık (telefon/tablet) kapatılacaktır.<br>
+            2. <strong>Ev İçi İletişim:</strong> Evde kesinlikle net sayısı, sıralama ve kıyaslama konuşulmayacak; sadece odaklanma disiplini ve gayret takdir edilecektir.<br>
             3. <strong>Stratejik Kural:</strong> "${escapeFn(strategyRule)}" kuralına eksiksiz riayet edilecektir.
         </p>
     </div>
@@ -4120,7 +4405,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 9. 60 SANİYELİK HIZLI VERİ GİRİŞ SİHİRBAZI MOTORU
+    // 9. 60 SANİYELİK HIZLI VERİ GİRİŞ SİHİRBAZI MOTORU (5-8. SINIF DİNAMİK)
     // ─────────────────────────────────────────────────────────────
     function openQuickWeeklySyncModal(studentId) {
         const list = Array.isArray(window.koclukData) ? window.koclukData : [];
@@ -4138,6 +4423,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         if (!item) return;
 
         activeKoclukId = targetId;
+        const config = getGradeCognitiveConfig(item.sinif);
 
         // Öğrenci Seçim Menüsünü Doldur
         const selectEl = document.getElementById('sync-student-select');
@@ -4150,8 +4436,8 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             selectEl.innerHTML = opts;
         }
 
-        // Aktif Faz Rozetini Güncelle
-        const phase = getCurrentLgsPhase();
+        // Aktif Faz Rozetini Güncelle (Sınıfa göre kademeli faz)
+        const phase = getCurrentLgsPhase(item.sinif);
         const phaseBadge = document.getElementById('sync-active-phase-badge');
         if (phaseBadge) {
             phaseBadge.textContent = `${phase.name}`;
@@ -4162,10 +4448,26 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         // Başlık Rozetini Güncelle
         const badge = document.getElementById('koc-sync-student-badge');
         if (badge) {
-            badge.innerHTML = `<strong>${escapeFn(item.adSoyad)}</strong> (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}) | Hedef: ${escapeFn(item.hedefLise)}`;
+            badge.innerHTML = `<strong>${escapeFn(item.adSoyad)}</strong> (${escapeFn(item.sinif)} - No: ${escapeFn(item.studentNo)}) | Hedef: ${escapeFn(item.hedefLise || (config.isLgsFinal ? 'Nitelikli Lise' : 'İOKBS Bursluluk / Üst Sınıf Hazırlık'))}`;
         }
 
-        // 1. Soru Piramidi Verilerini Doldur (3 Kademeli)
+        // Başlık ve Etiketleri Sınıfa Göre Dinamikleştir
+        const piramitTitle = document.getElementById('sync-piramit-title');
+        if (piramitTitle) {
+            piramitTitle.innerHTML = `<i class="fas fa-layer-group"></i> 1. Haftalık Soru Kalite Piramidi (%${config.piramit.kavrama} Kavrama / %${config.piramit.orta} Orta / %${config.piramit.yeniNesil} Yeni Nesil) &amp; Ritmi:`;
+        }
+        const lblKav = document.getElementById('sync-lbl-kavrama');
+        if (lblKav) lblKav.textContent = `%${config.piramit.kavrama} KAVRAMA / TEMEL:`;
+        const lblOrta = document.getElementById('sync-lbl-orta');
+        if (lblOrta) lblOrta.textContent = `%${config.piramit.orta} UYGULAMA / ORTA:`;
+        const lblYeni = document.getElementById('sync-lbl-yeninesil');
+        if (lblYeni) lblYeni.textContent = `%${config.piramit.yeniNesil} YENİ NESİL / İLERİ:`;
+        const lblBlok = document.getElementById('sync-blok-lbl');
+        if (lblBlok) lblBlok.textContent = `ODAK BLOK (${config.pomodoroOdakDk}/${config.blokOdakDk} dk):`;
+        const tdeHeader = document.getElementById('sync-deneme-tde-header');
+        if (tdeHeader) tdeHeader.innerHTML = `<i class="fas fa-chart-line"></i> 2. Yeni Deneme Sonucu &amp; ${config.isLgsFinal ? 'TDE Turlama' : 'Süre & Strateji'} (Opsiyonel):`;
+
+        // 1. Soru Piramidi Verilerini Doldur (Sınıf konfigürasyonuna duyarlı)
         const lastTakip = (Array.isArray(item.haftalikTakip) && item.haftalikTakip.length > 0) ? item.haftalikTakip[item.haftalikTakip.length - 1] : null;
         const kavramaEl = document.getElementById('sync-soru-kavrama');
         const ortaEl = document.getElementById('sync-soru-orta');
@@ -4174,11 +4476,11 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         const blokEl = document.getElementById('sync-blok');
         const rubrikEl = document.getElementById('sync-rubrik-puan');
 
-        if (kavramaEl) kavramaEl.value = lastTakip ? (lastTakip.kavramaCount ?? lastTakip.kazanimSoru ?? 120) : 120;
-        if (ortaEl) ortaEl.value = lastTakip ? (lastTakip.ortaCount ?? 180) : 180;
-        if (yeniNesilEl) yeniNesilEl.value = lastTakip ? (lastTakip.yeniNesilCount ?? lastTakip.yeniNesilSoru ?? 300) : 300;
-        if (uykuEl) uykuEl.value = lastTakip ? (lastTakip.sleepAverage ?? lastTakip.uykuOrtalamasi ?? 8) : 8;
-        if (blokEl) blokEl.value = lastTakip ? (lastTakip.focusBlockCount ?? lastTakip.odakBlokSayisi ?? 12) : 12;
+        if (kavramaEl) kavramaEl.value = lastTakip ? (lastTakip.kavramaCount ?? lastTakip.kazanimSoru ?? config.piramit.kavramaCount) : config.piramit.kavramaCount;
+        if (ortaEl) ortaEl.value = lastTakip ? (lastTakip.ortaCount ?? config.piramit.ortaCount) : config.piramit.ortaCount;
+        if (yeniNesilEl) yeniNesilEl.value = lastTakip ? (lastTakip.yeniNesilCount ?? lastTakip.yeniNesilSoru ?? config.piramit.yeniNesilCount) : config.piramit.yeniNesilCount;
+        if (uykuEl) uykuEl.value = lastTakip ? (lastTakip.sleepAverage ?? lastTakip.uykuOrtalamasi ?? (config.sinifNo <= 6 ? 9 : 8)) : (config.sinifNo <= 6 ? 9 : 8);
+        if (blokEl) blokEl.value = lastTakip ? (lastTakip.focusBlockCount ?? lastTakip.odakBlokSayisi ?? (config.sinifNo <= 6 ? 8 : 12)) : (config.sinifNo <= 6 ? 8 : 12);
         if (rubrikEl) rubrikEl.value = lastTakip ? (lastTakip.rubricScore ?? 22) : 22;
 
         syncUpdatePiramitCalc();
@@ -4189,8 +4491,8 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         document.getElementById('sync-den-mat').value = '';
         document.getElementById('sync-den-fen').value = '';
         document.getElementById('sync-den-toplam').value = '';
-        document.getElementById('sync-tde-fen1').value = '32';
-        document.getElementById('sync-tde-mat1').value = '30';
+        document.getElementById('sync-tde-fen1').value = String(config.tdeIdealFen);
+        document.getElementById('sync-tde-mat1').value = String(config.tdeIdealMat);
         document.getElementById('sync-tde-inat').value = '0';
         document.getElementById('sync-tde-fen2').value = '2';
         document.getElementById('sync-tde-mat2').value = '3';
@@ -4227,7 +4529,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         // 4. Stratejik Kural
         const ruleEl = document.getElementById('sync-strateji-kurali');
         if (ruleEl) {
-            ruleEl.value = item.aktifStratejiKurali || 'Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç.';
+            ruleEl.value = item.aktifStratejiKurali || (config.isLgsFinal ? 'Sayısal oturumda 120 saniyeyi aşan soruya [?] koyup derhal geç.' : 'Test çözerken takıldığın soruda 90 saniyeyi aşma, işaret koyup 2. tura bırak.');
         }
 
         const modal = document.getElementById('kocluk-quick-sync-modal');
@@ -4240,6 +4542,11 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     }
 
     function syncUpdatePiramitCalc() {
+        const studentSelect = document.getElementById('sync-student-select');
+        const targetId = studentSelect?.value || activeKoclukId;
+        const item = (window.koclukData || []).find(k => String(k.id) === String(targetId));
+        const config = getGradeCognitiveConfig(item?.sinif);
+
         const kavrama = Number(document.getElementById('sync-soru-kavrama')?.value) || 0;
         const orta = Number(document.getElementById('sync-soru-orta')?.value) || 0;
         const yeni = Number(document.getElementById('sync-soru-yeninesil')?.value) || 0;
@@ -4255,12 +4562,12 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         }
 
         const pct = Math.round((yeni / total) * 100);
-        if (pct < 45) {
-            alertEl.innerHTML = `⚠️ Konfor Alanı Tuzağı! (Yeni Nesil: %${pct} &lt; %45) • Toplam: ${total} Soru`;
+        if (pct < config.konforThreshold) {
+            alertEl.innerHTML = `⚠️ Konfor Alanı Tuzağı! (${config.sinifNo}. Sınıf Eşiği: %${config.konforThreshold} - Şu an: %${pct}) • Toplam: ${total} Soru`;
             alertEl.style.background = 'rgba(239, 68, 68, 0.15)';
             alertEl.style.color = '#ef4444';
         } else {
-            alertEl.innerHTML = `🟢 Dengeli Dağılım (Yeni Nesil: %${pct} &gt;= %45) • Toplam: ${total} Soru`;
+            alertEl.innerHTML = `🟢 Dengeli Dağılım (${config.sinifNo}. Sınıf Hedefi: %${config.piramit.yeniNesil} - Şu an: %${pct}) • Toplam: ${total} Soru`;
             alertEl.style.background = 'rgba(16, 185, 129, 0.15)';
             alertEl.style.color = '#10b981';
         }
@@ -4278,8 +4585,13 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     }
 
     function syncLiveTdePreview() {
-        const fen1 = Number(document.getElementById('sync-tde-fen1')?.value) || 32;
-        const mat1 = Number(document.getElementById('sync-tde-mat1')?.value) || 30;
+        const studentSelect = document.getElementById('sync-student-select');
+        const targetId = studentSelect?.value || activeKoclukId;
+        const item = (window.koclukData || []).find(k => String(k.id) === String(targetId));
+        const config = getGradeCognitiveConfig(item?.sinif);
+
+        const fen1 = Number(document.getElementById('sync-tde-fen1')?.value) || config.tdeIdealFen;
+        const mat1 = Number(document.getElementById('sync-tde-mat1')?.value) || config.tdeIdealMat;
         const inat = Number(document.getElementById('sync-tde-inat')?.value) || 0;
         const fen2 = Number(document.getElementById('sync-tde-fen2')?.value) || 2;
         const mat2 = Number(document.getElementById('sync-tde-mat2')?.value) || 3;
@@ -4292,11 +4604,11 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             fen2TurKazanc: fen2,
             mat2TurKazanc: mat2,
             optikKontrol: optik
-        });
+        }, item?.sinif);
 
         const badge = document.getElementById('sync-live-tde-badge');
         if (badge) {
-            badge.textContent = `Canlı TDE: ${tde.tdePuan}/100 • ${tde.badgeText}`;
+            badge.textContent = `${config.isLgsFinal ? 'Canlı TDE' : 'Strateji Skoru'}: ${tde.tdePuan}/100 • ${tde.badgeText}`;
             badge.style.background = tde.badgeBg;
             badge.style.color = tde.badgeColor;
         }
@@ -4308,14 +4620,16 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         const item = (window.koclukData || []).find(k => String(k.id) === String(targetId));
         if (!item) return;
 
+        const config = getGradeCognitiveConfig(item.sinif);
+
         // 1. Haftalık Takip Verisi (Soru Kalite Piramidi & Yaşam Ritmi)
         const kavrama = Number(document.getElementById('sync-soru-kavrama')?.value) || 0;
         const orta = Number(document.getElementById('sync-soru-orta')?.value) || 0;
         const yeniNesil = Number(document.getElementById('sync-soru-yeninesil')?.value) || 0;
         const total = kavrama + orta + yeniNesil;
         const ratio = total > 0 ? (yeniNesil / total) : 0;
-        const uyku = Number(document.getElementById('sync-uyku')?.value) || 8;
-        const blok = Number(document.getElementById('sync-blok')?.value) || 0;
+        const uyku = Number(document.getElementById('sync-uyku')?.value) || (config.sinifNo <= 6 ? 9 : 8);
+        const blok = Number(document.getElementById('sync-blok')?.value) || (config.sinifNo <= 6 ? 8 : 12);
         const rubrik = Number(document.getElementById('sync-rubrik-puan')?.value) || 20;
 
         if (!Array.isArray(item.haftalikTakip)) item.haftalikTakip = [];
@@ -4327,7 +4641,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             yeniNesilCount: yeniNesil,
             totalQuestions: total,
             newGenerationRatio: Math.round(ratio * 100),
-            isComfortZoneTrap: ratio < 0.45,
+            isComfortZoneTrap: ratio < (config.konforThreshold / 100),
             kazanimSoru: kavrama + orta, // Geriye dönük uyumluluk
             yeniNesilSoru: yeniNesil,     // Geriye dönük uyumluluk
             uykuOrtalamasi: uyku,
@@ -4344,8 +4658,8 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
             const mat = parseFloat(document.getElementById('sync-den-mat')?.value) || 0;
             const fen = parseFloat(document.getElementById('sync-den-fen')?.value) || 0;
             const toplam = parseFloat(document.getElementById('sync-den-toplam')?.value) || (sozel + mat + fen);
-            const fen1 = Number(document.getElementById('sync-tde-fen1')?.value) || 32;
-            const mat1 = Number(document.getElementById('sync-tde-mat1')?.value) || 30;
+            const fen1 = Number(document.getElementById('sync-tde-fen1')?.value) || config.tdeIdealFen;
+            const mat1 = Number(document.getElementById('sync-tde-mat1')?.value) || config.tdeIdealMat;
             const inat = Number(document.getElementById('sync-tde-inat')?.value) || 0;
             const fen2 = Number(document.getElementById('sync-tde-fen2')?.value) || 0;
             const mat2 = Number(document.getElementById('sync-tde-mat2')?.value) || 0;
@@ -4358,7 +4672,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
                 fen2TurKazanc: fen2,
                 mat2TurKazanc: mat2,
                 optikKontrol: optik
-            });
+            }, item.sinif);
 
             if (!Array.isArray(item.denemeler)) item.denemeler = [];
             item.denemeler.push({
@@ -4369,14 +4683,16 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
                 matNet: mat,
                 fenNet: fen,
                 toplamNet: Math.round(toplam * 100) / 100,
-                cozumSirasi: 'Fen-Mat',
+                cozumSirasi: config.isLgsFinal ? 'Fen-Mat' : 'Mat-Fen',
                 fen1TurSure: fen1,
                 mat1TurSure: mat1,
                 inatlasmaSayisi: inat,
                 fen2TurKazanc: fen2,
                 mat2TurKazanc: mat2,
                 optikKontrol: optik,
-                tdePuan: tdeInfo.tdePuan
+                tdePuan: tdeInfo.tdePuan,
+                sosyal: 0,
+                inkilap: 0
             });
         }
 
@@ -4404,7 +4720,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
 
         if (typeof saveData === 'function') saveData(true);
         if (typeof showGlobalToast === 'function') {
-            showGlobalToast(`⚡ ${item.adSoyad} için haftalık veriler ve TDE başarıyla senkronize edildi!`, 'success');
+            showGlobalToast(`⚡ ${item.adSoyad} (${config.sinifNo}. Sınıf) için haftalık veriler ve ${config.isLgsFinal ? 'TDE' : 'Strateji Skoru'} başarıyla senkronize edildi!`, 'success');
         }
 
         closeModal('kocluk-quick-sync-modal');
