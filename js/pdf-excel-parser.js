@@ -283,8 +283,12 @@
             studentName: '',
             studentClass: '',
             totalNet: '',
-            rank: '',
+            rank: '',          // Genel Sıra / Derece
+            rankKurum: '',     // Kurum / Okul Sırası
+            rankSinif: '',     // Sınıf / Şube Sırası
             puan: '',
+            yuzdelik: '',      // Yüzdelik Dilim
+            customParams: [],  // İsteğe bağlı ek parametreler: [{ id, name, colIdx }]
             // Dersler:
             turkce_net: '', turkce_d: '', turkce_y: '',
             mat_net: '', mat_d: '', mat_y: '',
@@ -296,21 +300,43 @@
 
         headers.forEach((h, idx) => {
             const clean = String(h || '').trim().toLocaleLowerCase('tr-TR');
+            const cleanAscii = String(h || '').trim().toLowerCase().replace(/ı/g, 'i').replace(/İ/g, 'i');
             const strIdx = String(idx);
 
-            // 1. Öğrenci Kimliği
-            if (!mapping.studentNo && /\b(okul no|öğrenci no|ogrenci no|karneno|no|numara)\b/.test(clean)) {
+            // 1. Sıralamalar (Öncelikli kontrol: "sınıf sırası" gibi başlıkların sınıf sütunuyla karışmaması için)
+            if (!mapping.rankSinif && (
+                clean.includes('snfsir') || clean.includes('subesir') || clean.includes('s.sira') || clean.includes('s.sıra') ||
+                ((clean.includes('sınıf') || clean.includes('sinif') || clean.includes('şube') || clean.includes('sube')) &&
+                 (clean.includes('sıra') || clean.includes('sira') || clean.includes('derece') || clean.includes('rank')))
+            )) {
+                mapping.rankSinif = strIdx;
+            } else if (!mapping.rankKurum && (
+                clean.includes('kumsir') || clean.includes('okulsir') || clean.includes('k.sira') || clean.includes('k.sıra') ||
+                ((clean.includes('kurum') || clean.includes('okul')) &&
+                 (clean.includes('sıra') || clean.includes('sira') || clean.includes('derece') || clean.includes('rank')))
+            )) {
+                mapping.rankKurum = strIdx;
+            } else if (!mapping.rank && (
+                clean.includes('gensir') || clean.includes('genelsir') || clean.includes('gnl') ||
+                ((clean.includes('genel') || clean.includes('ilçe') || clean.includes('ilce') || clean.includes('il')) &&
+                 (clean.includes('sıra') || clean.includes('sira') || clean.includes('derece') || clean.includes('rank'))) ||
+                /\b(sıra|sira|derece|rank)\b/.test(clean)
+            )) {
+                mapping.rank = strIdx;
+            } else if (!mapping.totalNet && /\b(toplam net|top\.?\s*net|genel net|net toplam[ıi]|t\.net)\b/.test(clean)) {
+                mapping.totalNet = strIdx;
+            } else if (!mapping.puan && /\b(puan|lgs puan[ıi]|tyt puan[ıi]|toplam puan)\b/.test(clean)) {
+                mapping.puan = strIdx;
+            } else if (!mapping.yuzdelik && /\b(yüzdelik|yuzdelik|yüzde|yuzde|dilim)\b/.test(clean)) {
+                mapping.yuzdelik = strIdx;
+            }
+            // 2. Öğrenci Kimliği
+            else if (!mapping.studentNo && /\b(okul no|öğrenci no|ogrenci no|karneno|no|numara)\b/.test(clean)) {
                 mapping.studentNo = strIdx;
             } else if (!mapping.studentName && /\b(ad soyad|ad[ıi] soyad[ıi]|öğrenci ad[ıi]|ogrenci adi|isim soyisim|ad|isim)\b/.test(clean)) {
                 mapping.studentName = strIdx;
-            } else if (!mapping.studentClass && /\b(sınıf|sinif|şube|sube|seviye)\b/.test(clean)) {
+            } else if (!mapping.studentClass && (clean.includes('sınıf') || clean.includes('sinif') || clean.includes('şube') || clean.includes('sube') || clean.includes('seviye')) && !clean.includes('sıra') && !clean.includes('sira') && !clean.includes('derece') && !clean.includes('rank')) {
                 mapping.studentClass = strIdx;
-            } else if (!mapping.totalNet && /\b(toplam net|top\.?\s*net|genel net|net toplam[ıi]|t\.net)\b/.test(clean)) {
-                mapping.totalNet = strIdx;
-            } else if (!mapping.rank && /\b(sıra|sira|derece|genel sıra|şube sıra)\b/.test(clean)) {
-                mapping.rank = strIdx;
-            } else if (!mapping.puan && /\b(puan|lgs puan[ıi]|tyt puan[ıi]|toplam puan)\b/.test(clean)) {
-                mapping.puan = strIdx;
             }
 
             // Metrik tipi belirleyiciler
@@ -320,42 +346,42 @@
 
             // 2. Dersler
             // Türkçe
-            if (clean.includes('tür') || clean.includes('turk') || clean.includes('tr')) {
+            if (clean.includes('tür') || clean.includes('turk') || clean.includes('tr') || cleanAscii.includes('turk') || cleanAscii.includes('tur')) {
                 if (isN && !mapping.turkce_net) mapping.turkce_net = strIdx;
                 else if (isD && !mapping.turkce_d) mapping.turkce_d = strIdx;
                 else if (isY && !mapping.turkce_y) mapping.turkce_y = strIdx;
                 else if (!mapping.turkce_net && !isD && !isY) mapping.turkce_net = strIdx;
             }
             // Matematik
-            else if (clean.includes('mat')) {
+            else if (clean.includes('mat') || cleanAscii.includes('mat')) {
                 if (isN && !mapping.mat_net) mapping.mat_net = strIdx;
                 else if (isD && !mapping.mat_d) mapping.mat_d = strIdx;
                 else if (isY && !mapping.mat_y) mapping.mat_y = strIdx;
                 else if (!mapping.mat_net && !isD && !isY) mapping.mat_net = strIdx;
             }
             // Fen Bilimleri
-            else if (clean.includes('fen')) {
+            else if (clean.includes('fen') || cleanAscii.includes('fen')) {
                 if (isN && !mapping.fen_net) mapping.fen_net = strIdx;
                 else if (isD && !mapping.fen_d) mapping.fen_d = strIdx;
                 else if (isY && !mapping.fen_y) mapping.fen_y = strIdx;
                 else if (!mapping.fen_net && !isD && !isY) mapping.fen_net = strIdx;
             }
             // Sosyal / İnkılap
-            else if (clean.includes('sos') || clean.includes('ink') || clean.includes('tarih')) {
+            else if (clean.includes('sos') || clean.includes('ink') || clean.includes('tarih') || cleanAscii.includes('ink') || clean === 't.c.' || clean === 'tc' || clean.startsWith('t.c') || clean.includes('inkılap') || clean.includes('inkilap')) {
                 if (isN && !mapping.sosyal_net) mapping.sosyal_net = strIdx;
                 else if (isD && !mapping.sosyal_d) mapping.sosyal_d = strIdx;
                 else if (isY && !mapping.sosyal_y) mapping.sosyal_y = strIdx;
                 else if (!mapping.sosyal_net && !isD && !isY) mapping.sosyal_net = strIdx;
             }
             // Din Kültürü
-            else if (clean.includes('din')) {
+            else if (clean.includes('din') || clean.includes('dkab') || cleanAscii.includes('din') || cleanAscii.includes('dkab') || clean.includes('ahlak')) {
                 if (isN && !mapping.din_net) mapping.din_net = strIdx;
                 else if (isD && !mapping.din_d) mapping.din_d = strIdx;
                 else if (isY && !mapping.din_y) mapping.din_y = strIdx;
                 else if (!mapping.din_net && !isD && !isY) mapping.din_net = strIdx;
             }
             // İngilizce / Yabancı Dil
-            else if (clean.includes('ing') || clean.includes('dil') || clean.includes('eng')) {
+            else if (clean.includes('ing') || cleanAscii.includes('ing') || clean.includes('dil') || clean.includes('eng') || cleanAscii.includes('eng') || clean.includes('y.dil') || clean.includes('ydil') || clean.includes('yabanci') || clean.includes('yabancı')) {
                 if (isN && !mapping.ing_net) mapping.ing_net = strIdx;
                 else if (isD && !mapping.ing_d) mapping.ing_d = strIdx;
                 else if (isY && !mapping.ing_y) mapping.ing_y = strIdx;
@@ -412,6 +438,22 @@
         const din = calcSubjNet('din_net', 'din_d', 'din_y');
         const ingilizce = calcSubjNet('ing_net', 'ing_d', 'ing_y');
 
+        const getSubjDY = (dKey, yKey) => {
+            const hasD = mapping[dKey] !== "" && mapping[dKey] !== undefined;
+            const hasY = mapping[yKey] !== "" && mapping[yKey] !== undefined;
+            return {
+                d: hasD ? parseNum(row[mapping[dKey]]) : undefined,
+                y: hasY ? parseNum(row[mapping[yKey]]) : undefined
+            };
+        };
+
+        const turkceDY = getSubjDY('turkce_d', 'turkce_y');
+        const matDY = getSubjDY('mat_d', 'mat_y');
+        const fenDY = getSubjDY('fen_d', 'fen_y');
+        const sosDY = getSubjDY('sosyal_d', 'sosyal_y');
+        const dinDY = getSubjDY('din_d', 'din_y');
+        const ingDY = getSubjDY('ing_d', 'ing_y');
+
         const sumNet = +(turkce + matematik + fen + sosyal + din + ingilizce).toFixed(2);
         let totalNet = sumNet;
 
@@ -423,7 +465,22 @@
         const rawName = mapping.studentName !== "" ? String(row[mapping.studentName] || '').trim() : "";
         const rawNo = mapping.studentNo !== "" ? String(row[mapping.studentNo] || '').trim() : "";
         const rawClass = mapping.studentClass !== "" ? String(row[mapping.studentClass] || '').trim() : "";
-        const rank = mapping.rank !== "" ? String(row[mapping.rank] || '-').trim() : "-";
+        const rank = (mapping.rank !== "" && mapping.rank !== undefined) ? String(row[mapping.rank] || '-').trim() : "-";
+        const rankKurum = (mapping.rankKurum !== "" && mapping.rankKurum !== undefined) ? String(row[mapping.rankKurum] || '-').trim() : "-";
+        const rankSinif = (mapping.rankSinif !== "" && mapping.rankSinif !== undefined) ? String(row[mapping.rankSinif] || '-').trim() : "-";
+        const puan = (mapping.puan !== "" && mapping.puan !== undefined) ? String(row[mapping.puan] || '').trim() : "";
+        const yuzdelik = (mapping.yuzdelik !== "" && mapping.yuzdelik !== undefined) ? String(row[mapping.yuzdelik] || '').trim() : "";
+
+        // İsteğe bağlı ek parametreler
+        const extraParams = {};
+        if (Array.isArray(mapping.customParams)) {
+            mapping.customParams.forEach(cp => {
+                const cIdx = (cp && cp.colIndex !== undefined && cp.colIndex !== "") ? cp.colIndex : (cp ? cp.colIdx : undefined);
+                if (cp && cp.name && cIdx !== "" && cIdx !== undefined) {
+                    extraParams[cp.name] = String(row[cIdx] || '').trim();
+                }
+            });
+        }
 
         // Öğrenci eşleştirme
         const students = Array.isArray(window.studentData) ? window.studentData : [];
@@ -459,8 +516,25 @@
             Sosyal: sosyal,
             DinKulturu: din,
             Ingilizce: ingilizce,
+            turkceD: turkceDY.d,
+            turkceY: turkceDY.y,
+            matD: matDY.d,
+            matY: matDY.y,
+            fenD: fenDY.d,
+            fenY: fenDY.y,
+            sosyalD: sosDY.d,
+            sosyalY: sosDY.y,
+            dinD: dinDY.d,
+            dinY: dinDY.y,
+            ingD: ingDY.d,
+            ingY: ingDY.y,
             totalNet: totalNet,
-            rank: rank || "-"
+            rank: rank || "-",
+            rankKurum: rankKurum || "-",
+            rankSinif: rankSinif || "-",
+            puan: puan || "",
+            yuzdelik: yuzdelik || "",
+            extraParams: extraParams
         };
     }
 

@@ -1044,10 +1044,263 @@
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 3. DETAY MODALI & SUB-TABS (ADAPTİF KOKPİT)
+    // 3. DETAY MODALI & SUB-TABS (ADAPTİF KOKPİT & QUICK SWITCHER)
     // ─────────────────────────────────────────────────────────────
+    window.activeYksDenemeSubSegment = window.activeYksDenemeSubSegment || null;
+    window.activeYksHataSubSegment = window.activeYksHataSubSegment || 'kok-neden-dagilim';
+    window.activeYksPiramitSubSegment = window.activeYksPiramitSubSegment || 'piramit-teshis';
 
-    function openYksDetailModal(kocId) {
+    /**
+     * Mobilde sanal klavye açıldığında input alanını ekranın ortasına pürüzsüz kaydırır
+     */
+    function yksAutoScrollOnFocus(el) {
+        if (!el) return;
+        setTimeout(() => {
+            if (typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 280);
+    }
+
+    /**
+     * Akıllı Formlar Açılır Menüsünü Aç / Kapat
+     */
+    
+    /**
+     * 60 Saniyelik Hızlı Giriş Çekmecesini (Inline Drawer) Açar / Kapatır
+     */
+    function toggleYksQuickDrawer() {
+        const drawer = document.getElementById('yks-inline-quick-drawer');
+        if (!drawer) return;
+        const isHidden = drawer.style.display === 'none' || !drawer.style.display;
+        if (isHidden) {
+            const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+            if (item) {
+                const s = item.haftalikSoruSayisi || {};
+                const d1 = document.getElementById('yks-drawer-d1');
+                const d2 = document.getElementById('yks-drawer-d2');
+                const d3 = document.getElementById('yks-drawer-d3');
+                const d4 = document.getElementById('yks-drawer-d4');
+                const netInp = document.getElementById('yks-drawer-net');
+                if (d1) d1.value = s.duzey1 || 0;
+                if (d2) d2.value = s.duzey2 || 0;
+                if (d3) d3.value = s.duzey3 || 0;
+                if (d4) d4.value = s.duzey4 || 0;
+                if (netInp) netInp.value = '';
+                updateYksDrawerKai();
+            }
+            drawer.style.display = 'block';
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            drawer.style.display = 'none';
+        }
+    }
+
+    function updateYksDrawerKai() {
+        const d1 = Number(document.getElementById('yks-drawer-d1')?.value) || 0;
+        const d2 = Number(document.getElementById('yks-drawer-d2')?.value) || 0;
+        const d3 = Number(document.getElementById('yks-drawer-d3')?.value) || 0;
+        const d4 = Number(document.getElementById('yks-drawer-d4')?.value) || 0;
+        const total = d1 + d2 + d3 + d4;
+        const kai = total > 0 ? Math.round(((d1 + d2) / total) * 100) : 0;
+        const prev = document.getElementById('yks-drawer-kai-preview');
+        if (prev) {
+            const color = (kai > 55) ? '#ef4444' : (kai >= 45 ? '#f59e0b' : '#10b981');
+            prev.innerHTML = `Toplam: <strong>${total} Soru</strong> &bull; Canlı KAİ: <strong style="color:${color}; font-size:12.5px;">%${kai}</strong>`;
+        }
+    }
+
+    function submitYksInlineQuickSync() {
+        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+        if (!item) return;
+
+        const d1 = Number(document.getElementById('yks-drawer-d1')?.value) || 0;
+        const d2 = Number(document.getElementById('yks-drawer-d2')?.value) || 0;
+        const d3 = Number(document.getElementById('yks-drawer-d3')?.value) || 0;
+        const d4 = Number(document.getElementById('yks-drawer-d4')?.value) || 0;
+        const total = d1 + d2 + d3 + d4;
+        const quickNet = parseFloat(document.getElementById('yks-drawer-net')?.value);
+
+        item.haftalikSoruSayisi = { duzey1: d1, duzey2: d2, duzey3: d3, duzey4: d4, toplam: total };
+
+        if (!isNaN(quickNet) && quickNet > 0) {
+            if (!Array.isArray(item.denemeler)) item.denemeler = [];
+            const seviye = item.sinifSeviyesi || detectSinifSeviyesi(item.sinif);
+            const isJunior = (seviye === 9 || seviye === 10);
+            item.denemeler.push({
+                id: 'den_' + Date.now(),
+                tarih: new Date().toISOString().split('T')[0],
+                tur: isJunior ? 'TYT Kondisyon' : 'TYT',
+                yayin: '60 Sn Hızlı Giriş Denemesi',
+                netler: { toplam: quickNet },
+                sureAnalizi: { optikKontrol: true }
+            });
+        }
+
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('60 saniyelik haftalık veriler başarıyla kaydedildi.', 'success');
+        }
+
+        const drawer = document.getElementById('yks-inline-quick-drawer');
+        if (drawer) drawer.style.display = 'none';
+
+        switchYksDetailSubTab(activeYksDetailSubTab);
+        renderYksKoclukModule();
+    }
+
+    function toggleYksFormsMenu(e) {
+        if (e) e.stopPropagation();
+        const pMenu = document.getElementById('yks-parent-dropdown-menu');
+        if (pMenu) pMenu.style.display = 'none';
+        const fMenu = document.getElementById('yks-forms-dropdown-menu');
+        if (fMenu) {
+            fMenu.style.display = (fMenu.style.display === 'block') ? 'none' : 'block';
+        }
+    }
+
+    /**
+     * Veli Bülteni Açılır Menüsünü Aç / Kapat
+     */
+    function toggleYksParentMenu(e) {
+        if (e) e.stopPropagation();
+        const fMenu = document.getElementById('yks-forms-dropdown-menu');
+        if (fMenu) fMenu.style.display = 'none';
+        const pMenu = document.getElementById('yks-parent-dropdown-menu');
+        if (pMenu) {
+            pMenu.style.display = (pMenu.style.display === 'block') ? 'none' : 'block';
+        }
+    }
+
+    /**
+     * Tüm açık dropdown menüleri kapatır
+     */
+    function hideYksDropdowns() {
+        const fMenu = document.getElementById('yks-forms-dropdown-menu');
+        const pMenu = document.getElementById('yks-parent-dropdown-menu');
+        if (fMenu) fMenu.style.display = 'none';
+        if (pMenu) pMenu.style.display = 'none';
+    }
+
+    document.addEventListener('click', () => hideYksDropdowns());
+
+    /**
+     * Klavye Kısayolları (Alt + Sol Ok: Önceki Öğrenci, Alt + Sağ Ok: Sonraki Öğrenci)
+     */
+    window.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('yks-kocluk-detail-modal');
+        if (!modal || modal.style.display !== 'flex') return;
+        if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'Left')) {
+            e.preventDefault();
+            navigateYksKoclukStudent(-1);
+        } else if (e.altKey && (e.key === 'ArrowRight' || e.key === 'Right')) {
+            e.preventDefault();
+            navigateYksKoclukStudent(1);
+        }
+    });
+
+    /**
+     * Hızlı Öğrenci Değiştirici Dropdown'ını Doldurur
+     */
+    function populateYksQuickSwitcher(selectedId) {
+        const select = document.getElementById('yks-quick-student-select');
+        if (!select) return;
+        const list = Array.isArray(window.yksKoclukData) ? window.yksKoclukData : [];
+        if (list.length === 0) {
+            select.innerHTML = '<option value="">YKS Koçluk Havuzu Boş</option>';
+            return;
+        }
+        let opts = '';
+        list.forEach(s => {
+            const isSel = String(s.id) === String(selectedId) ? 'selected' : '';
+            const sev = s.sinifSeviyesi || detectSinifSeviyesi(s.sinif);
+            const kademeBadge = (sev === 'mezun') ? '🎓 Mezun' : `${sev}. Sınıf`;
+            opts += `<option value="${escapeFn(s.id)}" ${isSel}>${escapeFn(s.sinif || kademeBadge)} - No:${escapeFn(s.studentNo || '-')} • ${escapeFn(s.adSoyad)} (${escapeFn(s.alan || 'Sayısal')})</option>`;
+        });
+        select.innerHTML = opts;
+    }
+
+    /**
+     * Önceki / Sonraki Öğrenciye Hızlı Geçiş Yapar (Modalı Kapatmadan)
+     */
+    function navigateYksKoclukStudent(direction) {
+        const list = Array.isArray(window.yksKoclukData) ? window.yksKoclukData : [];
+        if (list.length === 0) return;
+        let idx = list.findIndex(k => String(k.id) === String(activeYksKoclukId));
+        if (idx === -1) idx = 0;
+        let nextIdx = idx + direction;
+        if (nextIdx < 0) nextIdx = list.length - 1;
+        if (nextIdx >= list.length) nextIdx = 0;
+        const nextStudent = list[nextIdx];
+        if (nextStudent) {
+            openYksDetailModal(nextStudent.id, activeYksDetailSubTab);
+        }
+    }
+
+    /**
+     * Veli WhatsApp Mesajı Gönder / Kopyala
+     */
+    function sendYksParentWhatsApp(mode) {
+        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+        if (!item) return;
+
+        const seviye = detectSinifSeviyesi(item.sinifSeviyesi || item.sinif);
+        const lastDeneme = (Array.isArray(item.denemeler) ? item.denemeler : []).slice(-1)[0];
+        const plateau = diagnoseYksNetPlateau(item);
+        const obp = calculateObpShield(item);
+        const kai = calculateKai(item.haftalikSoruSayisi);
+
+        let msg = '';
+        if (mode === 'plato') {
+            msg = `Sayın Velimiz, ${item.adSoyad} isimli öğrencimizin YKS hazırlık sürecinde bilişsel koçluk takibinde net platosu/süre tıkanıklığı teşhis edilmiştir.\n\n` +
+                  `📌 Durum Teşhisi: ${plateau.status}\n` +
+                  `💡 Uzman Cerrahi Reçete: ${plateau.recete}\n\n` +
+                  `🛡️ Evde Alınacak Önlemler (Krizsiz Protokol):\n` +
+                  `1. Ev ortamında kesinlikle net veya deneme puanı sorgulanmamalı, sınav baskısı kurulmamalıdır.\n` +
+                  `2. Nöral konsolidasyon ve bellek oturması için günlük 7.5 - 8 saat kaliteli uyku ritmi korunmalıdır.\n` +
+                  `3. Öğrencimizle mutabık kalınan haftalık çalışma ve turlama kuralına güvenilmelidir.\n\n` +
+                  `Bilişsel Mentorluk ve Psikometrik Takip Servisi`;
+        } else {
+            msg = `Sayın Velimiz, ${item.adSoyad} (${item.sinif || (seviye + '. Sınıf')} - ${item.alan || 'YKS'}) isimli öğrencimizin bilişsel gelişim bülteni oluşturulmuştur:\n\n` +
+                  `🎯 Akademik Hedef: ${item.hedefProgram || item.hedefBolum || 'Hedef Lisans'} (İlk ${item.hedefSiralama || '20.000'})\n` +
+                  (lastDeneme ? `⏱️ Son Deneme (${lastDeneme.tur}): Toplam ${Number(lastDeneme.netler?.toplam || 0).toFixed(2)} Net (TDE: ${calculateYksTde(lastDeneme).tdePuan}/100)\n` : '') +
+                  `📊 Konfor Alanı İndeksi (KAİ): %${kai.kai} (${kai.label})\n` +
+                  (seviye === 9 || seviye === 10 ? `🛡️ Tahmini OBP Kalkanı: +${obp.yerlestirmeKatkisi} Puan (Diploma: ${obp.diplomaNotu})\n` : '') +
+                  `\nDetaylı analiz okul portalımızda veli incelemesine açıktır.`;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(msg).then(() => {
+                if (typeof showGlobalToast === 'function') {
+                    showGlobalToast('Veli bülteni panoya kopyalandı. WhatsApp Web açılıyor...', 'success');
+                } else {
+                    alert('Veli bülteni panoya kopyalandı.');
+                }
+            });
+        }
+        const waUrl = 'https://web.whatsapp.com/send?text=' + encodeURIComponent(msg);
+        window.open(waUrl, '_blank');
+    }
+
+    /**
+     * BiP ile Sadeleştirilmiş Paylaşım
+     */
+    function shareYksViaBip() {
+        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+        if (!item) return;
+        const kai = calculateKai(item.haftalikSoruSayisi);
+        const lastDeneme = (Array.isArray(item.denemeler) ? item.denemeler : []).slice(-1)[0];
+        const msg = `BiP Öğrenci Bilgilendirme: ${item.adSoyad} | ` +
+                    (lastDeneme ? `Son Net: ${Number(lastDeneme.netler?.toplam || 0).toFixed(2)} | ` : '') +
+                    `KAİ: %${kai.kai} | Hedef: ${item.hedefProgram || 'YKS'}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(msg);
+            if (typeof showGlobalToast === 'function') showGlobalToast('BiP mesajı panoya kopyalandı.', 'success');
+            else alert('BiP mesajı kopyalandı.');
+        }
+    }
+
+    function openYksDetailModal(kocId, keepSubTab) {
         activeYksKoclukId = kocId;
         const item = (window.yksKoclukData || []).find(k => String(k.id) === String(kocId));
         if (!item) return;
@@ -1055,14 +1308,23 @@
         item.sinifSeviyesi = item.sinifSeviyesi || detectSinifSeviyesi(item.sinif);
 
         const titleEl = document.getElementById('yks-detail-student-title');
+        const badgeEl = document.getElementById('yks-detail-badge');
+
+        let kademeText = '12. Sınıf YKS';
+        if (item.sinifSeviyesi === 9) kademeText = '🌱 9. Sınıf (Temel İnşa & OYSS)';
+        else if (item.sinifSeviyesi === 10) kademeText = '🌿 10. Sınıf (Kavram & OYSS)';
+        else if (item.sinifSeviyesi === 11) kademeText = `⚡ 11. Sınıf (${item.alan || 'Sayısal'} Omurgası)`;
+        else if (item.sinifSeviyesi === 'mezun') kademeText = '🎓 Mezun (ÖSYM Zirve)';
+
         if (titleEl) {
-            let kademeText = '12. Sınıf YKS';
-            if (item.sinifSeviyesi === 9) kademeText = '🌱 9. Sınıf (Temel İnşa & OYSS)';
-            else if (item.sinifSeviyesi === 10) kademeText = '🌿 10. Sınıf (Kavram & OYSS)';
-            else if (item.sinifSeviyesi === 11) kademeText = `⚡ 11. Sınıf (${item.alan} Omurgası)`;
-            else if (item.sinifSeviyesi === 'mezun') kademeText = '🎓 Mezun (ÖSYM Zirve)';
-            titleEl.innerHTML = `🎯 ${escapeFn(item.adSoyad)} <span style="font-size:12px; font-weight:600; opacity:0.8; margin-left:8px;">(${escapeFn(item.studentNo || '')} • ${kademeText})</span>`;
+            titleEl.innerHTML = `<i class="fas fa-graduation-cap" style="color:#0284c7;"></i> <span>${escapeFn(item.adSoyad)}</span>`;
         }
+        if (badgeEl) {
+            badgeEl.textContent = `${item.sinif || kademeText} • ${item.alan || 'Sayısal'} • Hedef: ${item.hedefProgram || item.hedefBolum || 'Üniversite'} (İlk ${item.hedefSiralama || '20.000'})`;
+        }
+
+        // Quick Switcher dropdown'ını doldur
+        populateYksQuickSwitcher(kocId);
 
         // Sub-Tab başlıklarını sınıf seviyesine göre dinamik uyarlayalım
         const denemelerBtn = document.getElementById('yks-sub-btn-tab-yks-denemeler');
@@ -1078,14 +1340,17 @@
             if (denemelerBtn) denemelerBtn.innerHTML = '⏱️ Denemeler &amp; TDE';
         }
 
-        switchYksDetailSubTab(activeYksDetailSubTab || 'tab-yks-profil');
-
         const modal = document.getElementById('yks-kocluk-detail-modal');
+        const targetSubTab = keepSubTab || (modal && modal.style.display === 'flex' && activeYksDetailSubTab ? activeYksDetailSubTab : 'tab-yks-profil');
+
+        switchYksDetailSubTab(targetSubTab);
+
         if (modal) modal.style.display = 'flex';
     }
 
     function switchYksDetailSubTab(subTabId) {
         activeYksDetailSubTab = subTabId;
+        window.activeYksDetailSubTab = subTabId;
         const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
         if (!item) return;
 
@@ -1094,7 +1359,12 @@
 
         const targetBtn = document.getElementById(`yks-sub-btn-${subTabId}`);
         const targetContent = document.getElementById(subTabId);
-        if (targetBtn) targetBtn.classList.add('active');
+        if (targetBtn) {
+            targetBtn.classList.add('active');
+            if (typeof targetBtn.scrollIntoView === 'function') {
+                targetBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
         if (targetContent) targetContent.style.display = 'block';
 
         if (subTabId === 'tab-yks-profil') renderYksDetailProfile(item);
@@ -1240,27 +1510,259 @@
         alert('Mentor notu başarıyla güncellendi.');
     }
 
-    // --- Sub-Tab 2: Denemeler & OYSS Yazılıları ---
+    // ─────────────────────────────────────────────────────────────
+    // SUB-TAB 2: DENEMELER, MEB OYSS & ÇİFT MOTORLU TDE SİSTEMİ
+    // ─────────────────────────────────────────────────────────────
+
+    function switchYksDenemeSubSegment(segmentId) {
+        window.activeYksDenemeSubSegment = segmentId;
+        document.querySelectorAll('.yks-deneme-seg-btn').forEach(btn => {
+            const isActive = btn.getAttribute('data-segment') === segmentId;
+            btn.classList.toggle('active', isActive);
+        });
+
+        // Tüm olası deneme segment div'leri
+        ['oyss', 'tyt-deneme', 'obp-kalkan', 'trend-plato', 'yeni-deneme', 'deneme-gecmisi'].forEach(seg => {
+            const el = document.getElementById('yks-deneme-seg-' + seg);
+            if (el) el.style.display = (seg === segmentId) ? 'block' : 'none';
+        });
+    }
+
+    /**
+     * Etkileşimli SVG Gelişim Grafiği (TYT & AYT Netleri ve Hedef Çizgisi)
+     */
+    function generateYksTrendSvg(item) {
+        const denemeler = Array.isArray(item.denemeler) ? item.denemeler : [];
+        const W = 620;
+        const H = 200;
+        const PAD_L = 40;
+        const PAD_R = 25;
+        const PAD_T = 20;
+        const PAD_B = 30;
+
+        if (denemeler.length === 0) {
+            return `
+                <div style="background:var(--input-bg); border:1px dashed var(--border); border-radius:10px; padding:30px; text-align:center; color:var(--text-muted); font-size:12px;">
+                    <i class="fas fa-chart-line" style="font-size:28px; opacity:0.4; margin-bottom:8px; display:block;"></i>
+                    Henüz grafik için deneme kaydı girilmedi. "Hızlı Sınav Girişi" sekmesinden ilk denemenizi kaydedin veya 8. Sınav Analizden veri çekin.
+                </div>
+            `;
+        }
+
+        const tytMax = 120;
+        const targetNet = parseFloat(item.hedefTytNet) || (item.sinifSeviyesi === 11 ? 75 : 90);
+        const targetY = H - PAD_B - ((targetNet / tytMax) * (H - PAD_T - PAD_B));
+
+        // Noktaları hesapla
+        const n = denemeler.length;
+        const stepX = n > 1 ? (W - PAD_L - PAD_R) / (n - 1) : (W - PAD_L - PAD_R) / 2;
+
+        let tytPoints = [];
+        let aytPoints = [];
+        let tytSvgPoints = '';
+        let aytSvgPoints = '';
+        let xLabels = '';
+        let dotsSvg = '';
+
+        denemeler.forEach((d, i) => {
+            const x = n > 1 ? PAD_L + i * stepX : W / 2;
+            const isAyt = String(d.tur).toUpperCase().includes('AYT');
+            const totalNet = Number(d.netler?.toplam || 0);
+
+            // Y ekseni ölçekleme (TYT için 120, AYT için 80)
+            const maxScale = isAyt ? 80 : 120;
+            const y = H - PAD_B - (Math.min(totalNet, maxScale) / maxScale) * (H - PAD_T - PAD_B);
+
+            if (isAyt) {
+                aytPoints.push({ x, y, net: totalNet, ad: d.yayin || d.ad || 'AYT', tarih: d.tarih || '' });
+                aytSvgPoints += `${x},${y} `;
+                dotsSvg += `
+                    <polygon points="${x},${y - 5} ${x + 5},${y} ${x},${y + 5} ${x - 5},${y}" fill="#7c3aed" stroke="#ffffff" stroke-width="1.5" style="cursor:pointer;">
+                        <title>AYT: ${escapeFn(d.yayin || d.ad || 'Deneme')} - ${totalNet.toFixed(2)} Net (${d.tarih || ''})</title>
+                    </polygon>
+                    <text x="${x}" y="${y - 8}" font-size="9" font-weight="700" fill="#7c3aed" text-anchor="middle">${totalNet.toFixed(1)}</text>
+                `;
+            } else {
+                tytPoints.push({ x, y, net: totalNet, ad: d.yayin || d.ad || 'TYT', tarih: d.tarih || '' });
+                tytSvgPoints += `${x},${y} `;
+                dotsSvg += `
+                    <circle cx="${x}" cy="${y}" r="4.5" fill="#0284c7" stroke="#ffffff" stroke-width="1.5" style="cursor:pointer;">
+                        <title>TYT: ${escapeFn(d.yayin || d.ad || 'Deneme')} - ${totalNet.toFixed(2)} Net (${d.tarih || ''})</title>
+                    </circle>
+                    <text x="${x}" y="${y - 8}" font-size="9" font-weight="700" fill="#0284c7" text-anchor="middle">${totalNet.toFixed(1)}</text>
+                `;
+            }
+
+            // X Etiketi
+            const shortName = (d.yayin || d.ad || `D-${i + 1}`).substring(0, 8);
+            xLabels += `<text x="${x}" y="${H - 10}" font-size="9.5" fill="var(--text-muted, #64748b)" text-anchor="middle">${escapeFn(shortName)}</text>`;
+        });
+
+        return `
+            <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:14px; overflow-x:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:11.5px; font-weight:700;">
+                    <div style="display:flex; gap:14px; align-items:center;">
+                        <span style="display:inline-flex; align-items:center; gap:5px; color:#0284c7;"><span style="width:10px; height:10px; border-radius:50%; background:#0284c7;"></span> TYT Net Eğrisi</span>
+                        <span style="display:inline-flex; align-items:center; gap:5px; color:#7c3aed;"><span style="width:10px; height:10px; background:#7c3aed; transform:rotate(45deg);"></span> AYT Net Eğrisi</span>
+                        <span style="display:inline-flex; align-items:center; gap:5px; color:#10b981;"><span style="width:16px; height:2px; background:#10b981; border-top:1px dashed #10b981;"></span> Hedef (${targetNet} Net)</span>
+                    </div>
+                    <span style="color:var(--text-muted); font-size:11px;">Son ${denemeler.length} Deneme</span>
+                </div>
+                <div style="min-width:540px;">
+                    <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; display:block;">
+                        <!-- Yatay Kılavuz Çizgileri -->
+                        <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" stroke="rgba(148,163,184,0.25)" stroke-width="1" />
+                        <line x1="${PAD_L}" y1="${H - PAD_B - 0.25 * (H - PAD_T - PAD_B)}" x2="${W - PAD_R}" y2="${H - PAD_B - 0.25 * (H - PAD_T - PAD_B)}" stroke="rgba(148,163,184,0.15)" stroke-dasharray="3,3" />
+                        <line x1="${PAD_L}" y1="${H - PAD_B - 0.50 * (H - PAD_T - PAD_B)}" x2="${W - PAD_R}" y2="${H - PAD_B - 0.50 * (H - PAD_T - PAD_B)}" stroke="rgba(148,163,184,0.15)" stroke-dasharray="3,3" />
+                        <line x1="${PAD_L}" y1="${H - PAD_B - 0.75 * (H - PAD_T - PAD_B)}" x2="${W - PAD_R}" y2="${H - PAD_B - 0.75 * (H - PAD_T - PAD_B)}" stroke="rgba(148,163,184,0.15)" stroke-dasharray="3,3" />
+                        <line x1="${PAD_L}" y1="${PAD_T}" x2="${W - PAD_R}" y2="${PAD_T}" stroke="rgba(148,163,184,0.25)" stroke-width="1" />
+
+                        <!-- Hedef Çizgisi -->
+                        <line x1="${PAD_L}" y1="${targetY}" x2="${W - PAD_R}" y2="${targetY}" stroke="#10b981" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.85" />
+                        <text x="${W - PAD_R}" y="${targetY - 4}" font-size="9" font-weight="800" fill="#10b981" text-anchor="end">Hedef: ${targetNet}N</text>
+
+                        <!-- TYT Çizgisi -->
+                        ${tytPoints.length > 1 ? `<polyline fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${tytSvgPoints.trim()}" />` : ''}
+
+                        <!-- AYT Çizgisi -->
+                        ${aytPoints.length > 1 ? `<polyline fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,2" points="${aytSvgPoints.trim()}" />` : ''}
+
+                        <!-- Noktalar ve Değerler -->
+                        ${dotsSvg}
+
+                        <!-- X Eksen Etiketleri -->
+                        ${xLabels}
+                    </svg>
+                </div>
+            </div>
+        `;
+    }
+
     function renderYksDetailDenemeler(item) {
         const c = document.getElementById('tab-yks-denemeler');
         if (!c) return;
 
         const seviye = detectSinifSeviyesi(item.sinifSeviyesi || item.sinif);
 
-        // 9 veya 10. Sınıf Modu: MEB OYSS 10 Ders Yazılı Takip Konsolu
+        // 9 ve 10. Sınıflar İçin Alt Segment Menüsü
         if (seviye === 9 || seviye === 10) {
-            renderOyssYaziliTakip(c, item);
+            const activeSeg = window.activeYksDenemeSubSegment || 'oyss';
+            c.innerHTML = `
+                <!-- Sub-Segment Kontrolü (9-10. Sınıf) -->
+                <div class="yks-subsegment-nav">
+                    <button type="button" class="yks-segment-btn yks-deneme-seg-btn ${activeSeg === 'oyss' ? 'active' : ''}" data-segment="oyss" onclick="switchYksDenemeSubSegment('oyss')">
+                        <i class="fas fa-edit"></i> 📝 MEB OYSS 10 Ders Yazılı Takip Konsolu
+                    </button>
+                    <button type="button" class="yks-segment-btn yks-deneme-seg-btn ${activeSeg === 'tyt-deneme' ? 'active' : ''}" data-segment="tyt-deneme" onclick="switchYksDenemeSubSegment('tyt-deneme')">
+                        <i class="fas fa-stopwatch"></i> ⏱️ TYT Kondisyon Denemeleri &amp; Giriş
+                    </button>
+                    <button type="button" class="yks-segment-btn yks-deneme-seg-btn ${activeSeg === 'obp-kalkan' ? 'active' : ''}" data-segment="obp-kalkan" onclick="switchYksDenemeSubSegment('obp-kalkan')">
+                        <i class="fas fa-shield-alt"></i> 🛡️ OBP Koruma Kalkanı Projeksiyonu
+                    </button>
+                </div>
+
+                <!-- Segment 1: MEB OYSS 10 Ders -->
+                <div id="yks-deneme-seg-oyss" style="${activeSeg === 'oyss' ? 'display:block;' : 'display:none;'}">
+                    ${getOyssYaziliTakipHtml(item)}
+                </div>
+
+                <!-- Segment 2: TYT Kondisyon Denemeleri -->
+                <div id="yks-deneme-seg-tyt-deneme" style="${activeSeg === 'tyt-deneme' ? 'display:block;' : 'display:none;'}">
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                            <h4 style="margin:0; color:#0284c7; font-size:14px;"><i class="fas fa-stopwatch me-1"></i> Erken Kademe TYT Kondisyon Denemeleri</h4>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn btn-clear" onclick="if (typeof window.syncAllExamsToKocluk === 'function') { window.syncAllExamsToKocluk(false); const cur = (window.yksKoclukData||[]).find(k=>k.id==='${item.id}'); if(cur) renderYksDetailDenemeler(cur); }" style="font-size:11.5px; padding:6px 12px; font-weight:700; border:1px solid rgba(2,132,199,0.35); border-radius:6px; background:rgba(2,132,199,0.08); color:#0284c7;">
+                                    <i class="fas fa-sync-alt me-1"></i> 🦅 8. Sınav Analizden Veri Çek
+                                </button>
+                                <button class="btn btn-primary" onclick="showAddYksDenemeForm()" style="font-size:11.5px; padding:6px 12px; font-weight:700;">
+                                    <i class="fas fa-plus me-1"></i> Hızlı Sınav Formunu Aç
+                                </button>
+                            </div>
+                        </div>
+                        ${renderDenemelerTableRows(item)}
+                    </div>
+                    ${renderAddDenemeFormBox(item)}
+                </div>
+
+                <!-- Segment 3: OBP Koruma Kalkanı -->
+                <div id="yks-deneme-seg-obp-kalkan" style="${activeSeg === 'obp-kalkan' ? 'display:block;' : 'display:none;'}">
+                    ${getObpShieldFullHtml(item)}
+                </div>
+            `;
             return;
         }
 
-        // 11, 12 veya Mezun Modu: Denemeler & TDE Skorlama
-        renderTytAytDenemeList(c, item);
+        // 11, 12 ve Mezun Seviyesi İçin Alt Segment Menüsü
+        const activeSeg = window.activeYksDenemeSubSegment || 'trend-plato';
+        const plateau = diagnoseYksNetPlateau(item);
+
+        c.innerHTML = `
+            <!-- Sub-Segment Kontrolü (11-12/Mezun) -->
+            <div class="yks-subsegment-nav">
+                <button type="button" class="yks-segment-btn yks-deneme-seg-btn ${activeSeg === 'trend-plato' ? 'active' : ''}" data-segment="trend-plato" onclick="switchYksDenemeSubSegment('trend-plato')">
+                    <i class="fas fa-chart-line"></i> 📈 Trend &amp; Çift Motorlu Plato Röntgeni
+                </button>
+                <button type="button" class="yks-segment-btn yks-deneme-seg-btn ${activeSeg === 'yeni-deneme' ? 'active' : ''}" data-segment="yeni-deneme" onclick="switchYksDenemeSubSegment('yeni-deneme')">
+                    <i class="fas fa-plus-circle"></i> ➕ Hızlı Sınav Girişi (İzomorfik Numpad &amp; Canlı Net)
+                </button>
+                <button type="button" class="yks-segment-btn yks-deneme-seg-btn ${activeSeg === 'deneme-gecmisi' ? 'active' : ''}" data-segment="deneme-gecmisi" onclick="switchYksDenemeSubSegment('deneme-gecmisi')">
+                    <i class="fas fa-list-alt"></i> 📋 Deneme Kütüğü &amp; TDE Karneleri
+                </button>
+            </div>
+
+            <!-- Segment 1: Trend Grafiği & Çift Motorlu Plato Röntgeni -->
+            <div id="yks-deneme-seg-trend-plato" style="${activeSeg === 'trend-plato' ? 'display:block;' : 'display:none;'}">
+                ${generateYksTrendSvg(item)}
+                <div style="background:var(--card-bg); border:1.5px solid ${plateau.color || 'var(--border)'}; border-radius:10px; padding:16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; color:${plateau.color || 'var(--text-main)'}; font-size:14px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-microscope"></i> Çift Katmanlı Net Platosu &amp; Süre Röntgeni
+                        </h4>
+                        <span style="background:${plateau.color}18; color:${plateau.color}; border:1px solid ${plateau.color}40; padding:3px 10px; border-radius:6px; font-weight:800; font-size:12px;">
+                            ${escapeFn(plateau.status)}
+                        </span>
+                    </div>
+                    <div style="background:var(--input-bg); border-left:4px solid ${plateau.color || '#0284c7'}; border-radius:0 8px 8px 0; padding:10px 14px; font-size:12px; line-height:1.45; color:var(--text-main);">
+                        <strong>Cerrahi Bilişsel Reçete:</strong> ${escapeFn(plateau.recete)}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment 2: Hızlı Sınav Girişi Formu -->
+            <div id="yks-deneme-seg-yeni-deneme" style="${activeSeg === 'yeni-deneme' ? 'display:block;' : 'display:none;'}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                    <div style="font-size:12px; color:var(--text-muted);">
+                        Form-2 ile birebir aynı sırada numpad akışı (Doğru ➔ Tab ➔ Yanlış ➔ Tab ➔ Sonraki Ders).
+                    </div>
+                    <button class="btn btn-clear" onclick="if (typeof window.syncAllExamsToKocluk === 'function') { window.syncAllExamsToKocluk(false); const cur = (window.yksKoclukData||[]).find(k=>k.id==='${item.id}'); if(cur) renderYksDetailDenemeler(cur); }" style="font-size:11.5px; padding:6px 12px; font-weight:700; border:1px solid rgba(2,132,199,0.35); border-radius:6px; background:rgba(2,132,199,0.08); color:#0284c7;">
+                        <i class="fas fa-sync-alt me-1"></i> 🦅 8. Sınav Analizden Veri Çek
+                    </button>
+                </div>
+                ${renderAddDenemeFormBox(item, true)}
+            </div>
+
+            <!-- Segment 3: Deneme Kütüğü & TDE Karneleri -->
+            <div id="yks-deneme-seg-deneme-gecmisi" style="${activeSeg === 'deneme-gecmisi' ? 'display:block;' : 'display:none;'}">
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; color:#0284c7; font-size:14px;"><i class="fas fa-list-alt me-1"></i> Tüm Kayıtlı Sınavlar ve TDE Skorları</h4>
+                        <button class="btn btn-primary" onclick="switchYksDenemeSubSegment('yeni-deneme')" style="font-size:11.5px; padding:6px 12px; font-weight:700;">
+                            <i class="fas fa-plus me-1"></i> Yeni Deneme Ekle
+                        </button>
+                    </div>
+                    ${renderDenemelerTableRows(item)}
+                </div>
+            </div>
+        `;
     }
 
-    function renderOyssYaziliTakip(container, item) {
+    /**
+     * MEB OYSS 10 Ders HTML Şablonu
+     */
+    function getOyssYaziliTakipHtml(item) {
         const yazililar = item.yazililar || {};
         const oyssAvg = calculateOyssAverages(item);
-        const obpShield = calculateObpShield(item);
 
         let tableRows = '';
         MEB_10_DERSI.forEach((ders, idx) => {
@@ -1269,7 +1771,6 @@
             const y2_1 = yazililar.donem2_y1?.[ders.id] ?? '';
             const y2_2 = yazililar.donem2_y2?.[ders.id] ?? '';
 
-            // Ortalama
             const arr = [parseFloat(y1_1), parseFloat(y1_2), parseFloat(y2_1), parseFloat(y2_2)].filter(n => !isNaN(n));
             const rowAvg = arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '-';
 
@@ -1280,17 +1781,17 @@
                         <span style="margin-right:6px;">${ders.icon}</span> ${escapeFn(ders.name)}
                         <span style="font-size:10px; color:var(--text-muted); font-weight:normal;">(${ders.kredi} Kredi)</span>
                     </td>
-                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y1_1" value="${y1_1}" placeholder="-" style="width:55px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);"></td>
-                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y1_2" value="${y1_2}" placeholder="-" style="width:55px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);"></td>
-                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y2_1" value="${y2_1}" placeholder="-" style="width:55px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);"></td>
-                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y2_2" value="${y2_2}" placeholder="-" style="width:55px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);"></td>
+                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y1_1" value="${y1_1}" placeholder="-" onfocus="yksAutoScrollOnFocus(this)" style="width:55px; text-align:center; padding:5px; border-radius:4px; border:1px solid var(--border);"></td>
+                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y1_2" value="${y1_2}" placeholder="-" onfocus="yksAutoScrollOnFocus(this)" style="width:55px; text-align:center; padding:5px; border-radius:4px; border:1px solid var(--border);"></td>
+                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y2_1" value="${y2_1}" placeholder="-" onfocus="yksAutoScrollOnFocus(this)" style="width:55px; text-align:center; padding:5px; border-radius:4px; border:1px solid var(--border);"></td>
+                    <td style="text-align:center;"><input type="number" min="0" max="100" class="yks-oyss-inp y2_2" value="${y2_2}" placeholder="-" onfocus="yksAutoScrollOnFocus(this)" style="width:55px; text-align:center; padding:5px; border-radius:4px; border:1px solid var(--border);"></td>
                     <td style="text-align:center; font-weight:800; color:#0284c7;">${rowAvg}</td>
                 </tr>
             `;
         });
 
-        container.innerHTML = `
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px;">
+        return `
+            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
                     <div>
                         <h4 style="margin:0; color:#0284c7; display:flex; align-items:center; gap:8px;">
@@ -1301,7 +1802,7 @@
                         </div>
                     </div>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <span style="background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.3); padding:4px 10px; border-radius:6px; font-size:12px; font-weight:800;">
+                        <span style="background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.3); padding:5px 12px; border-radius:6px; font-size:12px; font-weight:800;">
                             Ağırlıklı Karne Ort.: ${oyssAvg.generalAvg}
                         </span>
                         <button class="btn btn-primary" onclick="saveYksOyssYazililar()" style="font-size:12px; padding:7px 16px; font-weight:700;">
@@ -1327,22 +1828,451 @@
                     </table>
                 </div>
             </div>
+        `;
+    }
 
-            <!-- Varsa Girilen TYT Denemeleri -->
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h4 style="margin:0; color:var(--text-main); font-size:13px; display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-stopwatch" style="color:#0284c7;"></i> TYT Deneme Kayıtları &amp; Hızlı Giriş
-                    </h4>
-                    <button class="btn btn-primary" onclick="showAddYksDenemeForm()" style="font-size:11.5px; padding:5px 12px; font-weight:700;">
-                        <i class="fas fa-plus me-1"></i> Yeni Deneme Ekle
-                    </button>
+    /**
+     * OBP Kalkanı Detay Kartı
+     */
+    function getObpShieldFullHtml(item) {
+        const obpShield = calculateObpShield(item);
+        return `
+            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:18px;">
+                <h4 style="margin:0 0 12px 0; color:#059669; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-shield-alt"></i> 🛡️ OBP Koruma Kalkanı &amp; 4 Yıllık Projeksiyon Simülatörü
+                </h4>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px;">
+                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:14px; text-align:center;">
+                        <div style="font-size:11px; color:#059669; font-weight:800; text-transform:uppercase;">YKS Ham Puana Eklenecek Kalkan</div>
+                        <div style="font-size:28px; font-weight:900; color:#059669; margin:4px 0;">+${obpShield.yerlestirmeKatkisi} Puan</div>
+                        <div style="font-size:11.5px; color:var(--text-muted);">
+                            ÖSYM OBP Puanı: <strong>${obpShield.obpPuan}</strong> &bull; Katsayı: 0.6
+                        </div>
+                    </div>
+                    <div style="background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.3); border-radius:8px; padding:14px; text-align:center;">
+                        <div style="font-size:11px; color:#0284c7; font-weight:800; text-transform:uppercase;">4 Yıllık Tahmini Diploma Notu</div>
+                        <div style="font-size:28px; font-weight:900; color:#0284c7; margin:4px 0;">${obpShield.diplomaNotu}</div>
+                        <div style="font-size:11.5px; color:var(--text-muted);">
+                            Sıralamaya Doğrudan Etki: <strong>+12.000..+35.000 Kişi</strong>
+                        </div>
+                    </div>
                 </div>
-                ${renderDenemelerTableRows(item)}
-                ${renderAddDenemeFormBox(item)}
+
+                <table class="custom-table" style="font-size:12.5px; width:100%; margin-bottom:14px;">
+                    <thead>
+                        <tr style="background:var(--tab-bg);">
+                            <th>Lise Kademesi</th>
+                            <th style="width:120px; text-align:center;">Yıl Sonu Notu</th>
+                            <th>Kalkan Durumu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight:bold;">🌱 9. Sınıf Yıl Sonu:</td>
+                            <td style="text-align:center;"><input type="number" step="0.1" id="yks-obp-s9" value="${obpShield.s9}" onfocus="yksAutoScrollOnFocus(this)" style="width:75px; padding:5px; text-align:center; border-radius:4px; border:1px solid var(--border);"></td>
+                            <td style="font-size:11.5px; color:var(--text-muted);">Temel kavram ve OYSS senaryoları</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold;">🌿 10. Sınıf Yıl Sonu:</td>
+                            <td style="text-align:center;"><input type="number" step="0.1" id="yks-obp-s10" value="${obpShield.s10}" onfocus="yksAutoScrollOnFocus(this)" style="width:75px; padding:5px; text-align:center; border-radius:4px; border:1px solid var(--border);"></td>
+                            <td style="font-size:11.5px; color:var(--text-muted);">Kritik eşik: Alan seçimi öncesi OBP güvencesi</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold;">⚡ 11. Sınıf Tahmini:</td>
+                            <td style="text-align:center;"><input type="number" step="0.1" id="yks-obp-s11" value="${obpShield.s11}" onfocus="yksAutoScrollOnFocus(this)" style="width:75px; padding:5px; text-align:center; border-radius:4px; border:1px solid var(--border);"></td>
+                            <td style="font-size:11.5px; color:var(--text-muted);">AYT omurgası dersleri</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold;">🎯 12. Sınıf Tahmini:</td>
+                            <td style="text-align:center;"><input type="number" step="0.1" id="yks-obp-s12" value="${obpShield.s12}" onfocus="yksAutoScrollOnFocus(this)" style="width:75px; padding:5px; text-align:center; border-radius:4px; border:1px solid var(--border);"></td>
+                            <td style="font-size:11.5px; color:var(--text-muted);">Mezuniyet ve YKS final yılı</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn btn-primary" onclick="saveYksObpProjections()" style="padding:8px 18px; font-size:12px; font-weight:700; background:#059669; border-color:#059669;">
+                    <i class="fas fa-save me-1"></i> OBP Kalkanı Notlarını Kaydet
+                </button>
             </div>
         `;
     }
+
+    function renderTytAytDenemeList(container, item) {
+        renderYksDetailDenemeler(item);
+    }
+
+    function renderDenemelerTableRows(item) {
+        const denemeler = Array.isArray(item.denemeler) ? item.denemeler : [];
+        let rows = '';
+        denemeler.forEach((d, idx) => {
+            const tde = calculateYksTde(d);
+            const isAyt = String(d.tur).toUpperCase().includes('AYT');
+            const totalNet = Number(d.netler?.toplam || 0).toFixed(2);
+            const sourceBadge = (d.source === 'exam_module' || d.examId)
+                ? `<span style="display:inline-block; font-size:10px; font-weight:800; background:rgba(2,132,199,0.12); color:#0284c7; border:1px solid rgba(2,132,199,0.3); padding:1px 6px; border-radius:4px; margin-left:6px;" title="8. Sınav Analiz bölümünden otomatik aktarıldı"><i class="fas fa-link me-1"></i>8. Sınav Analiz</span>`
+                : '';
+            rows += `
+                <tr>
+                    <td style="font-weight:bold; text-align:center;">${idx + 1}</td>
+                    <td>${escapeFn(d.tarih || '-')}</td>
+                    <td><span style="background:${isAyt ? '#7c3aed' : '#0284c7'}; color:white; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:800;">${escapeFn(d.tur)}</span></td>
+                    <td>${escapeFn(d.yayin || 'Genel Deneme')}${sourceBadge}</td>
+                    <td style="font-weight:900; color:var(--text-main); text-align:center;">${totalNet}</td>
+                    <td style="text-align:center;">
+                        <span style="background:${tde.badgeBg}; color:${tde.badgeColor}; border:1px solid ${tde.badgeBorder}; padding:2px 8px; border-radius:6px; font-weight:800; font-size:11px;">
+                            ${tde.tdePuan} Puan
+                        </span>
+                    </td>
+                    <td style="font-size:11px; color:var(--text-muted);">${escapeFn(tde.badgeText)}</td>
+                    <td style="text-align:center;">
+                        <button class="action-btn" onclick="deleteYksDeneme(${idx})" title="Denemeyi Sil" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        if (!rows) {
+            rows = `<tr><td colspan="8" style="text-align:center; padding:22px; color:var(--text-muted);">Henüz kayıtlı deneme sınavı bulunamadı.</td></tr>`;
+        }
+
+        return `
+            <div style="overflow-x:auto;">
+                <table class="custom-table" style="width:100%; font-size:12px; margin:0;">
+                    <thead>
+                        <tr style="background:var(--tab-bg);">
+                            <th style="width:40px; text-align:center;">#</th>
+                            <th style="width:90px;">Tarih</th>
+                            <th style="width:65px;">Oturum</th>
+                            <th>Yayın / Deneme Adı</th>
+                            <th style="width:80px; text-align:center;">Toplam Net</th>
+                            <th style="width:100px; text-align:center;">TDE Skoru</th>
+                            <th>Stratejik Teşhis</th>
+                            <th style="width:50px; text-align:center;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    /**
+     * İzomorfik Form-2 Sıralı Hızlı Deneme Giriş Kutusu (Zero-Friction Numpad Flow)
+     */
+    function renderAddDenemeFormBox(item, forceVisible) {
+        const displayStyle = forceVisible ? 'display:block;' : 'display:none;';
+        return `
+            <div id="yks-add-deneme-form-box" style="${displayStyle} margin-top:14px; background:var(--card-bg); border:1.5px dashed #0284c7; border-radius:10px; padding:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <h4 style="margin:0; color:#0284c7; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-bolt" style="color:#d97706;"></i> ⏱️ Hızlı Sınav Girişi (İzomorfik Sıra &amp; Canlı Net)
+                    </h4>
+                    <div style="background:rgba(2,132,199,0.1); border:1px solid rgba(2,132,199,0.3); border-radius:6px; padding:4px 10px; font-size:12px; font-weight:800; color:#0284c7;">
+                        Toplam Net: <span id="yks-den-live-toplam-display">0.00</span>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:14px;">
+                    <div>
+                        <label style="font-size:11px; font-weight:700;">Tarih:</label>
+                        <input type="date" id="yks-den-date" value="${new Date().toISOString().split('T')[0]}" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:700;">Oturum Türü:</label>
+                        <select id="yks-den-tur" onchange="toggleYksDenemeTurFields()" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px; font-weight:700;">
+                            <option value="TYT" selected>TYT (120 Soru / 165 Dk)</option>
+                            <option value="AYT">AYT (80 Soru / 180 Dk)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:700;">Yayın / Deneme Adı:</label>
+                        <input type="text" id="yks-den-yayin" placeholder="Örn: 3D Türkiye Geneli-1" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:700;">Toplam Net (Otomatik):</label>
+                        <input type="number" step="0.25" id="yks-den-toplam-net" value="0" readonly style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px; font-weight:900; color:#0284c7;">
+                    </div>
+                </div>
+
+                <!-- 1-e-1 İZOMORFİK BRANŞ GİRİŞ MATRİSİ (FORM-2 İLE AYNI SIRA) -->
+                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <div style="font-size:11.5px; font-weight:800; color:var(--text-main); margin-bottom:8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">
+                        <span><i class="fas fa-keyboard me-1"></i> Numpad Hızlı Giriş (Sıra: D ➔ Tab ➔ Y ➔ Tab ➔ Sonraki Ders)</span>
+                        <span style="font-size:11px; color:var(--text-muted);">Boş ve Net Otomatik Hesaplanır</span>
+                    </div>
+
+                    <!-- TYT Branşları -->
+                    <div id="yks-tyt-branches-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
+                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
+                            <div style="font-weight:700; font-size:12px; color:#0284c7; margin-bottom:4px;">1. Türkçe (40 Soru)</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="1" min="0" max="40" class="yks-input-d" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="2" min="0" max="40" class="yks-input-y" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#0284c7;">0.00</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="yks-branch-row" data-total-q="20" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
+                            <div style="font-weight:700; font-size:12px; color:#d97706; margin-bottom:4px;">2. Sosyal Bilimler (20 Soru)</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="3" min="0" max="20" class="yks-input-d" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="4" min="0" max="20" class="yks-input-y" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">20</span><br>Net: <strong class="yks-val-net" style="color:#d97706;">0.00</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
+                            <div style="font-weight:700; font-size:12px; color:#059669; margin-bottom:4px;">3. Temel Matematik (40 Soru)</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="5" min="0" max="40" class="yks-input-d" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="6" min="0" max="40" class="yks-input-y" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#059669;">0.00</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="yks-branch-row" data-total-q="20" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
+                            <div style="font-weight:700; font-size:12px; color:#7c3aed; margin-bottom:4px;">4. Fen Bilimleri (20 Soru)</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="7" min="0" max="20" class="yks-input-d" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="8" min="0" max="20" class="yks-input-y" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">20</span><br>Net: <strong class="yks-val-net" style="color:#7c3aed;">0.00</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AYT Branşları (Varsayılan Gizli) -->
+                    <div id="yks-ayt-branches-grid" style="display:none; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
+                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
+                            <div style="font-weight:700; font-size:12px; color:#7c3aed; margin-bottom:4px;">AYT Matematik (40 Soru)</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="11" min="0" max="40" class="yks-input-d" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="12" min="0" max="40" class="yks-input-y" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#7c3aed;">0.00</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
+                            <div style="font-weight:700; font-size:12px; color:#059669; margin-bottom:4px;">AYT Fen / Edebiyat-Sosyal (40 Soru)</div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="13" min="0" max="40" class="yks-input-d" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="14" min="0" max="40" class="yks-input-y" onfocus="yksAutoScrollOnFocus(this)" oninput="calculateYksLiveNet(this)" style="width:52px; padding:5px; text-align:center; font-size:12.5px; border-radius:4px; border:1px solid var(--border);"></div>
+                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#059669;">0.00</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÇİFT MOTORLU TDE AKORDEON PANELİ -->
+                <div style="border:1px solid var(--border); border-radius:8px; margin-bottom:14px; overflow:hidden;">
+                    <div onclick="toggleYksTdeAccordion()" style="background:var(--tab-bg); padding:10px 14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:12px;">
+                        <span><i class="fas fa-sliders-h me-1" style="color:#d97706;"></i> Çift Motorlu TDE™ Strateji &amp; Süre Analizi Parametreleri (İsteğe Bağlı)</span>
+                        <i id="yks-tde-acc-icon" class="fas fa-chevron-down"></i>
+                    </div>
+                    <div id="yks-tde-accordion-body" style="display:none; padding:14px; background:var(--card-bg);">
+                        <div id="yks-tde-tyt-fields" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; font-size:11.5px;">
+                            <div>
+                                <label style="font-weight:700;">1. Türkçe Süresi (Dk):</label>
+                                <input type="number" id="yks-tde-turkce-sure" value="40" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;">3. Matematik Süresi (Dk):</label>
+                                <input type="number" id="yks-tde-mat-sure" value="45" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;">Fen + Sosyal Süresi (Dk):</label>
+                                <input type="number" id="yks-tde-fen-sos-sure" value="30" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;">İnatlaşılan Soru Adedi (-8p):</label>
+                                <input type="number" id="yks-tde-inat-soru" value="0" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;">2. Turda Kurtarılan Net (+4p):</label>
+                                <input type="number" id="yks-tde-tur2-net" value="0" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; margin-top:16px;">
+                                <input type="checkbox" id="yks-tde-optik" checked>
+                                <label for="yks-tde-optik" style="font-weight:700;">Optik Kontrol Yapıldı (+15p)</label>
+                            </div>
+                        </div>
+
+                        <div id="yks-tde-ayt-fields" style="display:none; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; font-size:11.5px;">
+                            <div>
+                                <label style="font-weight:700;">Dikkat Hatası (-12p/soru):</label>
+                                <input type="number" id="yks-tde-ayt-dikkat" value="0" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;">Kök/Öncül Algılama (-10p):</label>
+                                <input type="number" id="yks-tde-ayt-oncul" value="0" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;">Rastgele Kumar İşaretleme (-15p):</label>
+                                <input type="number" id="yks-tde-ayt-kumar" value="0" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; border-radius:4px; border:1px solid var(--border);">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; margin-top:16px;">
+                                <input type="checkbox" id="yks-tde-ayt-optik" checked>
+                                <label for="yks-tde-ayt-optik" style="font-weight:700;">AYT Optik Kontrol (+10p)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button class="btn btn-clear" onclick="document.getElementById('yks-add-deneme-form-box').style.display='none';" style="font-size:12px; padding:7px 16px;">İptal</button>
+                    <button class="btn btn-primary" onclick="saveNewYksDeneme()" style="font-size:12px; padding:7px 20px; font-weight:700;">
+                        <i class="fas fa-save me-1"></i> Denemeyi Kaydet &amp; TDE Skorla
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function showAddYksDenemeForm() {
+        const box = document.getElementById('yks-add-deneme-form-box');
+        if (box) {
+            box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+            if (box.style.display === 'block') {
+                box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+
+    function toggleYksDenemeTurFields() {
+        const tur = document.getElementById('yks-den-tur')?.value || 'TYT';
+        const isAyt = tur === 'AYT';
+
+        const tytGrid = document.getElementById('yks-tyt-branches-grid');
+        const aytGrid = document.getElementById('yks-ayt-branches-grid');
+        const tytTde = document.getElementById('yks-tde-tyt-fields');
+        const aytTde = document.getElementById('yks-tde-ayt-fields');
+
+        if (tytGrid) tytGrid.style.display = isAyt ? 'none' : 'grid';
+        if (aytGrid) aytGrid.style.display = isAyt ? 'grid' : 'none';
+        if (tytTde) tytTde.style.display = isAyt ? 'none' : 'grid';
+        if (aytTde) aytTde.style.display = isAyt ? 'grid' : 'none';
+
+        // Sıfırla ve yeniden hesapla
+        document.querySelectorAll('.yks-input-d, .yks-input-y').forEach(inp => {
+            if (inp.offsetParent !== null) {
+                calculateYksLiveNet(inp);
+            }
+        });
+    }
+
+    function toggleYksTdeAccordion() {
+        const body = document.getElementById('yks-tde-accordion-body');
+        const icon = document.getElementById('yks-tde-acc-icon');
+        if (body) {
+            const isHidden = body.style.display === 'none';
+            body.style.display = isHidden ? 'block' : 'none';
+            if (icon) icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+        }
+    }
+
+    function calculateYksLiveNet(inputEl) {
+        const row = inputEl.closest('.yks-branch-row');
+        if (!row) return;
+
+        const totalQ = parseInt(row.getAttribute('data-total-q') || '40', 10);
+        const dVal = parseFloat(row.querySelector('.yks-input-d')?.value) || 0;
+        const yVal = parseFloat(row.querySelector('.yks-input-y')?.value) || 0;
+
+        const bVal = Math.max(0, totalQ - (dVal + yVal));
+        const netVal = Math.max(0, dVal - (yVal * 0.25));
+
+        const bSpan = row.querySelector('.yks-val-b');
+        const netSpan = row.querySelector('.yks-val-net');
+        if (bSpan) bSpan.textContent = bVal;
+        if (netSpan) netSpan.textContent = netVal.toFixed(2);
+
+        // Toplam neti güncelle
+        updateYksTotalNetLive();
+    }
+
+    function updateYksTotalNetLive() {
+        const tur = document.getElementById('yks-den-tur')?.value || 'TYT';
+        const isAyt = tur === 'AYT';
+        const gridId = isAyt ? 'yks-ayt-branches-grid' : 'yks-tyt-branches-grid';
+        const grid = document.getElementById(gridId);
+
+        let sumNet = 0;
+        if (grid) {
+            grid.querySelectorAll('.yks-branch-row').forEach(r => {
+                const n = parseFloat(r.querySelector('.yks-val-net')?.textContent) || 0;
+                sumNet += n;
+            });
+        }
+
+        const displayEl = document.getElementById('yks-den-live-toplam-display');
+        const inputEl = document.getElementById('yks-den-toplam-net');
+        if (displayEl) displayEl.textContent = sumNet.toFixed(2);
+        if (inputEl) inputEl.value = sumNet.toFixed(2);
+    }
+
+    function saveNewYksDeneme() {
+        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+        if (!item) return;
+
+        const tarih = document.getElementById('yks-den-date')?.value || new Date().toISOString().split('T')[0];
+        const tur = document.getElementById('yks-den-tur')?.value || 'TYT';
+        const yayin = document.getElementById('yks-den-yayin')?.value.trim() || `${tur} Genel Deneme`;
+        const net = parseFloat(document.getElementById('yks-den-toplam-net')?.value) || 0;
+
+        // Süre Analizi
+        let sureAnalizi = {};
+        if (tur === 'TYT') {
+            sureAnalizi = {
+                turkce1TurDk: parseInt(document.getElementById('yks-tde-turkce-sure')?.value) || 40,
+                mat1TurDk: parseInt(document.getElementById('yks-tde-mat-sure')?.value) || 45,
+                fenSosyalSureDk: parseInt(document.getElementById('yks-tde-fen-sos-sure')?.value) || 30,
+                inatSoruSayisi: parseInt(document.getElementById('yks-tde-inat-soru')?.value) || 0,
+                tur2KurtarilanNet: parseFloat(document.getElementById('yks-tde-tur2-net')?.value) || 0,
+                optikKontrol: document.getElementById('yks-tde-optik')?.checked ?? true
+            };
+        } else {
+            sureAnalizi = {
+                dikkatHatasiSoru: parseInt(document.getElementById('yks-tde-ayt-dikkat')?.value) || 0,
+                soruKokuAlgilamaHatasi: parseInt(document.getElementById('yks-tde-ayt-oncul')?.value) || 0,
+                rastgeleKumarIsaretleme: parseInt(document.getElementById('yks-tde-ayt-kumar')?.value) || 0,
+                optikKontrol: document.getElementById('yks-tde-ayt-optik')?.checked ?? true
+            };
+        }
+
+        const newDen = {
+            id: 'den_' + Date.now(),
+            tarih,
+            tur,
+            yayin,
+            netler: { toplam: net },
+            sureAnalizi
+        };
+
+        if (!Array.isArray(item.denemeler)) item.denemeler = [];
+        item.denemeler.push(newDen);
+
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('Deneme sınavı ve TDE analizi başarıyla kaydedildi.', 'success');
+        }
+
+        window.activeYksDenemeSubSegment = 'deneme-gecmisi';
+        renderYksDetailDenemeler(item);
+        renderYksKoclukModule();
+    }
+
+    function deleteYksDeneme(index) {
+        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+        if (!item || !Array.isArray(item.denemeler)) return;
+        if (!confirm('Bu deneme kaydını silmek istediğinize emin misiniz?')) return;
+        item.denemeler.splice(index, 1);
+        if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('Deneme kaydı silindi.', 'warning');
+        }
+        window.activeYksDenemeSubSegment = 'deneme-gecmisi';
+        renderYksDetailDenemeler(item);
+        renderYksKoclukModule();
+    }
+
 
     function saveYksOyssYazililar() {
         const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
@@ -1375,369 +2305,42 @@
         }
 
         if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('MEB OYSS yazılı notları ve OBP Kalkanı kaydedildi.', 'success');
+        } else {
+            alert('MEB OYSS yazılı notları ve OBP Kalkanı başarıyla kaydedildi.');
+        }
         renderYksDetailDenemeler(item);
         renderYksKoclukModule();
-        alert('MEB OYSS yazılı notları ve OBP Kalkanı başarıyla kaydedildi.');
     }
 
-    function renderTytAytDenemeList(container, item) {
-        container.innerHTML = `
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px;">
-                <h4 style="margin:0 0 12px 0; color:#0284c7; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                    <span><i class="fas fa-chart-bar me-2"></i> Deneme Kayıtları &amp; Çift Motorlu TDE Skoru</span>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-clear" onclick="if (typeof window.syncAllExamsToKocluk === 'function') { window.syncAllExamsToKocluk(false); const cur = (window.yksKoclukData||[]).find(k=>k.id==='${item.id}'); if(cur) renderYksDetailDenemeler(cur); }" style="font-size:11.5px; padding:6px 12px; font-weight:700; border:1px solid rgba(2,132,199,0.35); border-radius:6px; background:rgba(2,132,199,0.08); color:#0284c7;">
-                            <i class="fas fa-sync-alt me-1"></i> 🦅 8. Sınav Analizden Güncelle
-                        </button>
-                        <button class="btn btn-primary" onclick="showAddYksDenemeForm()" style="font-size:11.5px; padding:6px 12px; font-weight:700;">
-                            <i class="fas fa-plus me-1"></i> Yeni Deneme Ekle
-                        </button>
-                    </div>
-                </h4>
-                ${renderDenemelerTableRows(item)}
-            </div>
-            ${renderAddDenemeFormBox(item)}
-        `;
-    }
+    // ─────────────────────────────────────────────────────────────
+    // SUB-TAB 3: METABİLİŞSEL SORU AMELİYATHANESİ & HATA DEFTERİ
+    // ─────────────────────────────────────────────────────────────
 
-    function renderDenemelerTableRows(item) {
-        const denemeler = Array.isArray(item.denemeler) ? item.denemeler : [];
-        let rows = '';
-        denemeler.forEach((d, idx) => {
-            const tde = calculateYksTde(d);
-            const isAyt = String(d.tur).toUpperCase().includes('AYT');
-            const totalNet = Number(d.netler?.toplam || 0).toFixed(2);
-            const sourceBadge = (d.source === 'exam_module' || d.examId)
-                ? `<span style="display:inline-block; font-size:10px; font-weight:800; background:rgba(2,132,199,0.12); color:#0284c7; border:1px solid rgba(2,132,199,0.3); padding:1px 6px; border-radius:4px; margin-left:6px;" title="8. Sınav Analiz bölümünden otomatik aktarıldı"><i class="fas fa-link me-1"></i>8. Sınav Analiz</span>`
-                : '';
-            rows += `
-                <tr>
-                    <td style="font-weight:bold; text-align:center;">${idx + 1}</td>
-                    <td>${escapeFn(d.tarih || '-')}</td>
-                    <td><span style="background:${isAyt ? '#7c3aed' : '#0284c7'}; color:white; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:800;">${escapeFn(d.tur)}</span></td>
-                    <td>${escapeFn(d.yayin || 'Genel Deneme')}${sourceBadge}</td>
-                    <td style="font-weight:900; color:var(--text-main); text-align:center;">${totalNet}</td>
-                    <td style="text-align:center;">
-                        <span style="background:${tde.badgeBg}; color:${tde.badgeColor}; border:1px solid ${tde.badgeBorder}; padding:2px 8px; border-radius:6px; font-weight:800; font-size:11px;">
-                            ${tde.tdePuan} Puan
-                        </span>
-                    </td>
-                    <td style="font-size:11px; color:var(--text-muted);">${escapeFn(tde.badgeText)}</td>
-                    <td style="text-align:center;">
-                        <button class="action-btn" onclick="deleteYksDeneme(${idx})" title="Denemeyi Sil" style="color:#ef4444;"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
+    function switchYksHataSubSegment(segmentId) {
+        window.activeYksHataSubSegment = segmentId;
+        document.querySelectorAll('.yks-hata-seg-btn').forEach(btn => {
+            const isActive = btn.getAttribute('data-segment') === segmentId;
+            btn.classList.toggle('active', isActive);
         });
 
-        if (!rows) {
-            rows = `<tr><td colspan="8" style="text-align:center; padding:22px; color:var(--text-muted);">Henüz deneme kaydı girilmedi.</td></tr>`;
-        }
-
-        return `
-            <div style="overflow-x:auto;">
-                <table class="custom-table" style="width:100%; font-size:12px; margin:0;">
-                    <thead>
-                        <tr style="background:var(--tab-bg);">
-                            <th style="width:40px; text-align:center;">#</th>
-                            <th style="width:90px;">Tarih</th>
-                            <th style="width:65px;">Oturum</th>
-                            <th>Yayın / Deneme Adı</th>
-                            <th style="width:80px; text-align:center;">Toplam Net</th>
-                            <th style="width:100px; text-align:center;">TDE Skoru</th>
-                            <th>Stratejik Teşhis</th>
-                            <th style="width:50px; text-align:center;">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-        `;
+        ['kok-neden-dagilim', 'ebbinghaus-tekrarlar', 'yeni-hata-ameliyat'].forEach(seg => {
+            const el = document.getElementById('yks-hata-seg-' + seg);
+            if (el) el.style.display = (seg === segmentId) ? 'block' : 'none';
+        });
     }
 
-    /**
-     * İzomorfik Form-2 Sıralı Hızlı Deneme Giriş Kutusu (Zero-Friction Numpad Flow)
-     */
-    function renderAddDenemeFormBox(item) {
-        return `
-            <div id="yks-add-deneme-form-box" style="display:none; margin-top:16px; background:var(--card-bg); border:1.5px dashed #0284c7; border-radius:10px; padding:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h4 style="margin:0; color:#0284c7; font-size:13.5px; display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-bolt" style="color:#d97706;"></i> ⏱️ Hızlı Sınav Girişi (İzomorfik Sıra &amp; Canlı Net)
-                    </h4>
-                    <div style="background:rgba(2,132,199,0.1); border:1px solid rgba(2,132,199,0.3); border-radius:6px; padding:4px 10px; font-size:12px; font-weight:800; color:#0284c7;">
-                        Toplam Net: <span id="yks-den-live-toplam-display">0.00</span>
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:14px;">
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Tarih:</label>
-                        <input type="date" id="yks-den-date" value="${new Date().toISOString().split('T')[0]}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">
-                    </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Oturum Türü:</label>
-                        <select id="yks-den-tur" onchange="toggleYksDenemeTurFields()" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px; font-weight:700;">
-                            <option value="TYT" selected>TYT (120 Soru / 165 Dk)</option>
-                            <option value="AYT">AYT (80 Soru / 180 Dk)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Yayın / Deneme Adı:</label>
-                        <input type="text" id="yks-den-yayin" placeholder="Örn: 3D Türkiye Geneli-1" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">
-                    </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Toplam Net (Otomatik Hesaplanır):</label>
-                        <input type="number" step="0.25" id="yks-den-toplam-net" value="0" readonly style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px; font-weight:900; color:#0284c7;">
-                    </div>
-                </div>
-
-                <!-- 1-e-1 İZOMORFİK BRANŞ GİRİŞ MATRİSİ (FORM-2 İLE AYNI SIRA) -->
-                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
-                    <div style="font-size:11.5px; font-weight:800; color:var(--text-main); margin-bottom:8px; display:flex; justify-content:space-between;">
-                        <span><i class="fas fa-keyboard me-1"></i> Numpad Hızlı Giriş (Sıra: D ➔ Tab ➔ Y ➔ Tab ➔ Sonraki Ders)</span>
-                        <span style="font-size:11px; color:var(--text-muted);">Boş ve Net Otomatik Hesaplanır</span>
-                    </div>
-
-                    <!-- TYT Branşları -->
-                    <div id="yks-tyt-branches-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
-                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
-                            <div style="font-weight:700; font-size:12px; color:#0284c7; margin-bottom:4px;">1. Türkçe (40 Soru)</div>
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="1" min="0" max="40" class="yks-input-d" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="2" min="0" max="40" class="yks-input-y" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#0284c7;">0.00</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="yks-branch-row" data-total-q="20" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
-                            <div style="font-weight:700; font-size:12px; color:#d97706; margin-bottom:4px;">2. Sosyal Bilimler (20 Soru)</div>
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="3" min="0" max="20" class="yks-input-d" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="4" min="0" max="20" class="yks-input-y" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">20</span><br>Net: <strong class="yks-val-net" style="color:#d97706;">0.00</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
-                            <div style="font-weight:700; font-size:12px; color:#059669; margin-bottom:4px;">3. Temel Matematik (40 Soru)</div>
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="5" min="0" max="40" class="yks-input-d" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="6" min="0" max="40" class="yks-input-y" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#059669;">0.00</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="yks-branch-row" data-total-q="20" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
-                            <div style="font-weight:700; font-size:12px; color:#7c3aed; margin-bottom:4px;">4. Fen Bilimleri (20 Soru)</div>
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="7" min="0" max="20" class="yks-input-d" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="8" min="0" max="20" class="yks-input-y" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">20</span><br>Net: <strong class="yks-val-net" style="color:#7c3aed;">0.00</strong></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AYT Branşları (Varsayılan Gizli) -->
-                    <div id="yks-ayt-branches-grid" style="display:none; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
-                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
-                            <div style="font-weight:700; font-size:12px; color:#7c3aed; margin-bottom:4px;">AYT Matematik (40 Soru)</div>
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="11" min="0" max="40" class="yks-input-d" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="12" min="0" max="40" class="yks-input-y" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#7c3aed;">0.00</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="yks-branch-row" data-total-q="40" style="border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--card-bg);">
-                            <div style="font-weight:700; font-size:12px; color:#0284c7; margin-bottom:4px;">AYT Fen / Alan-2 (40 Soru)</div>
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <div><label style="font-size:10px;">Doğru</label><input type="number" tabindex="13" min="0" max="40" class="yks-input-d" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10px;">Yanlış</label><input type="number" tabindex="14" min="0" max="40" class="yks-input-y" oninput="calculateYksLiveNet(this)" style="width:50px; padding:4px; text-align:center; font-size:12px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="font-size:11px; margin-left:auto; text-align:right;">Boş: <span class="yks-val-b" style="font-weight:700;">40</span><br>Net: <strong class="yks-val-net" style="color:#0284c7;">0.00</strong></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TDE AKORDEONU (KADEMELİ AÇIĞA ÇIKARMA) -->
-                <div style="margin-bottom:12px;">
-                    <button type="button" class="btn btn-clear" onclick="toggleYksTdeAccordion()" style="font-size:11.5px; padding:6px 10px; font-weight:700; border:1px dashed var(--border); border-radius:6px; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-                        <span><i class="fas fa-stopwatch me-1" style="color:#0284c7;"></i> ⏱️ TDE Süre ve Turlama Detaylarını Gir (Opsiyonel / Akordeon)</span>
-                        <i id="yks-tde-acc-icon" class="fas fa-chevron-down"></i>
-                    </button>
-
-                    <div id="yks-tde-accordion-body" style="display:none; margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--tab-bg);">
-                        <div id="yks-tyt-tde-fields">
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
-                                <div><label style="font-size:10.5px;">Türkçe 1. Tur (dk):</label><input type="number" id="yks-tde-turkce" value="42" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10.5px;">Matematik 1. Tur (dk):</label><input type="number" id="yks-tde-mat" value="45" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10.5px;">Fen/Sosyal 1. Tur (dk):</label><input type="number" id="yks-tde-fensos" value="30" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10.5px; color:#ef4444; font-weight:700;">İnatlaşma Sayısı:</label><input type="number" id="yks-tde-inat" value="0" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10.5px; color:#059669; font-weight:700;">2. Tur Net Kurtarma:</label><input type="number" step="0.25" id="yks-tde-tur2" value="4" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="display:flex; align-items:center; gap:6px; margin-top:14px;"><input type="checkbox" id="yks-tde-optik" checked><label for="yks-tde-optik" style="font-size:11px; cursor:pointer;">Optik Son Kontrol (3 dk)</label></div>
-                            </div>
-                        </div>
-
-                        <div id="yks-ayt-tde-fields" style="display:none;">
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
-                                <div><label style="font-size:10.5px;">Dikkat / İşlem Hatası:</label><input type="number" id="yks-ayt-dikkat" value="1" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10.5px;">Soru Kökü Algılama Hatası:</label><input type="number" id="yks-ayt-kok" value="0" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div><label style="font-size:10.5px;">Rastgele (Kumar) İşaretleme:</label><input type="number" id="yks-ayt-kumar" value="0" style="width:100%; padding:4px; font-size:11.5px; border-radius:4px; border:1px solid var(--border);"></div>
-                                <div style="display:flex; align-items:center; gap:6px; margin-top:14px;"><input type="checkbox" id="yks-ayt-optik" checked><label for="yks-ayt-optik" style="font-size:11px; cursor:pointer;">Optik &amp; İşlem Çapraz Kontrol</label></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:8px;">
-                    <button class="btn btn-clear" onclick="document.getElementById('yks-add-deneme-form-box').style.display='none'" style="padding:6px 14px; font-size:12px;">İptal</button>
-                    <button class="btn btn-primary" onclick="saveNewYksDeneme()" style="padding:6px 18px; font-size:12px; font-weight:700;"><i class="fas fa-check me-1"></i> Denemeyi Kaydet</button>
-                </div>
-            </div>
-        `;
-    }
-
-    function showAddYksDenemeForm() {
-        const box = document.getElementById('yks-add-deneme-form-box');
-        if (box) {
-            box.style.display = 'block';
-            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function toggleYksDenemeTurFields() {
-        const tur = document.getElementById('yks-den-tur')?.value;
-        const tytBranches = document.getElementById('yks-tyt-branches-grid');
-        const aytBranches = document.getElementById('yks-ayt-branches-grid');
-        const tytTde = document.getElementById('yks-tyt-tde-fields');
-        const aytTde = document.getElementById('yks-ayt-tde-fields');
-
-        if (tur === 'AYT') {
-            if (tytBranches) tytBranches.style.display = 'none';
-            if (aytBranches) aytBranches.style.display = 'grid';
-            if (tytTde) tytTde.style.display = 'none';
-            if (aytTde) aytTde.style.display = 'block';
-        } else {
-            if (tytBranches) tytBranches.style.display = 'grid';
-            if (aytBranches) aytBranches.style.display = 'none';
-            if (tytTde) tytTde.style.display = 'block';
-            if (aytTde) aytTde.style.display = 'none';
-        }
-        calculateYksLiveNet();
-    }
-
-    function toggleYksTdeAccordion() {
-        const body = document.getElementById('yks-tde-accordion-body');
-        const icon = document.getElementById('yks-tde-acc-icon');
-        if (body) {
-            const isHidden = body.style.display === 'none';
-            body.style.display = isHidden ? 'block' : 'none';
-            if (icon) icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
-        }
-    }
-
-    function calculateYksLiveNet(inputEl) {
-        if (inputEl) {
-            const row = inputEl.closest('.yks-branch-row');
-            if (row) {
-                const totalQ = parseInt(row.getAttribute('data-total-q') || '40', 10);
-                const d = parseFloat(row.querySelector('.yks-input-d')?.value) || 0;
-                const y = parseFloat(row.querySelector('.yks-input-y')?.value) || 0;
-                const b = Math.max(0, totalQ - (d + y));
-                const net = Math.max(0, parseFloat((d - (y / 4)).toFixed(2)));
-
-                const bEl = row.querySelector('.yks-val-b');
-                const netEl = row.querySelector('.yks-val-net');
-                if (bEl) bEl.textContent = b;
-                if (netEl) netEl.textContent = net.toFixed(2);
-            }
-        }
-
-        const tur = document.getElementById('yks-den-tur')?.value || 'TYT';
-        const targetContainer = tur === 'AYT' ? document.getElementById('yks-ayt-branches-grid') : document.getElementById('yks-tyt-branches-grid');
-
-        let total = 0;
-        if (targetContainer) {
-            targetContainer.querySelectorAll('.yks-branch-row').forEach(row => {
-                const d = parseFloat(row.querySelector('.yks-input-d')?.value) || 0;
-                const y = parseFloat(row.querySelector('.yks-input-y')?.value) || 0;
-                total += (d - (y / 4));
-            });
-        }
-
-        const cleanTotal = Math.max(0, parseFloat(total.toFixed(2)));
-        const topNetInput = document.getElementById('yks-den-toplam-net');
-        const liveDisplay = document.getElementById('yks-den-live-toplam-display');
-        if (topNetInput) topNetInput.value = cleanTotal;
-        if (liveDisplay) liveDisplay.textContent = cleanTotal.toFixed(2);
-    }
-
-    function saveNewYksDeneme() {
-        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
-        if (!item) return;
-
-        const tarih = document.getElementById('yks-den-date')?.value || new Date().toISOString().split('T')[0];
-        const tur = document.getElementById('yks-den-tur')?.value || 'TYT';
-        const yayin = document.getElementById('yks-den-yayin')?.value?.trim() || 'Genel Deneme';
-        const net = Number(document.getElementById('yks-den-toplam-net')?.value) || 0;
-
-        let sureAnalizi = {};
-        if (tur === 'AYT') {
-            sureAnalizi = {
-                dikkatHatasiSayisi: Number(document.getElementById('yks-ayt-dikkat')?.value) || 0,
-                kokOkumaHatasiSayisi: Number(document.getElementById('yks-ayt-kok')?.value) || 0,
-                kumarSoruSayisi: Number(document.getElementById('yks-ayt-kumar')?.value) || 0,
-                optikKontrol: !!document.getElementById('yks-ayt-optik')?.checked
-            };
-        } else {
-            sureAnalizi = {
-                turkce1Tur: Number(document.getElementById('yks-tde-turkce')?.value) || 42,
-                mat1Tur: Number(document.getElementById('yks-tde-mat')?.value) || 45,
-                fenSos1Tur: Number(document.getElementById('yks-tde-fensos')?.value) || 30,
-                inatlasmaSayisi: Number(document.getElementById('yks-tde-inat')?.value) || 0,
-                tur2NetKazanc: Number(document.getElementById('yks-tde-tur2')?.value) || 0,
-                optikKontrol: !!document.getElementById('yks-tde-optik')?.checked
-            };
-        }
-
-        const newDen = {
-            id: 'den_' + Date.now(),
-            tarih,
-            tur,
-            yayin,
-            netler: { toplam: net },
-            sureAnalizi
-        };
-
-        if (!Array.isArray(item.denemeler)) item.denemeler = [];
-        item.denemeler.push(newDen);
-
-        if (typeof saveData === 'function') saveData(true);
-        renderYksDetailDenemeler(item);
-        renderYksKoclukModule();
-    }
-
-    function deleteYksDeneme(index) {
-        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
-        if (!item || !Array.isArray(item.denemeler)) return;
-        if (!confirm('Bu deneme kaydını silmek istediğinize emin misiniz?')) return;
-        item.denemeler.splice(index, 1);
-        if (typeof saveData === 'function') saveData(true);
-        renderYksDetailDenemeler(item);
-        renderYksKoclukModule();
-    }
-
-    // --- Sub-Tab 3: Metabilişsel Hata Defteri (Spaced Repetition & 4 Kök Neden) ---
     function renderYksDetailHataDefteri(item) {
         const c = document.getElementById('tab-yks-hata');
         if (!c) return;
 
         const hatalar = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
+        const activeSeg = window.activeYksHataSubSegment || 'kok-neden-dagilim';
 
-        // Filtre sayıları
-        let dueCount = 0;
+        // Kök neden dağılım sayıları
         let countA = 0, countB = 0, countC = 0, countD = 0;
+        let dueCount = 0;
         let completedCount = 0;
 
         hatalar.forEach(h => {
@@ -1751,21 +2354,50 @@
             else if (k === 'D') countD++;
         });
 
-        const filteredHatalar = hatalar.filter(h => {
-            if (activeHataFilter === 'due') return getYksHataRepeatStatus(h).isDue;
-            if (activeHataFilter === 'completed') return getYksHataRepeatStatus(h).status === 'completed';
-            if (['A', 'B', 'C', 'D'].includes(activeHataFilter)) return (h.kokNeden || 'A').toUpperCase() === activeHataFilter;
+        const totalErrors = hatalar.length;
+        const pA = totalErrors ? Math.round((countA / totalErrors) * 100) : 0;
+        const pB = totalErrors ? Math.round((countB / totalErrors) * 100) : 0;
+        const pC = totalErrors ? Math.round((countC / totalErrors) * 100) : 0;
+        const pD = totalErrors ? Math.round((countD / totalErrors) * 100) : 0;
+
+        // Dominant Kök Neden Tespiti ve Cerrahi Reçete
+        let dominantCode = 'A';
+        let maxCount = countA;
+        if (countB > maxCount) { dominantCode = 'B'; maxCount = countB; }
+        if (countC > maxCount) { dominantCode = 'C'; maxCount = countC; }
+        if (countD > maxCount) { dominantCode = 'D'; maxCount = countD; }
+
+        const dominantMeta = getYksKokNedenMeta(dominantCode);
+
+        let dominantRecete = '';
+        if (dominantCode === 'A') {
+            dominantRecete = 'Konu temelinde kavram boşluğu var. Deneme çözmeyi yavaşlatıp MEB kazanım testlerine ve kavram haritalarına dönülmelidir.';
+        } else if (dominantCode === 'B') {
+            dominantRecete = 'Soru kökü ve kurgu tuzaklarına düşülüyor. Sorunun altı çizilmeli, "hangisi olamaz / kesinlikle" ifadelerine nöral kilitlenme uygulanmalıdır.';
+        } else if (dominantCode === 'C') {
+            dominantRecete = 'Zaman baskısı altında işlem ve optik kontrol hatası yapılıyor. Numpad turlama tekniği ve her sorudan sonra optik kontrol alışkanlığı kazandırılmalıdır.';
+        } else {
+            dominantRecete = 'Öğrencinin zor sorulara veya belirli branşlara karşı bilişsel direnci var. Blok pomodoro seanslarında ilk 15 dakika en çok korkulan soru tipine ayrılmalıdır.';
+        }
+
+        // Bekleyen Ebbinghaus Tekrarları
+        const dueErrors = hatalar.map((h, i) => ({ h, idx: i })).filter(item => getYksHataRepeatStatus(item.h).isDue);
+
+        // Filtreli Tüm Hatalar
+        const filteredHatalar = hatalar.map((h, i) => ({ h, idx: i })).filter(item => {
+            if (activeHataFilter === 'due') return getYksHataRepeatStatus(item.h).isDue;
+            if (activeHataFilter === 'completed') return getYksHataRepeatStatus(item.h).status === 'completed';
+            if (['A', 'B', 'C', 'D'].includes(activeHataFilter)) return (item.h.kokNeden || 'A').toUpperCase() === activeHataFilter;
             return true;
         });
 
-        let rows = '';
-        filteredHatalar.forEach((h, idx) => {
+        let allRows = '';
+        filteredHatalar.forEach(({ h, idx }, displayIdx) => {
             const rep = getYksHataRepeatStatus(h);
-            const originalIndex = hatalar.indexOf(h);
-            rows += `
+            allRows += `
                 <tr>
-                    <td style="font-weight:bold; text-align:center;">${idx + 1}</td>
-                    <td><span style="font-size:10.5px; font-weight:700;">${escapeFn(h.oturum || 'TYT')}</span> &bull; <strong>${escapeFn(h.ders || '-')}</strong></td>
+                    <td style="font-weight:bold; text-align:center;">${displayIdx + 1}</td>
+                    <td><span style="font-size:10px; font-weight:800; background:rgba(2,132,199,0.1); color:#0284c7; padding:2px 6px; border-radius:4px;">${escapeFn(h.oturum || 'TYT')}</span> &bull; <strong>${escapeFn(h.ders || '-')}</strong></td>
                     <td style="font-size:11.5px;">${escapeFn(h.konu || '-')}</td>
                     <td style="text-align:center;">
                         ${getYksKokNedenBadge(h.kokNeden)}
@@ -1779,197 +2411,302 @@
                             ${escapeFn(rep.label)}
                         </span>
                     </td>
-                    <td style="text-align:center; font-size:10.5px;">
-                        <label style="margin-right:4px;"><input type="checkbox" onchange="toggleYksHataTekrar(${originalIndex}, 1)" ${h.tekrar1 ? 'checked' : ''} title="1. Gün (24 sa)"> 1G</label>
-                        <label style="margin-right:4px;"><input type="checkbox" onchange="toggleYksHataTekrar(${originalIndex}, 3)" ${h.tekrar3 ? 'checked' : ''} title="3. Gün (72 sa)"> 3G</label>
-                        <label style="margin-right:4px;"><input type="checkbox" onchange="toggleYksHataTekrar(${originalIndex}, 7)" ${h.tekrar7 ? 'checked' : ''} title="7. Gün (168 sa)"> 7G</label>
-                        <label><input type="checkbox" onchange="toggleYksHataTekrar(${originalIndex}, 21)" ${h.tekrar21 ? 'checked' : ''} title="21. Gün (504 sa)"> 21G</label>
+                    <td style="text-align:center; font-size:10.5px; white-space:nowrap;">
+                        <label style="margin-right:4px; cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 1)" ${h.tekrar1 ? 'checked' : ''} title="1. Gün (24 sa)"> 1G</label>
+                        <label style="margin-right:4px; cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 3)" ${h.tekrar3 ? 'checked' : ''} title="3. Gün (72 sa)"> 3G</label>
+                        <label style="margin-right:4px; cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 7)" ${h.tekrar7 ? 'checked' : ''} title="7. Gün (168 sa)"> 7G</label>
+                        <label style="cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 21)" ${h.tekrar21 ? 'checked' : ''} title="21. Gün (504 sa)"> 21G</label>
                     </td>
                     <td style="text-align:center;">
-                        <button class="action-btn" onclick="deleteYksHata(${originalIndex})" title="Hatayı Sil" style="color:#ef4444;"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn" onclick="deleteYksHata(${idx})" title="Soruyu Sil" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `;
         });
 
-        if (!rows) {
-            rows = `<tr><td colspan="8" style="text-align:center; padding:22px; color:var(--text-muted);">Bu filtrede soru bulunmuyor.</td></tr>`;
+        if (!allRows) {
+            allRows = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Bu filtreye uygun soru kaydı bulunamadı.</td></tr>`;
+        }
+
+        let dueRows = '';
+        dueErrors.forEach(({ h, idx }, displayIdx) => {
+            const rep = getYksHataRepeatStatus(h);
+            dueRows += `
+                <tr style="background:rgba(239,68,68,0.04);">
+                    <td style="font-weight:bold; text-align:center;">${displayIdx + 1}</td>
+                    <td><strong>${escapeFn(h.ders || '-')}</strong> <small style="color:var(--text-muted);">(${escapeFn(h.oturum || 'TYT')})</small></td>
+                    <td>${escapeFn(h.konu || '-')}</td>
+                    <td style="text-align:center;">${getYksKokNedenBadge(h.kokNeden)}</td>
+                    <td style="font-size:11px;">
+                        ${h.kavramYanilgisi ? `<span style="color:#ef4444; font-weight:700;">Yanıldım:</span> ${escapeFn(h.kavramYanilgisi)}<br>` : ''}
+                        <span style="color:#059669; font-weight:700;">Nüans:</span> ${escapeFn(h.soruNotu || '-')}
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="background:${rep.badgeBg}; color:${rep.badgeColor}; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:6px;">
+                            ${escapeFn(rep.label)}
+                        </span>
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <label style="margin-right:6px; cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 1)" ${h.tekrar1 ? 'checked' : ''}> 1G</label>
+                        <label style="margin-right:6px; cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 3)" ${h.tekrar3 ? 'checked' : ''}> 3G</label>
+                        <label style="margin-right:6px; cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 7)" ${h.tekrar7 ? 'checked' : ''}> 7G</label>
+                        <label style="cursor:pointer;"><input type="checkbox" onchange="toggleYksHataTekrar(${idx}, 21)" ${h.tekrar21 ? 'checked' : ''}> 21G</label>
+                    </td>
+                </tr>
+            `;
+        });
+
+        if (!dueRows) {
+            dueRows = `<tr><td colspan="7" style="text-align:center; padding:26px; color:#10b981; font-weight:700;"><i class="fas fa-check-circle me-1"></i> Tebrikler! Şu an günü gelmiş bekleyen aralıklı tekrar sorusu yok.</td></tr>`;
         }
 
         c.innerHTML = `
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                    <div>
-                        <h4 style="margin:0; color:#ef4444; display:flex; align-items:center; gap:8px;">
-                            <i class="fas fa-microscope"></i> Metabilişsel Soru Ameliyathanesi &amp; Ebbinghaus Döngüsü (1 - 3 - 7 - 21 Gün)
+            <!-- Sub-Segment Kontrolü (Hata Defteri) -->
+            <div class="yks-subsegment-nav">
+                <button type="button" class="yks-segment-btn yks-hata-seg-btn ${activeSeg === 'kok-neden-dagilim' ? 'active' : ''}" data-segment="kok-neden-dagilim" onclick="switchYksHataSubSegment('kok-neden-dagilim')">
+                    <i class="fas fa-chart-pie"></i> 🎯 4 Kök Neden Dağılımı &amp; Cerrahi Reçete
+                </button>
+                <button type="button" class="yks-segment-btn yks-hata-seg-btn ${activeSeg === 'ebbinghaus-tekrarlar' ? 'active' : ''}" data-segment="ebbinghaus-tekrarlar" onclick="switchYksHataSubSegment('ebbinghaus-tekrarlar')">
+                    <i class="fas fa-history"></i> ⏰ Ebbinghaus Bekleyen Tekrarlar <span style="background:#ef4444; color:white; font-size:10px; padding:1px 6px; border-radius:10px; margin-left:4px;">${dueCount}</span>
+                </button>
+                <button type="button" class="yks-segment-btn yks-hata-seg-btn ${activeSeg === 'yeni-hata-ameliyat' ? 'active' : ''}" data-segment="yeni-hata-ameliyat" onclick="switchYksHataSubSegment('yeni-hata-ameliyat')">
+                    <i class="fas fa-plus-circle"></i> ➕ Soru Ameliyathanesine Yatır &amp; Kütük
+                </button>
+            </div>
+
+            <!-- Segment 1: Kök Neden Dağılımı ve Cerrahi Reçete -->
+            <div id="yks-hata-seg-kok-neden-dagilim" style="${activeSeg === 'kok-neden-dagilim' ? 'display:block;' : 'display:none;'}">
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-size:13.5px; color:var(--text-main); font-weight:800;">
+                            <i class="fas fa-dna me-1" style="color:#0284c7;"></i> Nöral Hata Kök Neden Dağılımı (${totalErrors} Kayıtlı Soru)
                         </h4>
-                        <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
-                            Yanlış veya boş bırakılan sorular "Ben Ne Düşündüm vs Doğru Nüans" ile ameliyata alınır.
+                        <span style="font-size:11.5px; color:var(--text-muted);">
+                            Baskın Kod: <strong style="color:${dominantMeta.color};">${dominantMeta.icon} Kod ${dominantMeta.code} (${dominantMeta.short})</strong>
+                        </span>
+                    </div>
+
+                    <!-- 4 Renkli Dağılım Çubuğu -->
+                    <div style="height:24px; border-radius:6px; overflow:hidden; display:flex; margin-bottom:12px; border:1px solid var(--border); font-size:10.5px; font-weight:800; color:white; text-align:center; line-height:24px;">
+                        <div style="width:${pA}%; background:#ef4444; min-width:${pA > 0 ? '25px' : '0'};" title="Kod A (Bilgi Eksikliği): %${pA}">${pA > 7 ? `A %${pA}` : ''}</div>
+                        <div style="width:${pB}%; background:#f59e0b; min-width:${pB > 0 ? '25px' : '0'};" title="Kod B (Kurgu/Soru Kökü): %${pB}">${pB > 7 ? `B %${pB}` : ''}</div>
+                        <div style="width:${pC}%; background:#0284c7; min-width:${pC > 0 ? '25px' : '0'};" title="Kod C (Süre/İşlem Hatası): %${pC}">${pC > 7 ? `C %${pC}` : ''}</div>
+                        <div style="width:${pD}%; background:#7c3aed; min-width:${pD > 0 ? '25px' : '0'};" title="Kod D (Bilişsel Direnç): %${pD}">${pD > 7 ? `D %${pD}` : ''}</div>
+                    </div>
+
+                    <!-- Kod Açıklama Rozetleri -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; font-size:11.5px; margin-bottom:14px;">
+                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:6px 10px;">
+                            <span style="color:#ef4444; font-weight:800;">🔴 Kod A:</span> Bilgi Eksikliği <strong>(${countA})</strong>
+                        </div>
+                        <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:6px 10px;">
+                            <span style="color:#f59e0b; font-weight:800;">🟡 Kod B:</span> Kurgu &amp; Kök <strong>(${countB})</strong>
+                        </div>
+                        <div style="background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.3); border-radius:6px; padding:6px 10px;">
+                            <span style="color:#0284c7; font-weight:800;">🔵 Kod C:</span> Süre &amp; İşlem <strong>(${countC})</strong>
+                        </div>
+                        <div style="background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.3); border-radius:6px; padding:6px 10px;">
+                            <span style="color:#7c3aed; font-weight:800;">🟣 Kod D:</span> Bilişsel Direnç <strong>(${countD})</strong>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="showAddYksHataBox()" style="font-size:11.5px; padding:6px 14px; font-weight:700;">
-                        <i class="fas fa-plus me-1"></i> Yeni Soru Ameliyata Al
-                    </button>
-                </div>
 
-                <!-- Hızlı Filtre Butonları -->
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; font-size:11px;">
-                    <button class="btn ${activeHataFilter === 'all' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('all')" style="padding:4px 10px; font-size:11px;">Tümü (${hatalar.length})</button>
-                    <button class="btn ${activeHataFilter === 'due' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('due')" style="padding:4px 10px; font-size:11px; color:#ef4444; font-weight:700;">🚨 Günü Gelen / Geciken (${dueCount})</button>
-                    <button class="btn ${activeHataFilter === 'A' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('A')" style="padding:4px 10px; font-size:11px;">🔴 Kod A (${countA})</button>
-                    <button class="btn ${activeHataFilter === 'B' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('B')" style="padding:4px 10px; font-size:11px;">🟡 Kod B (${countB})</button>
-                    <button class="btn ${activeHataFilter === 'C' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('C')" style="padding:4px 10px; font-size:11px;">🟠 Kod C (${countC})</button>
-                    <button class="btn ${activeHataFilter === 'D' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('D')" style="padding:4px 10px; font-size:11px;">🟣 Kod D (${countD})</button>
-                    <button class="btn ${activeHataFilter === 'completed' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('completed')" style="padding:4px 10px; font-size:11px; color:#059669;">🟢 Mühürlenen (${completedCount})</button>
-                </div>
-
-                <div style="overflow-x:auto;">
-                    <table class="custom-table" style="width:100%; font-size:12px; margin:0;">
-                        <thead>
-                            <tr style="background:var(--tab-bg);">
-                                <th style="width:35px; text-align:center;">#</th>
-                                <th style="width:120px;">Ders / Oturum</th>
-                                <th>Kazanım / Konu</th>
-                                <th style="width:180px; text-align:center;">Kök Neden</th>
-                                <th>Bilişsel Deşifre Notu</th>
-                                <th style="width:140px; text-align:center;">Tekrar Durumu</th>
-                                <th style="width:140px; text-align:center;">1-3-7-21 Onay</th>
-                                <th style="width:40px; text-align:center;">İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
+                    <!-- Dominant Reçete Kartı -->
+                    <div style="background:var(--input-bg); border-left:4px solid ${dominantMeta.color}; border-radius:0 8px 8px 0; padding:12px 14px; font-size:12px; line-height:1.45;">
+                        <strong style="color:${dominantMeta.color};">${dominantMeta.icon} Dominant Kök Neden Cerrahi Reçetesi:</strong>
+                        <div style="margin-top:3px; color:var(--text-main);">${dominantRecete}</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Yeni Hata Formu -->
-            <div id="yks-add-hata-box" style="display:none; background:var(--card-bg); border:1.5px dashed #ef4444; border-radius:10px; padding:16px;">
-                <h4 style="margin:0 0 10px 0; color:#ef4444; font-size:13px; display:flex; align-items:center; gap:6px;">
-                    <i class="fas fa-scalpel me-1"></i> Soru Ameliyathanesine Yeni Yanlış/Boş Soru Yatır
-                </h4>
+            <!-- Segment 2: Bekleyen Ebbinghaus Tekrarları -->
+            <div id="yks-hata-seg-ebbinghaus-tekrarlar" style="${activeSeg === 'ebbinghaus-tekrarlar' ? 'display:block;' : 'display:none;'}">
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-size:14px; color:#ef4444;"><i class="fas fa-clock me-1"></i> Ebbinghaus Unutma Eğrisine Göre Acil Tekrar Bekleyen Sorular</h4>
+                        <span style="font-size:11.5px; color:var(--text-muted);">
+                            1. Gün (24s) ➔ 3. Gün (72s) ➔ 7. Gün (168s) ➔ 21. Gün (504s)
+                        </span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="custom-table" style="width:100%; font-size:12px; margin:0;">
+                            <thead>
+                                <tr style="background:var(--tab-bg);">
+                                    <th style="width:35px; text-align:center;">#</th>
+                                    <th>Ders &amp; Oturum</th>
+                                    <th>Konu / Kazanım</th>
+                                    <th style="width:80px; text-align:center;">Kök Neden</th>
+                                    <th>Kavram Yanılgısı &amp; Bilişsel Nüans</th>
+                                    <th style="width:110px; text-align:center;">Durum</th>
+                                    <th style="width:130px; text-align:center;">Mühürle</th>
+                                </tr>
+                            </thead>
+                            <tbody>${dueRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:12px;">
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Oturum / Alan:</label>
-                        <select id="yks-hata-oturum" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
-                            <option value="TYT">TYT Oturumu</option>
-                            <option value="AYT">AYT Oturumu</option>
-                            <option value="OYSS">MEB OYSS Yazılısı</option>
-                        </select>
+            <!-- Segment 3: Soru Ameliyathanesi Formu & Tüm Kayıtlar -->
+            <div id="yks-hata-seg-yeni-hata-ameliyat" style="${activeSeg === 'yeni-hata-ameliyat' ? 'display:block;' : 'display:none;'}">
+                <!-- 2 Sütunlu Cerrahi Kayıt Formu -->
+                <div style="background:var(--card-bg); border:1.5px solid #0284c7; border-radius:10px; padding:16px; margin-bottom:16px;">
+                    <h4 style="margin:0 0 12px 0; color:#0284c7; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-cut" style="color:#ef4444;"></i> Metabilişsel Soru Ameliyathanesine Yatır (Kavram Yanılgısı ➔ Doğru Kural)
+                    </h4>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">Sınav / Oturum:</label>
+                            <select id="yks-err-oturum" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px; font-weight:700;">
+                                <option value="TYT">TYT</option>
+                                <option value="AYT">AYT</option>
+                                <option value="OYSS">MEB OYSS Yazılısı</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">Ders:</label>
+                            <input type="text" id="yks-err-ders" placeholder="Örn: Matematik, Fizik, Biyoloji..." onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">Konu / Mikro-Kazanım:</label>
+                            <input type="text" id="yks-err-konu" placeholder="Örn: Türev Geometrik Yorum, Limit, Mitoz..." onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">Soru Kalite Piramidi Düzeyi:</label>
+                            <select id="yks-err-duzey" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px; font-weight:700;">
+                                <option value="1">Düzey 1 (Temel Hatırlama)</option>
+                                <option value="2">Düzey 2 (Kavrama &amp; Standart)</option>
+                                <option value="3" selected>Düzey 3 (Yeni Nesil &amp; Çift Kazanım)</option>
+                                <option value="4">Düzey 4 (Üst Biliş &amp; Eleme)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Ders:</label>
-                        <input type="text" id="yks-hata-ders" placeholder="Örn: Matematik" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+
+                    <!-- Kök Neden Hap Seçicileri -->
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:11px; font-weight:700; margin-bottom:6px; display:block;">Cerrahi Kök Neden Kodu:</label>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-sm yks-kok-btn" data-kok="A" onclick="selectYksHataKokNeden('A')" style="border-radius:20px; font-size:11.5px; font-weight:700; padding:5px 14px; background:rgba(239,68,68,0.18); color:#ef4444; border:2px solid #ef4444;">
+                                🔴 Kod A: Bilgi Eksikliği
+                            </button>
+                            <button type="button" class="btn btn-sm yks-kok-btn" data-kok="B" onclick="selectYksHataKokNeden('B')" style="border-radius:20px; font-size:11.5px; font-weight:700; padding:5px 14px; background:transparent; color:var(--text-muted); border:1px solid var(--border);">
+                                🟡 Kod B: Kurgu &amp; Kök
+                            </button>
+                            <button type="button" class="btn btn-sm yks-kok-btn" data-kok="C" onclick="selectYksHataKokNeden('C')" style="border-radius:20px; font-size:11.5px; font-weight:700; padding:5px 14px; background:transparent; color:var(--text-muted); border:1px solid var(--border);">
+                                🔵 Kod C: Süre &amp; İşlem
+                            </button>
+                            <button type="button" class="btn btn-sm yks-kok-btn" data-kok="D" onclick="selectYksHataKokNeden('D')" style="border-radius:20px; font-size:11.5px; font-weight:700; padding:5px 14px; background:transparent; color:var(--text-muted); border:1px solid var(--border);">
+                                🟣 Kod D: Bilişsel Direnç
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Konu / Mikro-Kazanım:</label>
-                        <input type="text" id="yks-hata-konu" placeholder="Örn: Türev - Ekstremum Noktaları" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+
+                    <!-- İki Sütunlu Metabilişsel Analiz Alanı -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#ef4444;"><i class="fas fa-times-circle me-1"></i> Ben Ne Düşündüm? (Kavram Yanılgım / Çeldirici Tuzağım):</label>
+                            <textarea id="yks-err-yanilgi" rows="2" placeholder="Örn: Soruda 'kesinlikle' diyordu, negatif kökleri unutup pozitif kabul ettim..." onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:8px; border-radius:6px; border:1px solid rgba(239,68,68,0.4); background:var(--input-bg); font-size:12px;"></textarea>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#059669;"><i class="fas fa-check-circle me-1"></i> Doğru Bilişsel Nüans &amp; Kalıcı Kural:</label>
+                            <textarea id="yks-err-not" rows="2" placeholder="Örn: Eşitsizliklerde payda işaret değiştirirken yön değiştirir, paydayı sıfır yapan kökü daima yuvarlak içine al..." onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:8px; border-radius:6px; border:1px solid rgba(16,185,129,0.4); background:var(--input-bg); font-size:12px;"></textarea>
+                        </div>
                     </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">Soru Düzeyi (Piramit):</label>
-                        <select id="yks-hata-duzey" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
-                            <option value="1">Düzey 1 (Kavrama/Formül)</option>
-                            <option value="2">Düzey 2 (Uygulama/Tarama)</option>
-                            <option value="3" selected>Düzey 3 (Yeni Nesil/ÖSYM)</option>
-                            <option value="4">Düzey 4 (Üst Düzey Eleme)</option>
-                        </select>
+
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="saveNewYksHata()" style="padding:8px 22px; font-size:12px; font-weight:700;">
+                            <i class="fas fa-save me-1"></i> Soruyu Ameliyathaneye Kaydet
+                        </button>
                     </div>
                 </div>
 
-                <!-- 4 Kök Neden Tıklanabilir Buton Paneli -->
-                <div style="margin-bottom:12px;">
-                    <label style="font-size:11px; font-weight:700; margin-bottom:6px; display:block;">4 Kök Neden Teşhisi Seçiniz:</label>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
-                        <div id="btn-kok-A" onclick="selectYksHataKokNeden('A')" style="cursor:pointer; border:1.5px solid #ef4444; background:rgba(239,68,68,0.12); padding:8px; border-radius:6px;">
-                            <strong style="color:#ef4444; font-size:11.5px;">🔴 Kod A: Bilgi &amp; Kavram Yanılgısı</strong>
-                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Kavramı/formülü bilmiyordum (Deklaratif Bellek).</div>
-                        </div>
-                        <div id="btn-kok-B" onclick="selectYksHataKokNeden('B')" style="cursor:pointer; border:1px solid var(--border); background:var(--input-bg); padding:8px; border-radius:6px;">
-                            <strong style="color:#d97706; font-size:11.5px;">🟡 Kod B: Kurgu &amp; Soru Kökü Hatası</strong>
-                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Öncülü, olumsuzu veya grafiği yanlış okudum.</div>
-                        </div>
-                        <div id="btn-kok-C" onclick="selectYksHataKokNeden('C')" style="cursor:pointer; border:1px solid var(--border); background:var(--input-bg); padding:8px; border-radius:6px;">
-                            <strong style="color:#ea580c; font-size:11.5px;">🟠 Kod C: Süre &amp; İşlem Hatası</strong>
-                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Zaman baskısı, 4 işlem veya kaydırma hatası.</div>
-                        </div>
-                        <div id="btn-kok-D" onclick="selectYksHataKokNeden('D')" style="cursor:pointer; border:1px solid var(--border); background:var(--input-bg); padding:8px; border-radius:6px;">
-                            <strong style="color:#8b5cf6; font-size:11.5px;">🟣 Kod D: Bilişsel Direnç &amp; İnatlaşma</strong>
-                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">&gt;2.5 dk inatlaştım veya önyargıyla kaçtım.</div>
+                <!-- Tüm Kayıtlı Sorular Kütüğü & Filtre Çubuğu -->
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-size:13.5px; color:var(--text-main); font-weight:800;">
+                            <i class="fas fa-archive me-1"></i> Hata Ameliyathanesi Arşivi (${filteredHatalar.length} Soru)
+                        </h4>
+                        <!-- Filtre Butonları -->
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                            <button class="btn btn-sm ${activeHataFilter === 'all' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('all')" style="font-size:11px; padding:4px 10px;">Hepsi (${hatalar.length})</button>
+                            <button class="btn btn-sm ${activeHataFilter === 'due' ? 'btn-danger' : 'btn-clear'}" onclick="filterYksHataDefteri('due')" style="font-size:11px; padding:4px 10px;">Bekleyenler (${dueCount})</button>
+                            <button class="btn btn-sm ${activeHataFilter === 'A' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('A')" style="font-size:11px; padding:4px 10px;">Kod A (${countA})</button>
+                            <button class="btn btn-sm ${activeHataFilter === 'B' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('B')" style="font-size:11px; padding:4px 10px;">Kod B (${countB})</button>
+                            <button class="btn btn-sm ${activeHataFilter === 'C' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('C')" style="font-size:11px; padding:4px 10px;">Kod C (${countC})</button>
+                            <button class="btn btn-sm ${activeHataFilter === 'D' ? 'btn-primary' : 'btn-clear'}" onclick="filterYksHataDefteri('D')" style="font-size:11px; padding:4px 10px;">Kod D (${countD})</button>
+                            <button class="btn btn-sm ${activeHataFilter === 'completed' ? 'btn-success' : 'btn-clear'}" onclick="filterYksHataDefteri('completed')" style="font-size:11px; padding:4px 10px;">Tamamlanan (${completedCount})</button>
                         </div>
                     </div>
-                </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-                    <div>
-                        <label style="font-size:11px; font-weight:700; color:#ef4444;">1. Ben Ne Düşündüm? (Kavram Yanılgım / Çeldirici):</label>
-                        <textarea id="yks-hata-yanilgi" placeholder="Soruda hangi çeldiriciye takıldım, zihnimdeki yanlış mantık neydi?..." style="width:100%; min-height:65px; padding:8px; border-radius:6px; border:1px solid var(--border); font-size:12px;"></textarea>
+                    <div style="overflow-x:auto;">
+                        <table class="custom-table" style="width:100%; font-size:12px; margin:0;">
+                            <thead>
+                                <tr style="background:var(--tab-bg);">
+                                    <th style="width:35px; text-align:center;">#</th>
+                                    <th>Ders &amp; Oturum</th>
+                                    <th>Konu / Kazanım</th>
+                                    <th style="width:80px; text-align:center;">Kök Neden</th>
+                                    <th>Kavram Yanılgısı &amp; Bilişsel Nüans</th>
+                                    <th style="width:110px; text-align:center;">Tekrar Durumu</th>
+                                    <th style="width:130px; text-align:center;">Mühürler</th>
+                                    <th style="width:45px; text-align:center;">Sil</th>
+                                </tr>
+                            </thead>
+                            <tbody>${allRows}</tbody>
+                        </table>
                     </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700; color:#059669;">2. Doğru Bilişsel Nüans (Bir Dahaki Sefere Uygulanacak Kural):</label>
-                        <textarea id="yks-hata-not" placeholder="Sorunun asıl püf noktası, formülü ve turlama anında dikkat edilecek kritik kural..." style="width:100%; min-height:65px; padding:8px; border-radius:6px; border:1px solid var(--border); font-size:12px;"></textarea>
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:8px;">
-                    <button class="btn btn-clear" onclick="document.getElementById('yks-add-hata-box').style.display='none'" style="padding:6px 14px; font-size:12px;">İptal</button>
-                    <button class="btn btn-primary" onclick="saveNewYksHata()" style="padding:6px 18px; font-size:12px; font-weight:700;"><i class="fas fa-check me-1"></i> Soru Ameliyathanesine Mühürle</button>
                 </div>
             </div>
         `;
     }
 
-    function filterYksHataDefteri(filterKey) {
-        activeHataFilter = filterKey;
-        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
-        if (item) renderYksDetailHataDefteri(item);
-    }
-
     function selectYksHataKokNeden(code) {
         activeSelectedKokNeden = code;
-        ['A', 'B', 'C', 'D'].forEach(c => {
-            const btn = document.getElementById(`btn-kok-${c}`);
-            if (btn) {
-                if (c === code) {
-                    btn.style.border = '1.5px solid #ef4444';
-                    btn.style.background = 'rgba(239,68,68,0.12)';
-                } else {
-                    btn.style.border = '1px solid var(--border)';
-                    btn.style.background = 'var(--input-bg)';
-                }
+        document.querySelectorAll('.yks-kok-btn').forEach(b => {
+            const isMatch = b.getAttribute('data-kok') === code;
+            if (isMatch) {
+                b.style.border = '2px solid #ef4444';
+                b.style.background = 'rgba(239,68,68,0.18)';
+                b.style.color = '#ef4444';
+            } else {
+                b.style.border = '1px solid var(--border)';
+                b.style.background = 'transparent';
+                b.style.color = 'var(--text-muted)';
             }
         });
     }
 
-    function showAddYksHataBox() {
-        const box = document.getElementById('yks-add-hata-box');
-        if (box) {
-            box.style.display = 'block';
-            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+    function filterYksHataDefteri(f) {
+        activeHataFilter = f;
+        const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
+        if (item) renderYksDetailHataDefteri(item);
     }
 
     function saveNewYksHata() {
         const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
         if (!item) return;
 
-        const oturum = document.getElementById('yks-hata-oturum')?.value || 'TYT';
-        const ders = document.getElementById('yks-hata-ders')?.value?.trim() || 'Matematik';
-        const konu = document.getElementById('yks-hata-konu')?.value?.trim() || 'Genel Kazanım';
-        const duzey = Number(document.getElementById('yks-hata-duzey')?.value) || 3;
-        const yanilgi = document.getElementById('yks-hata-yanilgi')?.value?.trim() || '';
-        const not = document.getElementById('yks-hata-not')?.value?.trim() || '';
+        const oturum = document.getElementById('yks-err-oturum')?.value || 'TYT';
+        const ders = document.getElementById('yks-err-ders')?.value.trim() || 'Genel';
+        const konu = document.getElementById('yks-err-konu')?.value.trim();
+        const duzey = parseInt(document.getElementById('yks-err-duzey')?.value || '3', 10);
+        const kavramYanilgisi = document.getElementById('yks-err-yanilgi')?.value.trim() || '';
+        const soruNotu = document.getElementById('yks-err-not')?.value.trim();
+
+        if (!konu || !soruNotu) {
+            alert('Lütfen sorunun ait olduğu konuyu ve doğru bilişsel kuralı yazınız.');
+            return;
+        }
 
         const newHata = {
             id: 'hata_' + Date.now(),
-            tarih: new Date().toISOString().split('T')[0],
-            createdAt: new Date().toISOString(),
             oturum,
             ders,
             konu,
-            kokNeden: activeSelectedKokNeden,
             duzey,
-            kavramYanilgisi: yanilgi,
-            soruNotu: not,
+            kokNeden: activeSelectedKokNeden || 'A',
+            kavramYanilgisi,
+            soruNotu,
+            kayitTarihi: new Date().toISOString(),
             tekrar1: false,
             tekrar3: false,
             tekrar7: false,
@@ -1977,9 +2714,14 @@
         };
 
         if (!Array.isArray(item.hataDefteri)) item.hataDefteri = [];
-        item.hataDefteri.push(newHata);
+        item.hataDefteri.unshift(newHata);
 
         if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('Soru ameliyathanesi kaydı başarıyla eklendi.', 'success');
+        }
+
+        window.activeYksHataSubSegment = 'yeni-hata-ameliyat';
         renderYksDetailHataDefteri(item);
         renderYksKoclukModule();
     }
@@ -1995,6 +2737,10 @@
         else if (cycleDay === 21) h.tekrar21 = !h.tekrar21;
 
         if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`${cycleDay}. gün tekrar mühürü güncellendi.`, 'success');
+        }
+
         renderYksDetailHataDefteri(item);
         renderYksKoclukModule();
     }
@@ -2005,109 +2751,998 @@
         if (!confirm('Bu soruyu hata ameliyathanesinden silmek istediğinize emin misiniz?')) return;
         item.hataDefteri.splice(index, 1);
         if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('Soru kaydı silindi.', 'warning');
+        }
         renderYksDetailHataDefteri(item);
         renderYksKoclukModule();
     }
 
+
+    function showAddYksHataBox() {
+        switchYksHataSubSegment('yeni-hata-ameliyat');
+        const box = document.getElementById('yks-err-oturum');
+        if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     // --- Sub-Tab 4: MEB Müfredatı Mikro-Kazanım Isı Haritası (Heatmap) ---
+
+    function getActiveYksStudent() {
+        const curId = activeYksKoclukId || window.activeYksKoclukId;
+        return (window.yksKoclukData || []).find(k => String(k.id) === String(curId)) || null;
+    }
+
+    function getYksKazanimKey(grade, subj, top) {
+        return `${grade}___${subj}___${top}`;
+    }
+
+    function getYksKazanimData(item, grade, subj, top) {
+        if (!item || !item.kazanimIsiHaritasi) return null;
+        const key = getYksKazanimKey(grade, subj, top);
+        if (item.kazanimIsiHaritasi[key]) return item.kazanimIsiHaritasi[key];
+        const fallbackKey = `${subj}___${top}`;
+        if (item.kazanimIsiHaritasi[fallbackKey]) return item.kazanimIsiHaritasi[fallbackKey];
+        return null;
+    }
+
+    function getEffectiveYksKazanimStatus(item, grade, subj, top, hatalar) {
+        const entry = getYksKazanimData(item, grade, subj, top);
+        if (entry && entry.durum) {
+            return {
+                status: entry.durum,
+                isManual: true,
+                entry: entry,
+                errorCount: 0
+            };
+        }
+        const subClean = String(subj || '').toLowerCase();
+        const topClean = String(top || '').toLowerCase();
+        const errorCount = (hatalar || []).filter(h => {
+            const hDers = String(h.ders || '').toLowerCase();
+            const hKonu = String(h.konu || '').toLowerCase();
+            return (hDers.includes(subClean) || subClean.includes(hDers)) &&
+                   (hKonu.includes(topClean) || topClean.includes(hKonu));
+        }).length;
+
+        let status = 'gray';
+        if (errorCount >= 2) {
+            status = 'red';
+        } else if (errorCount === 1) {
+            status = 'yellow';
+        }
+        return {
+            status: status,
+            isManual: false,
+            entry: null,
+            errorCount: errorCount
+        };
+    }
+
     function renderYksDetailHeatmap(item) {
         const c = document.getElementById('tab-yks-isi-haritasi');
         if (!c) return;
+        if (!item) {
+            item = getActiveYksStudent();
+            if (!item) return;
+        } else if (item.id) {
+            activeYksKoclukId = item.id;
+            window.activeYksKoclukId = item.id;
+        }
 
+        item.kazanimIsiHaritasi = item.kazanimIsiHaritasi || {};
         const curr = window.curriculumData || {};
         const seviye = detectSinifSeviyesi(item.sinifSeviyesi || item.sinif);
-
-        let targetGradeCurriculum = {};
-        if (seviye === 9) targetGradeCurriculum = curr['9. Sınıf'] || {};
-        else if (seviye === 10) targetGradeCurriculum = curr['10. Sınıf'] || {};
-        else if (seviye === 11) targetGradeCurriculum = curr['11. Sınıf'] || {};
-        else targetGradeCurriculum = curr['12. Sınıf'] || curr['11. Sınıf'] || {};
-
+        const defaultGrade = (seviye === 9) ? '9. Sınıf' : (seviye === 10) ? '10. Sınıf' : (seviye === 11) ? '11. Sınıf' : '12. Sınıf';
+        window.activeYksHeatGrade = window.activeYksHeatGrade || defaultGrade;
+        const activeGrade = window.activeYksHeatGrade;
+        const targetGradeCurriculum = curr[activeGrade] || {};
         const hatalar = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
 
+        // KPI istatistiklerini hesapla
+        let totalTopics = 0;
+        let greenCount = 0;
+        let yellowCount = 0;
+        let redCount = 0;
+        let grayCount = 0;
+
+        const subjects = Object.keys(targetGradeCurriculum);
+        subjects.forEach(sub => {
+            const units = targetGradeCurriculum[sub] || {};
+            Object.keys(units).forEach(uName => {
+                const topics = Array.isArray(units[uName].Konular) ? units[uName].Konular : [];
+                topics.forEach(top => {
+                    totalTopics++;
+                    const st = getEffectiveYksKazanimStatus(item, activeGrade, sub, top, hatalar);
+                    if (st.status === 'green') greenCount++;
+                    else if (st.status === 'yellow') yellowCount++;
+                    else if (st.status === 'red') redCount++;
+                    else grayCount++;
+                });
+            });
+        });
+
+        // Müfredat dışında elle girilmiş özel konular varsa onları da ekle
+        Object.keys(item.kazanimIsiHaritasi).forEach(k => {
+            if (k.startsWith(`${activeGrade}___`)) {
+                const parts = k.split('___');
+                const sub = parts[1];
+                const top = parts[2];
+                let exists = false;
+                if (targetGradeCurriculum[sub]) {
+                    Object.keys(targetGradeCurriculum[sub]).forEach(u => {
+                        const tops = targetGradeCurriculum[sub][u].Konular || [];
+                        if (tops.includes(top)) exists = true;
+                    });
+                }
+                if (!exists) {
+                    totalTopics++;
+                    const st = item.kazanimIsiHaritasi[k].durum;
+                    if (st === 'green') greenCount++;
+                    else if (st === 'yellow') yellowCount++;
+                    else if (st === 'red') redCount++;
+                    else grayCount++;
+                }
+            }
+        });
+
+        const greenPct = totalTopics > 0 ? Math.round((greenCount / totalTopics) * 100) : 0;
+        const yellowPct = totalTopics > 0 ? Math.round((yellowCount / totalTopics) * 100) : 0;
+        const redPct = totalTopics > 0 ? Math.round((redCount / totalTopics) * 100) : 0;
+        const grayPct = totalTopics > 0 ? Math.max(0, 100 - greenPct - yellowPct - redPct) : 0;
+
         let html = `
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+                <!-- Üst Başlık & Eylemler -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
                     <div>
-                        <h4 style="margin:0; color:#0284c7; display:flex; align-items:center; gap:8px;">
-                            <i class="fas fa-th me-1"></i> MEB ${seviye}. Sınıf Mikro-Kazanım Isı Haritası
+                        <h4 style="margin:0; color:#0284c7; display:flex; align-items:center; gap:8px; font-size:16px; font-weight:800;">
+                            <i class="fas fa-th-large"></i> MEB Mikro-Kazanım Isı Haritası & Teşhis Masası
                         </h4>
                         <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">
-                            Hata defteri ve deneme teşhisleri MEB müfredatına göre otomatik taranarak renklendirilmiştir.
+                            Bilişsel hakimiyet, soru çözümleri ve hata defteri entegrasyonlu klinik mikro-kazanım röntgeni.
                         </div>
                     </div>
-                    <div style="display:flex; gap:8px; font-size:11px; font-weight:700;">
-                        <span style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:3px 8px; border-radius:6px;">🔴 Cerrahi Müdahale (&gt;%40 Kayıp)</span>
-                        <span style="background:rgba(245,158,11,0.12); color:#d97706; border:1px solid rgba(245,158,11,0.3); padding:3px 8px; border-radius:6px;">🟡 Konsolidasyon</span>
-                        <span style="background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.3); padding:3px 8px; border-radius:6px;">🟢 Bilişsel Otonomi</span>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-primary" onclick="toggleYksHeatDrawer(true)" style="font-size:12px; padding:7px 14px; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fas fa-plus-circle"></i> Yeni Teşhis / Kazanım Gir
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="printYksHeatmapReport()" style="font-size:12px; padding:7px 12px; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fas fa-print"></i> Rapor Al
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kademe / Sınıf Seçim Çubuğu -->
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; overflow-x:auto; padding-bottom:4px;" class="yks-heat-grade-pills">
+                    <span style="font-size:11.5px; font-weight:800; color:var(--text-muted); white-space:nowrap; margin-right:4px;">
+                        <i class="fas fa-graduation-cap"></i> KADEME:
+                    </span>
+                    <button type="button" class="btn btn-sm ${activeGrade === '9. Sınıf' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="switchYksHeatGrade('9. Sınıf')" style="font-size:11.5px; font-weight:700; border-radius:20px; padding:4px 12px;">9. Sınıf (TYT)</button>
+                    <button type="button" class="btn btn-sm ${activeGrade === '10. Sınıf' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="switchYksHeatGrade('10. Sınıf')" style="font-size:11.5px; font-weight:700; border-radius:20px; padding:4px 12px;">10. Sınıf (TYT)</button>
+                    <button type="button" class="btn btn-sm ${activeGrade === '11. Sınıf' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="switchYksHeatGrade('11. Sınıf')" style="font-size:11.5px; font-weight:700; border-radius:20px; padding:4px 12px;">11. Sınıf (AYT)</button>
+                    <button type="button" class="btn btn-sm ${activeGrade === '12. Sınıf' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="switchYksHeatGrade('12. Sınıf')" style="font-size:11.5px; font-weight:700; border-radius:20px; padding:4px 12px;">12. Sınıf (AYT)</button>
+                </div>
+
+                <!-- KPI Bilişsel Röntgen Kartları -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:12px;">
+                    <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Toplam Konu</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--text-main); margin-top:2px;">${totalTopics}</div>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:10px; text-align:center; cursor:pointer;" onclick="setYksHeatStatusFilter('green')">
+                        <div style="font-size:10px; font-weight:700; color:#059669; text-transform:uppercase;">🟢 Otonomi</div>
+                        <div style="font-size:18px; font-weight:800; color:#059669; margin-top:2px;">${greenCount} <span style="font-size:11px; font-weight:600;">(%${greenPct})</span></div>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:10px; text-align:center; cursor:pointer;" onclick="setYksHeatStatusFilter('yellow')">
+                        <div style="font-size:10px; font-weight:700; color:#d97706; text-transform:uppercase;">🟡 Konsolidasyon</div>
+                        <div style="font-size:18px; font-weight:800; color:#d97706; margin-top:2px;">${yellowCount}</div>
+                    </div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:10px; text-align:center; cursor:pointer;" onclick="setYksHeatStatusFilter('red')">
+                        <div style="font-size:10px; font-weight:700; color:#dc2626; text-transform:uppercase;">🔴 Cerrahi Eksik</div>
+                        <div style="font-size:18px; font-weight:800; color:#dc2626; margin-top:2px;">${redCount}</div>
+                    </div>
+                    <div style="background:var(--input-bg); border:1px dashed var(--border); border-radius:8px; padding:10px; text-align:center; cursor:pointer;" onclick="setYksHeatStatusFilter('gray')">
+                        <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">⚪ Başlanmadı</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--text-muted); margin-top:2px;">${grayCount}</div>
+                    </div>
+                </div>
+
+                <!-- İlerleme Çubuğu -->
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+                        <span>Müfredat Hakimiyet Oranı</span>
+                        <span style="color:#059669;">%${greenPct} Bilişsel Otonomi</span>
+                    </div>
+                    <div style="height:8px; background:rgba(148,163,184,0.2); border-radius:4px; overflow:hidden; display:flex;">
+                        <div style="width:${greenPct}%; background:#10b981;" title="🟢 Otonomi: %${greenPct}"></div>
+                        <div style="width:${yellowPct}%; background:#f59e0b;" title="🟡 Konsolidasyon: %${yellowPct}"></div>
+                        <div style="width:${redPct}%; background:#ef4444;" title="🔴 Cerrahi: %${redPct}"></div>
+                    </div>
+                </div>
+
+                <!-- ➕ Hızlı Teşhis ve Soru Giriş Çekmecesi (Drawer) -->
+                <div id="yks-heat-entry-drawer" style="display:none; background:var(--input-bg); border:2px solid #0284c7; border-radius:10px; padding:16px; margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                        <h5 id="yks-heat-drawer-title" style="margin:0; color:#0284c7; font-weight:800; font-size:14px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-stethoscope"></i> Mikro-Kazanım Teşhis & Soru Giriş Masası
+                        </h5>
+                        <button type="button" onclick="toggleYksHeatDrawer(false)" style="background:none; border:none; font-size:16px; color:var(--text-muted); cursor:pointer;">&times;</button>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:3px; display:block;">Kademe</label>
+                            <select id="yks-heat-in-grade" class="form-control" style="font-size:12px; padding:6px 8px; border-radius:6px;" onchange="onYksHeatDrawerGradeChange()">
+                                <option value="9. Sınıf" ${activeGrade === '9. Sınıf' ? 'selected' : ''}>9. Sınıf (TYT)</option>
+                                <option value="10. Sınıf" ${activeGrade === '10. Sınıf' ? 'selected' : ''}>10. Sınıf (TYT)</option>
+                                <option value="11. Sınıf" ${activeGrade === '11. Sınıf' ? 'selected' : ''}>11. Sınıf (AYT)</option>
+                                <option value="12. Sınıf" ${activeGrade === '12. Sınıf' ? 'selected' : ''}>12. Sınıf (AYT)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:3px; display:block;">Ders</label>
+                            <select id="yks-heat-in-subj" class="form-control" style="font-size:12px; padding:6px 8px; border-radius:6px;" onchange="onYksHeatDrawerSubjChange()"></select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:3px; display:block;">Ünite / Tema</label>
+                            <select id="yks-heat-in-unite" class="form-control" style="font-size:12px; padding:6px 8px; border-radius:6px;" onchange="onYksHeatDrawerUniteChange()"></select>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin:0;">Konu / Mikro-Kazanım</label>
+                                <a href="javascript:void(0)" onclick="toggleYksHeatCustomTopic()" id="yks-heat-toggle-custom-btn" style="font-size:10.5px; color:#0284c7; text-decoration:none; font-weight:700;">+ Özel Konu</a>
+                            </div>
+                            <select id="yks-heat-in-top-select" class="form-control" style="font-size:12px; padding:6px 8px; border-radius:6px;" onchange="onYksHeatDrawerTopSelectChange()"></select>
+                            <input type="text" id="yks-heat-in-top-custom" class="form-control" placeholder="Özel konu adı yazın..." style="display:none; font-size:12px; padding:6px 8px; border-radius:6px; margin-top:4px;" onfocus="yksAutoScrollOnFocus(this)">
+                        </div>
+                    </div>
+
+                    <!-- Durum Seçimi & Soru Girişleri -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-bottom:12px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:10px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; display:block;">Bilişsel Durum (Teşhis)</label>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                <button type="button" id="yks-heat-status-btn-green" class="btn btn-sm" onclick="selectYksHeatDrawerStatus('green')" style="font-size:11px; font-weight:700; border-radius:6px; text-align:left; padding:6px 10px; border:1px solid #10b981; background:rgba(16,185,129,0.1); color:#059669;">
+                                    🟢 Bilişsel Otonomi
+                                </button>
+                                <button type="button" id="yks-heat-status-btn-yellow" class="btn btn-sm" onclick="selectYksHeatDrawerStatus('yellow')" style="font-size:11px; font-weight:700; border-radius:6px; text-align:left; padding:6px 10px; border:1px solid #f59e0b; background:rgba(245,158,11,0.1); color:#d97706;">
+                                    🟡 Konsolidasyon
+                                </button>
+                                <button type="button" id="yks-heat-status-btn-red" class="btn btn-sm" onclick="selectYksHeatDrawerStatus('red')" style="font-size:11px; font-weight:700; border-radius:6px; text-align:left; padding:6px 10px; border:1px solid #ef4444; background:rgba(239,68,68,0.1); color:#dc2626;">
+                                    🔴 Cerrahi Müdahale
+                                </button>
+                                <button type="button" id="yks-heat-status-btn-gray" class="btn btn-sm" onclick="selectYksHeatDrawerStatus('gray')" style="font-size:11px; font-weight:700; border-radius:6px; text-align:left; padding:6px 10px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-muted);">
+                                    ⚪ Başlanmadı / Nötr
+                                </button>
+                            </div>
+                            <input type="hidden" id="yks-heat-in-status" value="green">
+                        </div>
+
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin:0;">Soru Çözüm Verisi (Opsiyonel)</label>
+                                <span id="yks-heat-in-net-display" style="font-size:11px; font-weight:800; color:#0284c7;">Net: 0.00 | Başarı: %0</span>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                                <div>
+                                    <input type="number" id="yks-heat-in-soru" class="form-control" placeholder="Çözülen" min="0" style="font-size:11.5px; padding:6px; border-radius:6px;" oninput="calcYksHeatDrawerNet()" onfocus="yksAutoScrollOnFocus(this)">
+                                </div>
+                                <div>
+                                    <input type="number" id="yks-heat-in-dogru" class="form-control" placeholder="Doğru" min="0" style="font-size:11.5px; padding:6px; border-radius:6px;" oninput="calcYksHeatDrawerNet()" onfocus="yksAutoScrollOnFocus(this)">
+                                </div>
+                                <div>
+                                    <input type="number" id="yks-heat-in-yanlis" class="form-control" placeholder="Yanlış" min="0" style="font-size:11.5px; padding:6px; border-radius:6px;" oninput="calcYksHeatDrawerNet()" onfocus="yksAutoScrollOnFocus(this)">
+                                </div>
+                            </div>
+                            <div style="margin-top:6px;">
+                                <input type="date" id="yks-heat-in-date" class="form-control" style="font-size:11px; padding:4px 8px; border-radius:6px;" onfocus="yksAutoScrollOnFocus(this)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mentor & Klinik Teşhis Notu -->
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:3px; display:block;">Mentor & Klinik Teşhis Notu (Kavram Yanılgısı / Nüanslar)</label>
+                        <textarea id="yks-heat-in-note" class="form-control" rows="2" placeholder="Örn: Fonksiyon bileşkesinde tanım kümesi ihmal ediliyor. Parabol tepe noktası simetri ekseniyle pekiştirilecek..." style="font-size:11.5px; padding:8px; border-radius:6px;" onfocus="yksAutoScrollOnFocus(this)"></textarea>
+                    </div>
+
+                    <!-- Eylem Butonları -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <button type="button" id="yks-heat-btn-reset" class="btn btn-outline-danger" onclick="resetYksKazanimStatus()" style="display:none; font-size:11.5px; font-weight:700; padding:6px 14px; border-radius:6px;">
+                            <i class="fas fa-trash-alt"></i> Teşhisi Sıfırla
+                        </button>
+                        <div style="display:flex; gap:8px; margin-left:auto;">
+                            <button type="button" class="btn btn-secondary" onclick="toggleYksHeatDrawer(false)" style="font-size:11.5px; font-weight:700; padding:6px 14px; border-radius:6px;">
+                                Vazgeç
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveYksKazanimStatus()" style="font-size:11.5px; font-weight:700; padding:6px 18px; border-radius:6px; background:#0284c7; border-color:#0284c7;">
+                                <i class="fas fa-save me-1"></i> Teşhisi Kaydet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtreleme & Canlı Arama Çubuğu -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px; background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:8px 12px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <select id="yks-heat-filter-subj" class="form-control" style="font-size:11.5px; padding:4px 8px; border-radius:6px; min-width:140px;" onchange="filterYksHeatmap()">
+                            <option value="all">Tüm Dersler (${subjects.length})</option>
+                            ${subjects.map(s => `<option value="${escapeFn(s)}">${escapeFn(s)}</option>`).join('')}
+                        </select>
+
+                        <div style="gap:4px; font-size:11px; display:flex;" class="yks-heat-status-filters">
+                            <button type="button" class="btn btn-sm yks-heat-filter-pill active" data-status="all" onclick="setYksHeatStatusFilter('all')" style="font-size:11px; padding:3px 8px; border-radius:14px;">Tümü</button>
+                            <button type="button" class="btn btn-sm yks-heat-filter-pill" data-status="red" onclick="setYksHeatStatusFilter('red')" style="font-size:11px; padding:3px 8px; border-radius:14px; color:#dc2626;">🔴 Cerrahi</button>
+                            <button type="button" class="btn btn-sm yks-heat-filter-pill" data-status="yellow" onclick="setYksHeatStatusFilter('yellow')" style="font-size:11px; padding:3px 8px; border-radius:14px; color:#d97706;">🟡 Tekrar</button>
+                            <button type="button" class="btn btn-sm yks-heat-filter-pill" data-status="green" onclick="setYksHeatStatusFilter('green')" style="font-size:11px; padding:3px 8px; border-radius:14px; color:#059669;">🟢 Otonomi</button>
+                            <button type="button" class="btn btn-sm yks-heat-filter-pill" data-status="gray" onclick="setYksHeatStatusFilter('gray')" style="font-size:11px; padding:3px 8px; border-radius:14px; color:var(--text-muted);">⚪ Başlanmadı</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <input type="text" id="yks-heat-search-input" class="form-control" placeholder="🔎 Konu veya ünite ara..." style="font-size:11.5px; padding:4px 10px; border-radius:6px; width:180px;" oninput="filterYksHeatmap()" onfocus="yksAutoScrollOnFocus(this)">
+                        <span id="yks-heat-visible-count" style="font-size:11px; font-weight:700; color:var(--text-muted); white-space:nowrap;">${totalTopics} Konu</span>
                     </div>
                 </div>
         `;
 
-        const subjects = Object.keys(targetGradeCurriculum);
         if (subjects.length === 0) {
-            html += `<p style="color:var(--text-muted); font-size:12px; padding:16px 0;">Bu kademeye ait müfredat verisi henüz sisteme girilmedi.</p></div>`;
+            html += `<p style="color:var(--text-muted); font-size:12px; padding:20px 0; text-align:center;">Bu kademeye ait MEB müfredat verisi bulunamadı.</p></div>`;
             c.innerHTML = html;
             return;
         }
 
+        // Subject Blocks ve Topic Cards Üretimi
         subjects.forEach(sub => {
-            html += `
-                <div style="margin-bottom:14px; border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--input-bg);">
-                    <div style="font-weight:800; font-size:13px; color:var(--text-main); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-book-open" style="color:#0284c7;"></i> ${escapeFn(sub)}
-                    </div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px;">
-            `;
-
             const units = targetGradeCurriculum[sub] || {};
+            let subTopicCardsHtml = '';
+            let subTotal = 0;
+            let subGreen = 0;
+            let subYellow = 0;
+            let subRed = 0;
+            let subGray = 0;
+
             Object.keys(units).forEach(uName => {
                 const u = units[uName];
                 const topics = Array.isArray(u.Konular) ? u.Konular : [];
 
                 topics.forEach(top => {
-                    const errorCount = hatalar.filter(h =>
-                        String(h.ders || '').toLowerCase().includes(sub.toLowerCase()) &&
-                        (String(h.konu || '').toLowerCase().includes(top.toLowerCase()) || top.toLowerCase().includes(String(h.konu || '').toLowerCase()))
-                    ).length;
+                    subTotal++;
+                    const st = getEffectiveYksKazanimStatus(item, activeGrade, sub, top, hatalar);
+                    const currentStatus = st.status;
+                    const key = getYksKazanimKey(activeGrade, sub, top);
 
-                    let bg = 'rgba(16, 185, 129, 0.08)';
-                    let border = 'rgba(16, 185, 129, 0.3)';
-                    let badge = '🟢 Bilişsel Otonomi';
-                    let badgeCol = '#059669';
+                    if (currentStatus === 'green') subGreen++;
+                    else if (currentStatus === 'yellow') subYellow++;
+                    else if (currentStatus === 'red') subRed++;
+                    else subGray++;
 
-                    if (errorCount >= 2) {
-                        bg = 'rgba(239, 68, 68, 0.12)';
-                        border = 'rgba(239, 68, 68, 0.4)';
-                        badge = `🔴 Cerrahi (${errorCount} Hata)`;
-                        badgeCol = '#dc2626';
-                    } else if (errorCount === 1) {
-                        bg = 'rgba(245, 158, 11, 0.1)';
-                        border = 'rgba(245, 158, 11, 0.35)';
-                        badge = '🟡 Konsolidasyon';
-                        badgeCol = '#d97706';
+                    let cardBg = 'var(--input-bg)';
+                    let cardBorder = 'var(--border)';
+                    let badgeLabel = '⚪ Başlanmadı';
+                    let badgeStyle = 'background:rgba(148,163,184,0.18); color:var(--text-muted); border:1px dashed var(--border);';
+
+                    if (currentStatus === 'green') {
+                        cardBg = 'rgba(16, 185, 129, 0.06)';
+                        cardBorder = 'rgba(16, 185, 129, 0.35)';
+                        badgeLabel = '🟢 Bilişsel Otonomi';
+                        badgeStyle = 'background:#059669; color:#fff; border:none;';
+                    } else if (currentStatus === 'yellow') {
+                        cardBg = 'rgba(245, 158, 11, 0.06)';
+                        cardBorder = 'rgba(245, 158, 11, 0.35)';
+                        badgeLabel = st.errorCount > 0 ? `🟡 Konsolidasyon (${st.errorCount} Hata)` : '🟡 Konsolidasyon';
+                        badgeStyle = 'background:#d97706; color:#fff; border:none;';
+                    } else if (currentStatus === 'red') {
+                        cardBg = 'rgba(239, 68, 68, 0.08)';
+                        cardBorder = 'rgba(239, 68, 68, 0.4)';
+                        badgeLabel = st.errorCount > 0 ? `🔴 Cerrahi (${st.errorCount} Hata)` : '🔴 Cerrahi Müdahale';
+                        badgeStyle = 'background:#dc2626; color:#fff; border:none;';
                     }
 
-                    html += `
-                        <div style="background:${bg}; border:1px solid ${border}; border-radius:6px; padding:8px; font-size:11.5px; display:flex; flex-direction:column; justify-content:space-between;">
-                            <div style="font-weight:700; color:var(--text-main); line-height:1.3; margin-bottom:6px;">${escapeFn(top)}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:9.5px; color:var(--text-muted);">${escapeFn(uName.split(':')[0])}</span>
-                                <span style="font-size:10px; font-weight:800; color:${badgeCol};">${badge}</span>
+                    const entry = st.entry;
+                    const hasQuestions = entry && Number(entry.soruSayisi) > 0;
+                    const hasNote = entry && entry.mentorNotu && entry.mentorNotu.trim();
+
+                    subTopicCardsHtml += `
+                        <div class="yks-heat-card"
+                             data-subj="${escapeFn(sub)}"
+                             data-top="${escapeFn(top)}"
+                             data-unite="${escapeFn(uName)}"
+                             data-status="${currentStatus}"
+                             data-search="${escapeFn(top.toLowerCase())} ${escapeFn(uName.toLowerCase())} ${escapeFn(sub.toLowerCase())}"
+                             style="background:${cardBg}; border:1px solid ${cardBorder}; border-radius:8px; padding:10px; font-size:11.5px; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s;">
+                            
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:4px;">
+                                    <span style="font-size:9.5px; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeFn(uName)}">
+                                        <i class="fas fa-layer-group"></i> ${escapeFn(uName.split(':')[0])}
+                                    </span>
+                                    <span style="font-size:9px; color:var(--text-muted);">${entry?.tarih ? entry.tarih.slice(5) : ''}</span>
+                                </div>
+                                <div style="font-weight:700; color:var(--text-main); line-height:1.3; margin-bottom:6px;">
+                                    ${escapeFn(top)}
+                                </div>
+                            </div>
+
+                            <div>
+                                ${hasQuestions ? `
+                                    <div style="font-size:10px; color:#0284c7; font-weight:700; margin-bottom:4px; background:rgba(2,132,199,0.08); padding:2px 6px; border-radius:4px; display:inline-block;">
+                                        <i class="fas fa-pencil-alt"></i> ${entry.soruSayisi} Soru (%${entry.basariYuzdesi || Math.round((entry.dogruSayisi / entry.soruSayisi) * 100)} D)
+                                    </div>
+                                ` : ''}
+
+                                ${hasNote ? `
+                                    <div style="font-size:10px; color:var(--text-muted); font-style:italic; margin-bottom:6px; background:var(--card-bg); padding:3px 6px; border-radius:4px; border-left:2px solid #0284c7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeFn(entry.mentorNotu)}">
+                                        <i class="fas fa-comment-dots" style="color:#0284c7;"></i> ${escapeFn(entry.mentorNotu)}
+                                    </div>
+                                ` : ''}
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; gap:4px;">
+                                    <button type="button" class="btn btn-sm yks-kazanim-cycle-btn"
+                                            data-key="${encodeURIComponent(key)}"
+                                            onclick="cycleYksKazanimStatusByKey(this.getAttribute('data-key'))"
+                                            title="Tıkla: Durumu Değiştir (⚪ ➔ 🟢 ➔ 🟡 ➔ 🔴)"
+                                            style="${badgeStyle}; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; cursor:pointer;">
+                                        ${badgeLabel}
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            data-grade="${escapeFn(activeGrade)}"
+                                            data-subj="${escapeFn(sub)}"
+                                            data-unite="${escapeFn(uName)}"
+                                            data-top="${escapeFn(top)}"
+                                            onclick="openYksKazanimEditModal(this)"
+                                            title="Detaylı Teşhis ve Soru Sayısı Düzenle"
+                                            style="font-size:10.5px; padding:2px 6px; border-radius:5px; border-color:var(--border);">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
                 });
             });
 
-            html += `</div></div>`;
+            html += `
+                <div class="yks-heat-subject-block" data-subj="${escapeFn(sub)}" style="margin-bottom:14px; border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--card-bg);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                        <div style="font-weight:800; font-size:13.5px; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-book-open" style="color:#0284c7;"></i> ${escapeFn(sub)}
+                            <span style="font-size:11px; font-weight:600; color:var(--text-muted);">(${subTotal} Konu)</span>
+                        </div>
+                        <div style="display:flex; gap:6px; font-size:10.5px; font-weight:700;">
+                            <span style="color:#059669;"><i class="fas fa-check-circle"></i> ${subGreen} Otonomi</span>
+                            <span style="color:#d97706;">• ${subYellow} Tekrar</span>
+                            <span style="color:#dc2626;">• ${subRed} Cerrahi</span>
+                            <span style="color:var(--text-muted);">• ${subGray} Başlanmadı</span>
+                        </div>
+                    </div>
+                    <div class="yks-heat-cards-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:10px;">
+                        ${subTopicCardsHtml}
+                    </div>
+                </div>
+            `;
         });
 
         html += `</div>`;
         c.innerHTML = html;
+
+        // Aktif filtreleri koru
+        if (window.activeYksHeatSubjFilter && window.activeYksHeatSubjFilter !== 'all') {
+            const fSub = document.getElementById('yks-heat-filter-subj');
+            if (fSub) fSub.value = window.activeYksHeatSubjFilter;
+        }
+        if (window.activeYksHeatStatusFilter) {
+            setYksHeatStatusFilter(window.activeYksHeatStatusFilter, false);
+        }
+    }
+
+    function toggleYksHeatDrawer(forceOpen, prefillData) {
+        const drawer = document.getElementById('yks-heat-entry-drawer');
+        if (!drawer) return;
+
+        const willOpen = (typeof forceOpen === 'boolean') ? forceOpen : (drawer.style.display === 'none');
+        drawer.style.display = willOpen ? 'block' : 'none';
+
+        if (willOpen) {
+            const item = getActiveYksStudent();
+            const gradeEl = document.getElementById('yks-heat-in-grade');
+            const targetGrade = prefillData?.grade || window.activeYksHeatGrade || (gradeEl ? gradeEl.value : '12. Sınıf');
+
+            if (gradeEl) gradeEl.value = targetGrade;
+            onYksHeatDrawerGradeChange(prefillData?.subj, prefillData?.unite, prefillData?.top);
+
+            const titleEl = document.getElementById('yks-heat-drawer-title');
+            const resetBtn = document.getElementById('yks-heat-btn-reset');
+
+            if (prefillData && prefillData.top) {
+                if (titleEl) titleEl.innerHTML = `<i class="fas fa-edit"></i> Teşhis Düzenle: ${escapeFn(prefillData.top)}`;
+                if (resetBtn) resetBtn.style.display = 'inline-block';
+
+                const existing = getYksKazanimData(item, targetGrade, prefillData.subj, prefillData.top);
+                selectYksHeatDrawerStatus(existing?.durum || 'green');
+
+                const sEl = document.getElementById('yks-heat-in-soru');
+                const dEl = document.getElementById('yks-heat-in-dogru');
+                const yEl = document.getElementById('yks-heat-in-yanlis');
+                const nEl = document.getElementById('yks-heat-in-note');
+                const dtEl = document.getElementById('yks-heat-in-date');
+
+                if (sEl) sEl.value = existing?.soruSayisi || '';
+                if (dEl) dEl.value = existing?.dogruSayisi || '';
+                if (yEl) yEl.value = existing?.yanlisSayisi || '';
+                if (nEl) nEl.value = existing?.mentorNotu || '';
+                if (dtEl) dtEl.value = existing?.tarih || new Date().toISOString().split('T')[0];
+
+                calcYksHeatDrawerNet();
+            } else {
+                if (titleEl) titleEl.innerHTML = `<i class="fas fa-stethoscope"></i> Mikro-Kazanım Teşhis & Soru Giriş Masası`;
+                if (resetBtn) resetBtn.style.display = 'none';
+                selectYksHeatDrawerStatus('green');
+
+                const sEl = document.getElementById('yks-heat-in-soru');
+                const dEl = document.getElementById('yks-heat-in-dogru');
+                const yEl = document.getElementById('yks-heat-in-yanlis');
+                const nEl = document.getElementById('yks-heat-in-note');
+                const dtEl = document.getElementById('yks-heat-in-date');
+
+                if (sEl) sEl.value = '';
+                if (dEl) dEl.value = '';
+                if (yEl) yEl.value = '';
+                if (nEl) nEl.value = '';
+                if (dtEl) dtEl.value = new Date().toISOString().split('T')[0];
+
+                calcYksHeatDrawerNet();
+            }
+
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function onYksHeatDrawerGradeChange(targetSubj, targetUnite, targetTop) {
+        const gradeEl = document.getElementById('yks-heat-in-grade');
+        const subjEl = document.getElementById('yks-heat-in-subj');
+        if (!gradeEl || !subjEl) return;
+
+        const grade = gradeEl.value;
+        const curr = window.curriculumData || {};
+        const subjects = Object.keys(curr[grade] || {});
+
+        subjEl.innerHTML = subjects.map(s => `<option value="${escapeFn(s)}">${escapeFn(s)}</option>`).join('');
+        if (targetSubj && subjects.includes(targetSubj)) {
+            subjEl.value = targetSubj;
+        }
+
+        onYksHeatDrawerSubjChange(targetUnite, targetTop);
+    }
+
+    function onYksHeatDrawerSubjChange(targetUnite, targetTop) {
+        const gradeEl = document.getElementById('yks-heat-in-grade');
+        const subjEl = document.getElementById('yks-heat-in-subj');
+        const uniteEl = document.getElementById('yks-heat-in-unite');
+        if (!gradeEl || !subjEl || !uniteEl) return;
+
+        const grade = gradeEl.value;
+        const subj = subjEl.value;
+        const curr = window.curriculumData || {};
+        const units = Object.keys(curr[grade]?.[subj] || {});
+
+        uniteEl.innerHTML = units.map(u => `<option value="${escapeFn(u)}">${escapeFn(u)}</option>`).join('');
+        if (targetUnite && units.includes(targetUnite)) {
+            uniteEl.value = targetUnite;
+        }
+
+        onYksHeatDrawerUniteChange(targetTop);
+    }
+
+    function onYksHeatDrawerUniteChange(targetTop) {
+        const gradeEl = document.getElementById('yks-heat-in-grade');
+        const subjEl = document.getElementById('yks-heat-in-subj');
+        const uniteEl = document.getElementById('yks-heat-in-unite');
+        const topEl = document.getElementById('yks-heat-in-top-select');
+        if (!gradeEl || !subjEl || !uniteEl || !topEl) return;
+
+        const grade = gradeEl.value;
+        const subj = subjEl.value;
+        const unite = uniteEl.value;
+        const curr = window.curriculumData || {};
+        const topics = Array.isArray(curr[grade]?.[subj]?.[unite]?.Konular) ? curr[grade][subj][unite].Konular : [];
+
+        topEl.innerHTML = topics.map(t => `<option value="${escapeFn(t)}">${escapeFn(t)}</option>`).join('');
+        if (targetTop && topics.includes(targetTop)) {
+            topEl.value = targetTop;
+            const customInput = document.getElementById('yks-heat-in-top-custom');
+            if (customInput) customInput.style.display = 'none';
+            topEl.style.display = 'block';
+        } else if (targetTop) {
+            const customInput = document.getElementById('yks-heat-in-top-custom');
+            if (customInput) {
+                customInput.value = targetTop;
+                customInput.style.display = 'block';
+                topEl.style.display = 'none';
+            }
+        }
+    }
+
+    function toggleYksHeatCustomTopic(forceCustom) {
+        const topSelect = document.getElementById('yks-heat-in-top-select');
+        const topCustom = document.getElementById('yks-heat-in-top-custom');
+        const btn = document.getElementById('yks-heat-toggle-custom-btn');
+        if (!topSelect || !topCustom) return;
+
+        const isCurrentlyCustom = (topCustom.style.display !== 'none');
+        const makeCustom = (typeof forceCustom === 'boolean') ? forceCustom : !isCurrentlyCustom;
+
+        if (makeCustom) {
+            topSelect.style.display = 'none';
+            topCustom.style.display = 'block';
+            topCustom.focus();
+            if (btn) btn.textContent = '📋 Listeden Seç';
+        } else {
+            topSelect.style.display = 'block';
+            topCustom.style.display = 'none';
+            if (btn) btn.textContent = '+ Özel Konu';
+        }
+    }
+
+    function selectYksHeatDrawerStatus(status) {
+        const inStatus = document.getElementById('yks-heat-in-status');
+        if (inStatus) inStatus.value = status;
+
+        ['green', 'yellow', 'red', 'gray'].forEach(s => {
+            const btn = document.getElementById(`yks-heat-status-btn-${s}`);
+            if (btn) {
+                if (s === status) {
+                    btn.style.boxShadow = '0 0 0 2px var(--text-main)';
+                    btn.style.fontWeight = '900';
+                } else {
+                    btn.style.boxShadow = 'none';
+                    btn.style.fontWeight = '700';
+                }
+            }
+        });
+    }
+
+    function calcYksHeatDrawerNet() {
+        const s = Number(document.getElementById('yks-heat-in-soru')?.value) || 0;
+        const d = Number(document.getElementById('yks-heat-in-dogru')?.value) || 0;
+        const y = Number(document.getElementById('yks-heat-in-yanlis')?.value) || 0;
+        const netDisplay = document.getElementById('yks-heat-in-net-display');
+        if (!netDisplay) return;
+
+        const net = Math.max(0, +(d - (y * 0.25)).toFixed(2));
+        const pct = s > 0 ? Math.round((d / s) * 100) : 0;
+        netDisplay.textContent = `Net: ${net} | Başarı: %${pct}`;
+    }
+
+    function saveYksKazanimStatus() {
+        const item = getActiveYksStudent();
+        if (!item) {
+            alert('Aktif öğrenci seçilmedi.');
+            return;
+        }
+
+        const grade = document.getElementById('yks-heat-in-grade')?.value;
+        const subj = document.getElementById('yks-heat-in-subj')?.value;
+        const unite = document.getElementById('yks-heat-in-unite')?.value;
+        const customInput = document.getElementById('yks-heat-in-top-custom');
+        const selectTop = document.getElementById('yks-heat-in-top-select');
+        const top = (customInput && customInput.style.display !== 'none' && customInput.value.trim())
+            ? customInput.value.trim()
+            : selectTop?.value;
+
+        if (!grade || !subj || !top) {
+            alert('Lütfen kademe, ders ve konu seçiniz.');
+            return;
+        }
+
+        const durum = document.getElementById('yks-heat-in-status')?.value || 'green';
+        const soruSayisi = Number(document.getElementById('yks-heat-in-soru')?.value) || 0;
+        const dogruSayisi = Number(document.getElementById('yks-heat-in-dogru')?.value) || 0;
+        const yanlisSayisi = Number(document.getElementById('yks-heat-in-yanlis')?.value) || 0;
+        const mentorNotu = document.getElementById('yks-heat-in-note')?.value?.trim() || '';
+        const tarih = document.getElementById('yks-heat-in-date')?.value || new Date().toISOString().split('T')[0];
+
+        item.kazanimIsiHaritasi = item.kazanimIsiHaritasi || {};
+        const key = getYksKazanimKey(grade, subj, top);
+
+        item.kazanimIsiHaritasi[key] = {
+            sinif: grade,
+            ders: subj,
+            unite: unite || '',
+            konu: top,
+            durum: durum,
+            soruSayisi: soruSayisi,
+            dogruSayisi: dogruSayisi,
+            yanlisSayisi: yanlisSayisi,
+            basariYuzdesi: soruSayisi > 0 ? Math.round((dogruSayisi / soruSayisi) * 100) : 0,
+            mentorNotu: mentorNotu,
+            tarih: tarih,
+            kaynak: 'manual'
+        };
+
+        if (typeof saveData === 'function') saveData(true);
+
+        const drawer = document.getElementById('yks-heat-entry-drawer');
+        if (drawer) drawer.style.display = 'none';
+
+        renderYksDetailHeatmap(item);
+
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`"${top}" teşhis verisi başarıyla kaydedildi.`, 'success');
+        } else {
+            alert(`"${top}" teşhis verisi başarıyla kaydedildi.`);
+        }
+    }
+
+    function resetYksKazanimStatus() {
+        const item = getActiveYksStudent();
+        if (!item || !item.kazanimIsiHaritasi) return;
+
+        const grade = document.getElementById('yks-heat-in-grade')?.value;
+        const subj = document.getElementById('yks-heat-in-subj')?.value;
+        const customInput = document.getElementById('yks-heat-in-top-custom');
+        const selectTop = document.getElementById('yks-heat-in-top-select');
+        const top = (customInput && customInput.style.display !== 'none' && customInput.value.trim())
+            ? customInput.value.trim()
+            : selectTop?.value;
+
+        if (!top) return;
+        const key = getYksKazanimKey(grade, subj, top);
+        const fallbackKey = `${subj}___${top}`;
+
+        delete item.kazanimIsiHaritasi[key];
+        delete item.kazanimIsiHaritasi[fallbackKey];
+
+        if (typeof saveData === 'function') saveData(true);
+
+        const drawer = document.getElementById('yks-heat-entry-drawer');
+        if (drawer) drawer.style.display = 'none';
+
+        renderYksDetailHeatmap(item);
+
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`"${top}" teşhisi sıfırlandı.`, 'info');
+        }
+    }
+
+    function cycleYksKazanimStatusByKey(encodedKey) {
+        const key = decodeURIComponent(encodedKey);
+        const item = getActiveYksStudent();
+        if (!item) return;
+
+        item.kazanimIsiHaritasi = item.kazanimIsiHaritasi || {};
+        const parts = key.split('___');
+        const grade = parts[0];
+        const subj = parts[1];
+        const top = parts[2];
+
+        const st = getEffectiveYksKazanimStatus(item, grade, subj, top, item.hataDefteri || []);
+        const currentStatus = st.status;
+
+        // Döngü: gray -> green -> yellow -> red -> gray
+        let nextStatus = 'green';
+        if (currentStatus === 'gray') nextStatus = 'green';
+        else if (currentStatus === 'green') nextStatus = 'yellow';
+        else if (currentStatus === 'yellow') nextStatus = 'red';
+        else if (currentStatus === 'red') nextStatus = 'gray';
+
+        const existing = item.kazanimIsiHaritasi[key] || {};
+        item.kazanimIsiHaritasi[key] = {
+            ...existing,
+            sinif: grade,
+            ders: subj,
+            konu: top,
+            durum: nextStatus,
+            tarih: new Date().toISOString().split('T')[0],
+            kaynak: 'cycle'
+        };
+
+        if (typeof saveData === 'function') saveData(true);
+
+        renderYksDetailHeatmap(item);
+
+        const statusLabels = {
+            green: '🟢 Bilişsel Otonomi',
+            yellow: '🟡 Konsolidasyon',
+            red: '🔴 Cerrahi Müdahale',
+            gray: '⚪ Başlanmadı / Nötr'
+        };
+
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(`"${top}": ${statusLabels[nextStatus]}`, 'success');
+        }
+    }
+
+    function openYksKazanimEditModal(btn) {
+        if (!btn) return;
+        const grade = btn.getAttribute('data-grade');
+        const subj = btn.getAttribute('data-subj');
+        const unite = btn.getAttribute('data-unite');
+        const top = btn.getAttribute('data-top');
+
+        toggleYksHeatDrawer(true, {
+            grade: grade,
+            subj: subj,
+            unite: unite,
+            top: top
+        });
+    }
+
+    function switchYksHeatGrade(gradeName) {
+        window.activeYksHeatGrade = gradeName;
+        const item = getActiveYksStudent();
+        if (item) renderYksDetailHeatmap(item);
+    }
+
+    function setYksHeatStatusFilter(statusVal, doReFilter) {
+        window.activeYksHeatStatusFilter = statusVal;
+        document.querySelectorAll('.yks-heat-filter-pill').forEach(btn => {
+            const isMatch = btn.getAttribute('data-status') === statusVal;
+            btn.classList.toggle('active', isMatch);
+            if (isMatch) {
+                btn.style.background = '#0284c7';
+                btn.style.color = '#fff';
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+            }
+        });
+
+        if (doReFilter !== false) {
+            filterYksHeatmap();
+        }
+    }
+
+    function filterYksHeatmap() {
+        const subjFilter = document.getElementById('yks-heat-filter-subj')?.value || 'all';
+        const statusFilter = window.activeYksHeatStatusFilter || 'all';
+        const searchInput = (document.getElementById('yks-heat-search-input')?.value || '').toLowerCase().trim();
+
+        window.activeYksHeatSubjFilter = subjFilter;
+
+        let visibleCount = 0;
+        const cards = document.querySelectorAll('.yks-heat-card');
+
+        cards.forEach(card => {
+            const cardSubj = card.getAttribute('data-subj');
+            const cardStatus = card.getAttribute('data-status');
+            const cardSearch = card.getAttribute('data-search') || '';
+
+            const matchSubj = (subjFilter === 'all' || cardSubj === subjFilter);
+            const matchStatus = (statusFilter === 'all' || cardStatus === statusFilter);
+            const matchSearch = (!searchInput || cardSearch.includes(searchInput));
+
+            const isVisible = matchSubj && matchStatus && matchSearch;
+            card.style.display = isVisible ? 'flex' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        document.querySelectorAll('.yks-heat-subject-block').forEach(block => {
+            const blockSubj = block.getAttribute('data-subj');
+            const matchSubj = (subjFilter === 'all' || blockSubj === subjFilter);
+            if (!matchSubj) {
+                block.style.display = 'none';
+            } else {
+                const hasVisibleCard = Array.from(block.querySelectorAll('.yks-heat-card')).some(c => c.style.display !== 'none');
+                block.style.display = hasVisibleCard ? 'block' : 'none';
+            }
+        });
+
+        const countBadge = document.getElementById('yks-heat-visible-count');
+        if (countBadge) {
+            countBadge.textContent = `${visibleCount} Konu Gösteriliyor`;
+        }
+    }
+
+    function printYksHeatmapReport() {
+        const item = getActiveYksStudent();
+        if (!item) {
+            alert('Aktif öğrenci bulunamadı.');
+            return;
+        }
+
+        const curr = window.curriculumData || {};
+        const grade = window.activeYksHeatGrade || '12. Sınıf';
+        const targetCurr = curr[grade] || {};
+        const hatalar = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
+
+        let rowsHtml = '';
+        Object.keys(targetCurr).forEach(sub => {
+            const units = targetCurr[sub] || {};
+            Object.keys(units).forEach(uName => {
+                const topics = units[uName].Konular || [];
+                topics.forEach(top => {
+                    const st = getEffectiveYksKazanimStatus(item, grade, sub, top, hatalar);
+                    const statusText = (st.status === 'green') ? '🟢 Otonomi' : (st.status === 'yellow') ? '🟡 Konsolidasyon' : (st.status === 'red') ? '🔴 Cerrahi Müdahale' : '⚪ Başlanmadı';
+                    const qData = st.entry?.soruSayisi ? `${st.entry.soruSayisi} Soru (%${st.entry.basariYuzdesi || 0} D)` : '-';
+                    const note = st.entry?.mentorNotu || (st.errorCount > 0 ? `${st.errorCount} hata defteri kaydı` : '-');
+
+                    rowsHtml += `
+                        <tr>
+                            <td><strong>${escapeFn(sub)}</strong></td>
+                            <td>${escapeFn(uName.split(':')[0])}</td>
+                            <td>${escapeFn(top)}</td>
+                            <td style="font-weight:bold;">${statusText}</td>
+                            <td>${qData}</td>
+                            <td style="font-size:9px;">${escapeFn(note)}</td>
+                        </tr>
+                    `;
+                });
+            });
+        });
+
+        const printWin = window.open('', '_blank');
+        if (!printWin) {
+            alert('Lütfen açılır pencere (pop-up) engelleyicisini kapatınız.');
+            return;
+        }
+
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html lang="tr">
+            <head>
+                <meta charset="UTF-8">
+                <title>MEB Mikro-Kazanım Isı Haritası - ${escapeFn(item.adSoyad)}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 10px; color: #1e293b; padding: 15px; }
+                    h2 { margin: 0 0 4px 0; color: #0284c7; }
+                    .header-box { border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; }
+                    table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+                    th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; }
+                    th { background: #f1f5f9; font-weight: bold; }
+                    @media print { body { padding: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="header-box">
+                    <div>
+                        <h2>MEB ${escapeFn(grade)} Mikro-Kazanım Hakimiyet Matrisi</h2>
+                        <div><strong>Öğrenci:</strong> ${escapeFn(item.adSoyad)} (${escapeFn(item.sinif || '')} - ${escapeFn(item.alan || '')}) | <strong>Tarih:</strong> ${new Date().toLocaleDateString('tr-TR')}</div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ders</th>
+                            <th>Ünite</th>
+                            <th>Mikro-Kazanım / Konu</th>
+                            <th>Bilişsel Durum</th>
+                            <th>Soru İstatistiği</th>
+                            <th>Mentor & Teşhis Notu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() { window.print(); };
+                </script>
+            </body>
+            </html>
+        `);
+        printWin.document.close();
     }
 
     // --- Sub-Tab 5: Soru Piramidi & Haftalık Soru Takip ---
+    // ─────────────────────────────────────────────────────────────
+    // SUB-TAB 5: SORU KALİTE PİRAMİDİ & KAİ İNDEKSİ
+    // ─────────────────────────────────────────────────────────────
+
+    function switchYksPiramitSubSegment(segmentId) {
+        window.activeYksPiramitSubSegment = segmentId;
+        document.querySelectorAll('.yks-piramit-seg-btn').forEach(btn => {
+            const isActive = btn.getAttribute('data-segment') === segmentId;
+            btn.classList.toggle('active', isActive);
+        });
+
+        ['piramit-teshis', 'haftalik-giris'].forEach(seg => {
+            const el = document.getElementById('yks-piramit-seg-' + seg);
+            if (el) el.style.display = (seg === segmentId) ? 'block' : 'none';
+        });
+    }
+
     function renderYksDetailPiramit(item) {
         const c = document.getElementById('tab-yks-piramit');
         if (!c) return;
@@ -2115,103 +3750,191 @@
         const seviye = detectSinifSeviyesi(item.sinifSeviyesi || item.sinif);
         const s = item.haftalikSoruSayisi || { duzey1: 100, duzey2: 200, duzey3: 350, duzey4: 150, toplam: 800 };
         const kai = calculateKai(s);
+        const activeSeg = window.activeYksPiramitSubSegment || 'piramit-teshis';
 
         let targetInfoText = '';
         if (seviye === 9 || seviye === 10) {
-            targetInfoText = '🌱 9-10. Sınıf Optimal Hedefi: Düzey 1 (%40) + Düzey 2 (%40) + Düzey 3 (%20)';
+            targetInfoText = '🌱 9-10. Sınıf Bilişsel Hedefi: Düzey 1 (%40) + Düzey 2 (%40) + Düzey 3 (%20). Temel kavram ve OYSS senaryoları pekiştirilmelidir.';
         } else if (seviye === 11) {
-            targetInfoText = '⚡ 11. Sınıf Optimal Hedefi: Düzey 1 (%25) + Düzey 2 (%35) + Düzey 3 (%30) + Düzey 4 (%10)';
+            targetInfoText = '⚡ 11. Sınıf Bilişsel Hedefi: Düzey 1 (%25) + Düzey 2 (%35) + Düzey 3 (%30) + Düzey 4 (%10). AYT omurgası ve yeni nesil analiz soruları ağırlıklı olmalıdır.';
         } else {
-            targetInfoText = '🎯 12. Sınıf & Mezun Hedefi: Düzey 1 (%15) + Düzey 2 (%25) + Düzey 3 (%40) + Düzey 4 (%20)';
+            targetInfoText = '🎯 12. Sınıf & Mezun Bilişsel Hedefi: Düzey 1 (%15) + Düzey 2 (%25) + Düzey 3 (%40) + Düzey 4 (%20). Konfor alanından çıkılmalı, Düzey 3-4 soruları çözülmelidir.';
         }
 
+        const pD1 = kai.total ? Math.round(((s.duzey1 || 0) / kai.total) * 100) : 0;
+        const pD2 = kai.total ? Math.round(((s.duzey2 || 0) / kai.total) * 100) : 0;
+        const pD3 = kai.total ? Math.round(((s.duzey3 || 0) / kai.total) * 100) : 0;
+        const pD4 = kai.total ? Math.round(((s.duzey4 || 0) / kai.total) * 100) : 0;
+
         c.innerHTML = `
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
-                    <h4 style="margin:0 0 12px 0; color:#0284c7; display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-layer-group"></i> Soru Kalite Piramidi &amp; KAİ İndeksi
-                    </h4>
-                    
-                    <div style="background:${kai.badgeBg}; border:1.5px solid ${kai.badgeColor}; border-radius:8px; padding:12px; margin-bottom:14px; text-align:center;">
-                        <div style="font-size:26px; font-weight:900; color:${kai.badgeColor};">KAİ: %${kai.kai}</div>
-                        <div style="font-size:12px; font-weight:700; color:${kai.badgeColor}; margin-top:2px;">${escapeFn(kai.label)}</div>
-                        <p style="margin:6px 0 0 0; font-size:11px; color:var(--text-muted); line-height:1.35;">
-                            ${targetInfoText}
-                        </p>
+            <!-- Sub-Segment Kontrolü (Piramit) -->
+            <div class="yks-subsegment-nav">
+                <button type="button" class="yks-segment-btn yks-piramit-seg-btn ${activeSeg === 'piramit-teshis' ? 'active' : ''}" data-segment="piramit-teshis" onclick="switchYksPiramitSubSegment('piramit-teshis')">
+                    <i class="fas fa-layer-group"></i> 📊 Piramit Dağılımı &amp; KAİ Teşhisi
+                </button>
+                <button type="button" class="yks-segment-btn yks-piramit-seg-btn ${activeSeg === 'haftalik-giris' ? 'active' : ''}" data-segment="haftalik-giris" onclick="switchYksPiramitSubSegment('haftalik-giris')">
+                    <i class="fas fa-edit"></i> ✏️ Haftalık Soru Girişi &amp; Güncelleme
+                </button>
+            </div>
+
+            <!-- Segment 1: Piramit Dağılımı ve KAİ Teşhisi -->
+            <div id="yks-piramit-seg-piramit-teshis" style="${activeSeg === 'piramit-teshis' ? 'display:block;' : 'display:none;'}">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:16px;">
+                    <!-- Sol Kart: KAİ Göstergesi & Alarm -->
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                        <h4 style="margin:0 0 12px 0; color:#0284c7; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-tachometer-alt"></i> Konfor Alanı İndeksi (KAİ™) &amp; Psödo-Çalışma Alarmı
+                        </h4>
+                        
+                        <div style="background:${kai.badgeBg}; border:1.5px solid ${kai.badgeColor}; border-radius:8px; padding:14px; margin-bottom:14px; text-align:center;">
+                            <div style="font-size:32px; font-weight:900; color:${kai.badgeColor};">KAİ: %${kai.kai}</div>
+                            <div style="font-size:12.5px; font-weight:800; color:${kai.badgeColor}; margin-top:3px;">${escapeFn(kai.label)}</div>
+                            <p style="margin:8px 0 0 0; font-size:11.5px; color:var(--text-muted); line-height:1.4;">
+                                ${targetInfoText}
+                            </p>
+                        </div>
+
+                        <!-- Psödo-Çalışma Eşikleri Açıklaması -->
+                        <div style="background:var(--input-bg); border-radius:8px; padding:12px; font-size:11.5px; line-height:1.45;">
+                            <div style="font-weight:700; color:var(--text-main); margin-bottom:6px;">Bilişsel Eşik Değerleri:</div>
+                            <div style="color:#ef4444; margin-bottom:3px;">🔴 <strong>KAİ > %55:</strong> Psödo-Çalışma Tuzağı (Öğrenci bildiği soruları çözerek kendini kandırıyor).</div>
+                            <div style="color:#f59e0b; margin-bottom:3px;">🟡 <strong>KAİ %45-55:</strong> Denge Eşiği (Orta seviye zorlanma).</div>
+                            <div style="color:#059669; margin-bottom:3px;">🟢 <strong>KAİ %30-45:</strong> Bilişsel Gelişim Bölgesi (Optimal zorlanma ve nöral sıçrama).</div>
+                            <div style="color:#7c3aed;">🟣 <strong>KAİ < %30:</strong> Aşırı Bilişsel Yük / Tükenmişlik Tehlikesi.</div>
+                        </div>
                     </div>
 
-                    <!-- Piramit Çubukları -->
-                    <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px;">
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:3px;">
-                                <span>[Düzey 4] Üst Bilişsel / Eleme</span>
-                                <span style="color:#7c3aed;">${s.duzey4 || 0} Soru (%${kai.total ? Math.round((s.duzey4 / kai.total) * 100) : 0})</span>
+                    <!-- Sağ Kart: Görsel Piramit Çubukları -->
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                        <h4 style="margin:0 0 14px 0; color:#0284c7; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fas fa-mountain me-2"></i> 4 Seviyeli Soru Piramidi</span>
+                            <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Toplam: <strong>${kai.total} Soru</strong></span>
+                        </h4>
+
+                        <div style="display:flex; flex-direction:column; gap:12px; font-size:11.5px;">
+                            <!-- Düzey 4 -->
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:4px;">
+                                    <span>🟣 [Düzey 4] Üst Bilişsel &amp; Eleme</span>
+                                    <span style="color:#7c3aed;">${s.duzey4 || 0} Soru (%${pD4})</span>
+                                </div>
+                                <div style="height:10px; background:rgba(0,0,0,0.06); border-radius:5px; overflow:hidden;">
+                                    <div style="height:100%; width:${pD4}%; background:#7c3aed; border-radius:5px;"></div>
+                                </div>
+                                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">ÖSYM tarzı çift kazanımlı zor sorular</div>
                             </div>
-                            <div style="height:8px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden;">
-                                <div style="height:100%; width:${kai.total ? Math.round((s.duzey4 / kai.total) * 100) : 0}%; background:#7c3aed;"></div>
+
+                            <!-- Düzey 3 -->
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:4px;">
+                                    <span>🟢 [Düzey 3] Yeni Nesil &amp; Analiz</span>
+                                    <span style="color:#059669;">${s.duzey3 || 0} Soru (%${pD3})</span>
+                                </div>
+                                <div style="height:10px; background:rgba(0,0,0,0.06); border-radius:5px; overflow:hidden;">
+                                    <div style="height:100%; width:${pD3}%; background:#059669; border-radius:5px;"></div>
+                                </div>
+                                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">Kurgulu, grafikli ve modelleme soruları</div>
+                            </div>
+
+                            <!-- Düzey 2 -->
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:4px;">
+                                    <span>🟡 [Düzey 2] Kavrama &amp; Standart Test</span>
+                                    <span style="color:#d97706;">${s.duzey2 || 0} Soru (%${pD2})</span>
+                                </div>
+                                <div style="height:10px; background:rgba(0,0,0,0.06); border-radius:5px; overflow:hidden;">
+                                    <div style="height:100%; width:${pD2}%; background:#d97706; border-radius:5px;"></div>
+                                </div>
+                                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">Konu pekiştirme ve soru bankası standartları</div>
+                            </div>
+
+                            <!-- Düzey 1 -->
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:4px;">
+                                    <span>🔵 [Düzey 1] Temel Bilgi &amp; Hatırlama</span>
+                                    <span style="color:#0284c7;">${s.duzey1 || 0} Soru (%${pD1})</span>
+                                </div>
+                                <div style="height:10px; background:rgba(0,0,0,0.06); border-radius:5px; overflow:hidden;">
+                                    <div style="height:100%; width:${pD1}%; background:#0284c7; border-radius:5px;"></div>
+                                </div>
+                                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">Doğrudan formül, tanım ve kavram tarama</div>
                             </div>
                         </div>
 
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:3px;">
-                                <span>[Düzey 3] Yeni Nesil / ÖSYM Düzeyi</span>
-                                <span style="color:#0284c7;">${s.duzey3 || 0} Soru (%${kai.total ? Math.round((s.duzey3 / kai.total) * 100) : 0})</span>
-                            </div>
-                            <div style="height:8px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden;">
-                                <div style="height:100%; width:${kai.total ? Math.round((s.duzey3 / kai.total) * 100) : 0}%; background:#0284c7;"></div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:3px;">
-                                <span>[Düzey 2] Tarama &amp; Pekiştirme</span>
-                                <span style="color:#d97706;">${s.duzey2 || 0} Soru (%${kai.total ? Math.round((s.duzey2 / kai.total) * 100) : 0})</span>
-                            </div>
-                            <div style="height:8px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden;">
-                                <div style="height:100%; width:${kai.total ? Math.round((s.duzey2 / kai.total) * 100) : 0}%; background:#d97706;"></div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:3px;">
-                                <span>[Düzey 1] Temel Kazanım / Formül</span>
-                                <span style="color:#64748b;">${s.duzey1 || 0} Soru (%${kai.total ? Math.round((s.duzey1 / kai.total) * 100) : 0})</span>
-                            </div>
-                            <div style="height:8px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden;">
-                                <div style="height:100%; width:${kai.total ? Math.round((s.duzey1 / kai.total) * 100) : 0}%; background:#64748b;"></div>
-                            </div>
+                        <div style="margin-top:16px; text-align:right;">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="switchYksPiramitSubSegment('haftalik-giris')" style="font-size:11.5px; font-weight:700;">
+                                <i class="fas fa-edit me-1"></i> Sayıları Güncelle
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
-                    <h4 style="margin:0 0 12px 0; color:#0284c7; display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-edit"></i> Haftalık Soru Hacmini Güncelle
+            <!-- Segment 2: Haftalık Soru Girişi Formu -->
+            <div id="yks-piramit-seg-haftalik-giris" style="${activeSeg === 'haftalik-giris' ? 'display:block;' : 'display:none;'}">
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:18px; max-width:640px; margin:0 auto;">
+                    <h4 style="margin:0 0 14px 0; color:#0284c7; font-size:14px; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-edit"></i> Haftalık Soru Sayılarını Güncelle (KAİ Canlı Hesaplayıcı)
                     </h4>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+                        Öğrencinin son bir haftada çözdüğü soruları bilişsel zorluk düzeylerine göre giriniz.
+                    </p>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
                         <div>
-                            <label style="font-size:11px; font-weight:700;">Düzey 1 (Temel):</label>
-                            <input type="number" id="yks-pir-d1" value="${s.duzey1 || 0}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                            <label style="font-size:11.5px; font-weight:700; color:#0284c7;">[Düzey 1] Temel Hatırlama:</label>
+                            <input type="number" id="yks-pir-d1" value="${s.duzey1 || 0}" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksLiveKaiPreview()" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:13px; font-weight:700;">
                         </div>
                         <div>
-                            <label style="font-size:11px; font-weight:700;">Düzey 2 (Tarama):</label>
-                            <input type="number" id="yks-pir-d2" value="${s.duzey2 || 0}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                            <label style="font-size:11.5px; font-weight:700; color:#d97706;">[Düzey 2] Kavrama &amp; Standart:</label>
+                            <input type="number" id="yks-pir-d2" value="${s.duzey2 || 0}" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksLiveKaiPreview()" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:13px; font-weight:700;">
                         </div>
                         <div>
-                            <label style="font-size:11px; font-weight:700;">Düzey 3 (Yeni Nesil):</label>
-                            <input type="number" id="yks-pir-d3" value="${s.duzey3 || 0}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                            <label style="font-size:11.5px; font-weight:700; color:#059669;">[Düzey 3] Yeni Nesil &amp; Analiz:</label>
+                            <input type="number" id="yks-pir-d3" value="${s.duzey3 || 0}" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksLiveKaiPreview()" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:13px; font-weight:700;">
                         </div>
                         <div>
-                            <label style="font-size:11px; font-weight:700;">Düzey 4 (Eleme/Üst Düzey):</label>
-                            <input type="number" id="yks-pir-d4" value="${s.duzey4 || 0}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                            <label style="font-size:11.5px; font-weight:700; color:#7c3aed;">[Düzey 4] Üst Biliş &amp; Eleme:</label>
+                            <input type="number" id="yks-pir-d4" value="${s.duzey4 || 0}" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksLiveKaiPreview()" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:13px; font-weight:700;">
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="saveYksPiramitQuestions()" style="width:100%; padding:8px; font-weight:700; font-size:12px;">
-                        <i class="fas fa-calculator me-1"></i> Soru Sayılarını Kaydet &amp; KAİ Yeniden Hesapla
-                    </button>
+
+                    <!-- Canlı Hesaplama Önizlemesi -->
+                    <div id="yks-live-kai-box" style="background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+                        <div>
+                            Toplam: <strong id="yks-live-pir-total">${kai.total} Soru</strong>
+                        </div>
+                        <div>
+                            Canlı KAİ: <strong id="yks-live-pir-kai" style="color:${kai.badgeColor}; font-size:14px;">%${kai.kai}</strong>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button class="btn btn-clear" onclick="switchYksPiramitSubSegment('piramit-teshis')" style="padding:7px 16px; font-size:12px;">İptal</button>
+                        <button class="btn btn-primary" onclick="saveYksPiramitQuestions()" style="padding:7px 20px; font-size:12px; font-weight:700;">
+                            <i class="fas fa-save me-1"></i> KAİ ve Soruları Kaydet
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
+    }
+
+    function updateYksLiveKaiPreview() {
+        const d1 = Number(document.getElementById('yks-pir-d1')?.value) || 0;
+        const d2 = Number(document.getElementById('yks-pir-d2')?.value) || 0;
+        const d3 = Number(document.getElementById('yks-pir-d3')?.value) || 0;
+        const d4 = Number(document.getElementById('yks-pir-d4')?.value) || 0;
+        const total = d1 + d2 + d3 + d4;
+        const kaiVal = total > 0 ? Math.round(((d1 + d2) / total) * 100) : 0;
+
+        const totEl = document.getElementById('yks-live-pir-total');
+        const kaiEl = document.getElementById('yks-live-pir-kai');
+        if (totEl) totEl.textContent = total + ' Soru';
+        if (kaiEl) {
+            kaiEl.textContent = '%' + kaiVal;
+            kaiEl.style.color = (kaiVal > 55) ? '#ef4444' : (kaiVal >= 45 ? '#f59e0b' : '#10b981');
+        }
     }
 
     function saveYksPiramitQuestions() {
@@ -2227,9 +3950,13 @@
         item.haftalikSoruSayisi = { duzey1: d1, duzey2: d2, duzey3: d3, duzey4: d4, toplam: total };
 
         if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('Haftalık soru dağılımı ve KAİ indeksi kaydedildi.', 'success');
+        }
+
+        window.activeYksPiramitSubSegment = 'piramit-teshis';
         renderYksDetailPiramit(item);
         renderYksKoclukModule();
-        alert('Haftalık soru dağılımı ve KAİ indeksi kaydedildi.');
     }
 
     // --- Sub-Tab 6: Gemini AI & WhatsApp / BiP Entegrasyonu ---
@@ -2843,6 +4570,27 @@ Yukarıdaki verilere dayanarak;
     window.saveNewYksStudent = saveNewYksStudent;
     window.deleteYksKoclukStudent = deleteYksKoclukStudent;
     window.openYksDetailModal = openYksDetailModal;
+    window.toggleYksQuickDrawer = toggleYksQuickDrawer;
+    window.updateYksDrawerKai = updateYksDrawerKai;
+    window.submitYksInlineQuickSync = submitYksInlineQuickSync;
+    window.populateYksQuickSwitcher = populateYksQuickSwitcher;
+    window.navigateYksKoclukStudent = navigateYksKoclukStudent;
+    window.switchYksDenemeSubSegment = switchYksDenemeSubSegment;
+    window.switchYksHataSubSegment = switchYksHataSubSegment;
+    window.switchYksPiramitSubSegment = switchYksPiramitSubSegment;
+    window.toggleYksFormsMenu = toggleYksFormsMenu;
+    window.toggleYksParentMenu = toggleYksParentMenu;
+    window.hideYksDropdowns = hideYksDropdowns;
+    window.sendYksParentWhatsApp = sendYksParentWhatsApp;
+    window.shareYksViaBip = shareYksViaBip;
+    window.yksAutoScrollOnFocus = yksAutoScrollOnFocus;
+    window.updateYksLiveKaiPreview = updateYksLiveKaiPreview;
+    window.calculateYksTde = calculateYksTde;
+    window.calculateKai = calculateKai;
+    window.getYksHataRepeatStatus = getYksHataRepeatStatus;
+    window.diagnoseYksNetPlateau = diagnoseYksNetPlateau;
+    window.getCurrentYksPhase = getCurrentYksPhase;
+    window.detectSinifSeviyesi = detectSinifSeviyesi;
     window.switchYksDetailSubTab = switchYksDetailSubTab;
     window.saveYksMentorNote = saveYksMentorNote;
     window.saveYksObpProjections = saveYksObpProjections;
@@ -2866,5 +4614,21 @@ Yukarıdaki verilere dayanarak;
     window.printYksForm = printYksForm;
     window.calculateObpShield = calculateObpShield;
     window.calculateOyssAverages = calculateOyssAverages;
+    window.renderYksDetailHeatmap = renderYksDetailHeatmap;
+    window.toggleYksHeatDrawer = toggleYksHeatDrawer;
+    window.onYksHeatDrawerGradeChange = onYksHeatDrawerGradeChange;
+    window.onYksHeatDrawerSubjChange = onYksHeatDrawerSubjChange;
+    window.onYksHeatDrawerUniteChange = onYksHeatDrawerUniteChange;
+    window.toggleYksHeatCustomTopic = toggleYksHeatCustomTopic;
+    window.selectYksHeatDrawerStatus = selectYksHeatDrawerStatus;
+    window.calcYksHeatDrawerNet = calcYksHeatDrawerNet;
+    window.saveYksKazanimStatus = saveYksKazanimStatus;
+    window.resetYksKazanimStatus = resetYksKazanimStatus;
+    window.cycleYksKazanimStatusByKey = cycleYksKazanimStatusByKey;
+    window.openYksKazanimEditModal = openYksKazanimEditModal;
+    window.switchYksHeatGrade = switchYksHeatGrade;
+    window.setYksHeatStatusFilter = setYksHeatStatusFilter;
+    window.filterYksHeatmap = filterYksHeatmap;
+    window.printYksHeatmapReport = printYksHeatmapReport;
 
 })();

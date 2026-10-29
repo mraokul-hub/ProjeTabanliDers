@@ -432,7 +432,7 @@ async function _executeSaveData() {
         for (let safeKey in _lastSavedRefs.students) {
             if (!currentStudents[safeKey]) updates[`app_data/${uid}/students/${safeKey}`] = null;
         }
-        candidateRefs.students = currentStudents;
+        candidateRefs.students = JSON.parse(JSON.stringify(currentStudents));
         
         // --- B. PROJECTS (Proje Grupları) ---
         let currentProjects = {};
@@ -454,7 +454,7 @@ async function _executeSaveData() {
         for (let id in _lastSavedRefs.projects) {
             if (!currentProjects[id]) updates[`app_data/${uid}/projects/${id}`] = null;
         }
-        candidateRefs.projects = currentProjects;
+        candidateRefs.projects = JSON.parse(JSON.stringify(currentProjects));
         
         // --- C. REGULAR GROUPS (Normal Kümeler) ---
         let currentRegGroups = {};
@@ -485,7 +485,7 @@ async function _executeSaveData() {
         for (let id in _lastSavedRefs.regular_groups) {
             if (!currentRegGroups[id]) updates[`app_data/${uid}/regular_groups/${id}`] = null;
         }
-        candidateRefs.regular_groups = currentRegGroups;
+        candidateRefs.regular_groups = JSON.parse(JSON.stringify(currentRegGroups));
         
         // --- D. EXAMS (Sınavlar) ---
         let currentExams = {};
@@ -502,14 +502,14 @@ async function _executeSaveData() {
         for (let id in _lastSavedRefs.exams) {
             if (!currentExams[id]) updates[`app_data/${uid}/exams/${id}`] = null;
         }
-        candidateRefs.exams = currentExams;
+        candidateRefs.exams = JSON.parse(JSON.stringify(currentExams));
 
         // --- E. SCHEDULE (Takvim) ---
         const currScheduleStr = JSON.stringify(scheduleData);
         if (currScheduleStr !== JSON.stringify(_lastSavedRefs.schedule)) {
             updates[`app_data/${uid}/schedule`] = scheduleData;
         }
-        candidateRefs.schedule = scheduleData;
+        candidateRefs.schedule = scheduleData ? JSON.parse(JSON.stringify(scheduleData)) : [];
 
         // --- F. TRACKING (Ödev & Proje Takip Sistemi) ---
         let currentTracking = {};
@@ -566,7 +566,7 @@ async function _executeSaveData() {
                 updates[`app_data/${uid}/tracking/${safeTrackId}`] = null;
             }
         }
-        candidateRefs.tracking = currentTracking;
+        candidateRefs.tracking = JSON.parse(JSON.stringify(currentTracking));
 
         // --- G. CHECKLISTS (Öğretmen Takip ve Kontrol Çizelgeleri) ---
         let currentChecklists = {};
@@ -617,7 +617,7 @@ async function _executeSaveData() {
                 updates[`app_data/${uid}/checklists/${safeChkId}`] = null;
             }
         }
-        candidateRefs.checklists = currentChecklists;
+        candidateRefs.checklists = JSON.parse(JSON.stringify(currentChecklists));
 
         // --- H. KOCLUK (LGS Bilişsel Koçluk & Mentorluk) ---
         let currentKocluk = {};
@@ -663,7 +663,7 @@ async function _executeSaveData() {
                 updates[`app_data/${uid}/kocluk/${safeKocId}`] = null;
             }
         }
-        candidateRefs.kocluk = currentKocluk;
+        candidateRefs.kocluk = JSON.parse(JSON.stringify(currentKocluk));
 
         // --- H. YKS BİLİŞSEL KOÇLUK & MENTORLUK (12. Sınıf TYT-AYT) ---
         let currentYks = {};
@@ -712,7 +712,7 @@ async function _executeSaveData() {
                 updates[`app_data/${uid}/yks_kocluk/${safeKocId}`] = null;
             }
         }
-        candidateRefs.yksKocluk = currentYks;
+        candidateRefs.yksKocluk = JSON.parse(JSON.stringify(currentYks));
 
         // --- I. ADVANCED GROUPS (İleri Çalışma Grupları) ---
         let currentAdv = {};
@@ -739,7 +739,7 @@ async function _executeSaveData() {
         for (let agId in _lastSavedRefs.advanced_groups) {
             if (!currentAdv[agId]) updates[`app_data/${uid}/advanced_groups/${agId}`] = null;
         }
-        candidateRefs.advanced_groups = currentAdv;
+        candidateRefs.advanced_groups = JSON.parse(JSON.stringify(currentAdv));
     }
 
     // 3. Değişiklikleri Firebase'e Tek Seferde Yaz (Atomik - Fail-Fast Zaman Aşımı Korumalı)
@@ -1696,6 +1696,24 @@ function listenToStudentForms() {
         const formsObj = snapshot.val();
         const formsArray = Object.keys(formsObj).map(key => ({ id: key, ...formsObj[key] })).reverse();
 
+        // Çoklu Kiracı / Rol İzolasyonu: Sadece öğretmenin kendi öğrencilerine ait formlar listelenir (Admin hariç)
+        const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
+        const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+        const myStudents = Array.isArray(studentData) ? studentData : [];
+        const formsToRender = isUserAdmin ? formsArray : formsArray.filter(f => {
+            if (!f) return false;
+            return myStudents.some(s => {
+                const noMatch = s.no && String(s.no) === String(f.ogrenciNo);
+                const classMatch = s.sinif && (s.sinif === f.sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(f.sinif)));
+                return noMatch || classMatch;
+            });
+        });
+
+        if (formsToRender.length === 0) {
+            listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Sınıflarınıza ait doldurulmuş form bulunmuyor.</div>';
+            return;
+        }
+
         function escapeHTML(str) {
             if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
             return (str || '').toString()
@@ -1707,7 +1725,7 @@ function listenToStudentForms() {
         }
 
         const fragment = document.createDocumentFragment();
-        formsArray.forEach(data => {
+        formsToRender.forEach(data => {
             const typeText = data.type === 'BEFORE' ? '<span style="color:var(--yellow); font-weight:bold;"><i class="fas fa-home"></i> Dersten Önce</span>' : '<span style="color:#8b5cf6; font-weight:bold;"><i class="fas fa-graduation-cap"></i> Dersten Sonra</span>';
 
             if (data.type === 'BEFORE' && data.formResponse) {

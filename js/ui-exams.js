@@ -20,7 +20,8 @@
             const currentVal = select.value; select.innerHTML = '<option value="">-- Sınav Seçiniz --</option>';
             examData.forEach(e => {
                 const classStr = e.classes ? e.classes.join(', ') : (e.sinif || 'Belirsiz');
-                select.innerHTML += `<option value="${e.id}">${e.title} (${classStr})</option>`;
+                const opt = new Option(`${e.title} (${classStr})`, e.id);
+                select.appendChild(opt);
             });
             select.value = currentVal;
             updateExamUploadClassesInfo();
@@ -576,6 +577,7 @@
                     headers: parsed.headers,
                     rows: parsed.rows,
                     mapping: initialMapping,
+                    customParams: initialMapping.customParams || [],
                     formulaType: '3y1d', // '3y1d' | '4y1d' | 'direct'
                     targetExamId: 'NEW',
                     manualOverrides: {},
@@ -683,6 +685,73 @@
             renderWizardPreviewTable();
         }
 
+        function addWizardCustomParam() {
+            const state = window._examWizardState;
+            if (!state) return;
+            if (!state.customParams) state.customParams = [];
+            const newId = 'param_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            state.customParams.push({
+                id: newId,
+                name: '',
+                colIndex: ''
+            });
+            state.mapping.customParams = state.customParams;
+            renderWizardMappingFields();
+            renderWizardPreviewTable();
+        }
+        window.addWizardCustomParam = addWizardCustomParam;
+
+        function addWizardCustomParamWithPreset(name) {
+            const state = window._examWizardState;
+            if (!state) return;
+            if (!state.customParams) state.customParams = [];
+            const existing = state.customParams.find(p => p.name.toLowerCase() === name.toLowerCase());
+            if (existing) return;
+
+            let matchedIdx = '';
+            if (state.headers && state.headers.length > 0) {
+                const searchKey = name.toLocaleLowerCase('tr-TR').replace(/[^a-z0-9çğıöşü]/g, '');
+                const foundIdx = state.headers.findIndex(h => {
+                    const cleanH = String(h || '').toLocaleLowerCase('tr-TR').replace(/[^a-z0-9çğıöşü]/g, '');
+                    return cleanH.includes(searchKey) || searchKey.includes(cleanH);
+                });
+                if (foundIdx !== -1) matchedIdx = String(foundIdx);
+            }
+
+            const newId = 'param_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            state.customParams.push({
+                id: newId,
+                name: name,
+                colIndex: matchedIdx
+            });
+            state.mapping.customParams = state.customParams;
+            renderWizardMappingFields();
+            renderWizardPreviewTable();
+        }
+        window.addWizardCustomParamWithPreset = addWizardCustomParamWithPreset;
+
+        function removeWizardCustomParam(paramId) {
+            const state = window._examWizardState;
+            if (!state || !state.customParams) return;
+            state.customParams = state.customParams.filter(p => p.id !== paramId);
+            state.mapping.customParams = state.customParams;
+            renderWizardMappingFields();
+            renderWizardPreviewTable();
+        }
+        window.removeWizardCustomParam = removeWizardCustomParam;
+
+        function onWizardCustomParamChange(paramId, field, val) {
+            const state = window._examWizardState;
+            if (!state || !state.customParams) return;
+            const param = state.customParams.find(p => p.id === paramId);
+            if (param) {
+                param[field] = val;
+                state.mapping.customParams = state.customParams;
+                renderWizardPreviewTable();
+            }
+        }
+        window.onWizardCustomParamChange = onWizardCustomParamChange;
+
         function renderWizardMappingFields() {
             const state = window._examWizardState;
             if (!state) return;
@@ -726,23 +795,41 @@
                     </div>
                 </div>
 
-                <!-- 2. Genel Metrikler -->
+                <!-- 2. Genel Metrikler & Sıralamalar -->
                 <div style="background:var(--tab-bg); padding:10px; border-radius:8px; border:1px solid var(--border);">
                     <div style="font-size:12px; font-weight:800; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-chart-pie"></i> 2. Toplam Net &amp; Sıra
+                        <i class="fas fa-chart-pie"></i> 2. Toplam Net &amp; Sıralamalar
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:6px;">
+                    <div style="display:flex; flex-direction:column; gap:5px;">
                         <div>
-                            <label style="font-size:11px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:2px;">Toplam Net (Boşsa derslerden toplanır)</label>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:2px;">Toplam Net (Boşsa derslerden toplanır)</label>
                             ${buildSelectHtml('totalNet', mapping.totalNet)}
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:2px;">Sıra / Derece</label>
-                            ${buildSelectHtml('rank', mapping.rank)}
                         </div>
                         <div>
                             <label style="font-size:11px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:2px;">Puan (Opsiyonel)</label>
                             ${buildSelectHtml('puan', mapping.puan)}
+                        </div>
+                        <div style="border-top:1px dashed var(--border); padding-top:4px; margin-top:2px;">
+                            <label style="font-size:11px; font-weight:700; color:#2563eb; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                                <i class="fas fa-globe"></i> Genel Sıra / Derece
+                            </label>
+                            ${buildSelectHtml('rank', mapping.rank)}
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#059669; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                                <i class="fas fa-school"></i> Kurum / Okul Sırası
+                            </label>
+                            ${buildSelectHtml('rankKurum', mapping.rankKurum)}
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#7c3aed; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                                <i class="fas fa-users"></i> Sınıf / Şube Sırası
+                            </label>
+                            ${buildSelectHtml('rankSinif', mapping.rankSinif)}
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:2px;">Yüzdelik Dilim (Opsiyonel)</label>
+                            ${buildSelectHtml('yuzdelik', mapping.yuzdelik)}
                         </div>
                     </div>
                 </div>
@@ -821,6 +908,73 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 6. İsteğe Bağlı Ek Parametreler / Özel Sütunlar -->
+                <div style="grid-column: 1 / -1; background:var(--tab-bg); padding:12px 14px; border-radius:8px; border:1.5px dashed var(--accent); margin-top:4px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="background:var(--accent); color:white; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">6</span>
+                            <span style="font-size:12.5px; font-weight:800; color:var(--text-main);">İsteğe Bağlı Ek Parametreler &amp; Özel Sütunlar</span>
+                            <span style="font-size:11px; color:var(--text-muted);">(Dosyadan seçmek istediğiniz diğer tüm sütunları buraya ekleyebilirsiniz)</span>
+                        </div>
+                        <button type="button" class="btn" onclick="addWizardCustomParam()" style="background:var(--accent); color:white; font-size:11.5px; font-weight:700; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; border:none; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="fas fa-plus-circle"></i> Yeni Parametre Ekle
+                        </button>
+                    </div>
+                    
+                    <div id="wizard-custom-params-list" style="display:flex; flex-direction:column; gap:8px;">
+                        ${(function () {
+                            const cParams = state.customParams || [];
+                            if (cParams.length === 0) {
+                                return `
+                                    <div style="padding:10px 14px; text-align:center; color:var(--text-muted); font-size:11.5px; border-radius:6px; background:rgba(0,0,0,0.02); border:1px solid var(--border);">
+                                        <i class="fas fa-info-circle me-1" style="color:var(--accent);"></i>
+                                        Henüz ek parametre eklenmedi. <strong>Kitapçık Türü, İl Sırası, İlçe Sırası, Doğru/Yanlış Toplamı</strong> gibi dosyada bulunan herhangi bir sütunu aktarmak için <strong>"Yeni Parametre Ekle"</strong> butonuna tıklayabilir veya aşağıdaki hızlı önerilerden seçebilirsiniz.
+                                    </div>
+                                `;
+                            }
+                            return cParams.map((p, pIdx) => {
+                                let colOptions = `<option value="">-- Dosyadaki Sütunu Seçin --</option>`;
+                                headers.forEach((h, hIdx) => {
+                                    const selected = String(p.colIndex) === String(hIdx) ? 'selected' : '';
+                                    colOptions += `<option value="${hIdx}" ${selected}>[${hIdx + 1}] ${escapeFn(h)}</option>`;
+                                });
+                                return `
+                                    <div style="display:flex; align-items:center; gap:10px; background:var(--card-bg); padding:8px 12px; border-radius:6px; border:1px solid var(--border); flex-wrap:wrap;">
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <span style="font-size:11px; font-weight:800; color:var(--accent); width:20px; text-align:center;">#${pIdx + 1}</span>
+                                        </div>
+                                        <div style="flex: 1 1 200px; display:flex; flex-direction:column; gap:2px;">
+                                            <label style="font-size:10.5px; font-weight:700; color:var(--text-main);">Parametre / Sütun Adı:</label>
+                                            <input type="text" value="${escapeFn(p.name)}" placeholder="Örn: Kitapçık Türü, İlçe Sırası, Toplam Doğru..." oninput="onWizardCustomParamChange('${p.id}', 'name', this.value)" style="padding:6px 9px; font-size:11.5px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);">
+                                        </div>
+                                        <div style="flex: 1.5 1 260px; display:flex; flex-direction:column; gap:2px;">
+                                            <label style="font-size:10.5px; font-weight:700; color:var(--text-main);">Dosyadaki Eşleşen Sütun:</label>
+                                            <select onchange="onWizardCustomParamChange('${p.id}', 'colIndex', this.value)" style="padding:6px 9px; font-size:11.5px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);">
+                                                ${colOptions}
+                                            </select>
+                                        </div>
+                                        <div style="display:flex; align-items:center; margin-top:16px;">
+                                            <button type="button" class="btn btn-sm" onclick="removeWizardCustomParam('${p.id}')" title="Bu parametreyi kaldır" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); padding:6px 11px; border-radius:6px; cursor:pointer;">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                        })()}
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                        <span style="font-size:11px; color:var(--text-muted); font-weight:700;">Hızlı Öneriler:</span>
+                        <button type="button" onclick="addWizardCustomParamWithPreset('Kitapçık')" style="cursor:pointer; font-size:10.5px; padding:3px 8px; background:var(--card-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-main);">+ Kitapçık</button>
+                        <button type="button" onclick="addWizardCustomParamWithPreset('İl Sırası')" style="cursor:pointer; font-size:10.5px; padding:3px 8px; background:var(--card-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-main);">+ İl Sırası</button>
+                        <button type="button" onclick="addWizardCustomParamWithPreset('İlçe Sırası')" style="cursor:pointer; font-size:10.5px; padding:3px 8px; background:var(--card-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-main);">+ İlçe Sırası</button>
+                        <button type="button" onclick="addWizardCustomParamWithPreset('Toplam Doğru')" style="cursor:pointer; font-size:10.5px; padding:3px 8px; background:var(--card-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-main);">+ Toplam Doğru</button>
+                        <button type="button" onclick="addWizardCustomParamWithPreset('Toplam Yanlış')" style="cursor:pointer; font-size:10.5px; padding:3px 8px; background:var(--card-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-main);">+ Toplam Yanlış</button>
+                        <button type="button" onclick="addWizardCustomParamWithPreset('Toplam Boş')" style="cursor:pointer; font-size:10.5px; padding:3px 8px; background:var(--card-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-main);">+ Toplam Boş</button>
+                    </div>
+                </div>
             `;
         }
 
@@ -828,6 +982,7 @@
             const state = window._examWizardState;
             if (!state) return null;
             if (!state.manualOverrides) state.manualOverrides = {};
+            state.mapping.customParams = state.customParams || [];
 
             const m = window.ExamDataParser.computeRowMetrics(row, state.mapping, state.formulaType);
             m.isManualMatched = false;
@@ -903,6 +1058,21 @@
                 const textOpacity = m.isIgnored ? '0.5' : (isSelected ? '1' : '0.45');
                 const displayName = m.isIgnored ? `<del style="color:var(--text-muted);">${escapeFn(m.name || 'İsimsiz')}</del>` : escapeFn(m.name || 'İsimsiz');
 
+                let rankPills = [];
+                if (m.rank && m.rank !== '-') rankPills.push(`<span style="background:rgba(59,130,246,0.12); color:#2563eb; font-weight:700; padding:1px 5px; border-radius:4px; font-size:10px;" title="Genel Sıra">G: ${escapeFn(m.rank)}</span>`);
+                if (m.rankKurum && m.rankKurum !== '-') rankPills.push(`<span style="background:rgba(16,185,129,0.12); color:#059669; font-weight:700; padding:1px 5px; border-radius:4px; font-size:10px;" title="Kurum / Okul Sırası">K: ${escapeFn(m.rankKurum)}</span>`);
+                if (m.rankSinif && m.rankSinif !== '-') rankPills.push(`<span style="background:rgba(139,92,246,0.12); color:#7c3aed; font-weight:700; padding:1px 5px; border-radius:4px; font-size:10px;" title="Sınıf / Şube Sırası">S: ${escapeFn(m.rankSinif)}</span>`);
+                if (m.puan) rankPills.push(`<span style="background:rgba(245,158,11,0.12); color:#d97706; font-weight:700; padding:1px 5px; border-radius:4px; font-size:10px;" title="Puan">${escapeFn(m.puan)} P</span>`);
+                if (m.yuzdelik) rankPills.push(`<span style="background:rgba(99,102,241,0.12); color:#4f46e5; font-weight:700; padding:1px 5px; border-radius:4px; font-size:10px;" title="Yüzdelik Dilim">%${escapeFn(m.yuzdelik)}</span>`);
+                if (m.extraParams) {
+                    Object.entries(m.extraParams).forEach(([k, v]) => {
+                        if (v !== undefined && v !== null && v !== '') {
+                            rankPills.push(`<span style="background:var(--tab-bg); border:1px solid var(--border); color:var(--text-muted); font-size:9.5px; padding:1px 4px; border-radius:4px;" title="${escapeFn(k)}: ${escapeFn(v)}">${escapeFn(k)}: <strong>${escapeFn(v)}</strong></span>`);
+                        }
+                    });
+                }
+                const rankDetailsHtml = rankPills.length > 0 ? `<div style="display:inline-flex; flex-wrap:wrap; gap:3px; justify-content:center; max-width:230px;">${rankPills.join('')}</div>` : '<span style="color:var(--text-muted);">-</span>';
+
                 rowsHtml += `
                     <tr style="border-bottom:1px solid var(--border); font-size:11.5px; background:${rowBg}; opacity:${textOpacity};" id="wizard-row-${idx}">
                         <td style="padding:6px 8px; text-align:center;">
@@ -920,7 +1090,7 @@
                         <td style="padding:6px 8px; text-align:center; font-weight:600; color:#8b5cf6;">${m.DinKulturu}</td>
                         <td style="padding:6px 8px; text-align:center; font-weight:600; color:#8b5cf6;">${m.Ingilizce}</td>
                         <td style="padding:6px 8px; text-align:center; font-weight:800; background:rgba(59,130,246,0.08); color:var(--primary);">${m.totalNet}</td>
-                        <td style="padding:6px 8px; text-align:center; color:var(--text-muted);">${escapeFn(m.rank)}</td>
+                        <td style="padding:6px 8px; text-align:center;">${rankDetailsHtml}</td>
                     </tr>
                 `;
             });
@@ -1512,11 +1682,34 @@
                     Fen: m.Fen,
                     DinKulturu: m.DinKulturu,
                     Ingilizce: m.Ingilizce,
+                    turkceD: m.turkceD,
+                    turkceY: m.turkceY,
+                    matD: m.matD,
+                    matY: m.matY,
+                    fenD: m.fenD,
+                    fenY: m.fenY,
+                    sosyalD: m.sosyalD,
+                    sosyalY: m.sosyalY,
+                    dinD: m.dinD,
+                    dinY: m.dinY,
+                    ingD: m.ingD,
+                    ingY: m.ingY,
                     totalNet: m.totalNet,
-                    rank: m.rank || "-"
+                    rank: m.rank || "-",
+                    rankKurum: m.rankKurum || "-",
+                    rankSinif: m.rankSinif || "-",
+                    puan: m.puan || "",
+                    yuzdelik: m.yuzdelik || "",
+                    extraParams: m.extraParams || {}
                 };
                 importedCount++;
             });
+
+            if (state.customParams && Array.isArray(state.customParams) && state.customParams.length > 0) {
+                targetExam.customParamDefs = state.customParams
+                    .filter(p => p.name && p.name.trim())
+                    .map(p => ({ id: p.id, name: p.name.trim() }));
+            }
 
             // Yeni sınav oluşturulduysa tespit edilen sınıfları ekle
             if (state.targetExamId === 'NEW') {
@@ -1565,7 +1758,8 @@
             if (field === 'title' && val) {
                 exam.title = val;
                 const titleDisp = document.getElementById('eval-title-display');
-                if (titleDisp) titleDisp.innerHTML = `<i class="fas fa-edit me-1" style="color:var(--teal);"></i> ${val} - Ortak Sınav Sonuç Tablosu`;
+                const safeVal = (typeof window.escapeHTML === 'function') ? window.escapeHTML(val) : val.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                if (titleDisp) titleDisp.innerHTML = `<i class="fas fa-edit me-1" style="color:var(--teal);"></i> ${safeVal} - Ortak Sınav Sonuç Tablosu`;
             } else if (field === 'date' && val) {
                 exam.date = val;
             }
@@ -1651,12 +1845,20 @@
                         ? `<i class="fas fa-sort-alpha-down ms-1" style="color:var(--secondary); font-size:12px;" title="A-Z Sıralı"></i>`
                         : `<i class="fas fa-sort-alpha-up-alt ms-1" style="color:var(--secondary); font-size:12px;" title="Z-A Sıralı"></i>`;
                 }
+                if (field === 'no') {
+                    return currentExamSort.direction === 'asc'
+                        ? `<i class="fas fa-sort-numeric-down ms-1" style="color:var(--secondary); font-size:12px;" title="Numaraya Göre Artan (1-9) Sıralı"></i>`
+                        : `<i class="fas fa-sort-numeric-up-alt ms-1" style="color:var(--secondary); font-size:12px;" title="Numaraya Göre Azalan (9-1) Sıralı"></i>`;
+                }
                 return currentExamSort.direction === 'asc'
                     ? `<i class="fas fa-sort-up ms-1" style="color:var(--secondary); font-size:12px;"></i>`
                     : `<i class="fas fa-sort-down ms-1" style="color:var(--secondary); font-size:12px;"></i>`;
             }
             if (field === 'ogrenci' || field === 'adSoyad') {
                 return `<i class="fas fa-sort-alpha-down ms-1" style="opacity:0.3; font-size:10px;" title="A-Z sıralamak için tıklayın"></i>`;
+            }
+            if (field === 'no') {
+                return `<i class="fas fa-sort-numeric-down ms-1" style="opacity:0.3; font-size:10px;" title="Numaraya göre sıralamak için tıklayın"></i>`;
             }
             return `<i class="fas fa-sort ms-1" style="opacity:0.3; font-size:10px;"></i>`;
         }
@@ -1666,8 +1868,8 @@
                 currentExamSort.direction = (currentExamSort.direction === 'asc' ? 'desc' : 'asc');
             } else {
                 currentExamSort.field = field;
-                // Ders netleri, toplam net ve derse özel netler için varsayılan yön 'desc' (büyükten küçüğe), isim ve sıra için 'asc'
-                currentExamSort.direction = (['Turkce', 'Matematik', 'Sosyal', 'Fen', 'DinKulturu', 'Ingilizce', 'totalNet', 'subjectNet'].includes(field) ? 'desc' : 'asc');
+                // Ders netleri, toplam net, puan ve derse özel netler için varsayılan yön 'desc' (büyükten küçüğe), no, isim ve sıralar için 'asc'
+                currentExamSort.direction = (['Turkce', 'Matematik', 'Sosyal', 'Fen', 'DinKulturu', 'Ingilizce', 'totalNet', 'subjectNet', 'puan'].includes(field) ? 'desc' : 'asc');
             }
             openExamEvaluation(activeExamId);
         }
@@ -1694,20 +1896,45 @@
             if (!exam || !exam.results) return;
             const sorted = Object.keys(exam.results).map(name => ({
                 name,
-                net: parseFloat(exam.results[name].totalNet) || 0
+                net: parseFloat(exam.results[name].totalNet) || 0,
+                sinif: String(exam.results[name].sinif || '').trim()
             })).sort((a, b) => b.net - a.net);
 
-            let currentRank = 1;
+            // Kurum Sıralaması (K): 1'den başlayarak nete göre otomatik atanır.
+            // Genel Sıralama (G): Varsa veritabanından/dosyadan alınır, otomatik hesaplanmaz veya ezilmez.
+            let currentKurumRank = 1;
             sorted.forEach((item, index) => {
                 if (index > 0 && item.net < sorted[index - 1].net) {
-                    currentRank = index + 1;
+                    currentKurumRank = index + 1;
                 }
-                exam.results[item.name].rank = currentRank;
+                exam.results[item.name].rankKurum = currentKurumRank;
+                // Genel sıra (rank) mevcutsa korunur, yoksa '-' kalır
+                if (exam.results[item.name].rank === undefined || exam.results[item.name].rank === null || exam.results[item.name].rank === '') {
+                    exam.results[item.name].rank = '-';
+                }
+            });
+
+            // Sınıf / Şube Sıralaması (S): Her sınıf kendi içinde gruplanarak 1'den başlayarak hesaplanır
+            const byClass = {};
+            sorted.forEach(item => {
+                const clsKey = item.sinif || 'Genel';
+                if (!byClass[clsKey]) byClass[clsKey] = [];
+                byClass[clsKey].push(item);
+            });
+            Object.keys(byClass).forEach(cls => {
+                let clsRank = 1;
+                const clsList = byClass[cls];
+                clsList.forEach((item, index) => {
+                    if (index > 0 && item.net < clsList[index - 1].net) {
+                        clsRank = index + 1;
+                    }
+                    exam.results[item.name].rankSinif = clsRank;
+                });
             });
 
             if (typeof saveData === 'function') saveData(true);
             if (typeof showGlobalToast === 'function') {
-                showGlobalToast('🏆 Tüm öğrencilerin sıraları (dereceleri) toplam netlerine göre otomatik hesaplandı.', 'success');
+                showGlobalToast('🏆 Kurum Sırası (K) ve Sınıf Sıraları (S) nete göre otomatik hesaplandı. Genel sıralama (G) korundu.', 'success');
             }
             openExamEvaluation(exam.id);
         }
@@ -2007,14 +2234,17 @@
                             <button class="btn btn-danger" id="btn-delete-selected-exam-students" onclick="deleteSelectedStudentsFromExam('${exam.id}')" style="background:#ef4444; color:#fff; font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px; opacity:0.65; cursor:pointer;" title="İşaretlenen öğrencileri bu sınavdan siler">
                                 <i class="fas fa-trash-alt"></i> Seçilenleri Sil (<span id="exam-selected-count">0</span>)
                             </button>
+                            <button class="btn" onclick="sortExamEvaluationTable('no')" style="background:rgba(59,130,246,0.12); color:#2563eb; border:1px solid rgba(59,130,246,0.3); font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Öğrencileri okul numarasına göre sıralar (1-9 / 9-1)">
+                                <i class="fas fa-sort-numeric-down"></i> Numaraya Göre Sırala
+                            </button>
                             <button class="btn" onclick="saveExamMeta('${exam.id}')" style="background:var(--teal); color:#fff; font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px;">
                                 <i class="fas fa-save"></i> Başlık &amp; Tarihi Kaydet
                             </button>
                             <button class="btn" onclick="openEditExamHeadersModal('${exam.id}')" style="background:rgba(99,102,241,0.12); color:#4f46e5; border:1px solid rgba(99,102,241,0.3); font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Ders sütun başlıklarını (TR, MAT, SOS vb.) değiştir">
                                 <i class="fas fa-columns"></i> Sütun Başlıklarını Düzenle
                             </button>
-                            <button class="btn" onclick="autoAssignExamRanks('${exam.id}')" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid rgba(16,185,129,0.3); font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Öğrenci sıralarını nete göre otomatik ata">
-                                <i class="fas fa-sort-numeric-down"></i> Sıraları Otomatik Hesapla
+                            <button class="btn" onclick="autoAssignExamRanks('${exam.id}')" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid rgba(16,185,129,0.3); font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Kurum (K) ve Sınıf (S) sıralarını nete göre 1'den başlayarak hesaplar. Varsa Genel sıra (G) veritabanından korunur.">
+                                <i class="fas fa-sort-numeric-down"></i> Sıraları Otomatik Hesapla (K / S)
                             </button>
                             <button class="btn" onclick="syncAllExamsToKocluk(false)" style="background:var(--secondary); color:#fff; font-size:11px; padding:7px 12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="8. Sınav Analiz verilerini LGS ve YKS Koçluk bölümlerine aktarır">
                                 <i class="fas fa-sync-alt"></i> Koçluk Verilerini Eşitle
@@ -2030,6 +2260,20 @@
                 </div>
             `;
 
+            // Sınavda Puan veya İsteğe Bağlı Ek Parametreler var mı?
+            const hasPuanCol = Object.values(exam.results || {}).some(r => r && r.puan !== undefined && r.puan !== '' && r.puan !== null);
+            const extraDefs = (exam.customParamDefs && Array.isArray(exam.customParamDefs) && exam.customParamDefs.length > 0)
+                ? exam.customParamDefs
+                : (function () {
+                    const found = new Set();
+                    Object.values(exam.results || {}).forEach(r => {
+                        if (r && r.extraParams && typeof r.extraParams === 'object') {
+                            Object.keys(r.extraParams).forEach(k => found.add(k));
+                        }
+                    });
+                    return Array.from(found).map(k => ({ id: k, name: k }));
+                })();
+
             // Tablo Başlıkları (Sıralanabilir ve Değiştirilebilir)
             if (isSingleSubject) {
                 const subLabel = activeSubConfig.label;
@@ -2037,17 +2281,29 @@
                     <th style="width:36px; text-align:center; padding:8px;">
                         <input type="checkbox" id="exam-select-all" onclick="toggleAllExamStudentCheckboxes(this)" title="Tümünü Seç / Seçimi Kaldır" style="cursor:pointer; transform:scale(1.15);">
                     </th>
+                    <th style="cursor:pointer; user-select:none; width:65px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('no')" title="Numaraya göre sıralamak için tıklayın (1-9 / 9-1)">
+                        NO ${getExamSortIcon('no')}
+                    </th>
                     <th style="cursor:pointer; user-select:none; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('ogrenci')" title="Yalnızca öğrenci isim ve soyismine göre alfabetik sıralar (A-Z / Z-A)">
                         ÖĞRENCİ (A-Z) ${getExamSortIcon('ogrenci')}
                     </th>
                     <th style="cursor:pointer; user-select:none; width:85px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('sinif')" title="Sınıfa göre sıralamak için tıklayın">
                         SINIF ${getExamSortIcon('sinif')}
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:130px; text-align:center; white-space:nowrap; padding:8px; background:rgba(0,0,0,0.04);" onclick="sortExamEvaluationTable('subjectNet')" title="Bu dersteki nete göre sıralamak için tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
-                            <i class="fas ${activeSubConfig.icon}" style="color:${activeSubConfig.color};"></i>
-                            <span style="color:${activeSubConfig.color}; font-weight:800;">${escapeFn(subLabel)} NETİ</span>
-                            ${getExamSortIcon('subjectNet')}
+                    <th style="cursor:pointer; user-select:none; width:180px; text-align:center; white-space:nowrap; padding:8px; background:rgba(0,0,0,0.04);" onclick="sortExamEvaluationTable('subjectNet')" title="Bu dersteki nete göre sıralamak için tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+                                <i class="fas ${activeSubConfig.icon}" style="color:${activeSubConfig.color};"></i>
+                                <span style="color:${activeSubConfig.color}; font-weight:800;">${escapeFn(subLabel)} (D - Y - NET)</span>
+                                ${getExamSortIcon('subjectNet')}
+                            </div>
+                            <div style="display:flex; gap:4px; font-size:9.5px; font-weight:700;">
+                                <span style="color:#10b981;">Doğru</span>
+                                <span style="color:var(--text-muted);">/</span>
+                                <span style="color:#ef4444;">Yanlış</span>
+                                <span style="color:var(--text-muted);">/</span>
+                                <span style="color:${activeSubConfig.color};">Net</span>
+                            </div>
                         </div>
                     </th>
                     <th style="cursor:pointer; user-select:none; width:110px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('subjectRank')" title="Ders başarı sırasına göre sıralamak için tıklayın">
@@ -2063,60 +2319,108 @@
                     <th style="width:36px; text-align:center; padding:8px;">
                         <input type="checkbox" id="exam-select-all" onclick="toggleAllExamStudentCheckboxes(this)" title="Tümünü Seç / Seçimi Kaldır" style="cursor:pointer; transform:scale(1.15);">
                     </th>
-                    <th style="cursor:pointer; user-select:none; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('ogrenci')" title="Yalnızca öğrenci isim ve soyismine göre alfabetik sıralar (A-Z / Z-A)">
+                    <th style="cursor:pointer; user-select:none; width:65px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('no')" title="Numaraya göre sıralamak için tıklayın (1-9 / 9-1)">
+                        NO ${getExamSortIcon('no')}
+                    </th>
+                    <th style="cursor:pointer; user-select:none; min-width:140px; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('ogrenci')" title="Yalnızca öğrenci isim ve soyismine göre alfabetik sıralar (A-Z / Z-A)">
                         ÖĞRENCİ (A-Z) ${getExamSortIcon('ogrenci')}
                     </th>
                     <th style="cursor:pointer; user-select:none; width:75px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('sinif')" title="Sınıfa göre sıralamak için tıklayın">
                         SINIF ${getExamSortIcon('sinif')}
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Turkce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                            <span>${escapeFn(colL.Turkce)}</span>
-                            <span onclick="event.stopPropagation(); editExamColumnHeader('Turkce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                            ${getExamSortIcon('Turkce')}
+                    <th style="cursor:pointer; user-select:none; min-width:88px; text-align:center; white-space:nowrap; padding:6px 4px;" onclick="sortExamEvaluationTable('Turkce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+                                <span style="font-weight:700; font-size:12px;">${escapeFn(colL.Turkce)}</span>
+                                <span onclick="event.stopPropagation(); editExamColumnHeader('Turkce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.6; padding:1px 2px; cursor:pointer;"><i class="fas fa-pen"></i></span>
+                                ${getExamSortIcon('Turkce')}
+                            </div>
+                            <div style="display:flex; gap:3px; font-size:9px; font-weight:700; line-height:1;">
+                                <span style="color:#10b981;">D</span><span style="color:var(--text-muted);">/</span><span style="color:#ef4444;">Y</span><span style="color:var(--text-muted);">/</span><span style="color:var(--text-main);">Net</span>
+                            </div>
                         </div>
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Matematik')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                            <span>${escapeFn(colL.Matematik)}</span>
-                            <span onclick="event.stopPropagation(); editExamColumnHeader('Matematik');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                            ${getExamSortIcon('Matematik')}
+                    <th style="cursor:pointer; user-select:none; min-width:88px; text-align:center; white-space:nowrap; padding:6px 4px;" onclick="sortExamEvaluationTable('Matematik')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+                                <span style="font-weight:700; font-size:12px;">${escapeFn(colL.Matematik)}</span>
+                                <span onclick="event.stopPropagation(); editExamColumnHeader('Matematik');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.6; padding:1px 2px; cursor:pointer;"><i class="fas fa-pen"></i></span>
+                                ${getExamSortIcon('Matematik')}
+                            </div>
+                            <div style="display:flex; gap:3px; font-size:9px; font-weight:700; line-height:1;">
+                                <span style="color:#10b981;">D</span><span style="color:var(--text-muted);">/</span><span style="color:#ef4444;">Y</span><span style="color:var(--text-muted);">/</span><span style="color:var(--text-main);">Net</span>
+                            </div>
                         </div>
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Sosyal')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                            <span>${escapeFn(colL.Sosyal)}</span>
-                            <span onclick="event.stopPropagation(); editExamColumnHeader('Sosyal');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                            ${getExamSortIcon('Sosyal')}
+                    <th style="cursor:pointer; user-select:none; min-width:88px; text-align:center; white-space:nowrap; padding:6px 4px;" onclick="sortExamEvaluationTable('Sosyal')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+                                <span style="font-weight:700; font-size:12px;">${escapeFn(colL.Sosyal)}</span>
+                                <span onclick="event.stopPropagation(); editExamColumnHeader('Sosyal');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.6; padding:1px 2px; cursor:pointer;"><i class="fas fa-pen"></i></span>
+                                ${getExamSortIcon('Sosyal')}
+                            </div>
+                            <div style="display:flex; gap:3px; font-size:9px; font-weight:700; line-height:1;">
+                                <span style="color:#10b981;">D</span><span style="color:var(--text-muted);">/</span><span style="color:#ef4444;">Y</span><span style="color:var(--text-muted);">/</span><span style="color:var(--text-main);">Net</span>
+                            </div>
                         </div>
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Fen')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                            <span>${escapeFn(colL.Fen)}</span>
-                            <span onclick="event.stopPropagation(); editExamColumnHeader('Fen');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                            ${getExamSortIcon('Fen')}
+                    <th style="cursor:pointer; user-select:none; min-width:88px; text-align:center; white-space:nowrap; padding:6px 4px;" onclick="sortExamEvaluationTable('Fen')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+                                <span style="font-weight:700; font-size:12px;">${escapeFn(colL.Fen)}</span>
+                                <span onclick="event.stopPropagation(); editExamColumnHeader('Fen');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.6; padding:1px 2px; cursor:pointer;"><i class="fas fa-pen"></i></span>
+                                ${getExamSortIcon('Fen')}
+                            </div>
+                            <div style="display:flex; gap:3px; font-size:9px; font-weight:700; line-height:1;">
+                                <span style="color:#10b981;">D</span><span style="color:var(--text-muted);">/</span><span style="color:#ef4444;">Y</span><span style="color:var(--text-muted);">/</span><span style="color:var(--text-main);">Net</span>
+                            </div>
                         </div>
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('DinKulturu')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                            <span>${escapeFn(colL.DinKulturu)}</span>
-                            <span onclick="event.stopPropagation(); editExamColumnHeader('DinKulturu');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                            ${getExamSortIcon('DinKulturu')}
+                    <th style="cursor:pointer; user-select:none; min-width:88px; text-align:center; white-space:nowrap; padding:6px 4px;" onclick="sortExamEvaluationTable('DinKulturu')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+                                <span style="font-weight:700; font-size:12px;">${escapeFn(colL.DinKulturu)}</span>
+                                <span onclick="event.stopPropagation(); editExamColumnHeader('DinKulturu');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.6; padding:1px 2px; cursor:pointer;"><i class="fas fa-pen"></i></span>
+                                ${getExamSortIcon('DinKulturu')}
+                            </div>
+                            <div style="display:flex; gap:3px; font-size:9px; font-weight:700; line-height:1;">
+                                <span style="color:#10b981;">D</span><span style="color:var(--text-muted);">/</span><span style="color:#ef4444;">Y</span><span style="color:var(--text-muted);">/</span><span style="color:var(--text-main);">Net</span>
+                            </div>
                         </div>
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:62px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('Ingilizce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
-                            <span>${escapeFn(colL.Ingilizce)}</span>
-                            <span onclick="event.stopPropagation(); editExamColumnHeader('Ingilizce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.55; padding:1px 2px;"><i class="fas fa-pen"></i></span>
-                            ${getExamSortIcon('Ingilizce')}
+                    <th style="cursor:pointer; user-select:none; min-width:88px; text-align:center; white-space:nowrap; padding:6px 4px;" onclick="sortExamEvaluationTable('Ingilizce')" title="Sıralamak için tıklayın, başlığı değiştirmek için kaleme tıklayın">
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:3px;">
+                                <span style="font-weight:700; font-size:12px;">${escapeFn(colL.Ingilizce)}</span>
+                                <span onclick="event.stopPropagation(); editExamColumnHeader('Ingilizce');" title="Başlığı Değiştir" style="font-size:9.5px; opacity:0.6; padding:1px 2px; cursor:pointer;"><i class="fas fa-pen"></i></span>
+                                ${getExamSortIcon('Ingilizce')}
+                            </div>
+                            <div style="display:flex; gap:3px; font-size:9px; font-weight:700; line-height:1;">
+                                <span style="color:#10b981;">D</span><span style="color:var(--text-muted);">/</span><span style="color:#ef4444;">Y</span><span style="color:var(--text-muted);">/</span><span style="color:var(--text-main);">Net</span>
+                            </div>
                         </div>
                     </th>
                     <th style="cursor:pointer; user-select:none; width:75px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('totalNet')" title="Toplam Nete göre sıralamak için tıklayın">
                         TOP.NET ${getExamSortIcon('totalNet')}
                     </th>
-                    <th style="cursor:pointer; user-select:none; width:55px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('rank')" title="Derece / Sıraya göre sıralamak için tıklayın">
-                        SIRA ${getExamSortIcon('rank')}
+                    <th style="user-select:none; min-width:130px; text-align:center; white-space:nowrap; padding:6px 4px;" title="Sıralamalar: Genel Sıra (G), Kurum Sırası (K), Sınıf Sırası (S) - Sıralamak için harflere tıklayın">
+                        <div style="font-weight:700; font-size:11px; margin-bottom:2px;">SIRALAMALAR</div>
+                        <div style="display:flex; justify-content:center; gap:4px; font-size:9.5px; font-weight:700;">
+                            <span onclick="sortExamEvaluationTable('rank')" style="cursor:pointer; padding:1px 5px; border-radius:3px; background:rgba(59,130,246,0.12); color:#2563eb;" title="Genel Sıraya Göre Sırala">G ${getExamSortIcon('rank')}</span>
+                            <span onclick="sortExamEvaluationTable('rankKurum')" style="cursor:pointer; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.12); color:#059669;" title="Kurum Sırasına Göre Sırala">K ${getExamSortIcon('rankKurum')}</span>
+                            <span onclick="sortExamEvaluationTable('rankSinif')" style="cursor:pointer; padding:1px 5px; border-radius:3px; background:rgba(139,92,246,0.12); color:#7c3aed;" title="Sınıf Sırasına Göre Sırala">S ${getExamSortIcon('rankSinif')}</span>
+                        </div>
                     </th>
+                    ${hasPuanCol ? `
+                        <th style="cursor:pointer; user-select:none; width:65px; text-align:center; white-space:nowrap; padding:8px;" onclick="sortExamEvaluationTable('puan')" title="Puana göre sıralamak için tıklayın">
+                            PUAN ${getExamSortIcon('puan')}
+                        </th>
+                    ` : ''}
+                    ${extraDefs.map(ed => `
+                        <th style="user-select:none; min-width:70px; text-align:center; white-space:nowrap; padding:6px 4px; font-size:11px; color:var(--text-muted); cursor:pointer;" onclick="sortExamEvaluationTable('extra:${escapeFn(ed.name)}')" title="${escapeFn(ed.name)} sütununa göre sırala">
+                            ${escapeFn(ed.name)} ${getExamSortIcon('extra:' + ed.name)}
+                        </th>
+                    `).join('')}
                     <th style="width:115px; text-align:center; padding:8px;">İŞLEM</th>
                 `;
             }
@@ -2131,7 +2435,7 @@
             }
             datalistEl.innerHTML = classOptionsHtml;
 
-            // ── SIRALAMA MOTORU (TÜRKÇE ALFABETİK A-Z / Z-A & DERSE ÖZEL SIRALAMA) ──
+            // ── SIRALAMA MOTORU (TÜRKÇE ALFABETİK A-Z / Z-A, NUMARA & DERSE ÖZEL SIRALAMA) ──
             const getSortVal = (s, fld) => {
                 const r = (exam.results && exam.results[s.adSoyad]) || {};
                 if (fld === 'ogrenci' || fld === 'adSoyad' || fld === 'name') {
@@ -2139,8 +2443,9 @@
                     return String(s.adSoyad || '').trim();
                 }
                 if (fld === 'no') {
-                    const noNum = parseInt(s.no) || 0;
-                    return noNum > 0 ? noNum : (s.no || '');
+                    const rawNo = String((s.no !== undefined && s.no !== '') ? s.no : (r.no || '')).trim();
+                    const noNum = parseInt(rawNo, 10);
+                    return (!isNaN(noNum) && noNum > 0) ? noNum : (rawNo || 999999);
                 }
                 if (fld === 'sinif') {
                     return String(s.sinif || r.sinif || '').toUpperCase();
@@ -2148,6 +2453,24 @@
                 if (fld === 'rank') {
                     const val = parseInt(r.rank);
                     return isNaN(val) ? 999999 : val;
+                }
+                if (fld === 'rankKurum') {
+                    const val = parseInt(r.rankKurum);
+                    return isNaN(val) ? 999999 : val;
+                }
+                if (fld === 'rankSinif') {
+                    const val = parseInt(r.rankSinif);
+                    return isNaN(val) ? 999999 : val;
+                }
+                if (fld === 'puan') {
+                    const val = parseFloat(r.puan);
+                    return isNaN(val) ? -9999 : val;
+                }
+                if (typeof fld === 'string' && fld.startsWith('extra:')) {
+                    const pKey = fld.substring(6);
+                    const rawVal = r.extraParams ? r.extraParams[pKey] : '';
+                    const num = parseFloat(rawVal);
+                    return !isNaN(num) ? num : String(rawVal || '');
                 }
                 if (fld === 'subjectRank') {
                     const val = parseInt(s._subjectRank);
@@ -2172,7 +2495,9 @@
                 const valA = getSortVal(a, currentExamSort.field);
                 const valB = getSortVal(b, currentExamSort.field);
                 let comp = 0;
-                if (typeof valA === 'string' || typeof valB === 'string') {
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    comp = valA - valB;
+                } else if (typeof valA === 'string' || typeof valB === 'string') {
                     comp = String(valA).localeCompare(String(valB), 'tr-TR', { numeric: true, sensitivity: 'base' });
                 } else {
                     comp = valA - valB;
@@ -2180,14 +2505,36 @@
                 return currentExamSort.direction === 'asc' ? comp : -comp;
             });
 
+            const examPenalty = (exam.title && (exam.title.includes('YKS') || exam.title.includes('TYT') || exam.title.includes('AYT'))) ? 4 : 3;
+            const resolveFn = (typeof window.resolveDybFromNet === 'function') ? window.resolveDybFromNet : function (netVal, maxQuestions = 20, p = 3) {
+                if (netVal === null || netVal === undefined || netVal === '' || isNaN(Number(netVal))) return { d: 0, y: 0, b: maxQuestions };
+                const net = Math.max(0, Math.round(Number(netVal) * 100) / 100);
+                if (net === 0) return { d: 0, y: 0, b: maxQuestions };
+                let best = null, minDiff = Infinity;
+                for (let y = 0; y <= maxQuestions; y++) {
+                    const d = Math.round(net + (y / p));
+                    if (d >= 0 && (d + y) <= maxQuestions) {
+                        const calcNet = Math.round((d - (y / p)) * 100) / 100;
+                        const diff = Math.abs(calcNet - net);
+                        if (diff < 0.02) { best = { d, y, b: Math.max(0, maxQuestions - d - y) }; break; }
+                        if (diff < minDiff) { minDiff = diff; best = { d, y, b: Math.max(0, maxQuestions - d - y) }; }
+                    }
+                }
+                if (!best) {
+                    const fallbackD = Math.min(maxQuestions, Math.max(0, Math.round(net)));
+                    best = { d: fallbackD, y: 0, b: Math.max(0, maxQuestions - fallbackD) };
+                }
+                return best;
+            };
+
             const body = document.getElementById('eval-body'); 
             body.innerHTML = '';
 
             allStudents.forEach(s => {
                 const res = exam.results[s.adSoyad] || { Turkce: '', Matematik: '', Sosyal: '', Fen: '', DinKulturu: '', Ingilizce: '', totalNet: '', rank: '' };
                 const safeName = escapeFn(s.adSoyad);
-                const safeNo = s.no ? escapeFn(s.no) : '';
-                const safeSinif = escapeFn(s.sinif || '-');
+                const safeNo = s.no ? escapeFn(s.no) : (res.no ? escapeFn(res.no) : '');
+                const safeSinif = escapeFn(s.sinif || res.sinif || '-');
                 const attrSafeName = (s.adSoyad || '').replace(/"/g, '&quot;');
                 const jsSafeName = (s.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 const safeTotalId = 'total-' + encodeURIComponent(s.adSoyad || '').replace(/%/g, '_');
@@ -2206,7 +2553,19 @@
 
                 if (isSingleSubject) {
                     // ── DERS BAZLI İZOLASYON MODU SATIRI ──
-                    const subVal = res[activeExamSubjectFilter] !== undefined ? res[activeExamSubjectFilter] : '';
+                    const activeSubMaxQ = (activeExamSubjectFilter === 'Sosyal' || activeExamSubjectFilter === 'DinKulturu' || activeExamSubjectFilter === 'Ingilizce') ? 10 : 20;
+                    const rawSubVal = res[activeExamSubjectFilter];
+                    const hasSubNet = (rawSubVal !== undefined && rawSubVal !== null && rawSubVal !== '' && !isNaN(parseFloat(rawSubVal)));
+                    const subVal = hasSubNet ? parseFloat(rawSubVal) : '';
+                    let subDVal = (res[activeExamSubjectFilter + '_d'] !== undefined && res[activeExamSubjectFilter + '_d'] !== null && res[activeExamSubjectFilter + '_d'] !== '') ? res[activeExamSubjectFilter + '_d'] : '';
+                    let subYVal = (res[activeExamSubjectFilter + '_y'] !== undefined && res[activeExamSubjectFilter + '_y'] !== null && res[activeExamSubjectFilter + '_y'] !== '') ? res[activeExamSubjectFilter + '_y'] : '';
+
+                    if ((subDVal === '' || subYVal === '') && hasSubNet) {
+                        const resolved = resolveFn(subVal, activeSubMaxQ, examPenalty);
+                        subDVal = resolved.d;
+                        subYVal = resolved.y;
+                    }
+
                     let subRankBadge = '<span style="color:var(--text-muted); font-size:11px;">-</span>';
                     if (s._subjectRank && s._subjectRank < 999999) {
                         if (s._subjectRank === 1) {
@@ -2224,22 +2583,56 @@
                         <td style="text-align:center; padding:6px 4px;">
                             <input type="checkbox" class="exam-student-checkbox" value="${attrSafeName}" onchange="updateExamSelectedCount()" style="cursor:pointer; transform:scale(1.15);">
                         </td>
-                        <td style="font-weight:600; font-size:13px; white-space:nowrap;">
-                            <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:48px; text-align:center; padding:3px 5px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; margin-right:6px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
+                        <td style="text-align:center; padding:4px;">
+                            <input type="text" class="exam-input exam-no-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:52px; text-align:center; padding:4px 2px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
+                        </td>
+                        <td style="font-weight:600; font-size:13px; white-space:nowrap; padding:6px 8px;">
                             ${safeName}${koclukBadge}
                         </td>
                         <td style="text-align:center; padding:4px;">
                             <input type="text" class="exam-input exam-sinif-input" data-name="${attrSafeName}" data-field="sinif" value="${safeSinif}" list="exam-class-options" style="width:58px; text-align:center; padding:4px; font-weight:700; color:var(--secondary); border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınıfı düzenleyebilirsiniz">
                         </td>
-                        <td style="text-align:center; padding:4px; background:rgba(0,0,0,0.02);">
-                            <input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="${activeExamSubjectFilter}" value="${subVal}" style="width:72px; text-align:center; padding:5px 6px; border-radius:6px; border:1.5px solid ${activeSubConfig.color}; font-weight:800; font-size:13px; color:${activeSubConfig.color}; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Hücre içi hızlı net düzenleme">
+                        <td style="text-align:center; padding:6px 4px; background:rgba(0,0,0,0.02);">
+                            <div style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
+                                    <label style="font-size:9px; font-weight:700; color:#10b981;">D</label>
+                                    <input type="number" min="0" max="${activeSubMaxQ}" step="1" 
+                                           class="exam-input exam-dyb-d" 
+                                           data-name="${attrSafeName}" data-subj="${activeExamSubjectFilter}" data-metric="d" 
+                                           value="${subDVal}" placeholder="D" title="${escapeFn(activeSubConfig.label)} Doğru"
+                                           style="width:34px; text-align:center; padding:3px 2px; font-size:12px; font-weight:700; color:#10b981; border:1.5px solid rgba(16,185,129,0.4); border-radius:4px; background:rgba(16,185,129,0.06);"
+                                           onfocus="this.select()" onchange="updateExamDybCell(this)">
+                                </div>
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
+                                    <label style="font-size:9px; font-weight:700; color:#ef4444;">Y</label>
+                                    <input type="number" min="0" max="${activeSubMaxQ}" step="1" 
+                                           class="exam-input exam-dyb-y" 
+                                           data-name="${attrSafeName}" data-subj="${activeExamSubjectFilter}" data-metric="y" 
+                                           value="${subYVal}" placeholder="Y" title="${escapeFn(activeSubConfig.label)} Yanlış"
+                                           style="width:34px; text-align:center; padding:3px 2px; font-size:12px; font-weight:700; color:#ef4444; border:1.5px solid rgba(239,68,68,0.4); border-radius:4px; background:rgba(239,68,68,0.06);"
+                                           onfocus="this.select()" onchange="updateExamDybCell(this)">
+                                </div>
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
+                                    <label style="font-size:9px; font-weight:800; color:${activeSubConfig.color};">NET</label>
+                                    <input type="number" step="0.01" 
+                                           class="exam-input exam-subj-net" 
+                                           data-name="${attrSafeName}" data-field="${activeExamSubjectFilter}" data-subj="${activeExamSubjectFilter}"
+                                           value="${subVal}" placeholder="Net" title="${escapeFn(activeSubConfig.label)} Neti"
+                                           style="width:68px; text-align:center; padding:4px; border-radius:6px; border:2px solid ${activeSubConfig.color}; font-weight:800; font-size:13px; color:${activeSubConfig.color}; background:var(--card-bg);"
+                                           onfocus="this.select()" onchange="updateManualExamCell(this)">
+                                </div>
+                            </div>
                         </td>
                         <td style="text-align:center; padding:4px;">
                             ${subRankBadge}
                         </td>
                         <td style="text-align:center; padding:4px; font-size:12px;">
-                            <span style="font-weight:700; color:var(--primary);">${res.totalNet || '0'} Net</span>
-                            <span style="color:var(--text-muted); font-size:11px; margin-left:4px;">(${res.rank ? 'Genel Sıra: #' + res.rank : 'Sırasız'})</span>
+                            <div style="font-weight:700; color:var(--primary);">${res.totalNet || '0'} Net</div>
+                            <div style="display:flex; justify-content:center; gap:3px; font-size:9.5px; font-weight:700; margin-top:2px;">
+                                <span style="background:rgba(59,130,246,0.12); color:#2563eb; padding:1px 4px; border-radius:3px;" title="Genel Sıra">G:${res.rank || '-'}</span>
+                                <span style="background:rgba(16,185,129,0.12); color:#059669; padding:1px 4px; border-radius:3px;" title="Kurum Sırası">K:${res.rankKurum || '-'}</span>
+                                <span style="background:rgba(139,92,246,0.12); color:#7c3aed; padding:1px 4px; border-radius:3px;" title="Sınıf Sırası">S:${res.rankSinif || '-'}</span>
+                            </div>
                         </td>
                         <td style="text-align:center; white-space:nowrap; padding:4px;">
                             <button class="btn" style="padding:4px 7px; font-size:10px; background:var(--secondary); margin-right:3px;" onclick="renderProgressChart('${jsSafeName}')" title="Gelişim Grafiği"><i class="fas fa-chart-line"></i> Grafik</button>
@@ -2247,26 +2640,87 @@
                         </td>
                     `;
                 } else {
-                    // ── TÜM DERSLER GENEL TABLO SATIRI ──
+                    // ── TÜM DERSLER GENEL TABLO SATIRI (D-Y-NET GÖRÜNÜMÜ) ──
+                    const getSubjDybHtml = (subjKey, maxQ, colTitle) => {
+                        const rawVal = res[subjKey];
+                        const hasNet = (rawVal !== undefined && rawVal !== null && rawVal !== '' && !isNaN(parseFloat(rawVal)));
+                        const netVal = hasNet ? parseFloat(rawVal) : '';
+
+                        let dVal = (res[subjKey + '_d'] !== undefined && res[subjKey + '_d'] !== null && res[subjKey + '_d'] !== '') ? res[subjKey + '_d'] : '';
+                        let yVal = (res[subjKey + '_y'] !== undefined && res[subjKey + '_y'] !== null && res[subjKey + '_y'] !== '') ? res[subjKey + '_y'] : '';
+
+                        if ((dVal === '' || yVal === '') && hasNet) {
+                            const resolved = resolveFn(netVal, maxQ, examPenalty);
+                            dVal = resolved.d;
+                            yVal = resolved.y;
+                        }
+
+                        return `
+                            <td style="text-align:center; padding:3px 2px; vertical-align:middle;">
+                                <div style="display:inline-flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+                                        <input type="number" min="0" max="${maxQ}" step="1" 
+                                               class="exam-input exam-dyb-d" 
+                                               data-name="${attrSafeName}" data-subj="${subjKey}" data-metric="d" 
+                                               value="${dVal}" placeholder="D" title="${colTitle} Doğru (D)"
+                                               style="width:26px; text-align:center; padding:2px 0; font-size:11px; font-weight:700; color:#10b981; border:1px solid rgba(16,185,129,0.35); border-radius:3px; background:rgba(16,185,129,0.06);"
+                                               onfocus="this.select()" onchange="updateExamDybCell(this)">
+                                        <span style="color:var(--text-muted); font-size:9.5px; user-select:none;">/</span>
+                                        <input type="number" min="0" max="${maxQ}" step="1" 
+                                               class="exam-input exam-dyb-y" 
+                                               data-name="${attrSafeName}" data-subj="${subjKey}" data-metric="y" 
+                                               value="${yVal}" placeholder="Y" title="${colTitle} Yanlış (Y)"
+                                               style="width:26px; text-align:center; padding:2px 0; font-size:11px; font-weight:700; color:#ef4444; border:1px solid rgba(239,68,68,0.35); border-radius:3px; background:rgba(239,68,68,0.06);"
+                                               onfocus="this.select()" onchange="updateExamDybCell(this)">
+                                    </div>
+                                    <input type="number" step="0.01" 
+                                           class="exam-input exam-subj-net" 
+                                           data-name="${attrSafeName}" data-field="${subjKey}" data-subj="${subjKey}" 
+                                           value="${netVal}" placeholder="Net" title="${colTitle} Neti"
+                                           style="width:58px; text-align:center; padding:3px 2px; font-weight:800; font-size:12px; border-radius:4px; border:1px solid var(--border); background:var(--card-bg);"
+                                           onfocus="this.select()" onchange="updateManualExamCell(this)">
+                                </div>
+                            </td>
+                        `;
+                    };
+
                     tr.innerHTML = `
                         <td style="text-align:center; padding:6px 4px;">
                             <input type="checkbox" class="exam-student-checkbox" value="${attrSafeName}" onchange="updateExamSelectedCount()" style="cursor:pointer; transform:scale(1.15);">
                         </td>
-                        <td style="font-weight:600; font-size:13px; white-space:nowrap;">
-                            <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:48px; text-align:center; padding:3px 5px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; margin-right:6px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
+                        <td style="text-align:center; padding:4px;">
+                            <input type="text" class="exam-input exam-no-input" data-name="${attrSafeName}" data-field="no" value="${safeNo}" placeholder="No" style="width:52px; text-align:center; padding:4px 2px; font-weight:700; font-size:12px; border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Öğrenci Numarası (Değiştirilirse sınıf otomatik eşleşir)">
+                        </td>
+                        <td style="font-weight:600; font-size:13px; white-space:nowrap; padding:6px 8px;">
                             ${safeName}${koclukBadge}
                         </td>
                         <td style="text-align:center; padding:4px;">
                             <input type="text" class="exam-input exam-sinif-input" data-name="${attrSafeName}" data-field="sinif" value="${safeSinif}" list="exam-class-options" style="width:58px; text-align:center; padding:4px; font-weight:700; color:var(--secondary); border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınıfı düzenleyebilirsiniz">
                         </td>
-                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Turkce" value="${res.Turkce}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Matematik" value="${res.Matematik}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Sosyal" value="${res.Sosyal}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Fen" value="${res.Fen}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="DinKulturu" value="${res.DinKulturu || ''}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
-                        <td><input type="number" step="0.01" class="exam-input" data-name="${attrSafeName}" data-field="Ingilizce" value="${res.Ingilizce || ''}" style="width:44px; text-align:center; padding:4px; border-radius:4px; border:1px solid var(--border);" onfocus="this.select()" onchange="updateManualExamCell(this)"></td>
+                        ${getSubjDybHtml('Turkce', 20, escapeFn(colL.Turkce))}
+                        ${getSubjDybHtml('Matematik', 20, escapeFn(colL.Matematik))}
+                        ${getSubjDybHtml('Sosyal', 10, escapeFn(colL.Sosyal))}
+                        ${getSubjDybHtml('Fen', 20, escapeFn(colL.Fen))}
+                        ${getSubjDybHtml('DinKulturu', 10, escapeFn(colL.DinKulturu))}
+                        ${getSubjDybHtml('Ingilizce', 10, escapeFn(colL.Ingilizce))}
                         <td><input type="number" step="0.01" id="${safeTotalId}" class="exam-input" data-name="${attrSafeName}" data-field="totalNet" value="${res.totalNet}" style="width:58px; padding:4px; font-weight:800; color:var(--primary); text-align:center; border:1px solid var(--border); border-radius:4px; background:var(--tab-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Toplam Net (Değiştirebilirsiniz veya ders netlerinden otomatik hesaplanır)"></td>
-                        <td><input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rank" value="${res.rank}" style="width:42px; padding:4px; text-align:center; font-weight:700; border:1px solid var(--border); border-radius:4px;" onfocus="this.select()" onchange="updateManualExamCell(this)" title="Sınav Sırası (Değiştirebilirsiniz)"></td>
+                        <td style="padding:3px 2px; text-align:center; vertical-align:middle;">
+                            <div style="display:inline-flex; align-items:center; justify-content:center; gap:2px;">
+                                <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rank" value="${res.rank || ''}" placeholder="G" title="Genel Sıra" style="width:36px; padding:3px 1px; text-align:center; font-weight:700; font-size:11px; border:1px solid rgba(59,130,246,0.35); border-radius:3px; background:rgba(59,130,246,0.06); color:#2563eb;" onfocus="this.select()" onchange="updateManualExamCell(this)">
+                                <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rankKurum" value="${res.rankKurum || ''}" placeholder="K" title="Kurum / Okul Sırası" style="width:36px; padding:3px 1px; text-align:center; font-weight:700; font-size:11px; border:1px solid rgba(16,185,129,0.35); border-radius:3px; background:rgba(16,185,129,0.06); color:#059669;" onfocus="this.select()" onchange="updateManualExamCell(this)">
+                                <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="rankSinif" value="${res.rankSinif || ''}" placeholder="S" title="Sınıf / Şube Sırası" style="width:36px; padding:3px 1px; text-align:center; font-weight:700; font-size:11px; border:1px solid rgba(139,92,246,0.35); border-radius:3px; background:rgba(139,92,246,0.06); color:#7c3aed;" onfocus="this.select()" onchange="updateManualExamCell(this)">
+                            </div>
+                        </td>
+                        ${hasPuanCol ? `
+                            <td style="text-align:center; padding:3px 2px;">
+                                <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="puan" value="${res.puan || ''}" placeholder="Puan" style="width:58px; padding:3px 2px; text-align:center; font-weight:700; font-size:11px; border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)">
+                            </td>
+                        ` : ''}
+                        ${extraDefs.map(ed => `
+                            <td style="text-align:center; padding:3px 2px;">
+                                <input type="text" class="exam-input" data-name="${attrSafeName}" data-field="extraParam" data-param-name="${escapeFn(ed.name)}" value="${escapeFn(res.extraParams ? (res.extraParams[ed.name] || '') : '')}" placeholder="${escapeFn(ed.name)}" style="width:65px; padding:3px 2px; text-align:center; font-size:11px; border:1px solid var(--border); border-radius:4px; background:var(--card-bg);" onfocus="this.select()" onchange="updateManualExamCell(this)">
+                            </td>
+                        `).join('')}
                         <td style="text-align:center; white-space:nowrap; padding:4px;">
                             <button class="btn" style="padding:4px 7px; font-size:10px; background:var(--secondary); margin-right:3px;" onclick="renderProgressChart('${jsSafeName}')" title="Gelişim Grafiği"><i class="fas fa-chart-line"></i> Grafik</button>
                             <button class="btn" style="padding:4px 7px; font-size:10px; background:#ef4444; color:#fff; border-radius:4px;" onclick="deleteStudentFromExam('${exam.id}', '${jsSafeName}')" title="Bu öğrenciyi sınavdan sil"><i class="fas fa-trash-alt"></i></button>
@@ -2334,7 +2788,8 @@
             openExamEvaluation(examId);
 
             if (typeof showGlobalToast === 'function') {
-                showGlobalToast(`<i class="fas fa-check-circle"></i> "${studentName}" sınavdan silindi.`, 'success');
+                const safeName = (typeof window.escapeHTML === 'function') ? window.escapeHTML(studentName) : String(studentName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                showGlobalToast(`<i class="fas fa-check-circle"></i> "${safeName}" sınavdan silindi.`, 'success');
             }
         }
         window.deleteStudentFromExam = deleteStudentFromExam;
@@ -2410,12 +2865,66 @@
                     if (sinifInput) sinifInput.value = masterSt.sinif;
                     if (!exam.classes.includes(masterSt.sinif)) exam.classes.push(masterSt.sinif);
                 }
-            } else if (field === 'rank') {
-                exam.results[name].rank = input.value.trim();
+            } else if (field === 'rank' || field === 'rankKurum' || field === 'rankSinif' || field === 'puan' || field === 'yuzdelik') {
+                exam.results[name][field] = input.value.trim();
+            } else if (field === 'extraParam') {
+                const paramName = input.getAttribute('data-param-name');
+                if (paramName) {
+                    if (!exam.results[name].extraParams) exam.results[name].extraParams = {};
+                    exam.results[name].extraParams[paramName] = input.value.trim();
+                }
             } else if (field === 'totalNet') {
                 exam.results[name].totalNet = parseFloat(input.value) || 0;
             } else {
-                exam.results[name][field] = parseFloat(input.value) || 0;
+                const rawVal = input.value.trim();
+                const row = input.closest('tr');
+                const penalty = (exam.title && (exam.title.includes('YKS') || exam.title.includes('TYT') || exam.title.includes('AYT'))) ? 4 : 3;
+                const maxQ = (field === 'Sosyal' || field === 'DinKulturu' || field === 'Ingilizce') ? 10 : 20;
+
+                if (rawVal === '') {
+                    exam.results[name][field] = '';
+                    exam.results[name][field + '_d'] = '';
+                    exam.results[name][field + '_y'] = '';
+                    if (row) {
+                        const dIn = row.querySelector(`.exam-dyb-d[data-subj="${field}"]`);
+                        const yIn = row.querySelector(`.exam-dyb-y[data-subj="${field}"]`);
+                        if (dIn) dIn.value = '';
+                        if (yIn) yIn.value = '';
+                    }
+                } else {
+                    const netNum = parseFloat(rawVal) || 0;
+                    exam.results[name][field] = netNum;
+                    const resolveFn = (typeof window.resolveDybFromNet === 'function') ? window.resolveDybFromNet : function (netVal, maxQuestions = 20, p = 3) {
+                        if (netVal === null || netVal === undefined || netVal === '' || isNaN(Number(netVal))) return { d: 0, y: 0, b: maxQuestions };
+                        const net = Math.max(0, Math.round(Number(netVal) * 100) / 100);
+                        if (net === 0) return { d: 0, y: 0, b: maxQuestions };
+                        let best = null, minDiff = Infinity;
+                        for (let y = 0; y <= maxQuestions; y++) {
+                            const d = Math.round(net + (y / p));
+                            if (d >= 0 && (d + y) <= maxQuestions) {
+                                const calcNet = Math.round((d - (y / p)) * 100) / 100;
+                                const diff = Math.abs(calcNet - net);
+                                if (diff < 0.02) { best = { d, y, b: Math.max(0, maxQuestions - d - y) }; break; }
+                                if (diff < minDiff) { minDiff = diff; best = { d, y, b: Math.max(0, maxQuestions - d - y) }; }
+                            }
+                        }
+                        if (!best) {
+                            const fallbackD = Math.min(maxQuestions, Math.max(0, Math.round(net)));
+                            best = { d: fallbackD, y: 0, b: Math.max(0, maxQuestions - fallbackD) };
+                        }
+                        return best;
+                    };
+                    const dyb = resolveFn(netNum, maxQ, penalty);
+                    exam.results[name][field + '_d'] = dyb.d;
+                    exam.results[name][field + '_y'] = dyb.y;
+                    if (row) {
+                        const dIn = row.querySelector(`.exam-dyb-d[data-subj="${field}"]`);
+                        const yIn = row.querySelector(`.exam-dyb-y[data-subj="${field}"]`);
+                        if (dIn) dIn.value = dyb.d;
+                        if (yIn) yIn.value = dyb.y;
+                    }
+                }
+
                 // Ders netleri değiştiğinde Toplam Neti otomatik topla
                 exam.results[name].totalNet = parseFloat((
                     (parseFloat(exam.results[name].Turkce) || 0) + 
@@ -2427,7 +2936,7 @@
                 ).toFixed(2));
                 
                 const safeTotalId = 'total-' + encodeURIComponent(name || '').replace(/%/g, '_');
-                const targetF = document.getElementById(safeTotalId) || document.getElementById(`total-${name.replace(/\s+/g, '')}`); 
+                const targetF = document.getElementById(safeTotalId) || (row ? row.querySelector(`[data-field="totalNet"]`) : null); 
                 if (targetF) targetF.value = exam.results[name].totalNet;
             }
             
@@ -2436,6 +2945,76 @@
             
             saveData();
         }
+
+        function updateExamDybCell(input) {
+            const name = input.getAttribute('data-name'); 
+            const subj = input.getAttribute('data-subj'); 
+            const metric = input.getAttribute('data-metric'); // 'd' or 'y'
+            const exam = (examData || []).find(e => String(e.id) === String(activeExamId));
+            if (!exam || !name || !subj) return;
+
+            if (!exam.results[name]) { 
+                exam.results[name] = { no: "", sinif: "", Turkce: 0, Matematik: 0, Sosyal: 0, Fen: 0, DinKulturu: 0, Ingilizce: 0, totalNet: 0, rank: "-" }; 
+                const s = (window.studentData || []).find(st => st.adSoyad === name); 
+                if (s) { exam.results[name].no = s.no; exam.results[name].sinif = s.sinif; } 
+            }
+
+            const res = exam.results[name];
+            const penalty = (exam.title && (exam.title.includes('YKS') || exam.title.includes('TYT') || exam.title.includes('AYT'))) ? 4 : 3;
+            const maxQ = (subj === 'Sosyal' || subj === 'DinKulturu' || subj === 'Ingilizce') ? 10 : 20;
+
+            const row = input.closest('tr');
+            const dIn = row ? row.querySelector(`.exam-dyb-d[data-subj="${subj}"]`) : null;
+            const yIn = row ? row.querySelector(`.exam-dyb-y[data-subj="${subj}"]`) : null;
+            const netIn = row ? row.querySelector(`.exam-subj-net[data-subj="${subj}"]`) : null;
+
+            if ((!dIn || dIn.value.trim() === '') && (!yIn || yIn.value.trim() === '')) {
+                res[subj] = '';
+                res[subj + '_d'] = '';
+                res[subj + '_y'] = '';
+                if (netIn) netIn.value = '';
+            } else {
+                let dVal = dIn && dIn.value.trim() !== '' ? parseInt(dIn.value, 10) : 0;
+                let yVal = yIn && yIn.value.trim() !== '' ? parseInt(yIn.value, 10) : 0;
+
+                if (isNaN(dVal) || dVal < 0) dVal = 0;
+                if (isNaN(yVal) || yVal < 0) yVal = 0;
+
+                if (dVal > maxQ) dVal = maxQ;
+                if (dVal + yVal > maxQ) {
+                    if (metric === 'd') yVal = Math.max(0, maxQ - dVal);
+                    else dVal = Math.max(0, maxQ - yVal);
+                }
+
+                if (dIn && dIn.value.trim() !== '') dIn.value = dVal;
+                if (yIn && yIn.value.trim() !== '') yIn.value = yVal;
+
+                const calcNet = Math.max(0, parseFloat((dVal - (yVal / penalty)).toFixed(2)));
+                res[subj] = calcNet;
+                res[subj + '_d'] = dVal;
+                res[subj + '_y'] = yVal;
+
+                if (netIn) netIn.value = calcNet;
+            }
+
+            // Toplam Neti güncelle
+            res.totalNet = parseFloat((
+                (parseFloat(res.Turkce) || 0) + 
+                (parseFloat(res.Matematik) || 0) + 
+                (parseFloat(res.Sosyal) || 0) + 
+                (parseFloat(res.Fen) || 0) + 
+                (parseFloat(res.DinKulturu) || 0) + 
+                (parseFloat(res.Ingilizce) || 0)
+            ).toFixed(2));
+
+            const safeTotalId = 'total-' + encodeURIComponent(name || '').replace(/%/g, '_');
+            const targetF = document.getElementById(safeTotalId) || (row ? row.querySelector(`[data-field="totalNet"]`) : null); 
+            if (targetF) targetF.value = res.totalNet;
+
+            syncSingleStudentExamToKocluk(exam, name, res);
+            saveData();
+        }
+        window.updateExamDybCell = updateExamDybCell;
 
         // ── İLERİ ÇALIŞMA GRUPLARI SİSTEMİ (Tab 8) ──
 
@@ -2908,8 +3487,190 @@
             });
             const classWrap = document.getElementById('chart-class-filter-wrap');
             if (classWrap) classWrap.style.display = (mode === 'class') ? 'block' : 'none';
+            const metricSelectWrap = document.getElementById('chart-metric-select')?.parentElement;
+            if (metricSelectWrap) {
+                metricSelectWrap.style.display = (mode === 'radar') ? 'none' : 'block';
+            }
             updateChartMetric();
         }
+
+        // Güvenli ve esnek ders neti çözümleyici (Farklı isimlendirmeler, D-Y hesaplamaları ve koçluk senkronizasyonunu destekler)
+        function getSubjectNetFromExamResult(res, subjKey, exam, studentName) {
+            if (!res && exam && studentName && exam.results) {
+                res = exam.results[studentName];
+            }
+            if (!res) return 0;
+
+            const toNum = (v) => {
+                if (v === null || v === undefined || v === '') return null;
+                const n = parseFloat(String(v).replace(',', '.'));
+                return isNaN(n) ? null : n;
+            };
+
+            const penalty = (exam && exam.title && (exam.title.includes('YKS') || exam.title.includes('TYT') || exam.title.includes('AYT'))) ? 4 : 3;
+
+            // Yardımcı: Adaylar arasından öncelikle > 0 olan gerçek değeri bulur; yoksa geçerli ilk değeri tutar
+            const findFirstPositiveOrValid = (...candidates) => {
+                let firstVal = null;
+                for (const c of candidates) {
+                    const n = toNum(c);
+                    if (n !== null) {
+                        if (n > 0) return n;
+                        if (firstVal === null) firstVal = n;
+                    }
+                }
+                return firstVal;
+            };
+
+            // Yardımcı: Sonuç nesnesinde ilgili anahtar kelimeleri içeren serbest sütunları tarar
+            const scanKeysForValue = (keywords) => {
+                let bestVal = null;
+                for (const [k, v] of Object.entries(res)) {
+                    if (['totalNet', 'rank', 'rankKurum', 'rankSinif', 'no', 'sinif', 'extraParams'].includes(k)) continue;
+                    const lk = k.toLocaleLowerCase('tr-TR').replace(/\./g, '').trim();
+                    const lkAscii = k.toLowerCase().replace(/ı/g, 'i').replace(/\./g, '').trim();
+                    const matches = keywords.some(kw => lk.includes(kw) || lkAscii.includes(kw));
+                    if (matches) {
+                        const n = toNum(v);
+                        if (n !== null) {
+                            if (n > 0) return n;
+                            if (bestVal === null) bestVal = n;
+                        }
+                    }
+                }
+                return bestVal;
+            };
+
+            // 1. Sınavda özel tanımlı sütun başlığı varsa kontrol et
+            if (exam && exam.columnLabels && exam.columnLabels[subjKey]) {
+                const customCol = exam.columnLabels[subjKey];
+                const customVal = toNum(res[customCol]);
+                if (customVal !== null && customVal > 0) return customVal;
+            }
+
+            let direct = null;
+            let d = null, y = 0;
+
+            if (subjKey === 'Turkce') {
+                direct = findFirstPositiveOrValid(res.Turkce, res.turkce, res.tr, res.Tr, res['Türkçe'], res.turkceNet, res.turkce_net);
+                if (direct === null || direct === 0) {
+                    const scanned = scanKeysForValue(['turk', 'turkce', 'tr']);
+                    if (scanned !== null && scanned > 0) direct = scanned;
+                }
+                d = findFirstPositiveOrValid(res.Turkce_d, res.TurkceD, res.turkceD, res.turkce_d, res.trD, res.tr_d);
+                y = findFirstPositiveOrValid(res.Turkce_y, res.TurkceY, res.turkceY, res.turkce_y, res.trY, res.tr_y) || 0;
+            } else if (subjKey === 'Matematik') {
+                direct = findFirstPositiveOrValid(res.Matematik, res.matematik, res.mat, res.Mat, res['Matematik'], res.matNet, res.mat_net);
+                if (direct === null || direct === 0) {
+                    const scanned = scanKeysForValue(['mat', 'matematik']);
+                    if (scanned !== null && scanned > 0) direct = scanned;
+                }
+                d = findFirstPositiveOrValid(res.Matematik_d, res.MatematikD, res.matD, res.mat_d);
+                y = findFirstPositiveOrValid(res.Matematik_y, res.MatematikY, res.matY, res.mat_y) || 0;
+            } else if (subjKey === 'Fen') {
+                direct = findFirstPositiveOrValid(res.Fen, res.fen, res['Fen Bilimleri'], res['Fen'], res.fenNet, res.fen_net);
+                if (direct === null || direct === 0) {
+                    const scanned = scanKeysForValue(['fen']);
+                    if (scanned !== null && scanned > 0) direct = scanned;
+                }
+                d = findFirstPositiveOrValid(res.Fen_d, res.FenD, res.fenD, res.fen_d);
+                y = findFirstPositiveOrValid(res.Fen_y, res.FenY, res.fenY, res.fen_y) || 0;
+            } else if (subjKey === 'Sosyal') {
+                direct = findFirstPositiveOrValid(
+                    res.Sosyal, res.sosyal, res.inkilap, res.Inkilap, res.ink, res.Ink, res.sos, res.Sos, res.tarih, res.Tarih,
+                    res['Sosyal Bilgiler'], res['İnkılap Tarihi'], res['İnkılap'], res['T.C. İnkılap Tarihi ve Atatürkçülük'],
+                    res['T.C. İnkılap'], res['İNKILAP'], res['SOSYAL'], res['İNK'], res['SOS'],
+                    res.sosyalNet, res.sosyal_net, res.inkNet, res.ink_net
+                );
+                if (direct === null || direct === 0) {
+                    const scanned = scanKeysForValue(['ink', 'sos', 'tarih', 'tc']);
+                    if (scanned !== null && scanned > 0) direct = scanned;
+                }
+                d = findFirstPositiveOrValid(res.Sosyal_d, res.SosyalD, res.sosyalD, res.sosyal_d, res.inkilapD, res.inkD, res.sosD);
+                y = findFirstPositiveOrValid(res.Sosyal_y, res.SosyalY, res.sosyalY, res.sosyal_y, res.inkilapY, res.inkY, res.sosY) || 0;
+            } else if (subjKey === 'DinKulturu') {
+                direct = findFirstPositiveOrValid(
+                    res.DinKulturu, res.dinKulturu, res.din, res.Din, res.din_kulturu, res.Din_Kulturu, res.dkab, res.DKAB,
+                    res['Din Kültürü'], res['Din Kültürü ve Ahlak Bilgisi'], res['Din'], res['DİN'], res['DİN KÜLTÜRÜ'],
+                    res.dinK, res.dinNet, res.din_net
+                );
+                if (direct === null || direct === 0) {
+                    const scanned = scanKeysForValue(['din', 'dkab', 'ahlak']);
+                    if (scanned !== null && scanned > 0) direct = scanned;
+                }
+                d = findFirstPositiveOrValid(res.DinKulturu_d, res.DinKulturuD, res.dinD, res.din_d, res.dkabD, res.dkab_d);
+                y = findFirstPositiveOrValid(res.DinKulturu_y, res.DinKulturuY, res.dinY, res.din_y, res.dkabY, res.dkab_y) || 0;
+            } else if (subjKey === 'Ingilizce') {
+                direct = findFirstPositiveOrValid(
+                    res.Ingilizce, res.ingilizce, res.ing, res.Ing, res['İngilizce'], res['İNGİLİZCE'], res['INGILIZCE'],
+                    res['İNG'], res['ING'], res['Yabancı Dil'], res['YABANCI DİL'], res['Y.DİL'], res['YDİL'],
+                    res.dil, res.Dil, res.yabanciDil, res.eng, res.English, res.ingNet, res.ing_net
+                );
+                if (direct === null || direct === 0) {
+                    const scanned = scanKeysForValue(['ing', 'dil', 'eng', 'ydil']);
+                    if (scanned !== null && scanned > 0) direct = scanned;
+                }
+                d = findFirstPositiveOrValid(res.Ingilizce_d, res.IngilizceD, res.ingD, res.ing_d, res.ingilizceD, res.dilD);
+                y = findFirstPositiveOrValid(res.Ingilizce_y, res.IngilizceY, res.ingY, res.ing_y, res.ingilizceY, res.dilY) || 0;
+            }
+
+            // Doğrudan pozitif net bulunmuşsa öncelikli olarak döndür
+            if (direct !== null && direct > 0) return direct;
+
+            // Doğru ve Yanlış değerleri üzerinden net hesaplama
+            if (d !== null && d > 0) {
+                return Math.max(0, +(d - (y / penalty)).toFixed(2));
+            }
+
+            // 2. Ek parametreler kontrolü
+            if (res.extraParams && typeof res.extraParams === 'object') {
+                for (const [k, v] of Object.entries(res.extraParams)) {
+                    const lk = k.toLocaleLowerCase('tr-TR').replace(/\./g, '').trim();
+                    const lkAscii = k.toLowerCase().replace(/ı/g, 'i').replace(/\./g, '').trim();
+                    const num = toNum(v);
+                    if (num !== null && num > 0) {
+                        if (subjKey === 'Sosyal' && (lk.includes('sos') || lk.includes('ink') || lk.includes('tarih') || lk.includes('tc') || lkAscii.includes('ink'))) return num;
+                        if (subjKey === 'DinKulturu' && (lk.includes('din') || lk.includes('dkab') || lkAscii.includes('din') || lkAscii.includes('dkab') || lk.includes('ahlak'))) return num;
+                        if (subjKey === 'Ingilizce' && (lk.includes('ing') || lk.includes('dil') || lk.includes('eng') || lkAscii.includes('ing') || lkAscii.includes('eng') || lk.includes('ydil'))) return num;
+                    }
+                }
+            }
+
+            // 3. Koçluk modülü senkronizasyon kontrolü (LGS ve YKS koçluk kayıtları)
+            const allKocluk = [...(Array.isArray(window.koclukData) ? window.koclukData : []), ...(Array.isArray(window.yksKoclukData) ? window.yksKoclukData : [])];
+            if (allKocluk.length > 0) {
+                const sName = studentName || res.adSoyad || res.name;
+                const koc = allKocluk.find(k => (sName && k.adSoyad === sName) || (res.no && String(k.studentNo) === String(res.no)));
+                if (koc && Array.isArray(koc.denemeler)) {
+                    const dObj = koc.denemeler.find(dm => (exam && String(dm.examId) === String(exam.id)) || (exam && dm.ad === exam.title));
+                    if (dObj) {
+                        if (subjKey === 'Sosyal') {
+                            const val = toNum(dObj.inkilap ?? dObj.sosyal ?? dObj.inkNet ?? dObj.sosNet);
+                            if (val !== null && val > 0) return val;
+                        } else if (subjKey === 'DinKulturu') {
+                            const val = toNum(dObj.din ?? dObj.dinNet ?? dObj.dkab);
+                            if (val !== null && val > 0) return val;
+                        } else if (subjKey === 'Ingilizce') {
+                            const val = toNum(dObj.ingilizce ?? dObj.ingNet ?? dObj.ing ?? dObj.dil);
+                            if (val !== null && val > 0) return val;
+                        } else if (subjKey === 'Turkce') {
+                            const val = toNum(dObj.turkce ?? dObj.turkceNet);
+                            if (val !== null && val > 0) return val;
+                        } else if (subjKey === 'Matematik') {
+                            const val = toNum(dObj.matematik ?? dObj.matNet);
+                            if (val !== null && val > 0) return val;
+                        } else if (subjKey === 'Fen') {
+                            const val = toNum(dObj.fen ?? dObj.fenNet);
+                            if (val !== null && val > 0) return val;
+                        }
+                    }
+                }
+            }
+
+            if (direct !== null) return direct;
+            return 0;
+        }
+        window.getSubjectNetFromExamResult = getSubjectNetFromExamResult;
 
         function renderProgressChart(studentName) {
             activeChartStudentName = studentName;
@@ -3008,14 +3769,18 @@
                 const fields = ['Turkce', 'Matematik', 'Sosyal', 'Fen', 'DinKulturu', 'Ingilizce'];
                 datasets = fields.map((f, i) => ({
                     label: metricLabels[f] || f,
-                    data: sortedExams.map(e => e.results[studentName] ? (parseFloat(e.results[studentName][f]) || 0) : null),
+                    data: sortedExams.map(e => e.results[studentName] ? getSubjectNetFromExamResult(e.results[studentName], f, e, studentName) : null),
                     borderColor: colors[i], backgroundColor: colors[i] + '22',
                     tension: 0.4, fill: false, pointRadius: 5, pointHoverRadius: 8
                 }));
             } else {
                 datasets = [{
                     label: metricLabels[metric] || metric,
-                    data: sortedExams.map(e => e.results[studentName] ? (parseFloat(e.results[studentName][metric]) || 0) : null),
+                    data: sortedExams.map(e => {
+                        if (!e.results[studentName]) return null;
+                        if (metric === 'totalNet') return parseFloat(e.results[studentName].totalNet) || 0;
+                        return getSubjectNetFromExamResult(e.results[studentName], metric, e, studentName);
+                    }),
                     borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)',
                     tension: 0.4, fill: true, pointRadius: 6, pointHoverRadius: 10,
                     pointBackgroundColor: '#3b82f6', borderWidth: 3
@@ -3070,7 +3835,7 @@
                 const studentLabels = filteredStudents.filter(s => lastExam.results[s.adSoyad]).map(s => s.adSoyad.split(' ')[0]);
                 const datasets = fields.map((f, i) => ({
                     label: metricLabels[f],
-                    data: filteredStudents.filter(s => lastExam.results[s.adSoyad]).map(s => parseFloat(lastExam.results[s.adSoyad][f]) || 0),
+                    data: filteredStudents.filter(s => lastExam.results[s.adSoyad]).map(s => getSubjectNetFromExamResult(lastExam.results[s.adSoyad], f, lastExam, s.adSoyad)),
                     backgroundColor: colors6[i] + 'bb', borderColor: colors6[i], borderWidth: 1
                 }));
                 if (studentLabels.length === 0) { renderEmptyChart('Seçili sınav için öğrenci verisi yok.'); return; }
@@ -3081,7 +3846,8 @@
             }
 
             filteredStudents.filter(s => lastExam.results[s.adSoyad]).forEach((s, i) => {
-                const val = parseFloat(lastExam.results[s.adSoyad][metric]) || 0;
+                const r = lastExam.results[s.adSoyad];
+                const val = (metric === 'totalNet') ? (parseFloat(r.totalNet) || 0) : getSubjectNetFromExamResult(r, metric, lastExam, s.adSoyad);
                 labels.push(s.adSoyad.split(' ')[0]);
                 data.push(val);
                 bgColors.push(colors6[i % colors6.length] + 'cc');
@@ -3107,7 +3873,27 @@
             const nameEl = document.getElementById('chart-student-name');
             if (nameEl) nameEl.textContent = studentName + ' — Ders Profil Analizi (Radar)';
 
-            const sortedExams = [...examData].filter(e => e.results && e.results[studentName])
+            // Öğrenci sonucunu esnek şekilde bul (adSoyad veya no eşleşmesi)
+            const findStudentResult = (exam) => {
+                if (!exam || !exam.results) return null;
+                if (exam.results[studentName]) return exam.results[studentName];
+                const cleanTarget = String(studentName).trim().toLocaleLowerCase('tr-TR');
+                const matchedKey = Object.keys(exam.results).find(k => {
+                    return String(k).trim().toLocaleLowerCase('tr-TR') === cleanTarget;
+                });
+                if (matchedKey) return exam.results[matchedKey];
+                const sObj = (window.studentData || []).find(st => st.adSoyad === studentName);
+                if (sObj && sObj.no) {
+                    const byNoKey = Object.keys(exam.results).find(k => {
+                        const r = exam.results[k];
+                        return r && String(r.no).trim() === String(sObj.no).trim();
+                    });
+                    if (byNoKey) return exam.results[byNoKey];
+                }
+                return null;
+            };
+
+            const sortedExams = [...examData].filter(e => findStudentResult(e) !== null)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
 
             if (sortedExams.length === 0) { renderEmptyChart('Radar için sınav verisi bulunamadı.'); return; }
@@ -3116,13 +3902,18 @@
             const fLabels = ['Türkçe', 'Matematik', 'Sosyal', 'Fen', 'Din Kültürü', 'İngilizce'];
             const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
-            const datasets = sortedExams.slice(-4).map((e, i) => ({
-                label: e.title,
-                data: fields.map(f => parseFloat(e.results[studentName][f]) || 0),
-                borderColor: colors[i % colors.length],
-                backgroundColor: colors[i % colors.length] + '22',
-                pointBackgroundColor: colors[i % colors.length], borderWidth: 2, pointRadius: 4
-            }));
+            const datasets = sortedExams.slice(-4).map((e, i) => {
+                const sRes = findStudentResult(e);
+                return {
+                    label: e.title,
+                    data: fields.map(f => getSubjectNetFromExamResult(sRes, f, e, studentName)),
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: colors[i % colors.length] + '22',
+                    pointBackgroundColor: colors[i % colors.length],
+                    borderWidth: 2,
+                    pointRadius: 4
+                };
+            });
 
             const statsEl = document.getElementById('chart-stats');
             if (statsEl) statsEl.innerHTML = `<span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;">Son ${datasets.length} sınav karşılaştırılıyor</span>`;
@@ -3148,7 +3939,7 @@
                         legend: { labels: { color: textColor, font: { size: 11 }, boxWidth: 12 } },
                         tooltip: {
                             mode: 'index', intersect: false, callbacks: {
-                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed.r}`
+                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== undefined ? ctx.parsed.y : (ctx.parsed.r !== undefined ? ctx.parsed.r : ctx.raw)}`
                             }
                         }
                     },
@@ -3156,7 +3947,13 @@
                         x: { ticks: { color: textColor, maxRotation: 35, font: { size: 10 } }, grid: { color: gridColor } },
                         y: { beginAtZero: true, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
                     } : {
-                        r: { ticks: { color: textColor, backdropColor: 'transparent', font: { size: 9 } }, grid: { color: gridColor }, pointLabels: { color: textColor, font: { size: 11 } } }
+                        r: {
+                            beginAtZero: true,
+                            min: 0,
+                            ticks: { color: textColor, backdropColor: 'transparent', font: { size: 9 }, stepSize: 2 },
+                            grid: { color: gridColor },
+                            pointLabels: { color: textColor, font: { size: 11, weight: 'bold' } }
+                        }
                     }
                 }
             });

@@ -1125,6 +1125,411 @@
             .rubric-grid {
                 grid-template-columns: 1fr !important;
             }
+
+            /* LGS Koçluk Detay Modalı Mobil Uyumluluk */
+            #yks-kocluk-detail-modal {
+                padding: 6px !important;
+            }
+            #yks-kocluk-detail-modal > div {
+                max-height: 96vh !important;
+                border-radius: 10px !important;
+            }
+            .yks-detail-modal-header {
+                padding: 10px 14px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+            .yks-detail-modal-header-actions {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                gap: 6px !important;
+                flex-wrap: wrap !important;
+            }
+            .yks-detail-subtabs-nav {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                gap: 6px !important;
+                padding: 8px 10px !important;
+                background: var(--tab-bg) !important;
+            }
+            .yks-detail-subtabs-nav::-webkit-scrollbar {
+                display: none !important;
+            }
+            .yks-sub-tab-btn {
+                flex: 0 0 auto !important;
+                min-width: auto !important;
+                padding: 8px 13px !important;
+                font-size: 11.5px !important;
+                border: 1px solid var(--border) !important;
+                background: var(--card-bg) !important;
+                white-space: nowrap !important;
+                text-align: center !important;
+                line-height: 1.25 !important;
+                box-sizing: border-box !important;
+            }
+            .yks-sub-tab-btn.active {
+                background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+                color: #ffffff !important;
+                border-color: #0284c7 !important;
+                box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3) !important;
+            }
+            .yks-quick-switcher {
+                width: 100% !important;
+                justify-content: space-between !important;
+                margin: 4px 0 !important;
+            }
+            .yks-quick-switcher select {
+                flex: 1 !important;
+                max-width: 100% !important;
+            }
+            #kocluk-detail-modal {
+                padding: 6px !important;
+            }
+            #kocluk-detail-modal > div {
+                max-height: 96vh !important;
+                border-radius: 10px !important;
+            }
+            .koc-detail-modal-header {
+                padding: 10px 14px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+            .koc-detail-modal-header-actions {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                gap: 6px !important;
+                flex-wrap: wrap !important;
+            }
+            .koc-detail-subtabs-nav {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                gap: 6px !important;
+                padding: 8px 10px !important;
+                background: var(--tab-bg) !important;
+            }
+            .koc-detail-subtabs-nav::-webkit-scrollbar {
+                display: none !important;
+            }
+            .koc-subtab-btn {
+                flex: 0 0 auto !important;
+                min-width: auto !important;
+                padding: 8px 13px !important;
+                font-size: 11.5px !important;
+                border: 1px solid var(--border) !important;
+                background: var(--card-bg) !important;
+                white-space: nowrap !important;
+                text-align: center !important;
+                line-height: 1.25 !important;
+                box-sizing: border-box !important;
+            }
+            .koc-subtab-btn.active {
+                background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+                color: #ffffff !important;
+                border-color: #4f46e5 !important;
+                box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3) !important;
+            }
+            .koc-quick-switcher {
+                width: 100% !important;
+                justify-content: space-between !important;
+                margin: 4px 0 !important;
+            }
+            .koc-quick-switcher select {
+                flex: 1 !important;
+                max-width: 100% !important;
+            }
+            .koc-detail-body {
+                padding: 12px 10px !important;
+            }
+        }
+
+        /* ── LGS KOÇLUK KOKPİTİ ALT SEKME STİLLERİ ── */
+        .koc-detail-subtabs-nav {
+            display: flex;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--tab-bg);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+        }
+
+        .koc-detail-subtabs-nav::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .koc-detail-subtabs-nav::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 4px;
+        }
+
+        .koc-subtab-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid transparent !important;
+            border-radius: 8px !important;
+            padding: 9px 15px !important;
+            font-size: 12.5px !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            background: transparent !important;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .koc-subtab-btn:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: var(--primary) !important;
+        }
+
+        .koc-subtab-btn.active {
+            background: var(--card-bg) !important;
+            color: #4f46e5 !important;
+            border-color: rgba(99, 102, 241, 0.35) !important;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.18) !important;
+        }
+
+        [data-theme='dark'] .koc-subtab-btn.active {
+            color: #818cf8 !important;
+            background: rgba(30, 41, 59, 0.95) !important;
+            border-color: rgba(129, 140, 248, 0.4) !important;
+        }
+
+        #btn-tab-koc-ai {
+            color: #8b5cf6 !important;
+        }
+        #btn-tab-koc-ai.active {
+            color: #7c3aed !important;
+            border-color: rgba(139, 92, 246, 0.4) !important;
+        }
+        [data-theme='dark'] #btn-tab-koc-ai.active {
+            color: #a78bfa !important;
+        }
+
+        /* ── LGS KOÇLUK SEGMENTED CONTROLS & MOBİL DERS KARTLARI ── */
+        /* ── YKS KOÇLUK SEGMENTED CONTROLS & MOBİL ── */
+        .yks-subsegment-nav {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: var(--tab-bg);
+            padding: 5px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .yks-subsegment-nav::-webkit-scrollbar {
+            display: none;
+        }
+        .yks-segment-btn {
+            flex: 1 1 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        .yks-segment-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+        }
+        .yks-segment-btn.active {
+            background: var(--card-bg);
+            color: #0284c7;
+            border-color: var(--border);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .koc-subsegment-nav {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: var(--tab-bg);
+            padding: 5px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .koc-subsegment-nav::-webkit-scrollbar {
+            display: none;
+        }
+        .koc-segment-btn {
+            flex: 1 1 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        .koc-segment-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+        }
+        .koc-segment-btn.active {
+            background: var(--card-bg);
+            color: var(--primary);
+            border-color: var(--border);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        /* D-Y-B Deneme Matrisi Masaüstü / Mobil Responsive Düzen */
+        .koc-exam-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .koc-exam-matrix-table th {
+            padding: 8px 10px;
+            background: var(--tab-bg);
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 767px) {
+            .koc-exam-matrix-table {
+                display: block !important;
+                width: 100% !important;
+                border: none !important;
+                background: transparent !important;
+            }
+            .koc-exam-matrix-table thead {
+                display: none !important;
+            }
+            .koc-exam-matrix-table tbody {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 10px !important;
+                width: 100% !important;
+            }
+            .koc-matrix-row {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr 1fr !important;
+                grid-template-areas: 
+                    "title title title"
+                    "d y b"
+                    "net net net" !important;
+                gap: 8px !important;
+                width: 100% !important;
+                background: var(--card-bg) !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 10px !important;
+                padding: 12px !important;
+                box-sizing: border-box !important;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            }
+            .koc-matrix-summary-row {
+                background: rgba(99,102,241,0.06) !important;
+                border: 1.5px solid #6366f1 !important;
+            }
+            .koc-matrix-total-row {
+                background: rgba(16,185,129,0.08) !important;
+                border: 2px solid #10b981 !important;
+            }
+            .koc-td-title {
+                grid-area: title !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding: 0 0 6px 0 !important;
+                border-bottom: 1px dashed var(--border) !important;
+                font-size: 13px !important;
+                font-weight: 800 !important;
+            }
+            .koc-td-d, .koc-td-y, .koc-td-b {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                background: var(--input-bg) !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 8px !important;
+                padding: 6px 4px !important;
+            }
+            .koc-td-d { grid-area: d !important; }
+            .koc-td-y { grid-area: y !important; }
+            .koc-td-b { grid-area: b !important; }
+            .koc-td-d::before {
+                content: "DOĞRU (D)";
+                font-size: 9.5px;
+                font-weight: 800;
+                color: #10b981;
+                margin-bottom: 4px;
+            }
+            .koc-td-y::before {
+                content: "YANLIŞ (Y)";
+                font-size: 9.5px;
+                font-weight: 800;
+                color: #ef4444;
+                margin-bottom: 4px;
+            }
+            .koc-td-b::before {
+                content: "BOŞ (B)";
+                font-size: 9.5px;
+                font-weight: 800;
+                color: var(--text-muted);
+                margin-bottom: 4px;
+            }
+            .koc-td-net {
+                grid-area: net !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                background: rgba(99,102,241,0.06) !important;
+                border: 1px solid rgba(99,102,241,0.2) !important;
+                border-radius: 8px !important;
+                padding: 8px 12px !important;
+                margin-top: 4px !important;
+            }
+            .koc-td-net::before {
+                content: "Otomatik Net:";
+                font-size: 11.5px;
+                font-weight: 800;
+                color: var(--text-main);
+            }
+            .koc-matrix-row input {
+                width: 100% !important;
+                max-width: 85px !important;
+                height: 38px !important;
+                font-size: 16px !important;
+                text-align: center !important;
+                border-radius: 6px !important;
+            }
         }
 
         /* ── PROJE GRUPLARI CSS ── */
@@ -3604,7 +4009,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                                                 <th style="padding:7px 8px; text-align:center; color:#8b5cf6;">İNG</th>
                                                 <th style="padding:7px 8px; text-align:center; font-weight:800;">TOP.NET
                                                 </th>
-                                                <th style="padding:7px 8px; text-align:center;">Sıra</th>
+                                                <th style="padding:7px 8px; text-align:center;">Sıralama &amp; Parametreler</th>
                                             </tr>
                                         </thead>
                                         <tbody id="wizard-preview-tbody"></tbody>
@@ -4495,7 +4900,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
 
         <div id="evaluation-modal"
             style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; backdrop-filter:blur(5px); padding:20px; box-sizing:border-box; overflow-y:auto;">
-            <div class="container" style="max-width:1120px; margin: 20px auto; position:relative;">
+            <div class="container" style="max-width:1360px; width:96%; margin: 20px auto; position:relative;">
                 <button class="action-btn btn-delete" onclick="closeEvaluation()"
                     style="position:absolute; top:20px; right:20px; font-size:20px;"><i
                         class="fas fa-times"></i></button>
@@ -6332,30 +6737,110 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:960px; width:100%; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.35); overflow:hidden; animation:fadeIn 0.25s ease;">
 
             <!-- Modal Üst Başlık -->
-            <div
-                style="padding:16px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg);">
-                <div>
-                    <h3 id="koc-detail-title" style="margin:0 0 4px 0; font-size:16px; color:var(--text-main);">Öğrenci
-                        Adı</h3>
-                    <div id="koc-detail-badge" style="font-size:12px; color:var(--text-muted); font-weight:600;">8/A •
-                        Hedef: Fen Lisesi</div>
+            <div class="koc-detail-modal-header"
+                style="padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg); gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div>
+                        <h3 id="koc-detail-title" style="margin:0 0 2px 0; font-size:16px; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-user-astronaut" style="color:var(--secondary);"></i> <span>Öğrenci Adı</span>
+                        </h3>
+                        <div id="koc-detail-badge" style="font-size:11.5px; color:var(--text-muted); font-weight:600;">8/A • Hedef: Fen Lisesi</div>
+                    </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <button id="btn-quick-sync-modal" class="btn btn-warning btn-sm"
+
+                <!-- Hızlı Öğrenci Değiştirici Konsolu -->
+                <div id="koc-quick-switcher-container" class="koc-quick-switcher" style="display:flex; align-items:center; gap:6px; background:var(--card-bg); padding:4px 8px; border-radius:8px; border:1px solid var(--border);">
+                    <button id="btn-koc-prev-student" type="button" class="btn btn-sm btn-clear" onclick="navigateKoclukStudent(-1)" title="Önceki Öğrenci (Alt + Sol Ok)" style="padding:5px 9px; font-size:12px; font-weight:700; border-radius:6px; color:var(--text-main); border:1px solid var(--border); background:var(--input-bg); cursor:pointer;">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div style="position:relative; display:inline-flex; align-items:center;">
+                        <i class="fas fa-user" style="position:absolute; left:9px; font-size:11px; color:var(--secondary); pointer-events:none;"></i>
+                        <select id="koc-quick-student-select" onchange="openKoclukDetailModal(this.value, window.activeDetailSubTab)" style="padding:5px 10px 5px 26px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main); max-width:240px; cursor:pointer;" title="Hızlı Öğrenci Seç">
+                            <!-- JS ile doldurulur -->
+                        </select>
+                    </div>
+                    <button id="btn-koc-next-student" type="button" class="btn btn-sm btn-clear" onclick="navigateKoclukStudent(1)" title="Sonraki Öğrenci (Alt + Sağ Ok)" style="padding:5px 9px; font-size:12px; font-weight:700; border-radius:6px; color:var(--text-main); border:1px solid var(--border); background:var(--input-bg); cursor:pointer;">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Eylem Butonları & Dropdown Menüler -->
+                <div class="koc-detail-modal-header-actions" style="display:flex; align-items:center; gap:6px;">
+                    <button id="btn-quick-sync-modal" type="button" class="btn btn-warning btn-sm"
                         onclick="openQuickWeeklySyncModal()"
-                        style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;"
+                        style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 11px; font-size:12px; cursor:pointer;"
                         title="60 Saniyelik Hızlı Haftalık Veri Giriş Sihirbazı">
                         <i class="fas fa-bolt"></i> ⚡ Hızlı Giriş
                     </button>
-                    <button id="btn-open-print-center" class="btn btn-outline-primary btn-sm"
-                        onclick="openKoclukPrintCenter()"
-                        style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:6px; padding:6px 14px; font-size:12px; cursor:pointer;"
-                        title="Hibrit Akıllı Form ve Rapor Yazdırma Merkezi">
-                        <i class="fas fa-print"></i> 🖨️ Akıllı Form Merkezi
+
+                    <!-- Akıllı Form Merkezi Dropdown -->
+                    <div class="koc-dropdown-container" style="position:relative; display:inline-block;">
+                        <button id="btn-koc-forms-dropdown" type="button" class="btn btn-outline-primary btn-sm"
+                            onclick="toggleKoclukFormsMenu(event)"
+                            style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;"
+                            title="Akıllı A4 Form Yazdırma Menüsü">
+                            <i class="fas fa-print"></i> 🖨️ Formlar <i class="fas fa-caret-down" style="font-size:10px;"></i>
+                        </button>
+                        <div id="koc-forms-dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:100050; min-width:270px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); padding:6px 0; font-size:12px;">
+                            <div style="padding:6px 12px; font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border);">
+                                <i class="fas fa-file-invoice me-1"></i> A4 Ön-Dolgulu Hibrit Formlar
+                            </div>
+                            <a href="javascript:void(0)" onclick="printSmartForm(window.activeKoclukId, 1); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:8px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="background:rgba(99,102,241,0.12); color:#4f46e5; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">FORM-1</span>
+                                <span>Haftalık Çalışma Formu (Ön-dolgulu A4)</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="printSmartForm(window.activeKoclukId, 2); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:8px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="background:rgba(16,185,129,0.12); color:#10b981; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">FORM-2</span>
+                                <span>Deneme Triyaj &amp; TDE Formu</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="printSmartForm(window.activeKoclukId, 3); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:8px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="background:rgba(245,158,11,0.12); color:#d97706; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">FORM-3</span>
+                                <span>Kes-Yapıştır Soru Ameliyathanesi</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="printSmartForm(window.activeKoclukId, 4); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:8px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="background:rgba(139,92,246,0.12); color:#8b5cf6; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">FORM-4</span>
+                                <span>Resmi Veli Mutabakatı &amp; Raporu</span>
+                            </a>
+                            <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                            <a href="javascript:void(0)" onclick="openKoclukPrintCenter(window.activeKoclukId); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:7px 12px; color:var(--primary); text-decoration:none; font-weight:700;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <i class="fas fa-cog"></i> <span>Tüm Formlar &amp; Önizleme Merkezi...</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Veli Bülteni Dropdown -->
+                    <div class="koc-dropdown-container" style="position:relative; display:inline-block;">
+                        <button id="btn-koc-parent-dropdown" type="button" class="btn btn-outline-success btn-sm"
+                            onclick="toggleKoclukParentMenu(event)"
+                            style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;"
+                            title="Veli WhatsApp Bülteni Gönder">
+                            <i class="fab fa-whatsapp" style="color:#10b981;"></i> 📱 Veli Bülteni <i class="fas fa-caret-down" style="font-size:10px;"></i>
+                        </button>
+                        <div id="koc-parent-dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:100050; min-width:250px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); padding:6px 0; font-size:12px;">
+                            <div style="padding:6px 12px; font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border);">
+                                <i class="fab fa-whatsapp text-success me-1"></i> WhatsApp Web Şablonları
+                            </div>
+                            <a href="javascript:void(0)" onclick="sendParentWhatsAppMessage(window.activeKoclukId, 'standart'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="color:#10b981; font-size:14px;"><i class="fas fa-check-circle"></i></span>
+                                <div>
+                                    <div style="font-weight:700;">🟢 Standart Veli Bülteni</div>
+                                    <div style="font-size:10.5px; color:var(--text-muted);">Haftalık genel durum ve net özeti</div>
+                                </div>
+                            </a>
+                            <a href="javascript:void(0)" onclick="sendParentWhatsAppMessage(window.activeKoclukId, 'krizsiz'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="color:#ef4444; font-size:14px;"><i class="fas fa-shield-alt"></i></span>
+                                <div>
+                                    <div style="font-weight:700; color:#ef4444;">🛡️ Krizsiz Plato Modu</div>
+                                    <div style="font-size:10.5px; color:var(--text-muted);">Net konuşmama &amp; süre taktiği rehberi</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <button class="action-btn" type="button" onclick="closeModal('kocluk-detail-modal')"
+                        style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted); padding:4px 6px;" title="Kapat">
+                        <i class="fas fa-times"></i>
                     </button>
-                    <button class="action-btn" onclick="closeModal('kocluk-detail-modal')"
-                        style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i
-                            class="fas fa-times"></i></button>
                 </div>
             </div>
 
@@ -6365,36 +6850,30 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- Alt Sekme Navigasyonu -->
-            <div
-                style="display:flex; border-bottom:1px solid var(--border); background:var(--card-bg); overflow-x:auto;">
+            <div id="koc-detail-subtabs-nav" class="koc-detail-subtabs-nav">
                 <button id="btn-tab-koc-profil" class="tab-btn koc-subtab-btn active"
-                    onclick="switchDetailSubTab('tab-koc-profil')"
-                    style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    onclick="switchDetailSubTab('tab-koc-profil')">
                     <i class="fas fa-sliders-h me-1"></i> 1. Profil &amp; Hedefler
                 </button>
                 <button id="btn-tab-koc-hata" class="tab-btn koc-subtab-btn"
-                    onclick="switchDetailSubTab('tab-koc-hata')"
-                    style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    onclick="switchDetailSubTab('tab-koc-hata')">
                     <i class="fas fa-book-open me-1"></i> 2. Metabilişsel Hata Defteri
                 </button>
                 <button id="btn-tab-koc-deneme" class="tab-btn koc-subtab-btn"
-                    onclick="switchDetailSubTab('tab-koc-deneme')"
-                    style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    onclick="switchDetailSubTab('tab-koc-deneme')">
                     <i class="fas fa-chart-line me-1"></i> 3. Denemeler &amp; Plato Analizi
                 </button>
                 <button id="btn-tab-koc-gorusme" class="tab-btn koc-subtab-btn"
-                    onclick="switchDetailSubTab('tab-koc-gorusme')"
-                    style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700;">
+                    onclick="switchDetailSubTab('tab-koc-gorusme')">
                     <i class="fas fa-comments me-1"></i> 4. Mentorluk Günlüğü
                 </button>
-                <button id="btn-tab-koc-ai" class="tab-btn koc-subtab-btn" onclick="switchDetailSubTab('tab-koc-ai')"
-                    style="border:none; border-radius:0; border-bottom:3px solid transparent; padding:12px 18px; font-size:12.5px; font-weight:700; color:#8b5cf6;">
+                <button id="btn-tab-koc-ai" class="tab-btn koc-subtab-btn" onclick="switchDetailSubTab('tab-koc-ai')">
                     <i class="fas fa-brain me-1"></i> 5. AI Rapor &amp; Veli Bülteni
                 </button>
             </div>
 
             <!-- Modal Gövde İçerikleri -->
-            <div style="flex:1; overflow-y:auto; padding:20px;">
+            <div class="koc-detail-body" style="flex:1; overflow-y:auto; padding:20px;">
                 <div id="tab-koc-profil" class="koc-subtab-content">
                     <div id="koc-subtab-profil-body"></div>
                 </div>
@@ -6568,7 +7047,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <!-- MODAL: 60 Saniyelik Hızlı Veri Giriş Sihirbazı              -->
     <!-- ============================================================ -->
     <div id="kocluk-quick-sync-modal" class="modal"
-        style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
+        style="display:none; position:fixed; z-index:100050; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
         <div
             style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:820px; width:100%; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.35); overflow:hidden;">
             <!-- Modal Header -->
@@ -7580,30 +8059,118 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <div id="yks-kocluk-detail-modal" class="modal"
         style="display:none; position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
         <div
-            style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:1050px; width:100%; height:90vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.35); animation:fadeIn 0.25s ease;">
-            <!-- Modal Header -->
-            <div
-                style="padding:16px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg);">
-                <div>
-                    <h3 id="yks-detail-student-title"
-                        style="margin:0; font-size:17px; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:8px;">
-                        🎯 YKS Bilişsel Kokpit
-                    </h3>
+            style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:1050px; width:100%; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.35); animation:fadeIn 0.25s ease;">
+            <!-- Modal Üst Başlık & Hızlı Konsol -->
+            <div class="yks-detail-modal-header"
+                style="padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--tab-bg); gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div>
+                        <h3 id="yks-detail-student-title" style="margin:0 0 2px 0; font-size:16px; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-graduation-cap" style="color:#0284c7;"></i> <span>Öğrenci Adı</span>
+                        </h3>
+                        <div id="yks-detail-badge" style="font-size:11.5px; color:var(--text-muted); font-weight:600;">12. Sınıf • Sayısal • Hedef: Tıp Fakültesi</div>
+                    </div>
                 </div>
-                <button class="action-btn" onclick="closeModal('yks-kocluk-detail-modal')"
-                    style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i
-                        class="fas fa-times"></i></button>
+
+                <!-- Hızlı Öğrenci Değiştirici Konsolu -->
+                <div id="yks-quick-switcher-container" class="yks-quick-switcher" style="display:flex; align-items:center; gap:6px; background:var(--card-bg); padding:4px 8px; border-radius:8px; border:1px solid var(--border);">
+                    <button id="btn-yks-prev-student" type="button" class="btn btn-sm btn-clear" onclick="navigateYksKoclukStudent(-1)" title="Önceki Öğrenci (Alt + Sol Ok)" style="padding:5px 9px; font-size:12px; font-weight:700; border-radius:6px; color:var(--text-main); border:1px solid var(--border); background:var(--input-bg); cursor:pointer;">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div style="position:relative; display:inline-flex; align-items:center;">
+                        <i class="fas fa-user-graduate" style="position:absolute; left:9px; font-size:11px; color:#0284c7; pointer-events:none;"></i>
+                        <select id="yks-quick-student-select" onchange="openYksDetailModal(this.value, window.activeYksDetailSubTab)" style="padding:5px 10px 5px 26px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main); max-width:240px; cursor:pointer;" title="Hızlı Öğrenci Seç">
+                            <!-- JS ile doldurulur -->
+                        </select>
+                    </div>
+                    <button id="btn-yks-next-student" type="button" class="btn btn-sm btn-clear" onclick="navigateYksKoclukStudent(1)" title="Sonraki Öğrenci (Alt + Sağ Ok)" style="padding:5px 9px; font-size:12px; font-weight:700; border-radius:6px; color:var(--text-main); border:1px solid var(--border); background:var(--input-bg); cursor:pointer;">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Eylem Butonları & Dropdown Menüler -->
+                <div class="yks-detail-modal-header-actions" style="display:flex; align-items:center; gap:6px;">
+                    <button id="btn-yks-quick-sync-modal" type="button" class="btn btn-warning btn-sm"
+                        onclick="toggleYksQuickDrawer()"
+                        style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 11px; font-size:12px; cursor:pointer;"
+                        title="60 Saniyelik Hızlı Veri Giriş Sihirbazı">
+                        <i class="fas fa-bolt"></i> <span>60 Sn Hızlı Giriş</span>
+                    </button>
+
+                    <!-- Akıllı Formlar Dropdown -->
+                    <div style="position:relative; display:inline-block;">
+                        <button id="btn-yks-forms-dropdown" type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="toggleYksFormsMenu(event)"
+                            style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 11px; font-size:12px; cursor:pointer; background:var(--card-bg); border:1px solid var(--border);"
+                            title="Akıllı A4 Formlarını Yazdır">
+                            <i class="fas fa-print" style="color:#0284c7;"></i> <span>Formlar</span> <i class="fas fa-caret-down"></i>
+                        </button>
+                        <div id="yks-forms-dropdown-menu"
+                            style="display:none; position:absolute; right:0; top:calc(100% + 5px); background:var(--card-bg); border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); min-width:270px; z-index:100060; padding:6px 0;">
+                            <div style="padding:6px 12px; font-size:10.5px; font-weight:800; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border); background:var(--tab-bg);">
+                                YKS / Lise Akıllı Baskı Merkezi
+                            </div>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); printYksForm('FORM-1')" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fas fa-calendar-check" style="color:#0284c7; width:16px;"></i> Form-1: Blok Çalışma &amp; Deep Work (A4)
+                            </button>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); printYksForm('FORM-2')" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fas fa-tachometer-alt" style="color:#f59e0b; width:16px;"></i> Form-2: Deneme Triyaj &amp; Çift TDE (A4)
+                            </button>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); printYksForm('FORM-3')" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fas fa-cut" style="color:#ef4444; width:16px;"></i> Form-3: Metabilişsel Soru Ameliyathanesi (A4)
+                            </button>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); printYksForm('FORM-4')" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fas fa-handshake" style="color:#10b981; width:16px;"></i> Form-4: Bilişsel Gelişim &amp; Veli Mutabakatı (A4)
+                            </button>
+                            <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); openYksPrintCenterModal()" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; background:none; border:none; color:#0284c7; cursor:pointer;">
+                                <i class="fas fa-sliders-h" style="width:16px;"></i> Akıllı Form Basım Merkezi...
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Veli Bülteni Dropdown -->
+                    <div style="position:relative; display:inline-block;">
+                        <button id="btn-yks-parent-dropdown" type="button" class="btn btn-sm btn-clear"
+                            onclick="toggleYksParentMenu(event)"
+                            style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 11px; font-size:12px; cursor:pointer; background:#25D366; color:white; border:none;"
+                            title="WhatsApp ve BiP Veli Bülteni Şablonları">
+                            <i class="fab fa-whatsapp"></i> <span>Veli Bülteni</span> <i class="fas fa-caret-down"></i>
+                        </button>
+                        <div id="yks-parent-dropdown-menu"
+                            style="display:none; position:absolute; right:0; top:calc(100% + 5px); background:var(--card-bg); border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); min-width:250px; z-index:100060; padding:6px 0;">
+                            <div style="padding:6px 12px; font-size:10.5px; font-weight:800; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border); background:var(--tab-bg);">
+                                WhatsApp &amp; BiP Veli İletişimi
+                            </div>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); sendYksParentWhatsApp('standard')" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fab fa-whatsapp" style="color:#25D366; width:16px;"></i> Standart Gelişim Bülteni
+                            </button>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); sendYksParentWhatsApp('plato')" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fas fa-shield-alt" style="color:#0284c7; width:16px;"></i> Krizsiz Plato &amp; Ev Protokolü
+                            </button>
+                            <button type="button" class="dropdown-item" onclick="hideYksDropdowns(); shareYksViaBip()" style="width:100%; text-align:left; padding:8px 14px; font-size:12px; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-main); cursor:pointer;">
+                                <i class="fas fa-comment-dots" style="color:#0284c7; width:16px;"></i> BiP Sadeleştirilmiş Bülten
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="action-btn" onclick="closeModal('yks-kocluk-detail-modal')"
+                        style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted); padding:4px 8px;"
+                        title="Kapat">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Modal Sub-Tabs Bar -->
-            <div
+            <!-- Modal Sub-Tabs Bar (Mobilde Yatay Kaydırılabilir) -->
+            <div class="yks-detail-subtabs-nav"
                 style="display:flex; gap:6px; padding:8px 16px; background:var(--tab-bg); border-bottom:1px solid var(--border); overflow-x:auto;">
                 <button id="yks-sub-btn-tab-yks-profil" class="tab-btn yks-sub-tab-btn active"
                     onclick="switchYksDetailSubTab('tab-yks-profil')">🎯 Profil &amp; Hedefler</button>
                 <button id="yks-sub-btn-tab-yks-denemeler" class="tab-btn yks-sub-tab-btn"
-                    onclick="switchYksDetailSubTab('tab-yks-denemeler')">⏱️ Denemeler &amp; TDE</button>
+                    onclick="switchYksDetailSubTab('tab-yks-denemeler')">⏱️ Denemeler &amp; OYSS</button>
                 <button id="yks-sub-btn-tab-yks-hata" class="tab-btn yks-sub-tab-btn"
-                    onclick="switchYksDetailSubTab('tab-yks-hata')">🔬 Hata Defteri &amp; Tekrar</button>
+                    onclick="switchYksDetailSubTab('tab-yks-hata')">🔬 Hata Ameliyathanesi</button>
                 <button id="yks-sub-btn-tab-yks-isi-haritasi" class="tab-btn yks-sub-tab-btn"
                     onclick="switchYksDetailSubTab('tab-yks-isi-haritasi')">🗺️ Mikro-Kazanım Isı Haritası</button>
                 <button id="yks-sub-btn-tab-yks-piramit" class="tab-btn yks-sub-tab-btn"
@@ -7611,9 +8178,52 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                 <button id="yks-sub-btn-tab-yks-ai" class="tab-btn yks-sub-tab-btn"
                     onclick="switchYksDetailSubTab('tab-yks-ai')">🤖 Gemini AI &amp; WhatsApp</button>
             </div>
-
+            
             <!-- Modal Body (Scrollable) -->
             <div style="flex:1; overflow-y:auto; padding:20px;">
+                <!-- ⚡ 60 Saniyelik Hızlı Giriş Inline Çekmecesi (Drawer) -->
+                <div id="yks-inline-quick-drawer" style="display:none; margin-bottom:16px; background:linear-gradient(135deg, rgba(2,132,199,0.06), rgba(217,119,6,0.06)); border:1.5px solid #d97706; border-radius:10px; padding:14px; animation:fadeIn 0.2s ease;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; font-size:13px; font-weight:800; color:#d97706; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-bolt"></i> ⚡ 60 Saniyelik Hızlı Veri Giriş Çekmecesi (Inline Drawer)
+                        </h4>
+                        <button type="button" class="btn btn-sm btn-clear" onclick="toggleYksQuickDrawer()" style="padding:2px 8px; font-size:12px; color:var(--text-muted); cursor:pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700; color:#0284c7;">D1 (Temel):</label>
+                            <input type="number" id="yks-drawer-d1" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksDrawerKai()" style="width:100%; padding:5px; font-size:12px; font-weight:700; border-radius:4px; border:1px solid var(--border); background:var(--input-bg);">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700; color:#d97706;">D2 (Kavrama):</label>
+                            <input type="number" id="yks-drawer-d2" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksDrawerKai()" style="width:100%; padding:5px; font-size:12px; font-weight:700; border-radius:4px; border:1px solid var(--border); background:var(--input-bg);">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700; color:#059669;">D3 (Analiz):</label>
+                            <input type="number" id="yks-drawer-d3" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksDrawerKai()" style="width:100%; padding:5px; font-size:12px; font-weight:700; border-radius:4px; border:1px solid var(--border); background:var(--input-bg);">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700; color:#7c3aed;">D4 (Üst Biliş):</label>
+                            <input type="number" id="yks-drawer-d4" min="0" onfocus="yksAutoScrollOnFocus(this)" oninput="updateYksDrawerKai()" style="width:100%; padding:5px; font-size:12px; font-weight:700; border-radius:4px; border:1px solid var(--border); background:var(--input-bg);">
+                        </div>
+                        <div>
+                            <label style="font-size:10.5px; font-weight:700;">Haftalık Deneme Neti:</label>
+                            <input type="number" step="0.25" id="yks-drawer-net" placeholder="Örn: 92.5" onfocus="yksAutoScrollOnFocus(this)" style="width:100%; padding:5px; font-size:12px; font-weight:700; border-radius:4px; border:1px solid var(--border); background:var(--input-bg);">
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; flex-wrap:wrap; gap:8px;">
+                        <span id="yks-drawer-kai-preview" style="color:var(--text-muted); font-weight:700;">KAİ Önizleme: <strong>%0</strong></span>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="btn btn-sm btn-clear" onclick="toggleYksQuickDrawer()" style="padding:4px 10px; font-size:11px;">İptal</button>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="submitYksInlineQuickSync()" style="padding:4px 14px; font-size:11px; font-weight:700; background:#d97706; border-color:#d97706;">
+                                <i class="fas fa-check me-1"></i> 60 Saniyede Kaydet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="tab-yks-profil" class="yks-sub-tab-content"></div>
                 <div id="tab-yks-denemeler" class="yks-sub-tab-content" style="display:none;"></div>
                 <div id="tab-yks-hata" class="yks-sub-tab-content" style="display:none;"></div>
@@ -7742,7 +8352,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <!-- MODAL: YKS 60 Saniyelik Hızlı Giriş Sihirbazı                -->
     <!-- ============================================================ -->
     <div id="yks-kocluk-quick-sync-modal" class="modal"
-        style="display:none; position:fixed; z-index:100000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
+        style="display:none; position:fixed; z-index:100050; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(4px);">
         <div
             style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:600px; width:100%; padding:22px; box-shadow:0 20px 40px rgba(0,0,0,0.3); animation:fadeIn 0.25s ease;">
             <div

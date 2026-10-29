@@ -324,12 +324,15 @@
                 card.className = 'form-box';
                 card.id = `tracking-card-${item.id}`;
                 card.style = `margin-bottom:15px; border-left: 5px solid ${borderColor}; ${isPassive ? 'opacity:0.75;' : ''} ${isChecked ? 'background:rgba(239,68,68,0.06); border-color:#ef4444;' : ''}`;
+                const safeType = typeof window.escapeHTML === 'function' ? window.escapeHTML(item.type) : (item.type || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const safeTitle = typeof window.escapeHTML === 'function' ? window.escapeHTML(item.title) : (item.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const safeSinif = typeof window.escapeHTML === 'function' ? window.escapeHTML(item.sinif) : (item.sinif || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
                 <div style="display:flex; align-items:flex-start;">
                     ${cardSelectHtml}
                     <div>
-                        <span class="xp-badge"${badgeExtra}>${item.type}</span>${pasifLabel}
-                        <h4 style="margin:5px 0;">${item.title} (${item.sinif})</h4>
+                        <span class="xp-badge"${badgeExtra}>${safeType}</span>${pasifLabel}
+                        <h4 style="margin:5px 0;">${safeTitle} (${safeSinif})</h4>
                         <p style="font-size:12px; margin:0; color:var(--text-muted);">Teslim: ${doneCount} / ${totalCount} | Son Tarih: ${new Date(item.date).toLocaleString('tr-TR')}</p>
                     </div>
                 </div>
@@ -1042,6 +1045,14 @@
             if (typeof saveData === 'function') saveData(true);
         }
 
+        function maskStudentNameKVKK(fullName) {
+            if (!fullName) return '';
+            return String(fullName).trim().split(/\s+/).map(part => {
+                if (part.length <= 1) return part;
+                return part.charAt(0) + '*'.repeat(Math.max(1, Math.min(part.length - 1, 3)));
+            }).join(' ');
+        }
+
         function buildTrackingSummaryText(id) {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
             if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
@@ -1057,10 +1068,12 @@
             if (hasEvaluations && students.length > 0) {
                 const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
                 const absent = students.filter(s => submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
-                const notDone = students.filter(s => !submissions[s.adSoyad]?.done && !submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
+                // KVKK / Kişisel Verileri Koruma: Toplu veli gruplarında eksik teslim isimleri maskelenir
+                const notDone = students.filter(s => !submissions[s.adSoyad]?.done && !submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + maskStudentNameKVKK(s.adSoyad));
                 text += `\n\n✅ *TAMAMLAYANLAR (${done.length} / ${students.length}):*\n` + (done.length > 0 ? '🔷 ' + done.join('\n🔷 ') : 'Henüz teslim eden yok');
-                text += `\n\n❌ *EKSİK OLANLAR (${notDone.length} / ${students.length}):*\n` + (notDone.length > 0 ? '🔸 ' + notDone.join('\n🔸 ') : 'Herkes tamamladı! 🎉');
+                text += `\n\n❌ *EKSİK OLANLAR (${notDone.length} / ${students.length}) [KVKK Uyumlu]:*\n` + (notDone.length > 0 ? '🔸 ' + notDone.join('\n🔸 ') : 'Herkes tamamladı! 🎉');
                 text += `\n\n⚪ *GELMEYENLER (${absent.length}):*\n` + (absent.length > 0 ? '▫️ ' + absent.join('\n▫️ ') : 'Gelmeyen öğrenci yok');
+                text += `\n\n🔒 *Not:* Bireysel öğrenci durumları için veli bilgilendirme mesajı ayrıca iletilebilir.`;
             }
             return text;
         }

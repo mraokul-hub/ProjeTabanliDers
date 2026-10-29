@@ -987,8 +987,96 @@
     // ─────────────────────────────────────────────────────────────
     // 4. ÖĞRENCİ KOÇLUK KOKPİTİ (DETAY MODALI)
     // ─────────────────────────────────────────────────────────────
-    function openKoclukDetailModal(kocId) {
+    window.activeDenemeSubSegment = window.activeDenemeSubSegment || 'trend';
+    window.activeHataSubSegment = window.activeHataSubSegment || 'kok-neden';
+
+    function kocAutoScrollOnFocus(el) {
+        if (!el) return;
+        setTimeout(() => {
+            if (typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 280);
+    }
+
+    function toggleKoclukFormsMenu(e) {
+        if (e) e.stopPropagation();
+        const pMenu = document.getElementById('koc-parent-dropdown-menu');
+        if (pMenu) pMenu.style.display = 'none';
+        const fMenu = document.getElementById('koc-forms-dropdown-menu');
+        if (fMenu) {
+            fMenu.style.display = (fMenu.style.display === 'block') ? 'none' : 'block';
+        }
+    }
+
+    function toggleKoclukParentMenu(e) {
+        if (e) e.stopPropagation();
+        const fMenu = document.getElementById('koc-forms-dropdown-menu');
+        if (fMenu) fMenu.style.display = 'none';
+        const pMenu = document.getElementById('koc-parent-dropdown-menu');
+        if (pMenu) {
+            pMenu.style.display = (pMenu.style.display === 'block') ? 'none' : 'block';
+        }
+    }
+
+    function hideKoclukDropdowns() {
+        const m1 = document.getElementById('koc-forms-dropdown-menu');
+        const m2 = document.getElementById('koc-parent-dropdown-menu');
+        if (m1) m1.style.display = 'none';
+        if (m2) m2.style.display = 'none';
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.koc-dropdown-container')) {
+            hideKoclukDropdowns();
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('kocluk-detail-modal');
+        if (!modal || modal.style.display === 'none') return;
+        if (e.altKey && (e.key === 'ArrowLeft' || e.keyCode === 37)) {
+            e.preventDefault();
+            navigateKoclukStudent(-1);
+        } else if (e.altKey && (e.key === 'ArrowRight' || e.keyCode === 39)) {
+            e.preventDefault();
+            navigateKoclukStudent(1);
+        }
+    });
+
+    function populateKoclukQuickSwitcher(selectedId) {
+        const select = document.getElementById('koc-quick-student-select');
+        if (!select) return;
+        const list = Array.isArray(window.koclukData) ? window.koclukData : [];
+        if (list.length === 0) {
+            select.innerHTML = '<option value="">Koçluk Havuzu Boş</option>';
+            return;
+        }
+        let opts = '';
+        list.forEach(s => {
+            const isSel = String(s.id) === String(selectedId) ? 'selected' : '';
+            opts += `<option value="${escapeFn(s.id)}" ${isSel}>${escapeFn(s.sinif || '8')} - No:${escapeFn(s.studentNo || '-')} • ${escapeFn(s.adSoyad)}</option>`;
+        });
+        select.innerHTML = opts;
+    }
+
+    function navigateKoclukStudent(direction) {
+        const list = Array.isArray(window.koclukData) ? window.koclukData : [];
+        if (list.length === 0) return;
+        let idx = list.findIndex(k => String(k.id) === String(activeKoclukId));
+        if (idx === -1) idx = 0;
+        let nextIdx = idx + direction;
+        if (nextIdx < 0) nextIdx = list.length - 1;
+        if (nextIdx >= list.length) nextIdx = 0;
+        const nextStudent = list[nextIdx];
+        if (nextStudent) {
+            openKoclukDetailModal(nextStudent.id, activeDetailSubTab);
+        }
+    }
+
+    function openKoclukDetailModal(kocId, keepSubTab) {
         activeKoclukId = kocId;
+        window.activeKoclukId = kocId;
         const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
         if (!item) return;
 
@@ -997,8 +1085,11 @@
 
         const titleEl = document.getElementById('koc-detail-title');
         const badgeEl = document.getElementById('koc-detail-badge');
-        if (titleEl) titleEl.innerHTML = `<i class="fas fa-user-astronaut me-2" style="color:var(--secondary);"></i> ${escapeFn(item.adSoyad)}`;
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-user-astronaut me-2" style="color:var(--secondary);"></i> <span>${escapeFn(item.adSoyad)}</span>`;
         if (badgeEl) badgeEl.textContent = `${item.sinif} - No: ${item.studentNo} | Hedef: ${item.hedefLise}`;
+
+        // Hızlı Öğrenci Değiştirici Konsolunu Güncelle
+        populateKoclukQuickSwitcher(kocId);
 
         // Üst Bar Aksiyon Butonlarını Bağla
         const printCenterBtn = document.getElementById('btn-open-print-center');
@@ -1009,6 +1100,7 @@
         if (quickSyncBtn) {
             quickSyncBtn.onclick = () => openQuickWeeklySyncModal(kocId);
         }
+
         // ── ONE-LOOK PULSE (TEK BAKIŞTA NABIZ) HESAPLAMA VE RENDER ──
         const pulseBar = document.getElementById('koc-detail-pulse-bar');
         if (pulseBar) {
@@ -1036,7 +1128,7 @@
             // 2. TDE Rozeti ve Temel Süre Kaybı
             let tdeHtml = '';
             if (lastDen) {
-                const tde = calculateTDE(lastDen);
+                const tde = calculateTDE(lastDen, item.sinif);
                 const inatTxt = (lastDen.inatlasmaSayisi && lastDen.inatlasmaSayisi > 0) ? ` • ${lastDen.inatlasmaSayisi} İnatlaşma!` : '';
                 tdeHtml = `<span style="background:${tde.badgeBg}; color:${tde.badgeColor}; border:1px solid ${tde.badgeBorder}; padding:4px 9px; border-radius:6px; font-weight:800;" title="Fen 1. Tur: ${lastDen.fen1TurSure || 32}dk, Mat 1. Tur: ${lastDen.mat1TurSure || 30}dk"><i class="fas fa-stopwatch me-1"></i> TDE: ${tde.tdePuan}/100 (${tde.badgeText}${inatTxt})</span>`;
             } else {
@@ -1069,18 +1161,25 @@
             pulseBar.style.display = 'flex';
         }
 
-        switchDetailSubTab('tab-koc-profil');
+        const targetSubTab = keepSubTab || (modal.style.display === 'flex' && activeDetailSubTab ? activeDetailSubTab : 'tab-koc-profil');
+        switchDetailSubTab(targetSubTab);
         modal.style.display = 'flex';
     }
 
     function switchDetailSubTab(tabId) {
         activeDetailSubTab = tabId;
+        window.activeDetailSubTab = tabId;
         document.querySelectorAll('.koc-subtab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.koc-subtab-content').forEach(c => c.style.display = 'none');
 
         const btn = document.getElementById('btn-' + tabId);
         const content = document.getElementById(tabId);
-        if (btn) btn.classList.add('active');
+        if (btn) {
+            btn.classList.add('active');
+            if (typeof btn.scrollIntoView === 'function') {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
         if (content) content.style.display = 'block';
 
         const item = (window.koclukData || []).find(k => String(k.id) === String(activeKoclukId));
@@ -1248,10 +1347,23 @@
     }
 
     // --- ALT SEKME 2: METABİLİŞSEL HATA DEFTERİ (KÖK NEDEN DAĞILIMI, REÇETE & SPACED REPETITION) ---
+    function switchHataSubSegment(segmentId) {
+        window.activeHataSubSegment = segmentId;
+        document.querySelectorAll('.koc-hata-seg-btn').forEach(btn => {
+            const isActive = btn.getAttribute('data-segment') === segmentId;
+            btn.classList.toggle('active', isActive);
+        });
+        ['kok-neden', 'aralikli-tekrar', 'hata-ekle'].forEach(seg => {
+            const el = document.getElementById('koc-hata-seg-' + seg);
+            if (el) el.style.display = (seg === segmentId) ? 'block' : 'none';
+        });
+    }
+
     function renderSubTabHataDefteri(item) {
         const container = document.getElementById('koc-subtab-hata-body');
         if (!container) return;
 
+        const config = getGradeCognitiveConfig(item ? item.sinif : '8');
         const errors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
 
         // 1. Kök Neden Dağılımını Hesapla
@@ -1281,7 +1393,7 @@
         if (total === 0) {
             receteHtml = `
                 <div style="background:var(--input-bg); border-left:4px solid var(--secondary); padding:10px 14px; border-radius:6px; font-size:12px; color:var(--text-muted);">
-                    <i class="fas fa-info-circle me-1"></i> Henüz hata kaydı girilmedi. Öğrencinin denemelerde ve testlerde çözemediği soruları eklediğinizde yapay zeka cerrahi reçeteyi otomatik sentezleyecektir.
+                    <i class="fas fa-info-circle me-1"></i> Henüz hata kaydı girilmedi. Öğrencinin denemelerde ve testlerde çözemediği soruları eklediğinizde cerrahi reçete otomatik sentezlenecektir.
                 </div>`;
         } else if (dominantCode === 'A') {
             receteHtml = `
@@ -1309,7 +1421,7 @@
                 </div>`;
         }
 
-        // 3. Tablo Satırları
+        // 3. Tablo Satırları (Tüm Hatalar)
         let rowsHtml = '';
         errors.forEach(err => {
             const repStatus = getHataRepeatStatus(err);
@@ -1389,125 +1501,241 @@
             });
         }
 
+        // 5. Günü Gelmiş Bekleyen Aralıklı Tekrarlar Tablosu
+        const dueErrors = errors.filter(h => getHataRepeatStatus(h).isDue);
+        let dueRowsHtml = '';
+        dueErrors.forEach(err => {
+            const repStatus = getHataRepeatStatus(err);
+            const codeBadge = getKökNedenBadge(err.kokNeden);
+            dueRowsHtml += `
+            <tr style="border-bottom:1px solid var(--border); font-size:12.5px; background:rgba(239,68,68,0.05);">
+                <td style="padding:10px; font-weight:700; color:var(--text-main);">${escapeFn(err.ders)}</td>
+                <td style="padding:10px;">${escapeFn(err.konu)}</td>
+                <td style="padding:10px;">${codeBadge}</td>
+                <td style="padding:10px; font-size:11.5px; color:var(--text-muted); max-width:240px;">${escapeFn(err.soruNotu || '-')}</td>
+                <td style="padding:10px; text-align:center;">
+                    <input type="checkbox" ${err.tekrar1 ? 'checked' : ''} onchange="toggleSpacedRepetition('${item.id}', '${err.id}', 'tekrar1', this.checked)">
+                </td>
+                <td style="padding:10px; text-align:center;">
+                    <input type="checkbox" ${err.tekrar3 ? 'checked' : ''} onchange="toggleSpacedRepetition('${item.id}', '${err.id}', 'tekrar3', this.checked)">
+                </td>
+                <td style="padding:10px; text-align:center;">
+                    <input type="checkbox" ${err.tekrar14 ? 'checked' : ''} onchange="toggleSpacedRepetition('${item.id}', '${err.id}', 'tekrar14', this.checked)">
+                </td>
+                <td style="padding:10px; text-align:center;">
+                    <span style="background:${repStatus.badgeBg}; color:${repStatus.badgeColor}; padding:3px 8px; border-radius:10px; font-size:10.5px; font-weight:700; white-space:nowrap;">
+                        ${repStatus.label}
+                    </span>
+                </td>
+                <td style="padding:10px; text-align:right; white-space:nowrap;">
+                    <button class="action-btn" onclick="openEditHataModal('${item.id}', '${err.id}')" title="Düzenle" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:6px;"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn btn-delete" onclick="deleteHataDefteriItem('${item.id}', '${err.id}')" title="Sil"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+
+        const activeSeg = window.activeHataSubSegment || 'kok-neden';
+
         container.innerHTML = `
-            <!-- Kök Neden Dağılım Barı -->
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:15px; box-shadow:var(--shadow);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-                    <strong style="font-size:13px; color:var(--text-main);"><i class="fas fa-chart-pie me-1" style="color:var(--secondary);"></i> Metabilişsel Kök Neden Dağılımı (${total} Soru)</strong>
-                    <div style="font-size:11px; display:flex; gap:10px; flex-wrap:wrap;">
-                        <span style="color:#ef4444; font-weight:700;" title="Kavramı hatırlayamadım, formülü veya kazanımı bilmiyordum.">🔴 A: %${pA} (Bilgi/Kavram)</span>
-                        <span style="color:#d97706; font-weight:700;" title="Soruyu bilmeme rağmen olumsuz kökü, grafiği veya öncülü yanlış okudum.">🟡 B: %${pB} (Kurgu/Okuma)</span>
-                        <span style="color:#ea580c; font-weight:700;" title="Süre baskısıyla acele ettim, dört işlem veya kaydırma hatası yaptım.">🟠 C: %${pC} (Süre/İşlem)</span>
-                        <span style="color:#8b5cf6; font-weight:700;" title="Soruyla 2.5 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu.">🟣 D: %${pD} (Bilişsel Direnç)</span>
-                    </div>
-                </div>
-
-                <div style="width:100%; height:14px; background:var(--input-bg); border-radius:8px; overflow:hidden; display:flex; border:1px solid var(--border);">
-                    <div style="width:${pA}%; background:#ef4444;" title="Kod A: Bilgi &amp; Kavram Eksikliği (%${pA}) - Kavramı hatırlayamadım, formülü veya kazanımı bilmiyordum."></div>
-                    <div style="width:${pB}%; background:#f59e0b;" title="Kod B: Kurgu &amp; Soru Kökü Hatası (%${pB}) - Soruyu bilmeme rağmen olumsuz kökü, grafiği veya öncülü yanlış okudum."></div>
-                    <div style="width:${pC}%; background:#ea580c;" title="Kod C: Süre Baskısı &amp; İşlem Hatası (%${pC}) - Süre baskısıyla acele ettim, dört işlem veya kaydırma hatası yaptım."></div>
-                    <div style="width:${pD}%; background:#8b5cf6;" title="Kod D: Bilişsel Direnç &amp; İnatlaşma (%${pD}) - Soruyla 2.5 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu."></div>
-                </div>
-
-                <div style="margin-top:12px;">
-                    ${receteHtml}
-                </div>
+            <!-- Alt Segment Menü Butonları -->
+            <div class="koc-subsegment-nav">
+                <button type="button" class="koc-segment-btn koc-hata-seg-btn ${activeSeg === 'kok-neden' ? 'active' : ''}" data-segment="kok-neden" onclick="switchHataSubSegment('kok-neden')">
+                    <i class="fas fa-chart-pie"></i> 🎯 Kök Neden &amp; Cerrahi Reçete
+                </button>
+                <button type="button" class="koc-segment-btn koc-hata-seg-btn ${activeSeg === 'aralikli-tekrar' ? 'active' : ''}" data-segment="aralikli-tekrar" onclick="switchHataSubSegment('aralikli-tekrar')">
+                    <i class="fas fa-stopwatch"></i> ⏰ Bekleyen Aralıklı Tekrarlar
+                    ${dueErrors.length > 0 ? `<span style="background:#ef4444; color:#fff; padding:1px 6px; border-radius:10px; font-size:10.5px; margin-left:4px; font-weight:800;">${dueErrors.length}</span>` : ''}
+                </button>
+                <button type="button" class="koc-segment-btn koc-hata-seg-btn ${activeSeg === 'hata-ekle' ? 'active' : ''}" data-segment="hata-ekle" onclick="switchHataSubSegment('hata-ekle')">
+                    <i class="fas fa-plus-circle"></i> ➕ Soru Kaydı &amp; Kütük (${errors.length})
+                </button>
             </div>
 
-            <!-- MEB Müfredatı Konu Isı Haritası (Micro-Topic Heatmap) -->
-            <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:15px; box-shadow:var(--shadow);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-                    <strong style="font-size:12.5px; color:var(--text-main);"><i class="fas fa-fire me-1" style="color:#ef4444;"></i> MEB Müfredatı Konu Isı Haritası (Micro-Topic Heatmap)</strong>
-                    <div style="font-size:11px; display:flex; gap:10px; color:var(--text-muted); font-weight:600;">
-                        <span style="color:#ef4444;">🔴 Cerrahi Müdahale</span>
-                        <span style="color:#d97706;">🟡 Strateji/Dikkat</span>
-                        <span style="color:#10b981;">🟢 Kalıcılaştı</span>
-                    </div>
-                </div>
-                <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                    ${heatMapBadgesHtml}
-                </div>
-            </div>
-
-            <!-- Yeni Hata Ekleme Paneli -->
-            <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:18px;">
-                <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; font-weight:700;">
-                    <i class="fas fa-plus-circle me-1"></i> Yeni Yanlış/Boş Soru Kaydı Ekle (${escapeFn(config.gradeLabel)} Metabilişsel Teşhis)
-                </h5>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">DERS:</label>
-                        <select id="koc-new-err-ders" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                            ${config.dersler.map(d => {
-                                let icon = '📘';
-                                if (d.includes('Fen')) icon = '🔬';
-                                else if (d.includes('Türkçe')) icon = '📕';
-                                else if (d.includes('İnkılap')) icon = '🇹🇷';
-                                else if (d.includes('Sosyal')) icon = '🌍';
-                                else if (d.includes('İngilizce')) icon = '🇬🇧';
-                                else if (d.includes('Din')) icon = '🕌';
-                                return `<option value="${escapeFn(d)}">${icon} ${escapeFn(d)}</option>`;
-                            }).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">KONU / KAZANIM:</label>
-                        <input type="text" id="koc-new-err-konu" placeholder="${config.grade === 5 ? 'Örn: Doğal Sayılar / Kuvvetin Ölçülmesi' : (config.grade === 8 ? 'Örn: EBOB-EKOK / Basınç' : 'Örn: Cebirsel İfadeler / Saf Maddeler')}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                    </div>
-                    <div style="grid-column: span 2;">
-                        <label style="font-size:11px; font-weight:700; display:block; margin-bottom:6px;">4 KÖK NEDEN KODU (METABİLİŞSEL TEŞHİS &amp; AÇIKLAMA):</label>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
-                            <button type="button" class="btn-kok-pill" data-kok="A" onclick="selectKokNedenPill('A')" style="text-align:left; background:rgba(239,68,68,0.18); color:#ef4444; border:2px solid #ef4444; border-radius:8px; padding:7px 10px; cursor:pointer;" title="Kavramı hatırlayamadım, formülü veya kazanımı bilmiyordum.">
-                                <div style="font-size:11.5px; font-weight:800;">🔴 Kod A: Bilgi &amp; Kavram</div>
-                                <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">Kavram/formül hatırlanamadı, kazanım bilinmiyor.</div>
-                            </button>
-                            <button type="button" class="btn-kok-pill" data-kok="B" onclick="selectKokNedenPill('B')" style="text-align:left; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:8px; padding:7px 10px; cursor:pointer;" title="Soruyu bilmeme rağmen olumsuz kökü, grafiği veya öncülü yanlış okudum.">
-                                <div style="font-size:11.5px; font-weight:800; color:#d97706;">🟡 Kod B: Kurgu &amp; Soru Kökü</div>
-                                <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">Olumsuz kök, grafik veya öncül yanlış okundu.</div>
-                            </button>
-                            <button type="button" class="btn-kok-pill" data-kok="C" onclick="selectKokNedenPill('C')" style="text-align:left; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:8px; padding:7px 10px; cursor:pointer;" title="Süre baskısıyla acele ettim, dört işlem veya kaydırma hatası yaptım.">
-                                <div style="font-size:11.5px; font-weight:800; color:#ea580c;">🟠 Kod C: Süre &amp; İşlem</div>
-                                <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">Süre baskısıyla acele, dört işlem/kaydırma.</div>
-                            </button>
-                            <button type="button" class="btn-kok-pill" data-kok="D" onclick="selectKokNedenPill('D')" style="text-align:left; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:8px; padding:7px 10px; cursor:pointer;" title="Soruyla 2.5 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu.">
-                                <div style="font-size:11.5px; font-weight:800; color:#8b5cf6;">🟣 Kod D: Bilişsel Direnç</div>
-                                <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">2.5+ dk inatlaşıldı, taktiksel pas geçilemedi.</div>
-                            </button>
-                            <input type="hidden" id="koc-new-err-kok" value="A">
+            <!-- SEGMENT 1: KÖK NEDEN DAĞILIMI VE CERRAHİ REÇETE -->
+            <div id="koc-hata-seg-kok-neden" style="${activeSeg === 'kok-neden' ? 'display:block;' : 'display:none;'}">
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:15px; box-shadow:var(--shadow);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                        <strong style="font-size:13px; color:var(--text-main);"><i class="fas fa-chart-pie me-1" style="color:var(--secondary);"></i> Metabilişsel Kök Neden Dağılımı (${total} Soru)</strong>
+                        <div style="font-size:11px; display:flex; gap:10px; flex-wrap:wrap;">
+                            <span style="color:#ef4444; font-weight:700;" title="Kavramı hatırlayamadım, formülü veya kazanımı bilmiyordum.">🔴 A: %${pA} (Bilgi/Kavram)</span>
+                            <span style="color:#d97706; font-weight:700;" title="Soruyu bilmeme rağmen olumsuz kökü, grafiği veya öncülü yanlış okudum.">🟡 B: %${pB} (Kurgu/Okuma)</span>
+                            <span style="color:#ea580c; font-weight:700;" title="Süre baskısıyla acele ettim, dört işlem veya kaydırma hatası yaptım.">🟠 C: %${pC} (Süre/İşlem)</span>
+                            <span style="color:#8b5cf6; font-weight:700;" title="Soruyla 2.5 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu.">🟣 D: %${pD} (Bilişsel Direnç)</span>
                         </div>
                     </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700;">SORU ÖZETİ / NOTU:</label>
-                        <input type="text" id="koc-new-err-not" placeholder="Örn: 2. öncüldeki istisnayı göremedi" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+
+                    <div style="width:100%; height:14px; background:var(--input-bg); border-radius:8px; overflow:hidden; display:flex; border:1px solid var(--border);">
+                        <div style="width:${pA}%; background:#ef4444;" title="Kod A: Bilgi &amp; Kavram Eksikliği (%${pA})"></div>
+                        <div style="width:${pB}%; background:#f59e0b;" title="Kod B: Kurgu &amp; Soru Kökü Hatası (%${pB})"></div>
+                        <div style="width:${pC}%; background:#ea580c;" title="Kod C: Süre Baskısı &amp; İşlem Hatası (%${pC})"></div>
+                        <div style="width:${pD}%; background:#8b5cf6;" title="Kod D: Bilişsel Direnç &amp; İnatlaşma (%${pD})"></div>
+                    </div>
+
+                    <div style="margin-top:12px;">
+                        ${receteHtml}
                     </div>
                 </div>
+
+                <!-- MEB Müfredatı Konu Isı Haritası (Micro-Topic Heatmap) -->
+                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:15px; box-shadow:var(--shadow);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                        <strong style="font-size:12.5px; color:var(--text-main);"><i class="fas fa-fire me-1" style="color:#ef4444;"></i> MEB Müfredatı Konu Isı Haritası (Micro-Topic Heatmap)</strong>
+                        <div style="font-size:11px; display:flex; gap:10px; color:var(--text-muted); font-weight:600;">
+                            <span style="color:#ef4444;">🔴 Cerrahi Müdahale</span>
+                            <span style="color:#d97706;">🟡 Strateji/Dikkat</span>
+                            <span style="color:#10b981;">🟢 Kalıcılaştı</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${heatMapBadgesHtml}
+                    </div>
+                </div>
+
                 <div style="display:flex; justify-content:flex-end;">
-                    <button class="btn btn-primary" onclick="addHataDefteriEntry('${item.id}')" style="padding:7px 16px; font-size:12px; font-weight:700; border-radius:6px;">
-                        <i class="fas fa-check"></i> Hata Defterine Kaydet
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="switchHataSubSegment('hata-ekle')" style="font-weight:700;">
+                        <i class="fas fa-plus-circle me-1"></i> Yeni Yanlış/Boş Soru Ekle &rarr;
                     </button>
                 </div>
             </div>
 
-            <!-- Tablo -->
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; text-align:left;">
-                    <thead>
-                        <tr style="background:var(--tab-bg); border-bottom:2px solid var(--border); font-size:11.5px; color:var(--text-muted); text-transform:uppercase;">
-                            <th style="padding:10px;">Ders</th>
-                            <th style="padding:10px;">Konu</th>
-                            <th style="padding:10px; min-width:200px;">Kök Neden &amp; Teşhis</th>
-                            <th style="padding:10px;">Teşhis / Soru Notu</th>
-                            <th style="padding:10px; text-align:center;">1. Gün (24h)</th>
-                            <th style="padding:10px; text-align:center;">3. Gün (72h)</th>
-                            <th style="padding:10px; text-align:center;">14. Gün (336h)</th>
-                            <th style="padding:10px; text-align:center;">Tekrar Durumu</th>
-                            <th style="padding:10px; text-align:right;">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsHtml || '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Henüz hata kaydı girilmedi. Öğrencinin yanlış yaptığı soruları ekleyerek aralıklı tekrar döngüsünü başlatın.</td></tr>'}
-                    </tbody>
-                </table>
+            <!-- SEGMENT 2: BEKLEYEN ARALIKLI TEKRARLAR (1-3-14 GÜN) -->
+            <div id="koc-hata-seg-aralikli-tekrar" style="${activeSeg === 'aralikli-tekrar' ? 'display:block;' : 'display:none;'}">
+                ${dueErrors.length > 0 ? `
+                    <div style="background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; border-radius:8px; padding:12px 14px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <strong style="color:#ef4444; font-size:13px;"><i class="fas fa-exclamation-triangle me-1"></i> 🚨 ${dueErrors.length} Soru Acil Tekrar Havuzunda!</strong>
+                            <span style="font-size:11px; color:var(--text-muted);">Ebbinghaus Unutma Eşiği</span>
+                        </div>
+                        <p style="margin:4px 0 0 0; font-size:12px; color:var(--text-main); line-height:1.4;">
+                            Bu soruların 1 gün (24h), 3 gün (72h) veya 14 gün (336h) aralıklı tekrar süresi dolmuştur. Öğrenciyle soruyu masada yeniden çözünüz ve ilgili tekrar kutucuğunu işaretleyiniz.
+                        </p>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; text-align:left;">
+                            <thead>
+                                <tr style="background:var(--tab-bg); border-bottom:2px solid var(--border); font-size:11.5px; color:var(--text-muted); text-transform:uppercase;">
+                                    <th style="padding:10px;">Ders</th>
+                                    <th style="padding:10px;">Konu</th>
+                                    <th style="padding:10px; min-width:180px;">Kök Neden</th>
+                                    <th style="padding:10px;">Teşhis / Soru Notu</th>
+                                    <th style="padding:10px; text-align:center;">1. Gün (24h)</th>
+                                    <th style="padding:10px; text-align:center;">3. Gün (72h)</th>
+                                    <th style="padding:10px; text-align:center;">14. Gün (336h)</th>
+                                    <th style="padding:10px; text-align:center;">Tekrar Durumu</th>
+                                    <th style="padding:10px; text-align:right;">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${dueRowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : `
+                    <div style="text-align:center; padding:35px 20px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.25); border-radius:10px;">
+                        <div style="font-size:36px; margin-bottom:8px;">🎉</div>
+                        <h4 style="margin:0 0 6px 0; color:#059669; font-size:16px; font-weight:800;">Tebrikler! Bekleyen Acil Tekrar Sorusu Yok</h4>
+                        <p style="margin:0 auto 16px auto; max-width:540px; font-size:12.5px; color:var(--text-muted); line-height:1.5;">
+                            Şu anda 1 gün, 3 gün veya 14 günlük periyotlarda gecikmiş soru bulunmamaktadır. Kayıtlı tüm sorular Ebbinghaus aralıklı tekrar döngüsüne uygun ilerlemektedir.
+                        </p>
+                        <div style="display:flex; justify-content:center; gap:10px;">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="switchHataSubSegment('hata-ekle')" style="font-weight:700;">
+                                <i class="fas fa-plus-circle me-1"></i> Yeni Soru Kaydet
+                            </button>
+                            <button type="button" class="btn btn-clear btn-sm" onclick="switchHataSubSegment('hata-ekle')" style="border:1px solid var(--border); font-weight:700;">
+                                <i class="fas fa-list me-1"></i> Tüm Soru Kütüğünü Gör (${errors.length})
+                            </button>
+                        </div>
+                    </div>
+                `}
+            </div>
+
+            <!-- SEGMENT 3: YENİ HATA / SORU KAYDI & TÜM KÜTÜK -->
+            <div id="koc-hata-seg-hata-ekle" style="${activeSeg === 'hata-ekle' ? 'display:block;' : 'display:none;'}">
+                <!-- Yeni Hata Ekleme Paneli -->
+                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:18px;">
+                    <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; font-weight:700;">
+                        <i class="fas fa-plus-circle me-1"></i> Yeni Yanlış/Boş Soru Kaydı Ekle (${escapeFn(config.gradeLabel)} Metabilişsel Teşhis)
+                    </h5>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">DERS:</label>
+                            <select id="koc-new-err-ders" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); font-size:12px;">
+                                ${config.dersler.map(d => {
+                                    let icon = '📘';
+                                    if (d.includes('Fen')) icon = '🔬';
+                                    else if (d.includes('Türkçe')) icon = '📕';
+                                    else if (d.includes('İnkılap')) icon = '🇹🇷';
+                                    else if (d.includes('Sosyal')) icon = '🌍';
+                                    else if (d.includes('İngilizce')) icon = '🇬🇧';
+                                    else if (d.includes('Din')) icon = '🕌';
+                                    return `<option value="${escapeFn(d)}">${icon} ${escapeFn(d)}</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">KONU / KAZANIM:</label>
+                            <input type="text" id="koc-new-err-konu" onfocus="this.select(); kocAutoScrollOnFocus(this);" placeholder="${config.grade === 5 ? 'Örn: Doğal Sayılar / Kuvvetin Ölçülmesi' : (config.grade === 8 ? 'Örn: EBOB-EKOK / Basınç' : 'Örn: Cebirsel İfadeler / Saf Maddeler')}" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label style="font-size:11px; font-weight:700; display:block; margin-bottom:6px;">4 KÖK NEDEN KODU (METABİLİŞSEL TEŞHİS &amp; AÇIKLAMA):</label>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
+                                <button type="button" class="btn-kok-pill" data-kok="A" onclick="selectKokNedenPill('A')" style="text-align:left; background:rgba(239,68,68,0.18); color:#ef4444; border:2px solid #ef4444; border-radius:8px; padding:7px 10px; cursor:pointer;" title="Kavramı hatırlayamadım, formülü veya kazanımı bilmiyordum.">
+                                    <div style="font-size:11.5px; font-weight:800;">🔴 Kod A: Bilgi &amp; Kavram</div>
+                                    <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">Kavram/formül hatırlanamadı, kazanım bilinmiyor.</div>
+                                </button>
+                                <button type="button" class="btn-kok-pill" data-kok="B" onclick="selectKokNedenPill('B')" style="text-align:left; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:8px; padding:7px 10px; cursor:pointer;" title="Soruyu bilmeme rağmen olumsuz kökü, grafiği veya öncülü yanlış okudum.">
+                                    <div style="font-size:11.5px; font-weight:800; color:#d97706;">🟡 Kod B: Kurgu &amp; Soru Kökü</div>
+                                    <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">Olumsuz kök, grafik veya öncül yanlış okundu.</div>
+                                </button>
+                                <button type="button" class="btn-kok-pill" data-kok="C" onclick="selectKokNedenPill('C')" style="text-align:left; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:8px; padding:7px 10px; cursor:pointer;" title="Süre baskısıyla acele ettim, dört işlem veya kaydırma hatası yaptım.">
+                                    <div style="font-size:11.5px; font-weight:800; color:#ea580c;">🟠 Kod C: Süre &amp; İşlem</div>
+                                    <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">Süre baskısıyla acele, dört işlem/kaydırma.</div>
+                                </button>
+                                <button type="button" class="btn-kok-pill" data-kok="D" onclick="selectKokNedenPill('D')" style="text-align:left; background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); border-radius:8px; padding:7px 10px; cursor:pointer;" title="Soruyla 2.5 dakikadan fazla inatlaştım, bırakamadım ve sınav koptu.">
+                                    <div style="font-size:11.5px; font-weight:800; color:#8b5cf6;">🟣 Kod D: Bilişsel Direnç</div>
+                                    <div style="font-size:10px; font-weight:500; opacity:0.85; margin-top:2px; line-height:1.25;">2.5+ dk inatlaşıldı, taktiksel pas geçilemedi.</div>
+                                </button>
+                                <input type="hidden" id="koc-new-err-kok" value="A">
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700;">SORU ÖZETİ / NOTU:</label>
+                            <input type="text" id="koc-new-err-not" onfocus="this.select(); kocAutoScrollOnFocus(this);" placeholder="Örn: 2. öncüldeki istisnayı göremedi" style="width:100%; padding:7px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="addHataDefteriEntry('${item.id}')" style="padding:7px 16px; font-size:12px; font-weight:700; border-radius:6px;">
+                            <i class="fas fa-check"></i> Hata Defterine Kaydet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tüm Sorular Tablosu -->
+                <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <strong style="font-size:13px; color:var(--text-main);"><i class="fas fa-list me-1"></i> Tüm Kayıtlı Hatalar (${errors.length} Soru)</strong>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <thead>
+                            <tr style="background:var(--tab-bg); border-bottom:2px solid var(--border); font-size:11.5px; color:var(--text-muted); text-transform:uppercase;">
+                                <th style="padding:10px;">Ders</th>
+                                <th style="padding:10px;">Konu</th>
+                                <th style="padding:10px; min-width:180px;">Kök Neden &amp; Teşhis</th>
+                                <th style="padding:10px;">Teşhis / Soru Notu</th>
+                                <th style="padding:10px; text-align:center;">1. Gün (24h)</th>
+                                <th style="padding:10px; text-align:center;">3. Gün (72h)</th>
+                                <th style="padding:10px; text-align:center;">14. Gün (336h)</th>
+                                <th style="padding:10px; text-align:center;">Tekrar Durumu</th>
+                                <th style="padding:10px; text-align:right;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml || '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Henüz hata kaydı girilmedi. Öğrencinin yanlış yaptığı soruları ekleyerek aralıklı tekrar döngüsünü başlatın.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         `;
     }
@@ -1611,11 +1839,13 @@
 
         const ders = document.getElementById('koc-new-err-ders')?.value;
         const konu = document.getElementById('koc-new-err-konu')?.value.trim();
-        const kok = document.getElementById('koc-new-err-kok')?.value;
+        const kok = document.getElementById('koc-new-err-kok')?.value || 'A';
         const not = document.getElementById('koc-new-err-not')?.value.trim();
 
         if (!konu) {
             alert('Lütfen sorunun ait olduğu konuyu belirtiniz.');
+            const konuInput = document.getElementById('koc-new-err-konu');
+            if (konuInput) konuInput.focus();
             return;
         }
 
@@ -1635,6 +1865,9 @@
         });
 
         if (typeof saveData === 'function') saveData(true);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('Soru Hata Defterine başarıyla eklendi.', 'success');
+        }
         renderSubTabHataDefteri(item);
         renderKoclukModule();
     }
@@ -1868,6 +2101,18 @@
             </div>`;
     }
 
+    function switchDenemeSubSegment(segmentId) {
+        window.activeDenemeSubSegment = segmentId;
+        document.querySelectorAll('.koc-deneme-seg-btn').forEach(btn => {
+            const isActive = btn.getAttribute('data-segment') === segmentId;
+            btn.classList.toggle('active', isActive);
+        });
+        ['trend', 'yeni-giris', 'gecmis'].forEach(seg => {
+            const el = document.getElementById('koc-deneme-seg-' + seg);
+            if (el) el.style.display = (seg === segmentId) ? 'block' : 'none';
+        });
+    }
+
     function renderSubTabDenemeler(item) {
         const container = document.getElementById('koc-subtab-deneme-body');
         if (!container) return;
@@ -1920,7 +2165,7 @@
             }
         }
 
-        // Tablo Satırları
+        // Tablo Satırları (Geçmiş Denemeler)
         let rowsHtml = '';
         denemeler.forEach(d => {
             // Otomatik D-Y-B çözümleme (eğer henüz işlenmediyse)
@@ -2029,294 +2274,365 @@
             </tr>`;
         });
 
+        // 4 KPI Hesaplama
+        const lastDen = denemeler.length > 0 ? denemeler[denemeler.length - 1] : null;
+        const latestNet = lastDen ? (Number(lastDen.toplamNet) || 0) : 0;
+        const avgTdeScore = denemeler.length > 0
+            ? Math.round(denemeler.reduce((acc, d) => acc + (d.tdePuan || calculateTDE(d, item.sinif).tdePuan), 0) / denemeler.length)
+            : 75;
+
+        const activeSeg = window.activeDenemeSubSegment || 'trend';
+
         container.innerHTML = `
-            ${platoTehisHtml}
-            ${renderSvgNetTdeChart(denemeler)}
+            <!-- Alt Segment Menü Butonları -->
+            <div class="koc-subsegment-nav">
+                <button type="button" class="koc-segment-btn koc-deneme-seg-btn ${activeSeg === 'trend' ? 'active' : ''}" data-segment="trend" onclick="switchDenemeSubSegment('trend')">
+                    <i class="fas fa-chart-line"></i> 📈 Trend &amp; Plato Röntgeni
+                </button>
+                <button type="button" class="koc-segment-btn koc-deneme-seg-btn ${activeSeg === 'yeni-giris' ? 'active' : ''}" data-segment="yeni-giris" onclick="switchDenemeSubSegment('yeni-giris')">
+                    <i class="fas fa-plus-circle"></i> ➕ Yeni Deneme Girişi
+                </button>
+                <button type="button" class="koc-segment-btn koc-deneme-seg-btn ${activeSeg === 'gecmis' ? 'active' : ''}" data-segment="gecmis" onclick="switchDenemeSubSegment('gecmis')">
+                    <i class="fas fa-list-alt"></i> 📋 Deneme Geçmişi Kütüğü (${denemeler.length})
+                </button>
+            </div>
 
-            <!-- Yeni Deneme Ekleme Formu -->
-            <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:18px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-                    <h5 style="margin:0; font-size:13.5px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-plus-circle" style="color:var(--secondary);"></i> Yeni Deneme ve ${config.isLgsFinal ? 'TDE Strateji' : 'Süre & Strateji'} Girişi
-                    </h5>
-                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                        <button type="button" class="btn btn-clear" onclick="if (typeof window.syncAllExamsToKocluk === 'function') { window.syncAllExamsToKocluk(false); const cur = (window.koclukData||[]).find(k=>k.id==='${item.id}'); if(cur) renderSubTabDenemeler(cur); }" style="font-size:11.5px; padding:5px 11px; border:1px solid rgba(2,132,199,0.35); border-radius:6px; background:rgba(2,132,199,0.08); color:#0284c7; font-weight:700;">
-                            <i class="fas fa-sync-alt me-1"></i> 🦅 8. Sınav Analizden Güncelle
-                        </button>
-                        <button type="button" class="btn btn-clear" onclick="toggleTdeDetailsPanel()" style="font-size:11.5px; padding:5px 11px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg);">
-                            <i class="fas fa-cog me-1" style="color:var(--secondary);"></i> <span id="tde-toggle-text">${config.isLgsFinal ? 'TDE Turlama Detaylarını Göster' : 'Süre & Turlama Detaylarını Göster'}</span>
-                        </button>
+            <!-- SEGMENT 1: TREND VE PLATO RÖNTGENİ -->
+            <div id="koc-deneme-seg-trend" style="${activeSeg === 'trend' ? 'display:block;' : 'display:none;'}">
+                <!-- 4 KPI Snapshot Barı -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:14px;">
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                        <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Son Net</div>
+                        <div style="font-size:18px; font-weight:900; color:var(--primary); margin-top:2px;">${latestNet} / 90</div>
+                    </div>
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                        <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Hedef Net</div>
+                        <div style="font-size:18px; font-weight:900; color:#10b981; margin-top:2px;">${item.hedefNet || 80} Net</div>
+                    </div>
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                        <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Ort. TDE Skoru</div>
+                        <div style="font-size:18px; font-weight:900; color:#f59e0b; margin-top:2px;">${avgTdeScore}/100</div>
+                    </div>
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                        <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Kayıtlı Deneme</div>
+                        <div style="font-size:18px; font-weight:900; color:var(--secondary); margin-top:2px;">${denemeler.length} Adet</div>
                     </div>
                 </div>
 
-                <!-- Deneme Adı & Tarih -->
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:12px;">
-                    <div>
-                        <label style="font-size:11px; font-weight:700; color:var(--text-main);">DENEME ADI:</label>
-                        <input type="text" id="koc-den-ad" placeholder="Örn: Kurumsal Deneme 4" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border); font-size:12.5px; font-weight:600;">
-                    </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:700; color:var(--text-main);">TARİH:</label>
-                        <input type="text" id="koc-den-tarih" value="${new Date().toLocaleDateString('tr-TR')}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
-                    </div>
-                </div>
+                ${platoTehisHtml}
+                ${renderSvgNetTdeChart(denemeler)}
 
-                <!-- Doğru - Yanlış - Boş ve Otomatik Net Hesaplama Matrisi -->
-                <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                        <thead>
-                            <tr style="background:var(--tab-bg); border-bottom:1px solid var(--border); color:var(--text-muted); font-size:11px; text-transform:uppercase;">
-                                <th style="padding:8px 12px; text-align:left;">Ders / Bölüm</th>
-                                <th style="padding:8px 6px; text-align:center; width:80px;">Doğru (D)</th>
-                                <th style="padding:8px 6px; text-align:center; width:80px;">Yanlış (Y)</th>
-                                <th style="padding:8px 6px; text-align:center; width:80px;">Boş (B)</th>
-                                <th style="padding:8px 12px; text-align:center; width:115px;">Otomatik Net</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- SÖZEL BÖLÜM (Ders Ders Doğru, Yanlış, Boş ve Net Girişi) -->
-                            <!-- 1. Türkçe (20 Soru) -->
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <td style="padding:7px 12px; font-weight:700; color:#ef4444;">
-                                    <i class="fas fa-book me-1" style="color:#ef4444;"></i> Türkçe <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(20 Soru)</span>
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-tr-d" min="0" max="20" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('tr', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-tr-y" min="0" max="20" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('tr', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-tr-b" min="0" max="20" placeholder="20" onfocus="this.select()" oninput="calcSubBoşChange('tr', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px 12px; text-align:center;">
-                                    <input type="number" id="koc-sub-tr-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #ef4444; background:rgba(239,68,68,0.08); font-weight:800; color:#ef4444; font-size:13px;">
-                                </td>
-                            </tr>
-
-                            <!-- 2. Sosyal Bilgiler / İnkılap Tarihi (10 Soru) -->
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <td style="padding:7px 12px; font-weight:700; color:#f59e0b;">
-                                    <i class="${config.sosyalDersIcon} me-1" style="color:#f59e0b;"></i> ${config.sosyalDersAdi} <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-ink-d" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-ink-y" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-ink-b" min="0" max="10" placeholder="10" onfocus="this.select()" oninput="calcSubBoşChange('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px 12px; text-align:center;">
-                                    <input type="number" id="koc-sub-ink-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #f59e0b; background:rgba(245,158,11,0.08); font-weight:800; color:#d97706; font-size:13px;">
-                                </td>
-                            </tr>
-
-                            <!-- 3. Din Kültürü (10 Soru) -->
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <td style="padding:7px 12px; font-weight:700; color:#10b981;">
-                                    <i class="fas fa-mosque me-1" style="color:#10b981;"></i> Din Kültürü ve A.B. <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-din-d" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('din', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-din-y" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('din', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-din-b" min="0" max="10" placeholder="10" onfocus="this.select()" oninput="calcSubBoşChange('din', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px 12px; text-align:center;">
-                                    <input type="number" id="koc-sub-din-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #10b981; background:rgba(16,185,129,0.08); font-weight:800; color:#10b981; font-size:13px;">
-                                </td>
-                            </tr>
-
-                            <!-- 4. İngilizce (10 Soru) -->
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <td style="padding:7px 12px; font-weight:700; color:#8b5cf6;">
-                                    <i class="fas fa-globe me-1" style="color:#8b5cf6;"></i> Yabancı Dil (İngilizce) <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-ing-d" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('ing', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-ing-y" min="0" max="10" placeholder="0" onfocus="this.select()" oninput="calcSubBrans('ing', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-sub-ing-b" min="0" max="10" placeholder="10" onfocus="this.select()" oninput="calcSubBoşChange('ing', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
-                                </td>
-                                <td style="padding:5px 12px; text-align:center;">
-                                    <input type="number" id="koc-sub-ing-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #8b5cf6; background:rgba(139,92,246,0.08); font-weight:800; color:#8b5cf6; font-size:13px;">
-                                </td>
-                            </tr>
-
-                            <!-- SÖZEL BÖLÜM TOPLAMI -->
-                            <tr style="background:rgba(99,102,241,0.06); border-bottom:2px solid #6366f1;">
-                                <td style="padding:8px 12px; font-weight:800; color:#4f46e5;">
-                                    <i class="fas fa-book-reader me-1" style="color:#6366f1;"></i> SÖZEL BÖLÜM TOPLAMI <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(50 Soru)</span>
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-den-sozel-d" min="0" max="50" placeholder="0" onfocus="this.select()" oninput="calcDybNet('sozel', 50)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #6366f1; font-weight:800; color:#10b981; font-size:12.5px; background:var(--card-bg);">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-den-sozel-y" min="0" max="50" placeholder="0" onfocus="this.select()" oninput="calcDybNet('sozel', 50)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #6366f1; font-weight:800; color:#ef4444; font-size:12.5px; background:var(--card-bg);">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-den-sozel-b" min="0" max="50" placeholder="50" onfocus="this.select()" oninput="calcDybBoşChange('sozel', 50)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #6366f1; font-weight:700; color:var(--text-muted); font-size:12.5px; background:var(--card-bg);">
-                                </td>
-                                <td style="padding:5px 12px; text-align:center;">
-                                    <input type="number" id="koc-den-sozel" step="0.25" placeholder="0.00" onfocus="this.select()" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:2px solid #6366f1; background:rgba(99,102,241,0.12); font-weight:900; color:#4f46e5; font-size:13.5px;">
-                                </td>
-                            </tr>
-
-                            <!-- Matematik Satırı -->
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <td style="padding:8px 12px; font-weight:700; color:var(--secondary);">
-                                    <i class="fas fa-calculator me-1" style="color:var(--secondary);"></i> Matematik <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(20 Soru)</span>
-                                </td>
-                                <td style="padding:6px; text-align:center;">
-                                    <input type="number" id="koc-den-mat-d" min="0" max="20" placeholder="0" onfocus="this.select()" oninput="calcDybNet('mat', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
-                                </td>
-                                <td style="padding:6px; text-align:center;">
-                                    <input type="number" id="koc-den-mat-y" min="0" max="20" placeholder="0" onfocus="this.select()" oninput="calcDybNet('mat', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
-                                </td>
-                                <td style="padding:6px; text-align:center;">
-                                    <input type="number" id="koc-den-mat-b" min="0" max="20" placeholder="20" onfocus="this.select()" oninput="calcDybBoşChange('mat', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
-                                </td>
-                                <td style="padding:6px 12px; text-align:center;">
-                                    <input type="number" id="koc-den-mat" step="0.25" placeholder="0.00" onfocus="this.select()" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--secondary); background:rgba(59,130,246,0.08); font-weight:800; color:var(--secondary); font-size:13px;">
-                                </td>
-                            </tr>
-
-                            <!-- Fen Bilimleri Satırı -->
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <td style="padding:8px 12px; font-weight:700; color:var(--teal);">
-                                    <i class="fas fa-atom me-1" style="color:var(--teal);"></i> Fen Bilimleri <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(20 Soru)</span>
-                                </td>
-                                <td style="padding:6px; text-align:center;">
-                                    <input type="number" id="koc-den-fen-d" min="0" max="20" placeholder="0" onfocus="this.select()" oninput="calcDybNet('fen', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
-                                </td>
-                                <td style="padding:6px; text-align:center;">
-                                    <input type="number" id="koc-den-fen-y" min="0" max="20" placeholder="0" onfocus="this.select()" oninput="calcDybNet('fen', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
-                                </td>
-                                <td style="padding:6px; text-align:center;">
-                                    <input type="number" id="koc-den-fen-b" min="0" max="20" placeholder="20" onfocus="this.select()" oninput="calcDybBoşChange('fen', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
-                                </td>
-                                <td style="padding:6px 12px; text-align:center;">
-                                    <input type="number" id="koc-den-fen" step="0.25" placeholder="0.00" onfocus="this.select()" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--teal); background:rgba(20,184,166,0.08); font-weight:800; color:var(--teal); font-size:13px;">
-                                </td>
-                            </tr>
-
-                            <!-- SAYISAL BÖLÜM TOPLAMI -->
-                            <tr style="background:rgba(2,132,199,0.06); border-bottom:2px solid #0284c7;">
-                                <td style="padding:8px 12px; font-weight:800; color:#0369a1;">
-                                    <i class="fas fa-brain me-1" style="color:#0284c7;"></i> SAYISAL BÖLÜM TOPLAMI <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(40 Soru)</span>
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-den-sayisal-d" min="0" max="40" placeholder="0" onfocus="this.select()" oninput="calcDybNet('sayisal', 40)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #0284c7; font-weight:800; color:#10b981; font-size:12.5px; background:var(--card-bg);">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-den-sayisal-y" min="0" max="40" placeholder="0" onfocus="this.select()" oninput="calcDybNet('sayisal', 40)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #0284c7; font-weight:800; color:#ef4444; font-size:12.5px; background:var(--card-bg);">
-                                </td>
-                                <td style="padding:5px; text-align:center;">
-                                    <input type="number" id="koc-den-sayisal-b" min="0" max="40" placeholder="40" onfocus="this.select()" oninput="calcDybBoşChange('sayisal', 40)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #0284c7; font-weight:700; color:var(--text-muted); font-size:12.5px; background:var(--card-bg);">
-                                </td>
-                                <td style="padding:5px 12px; text-align:center;">
-                                    <input type="number" id="koc-den-sayisal" step="0.25" placeholder="0.00" onfocus="this.select()" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:2px solid #0284c7; background:rgba(2,132,199,0.12); font-weight:900; color:#0369a1; font-size:13.5px;">
-                                </td>
-                            </tr>
-
-                            <!-- GENEL TOPLAM Satırı -->
-                            <tr style="background:rgba(16,185,129,0.06); font-weight:800;">
-                                <td style="padding:10px 12px; color:var(--primary); font-size:12.5px;">
-                                    <i class="fas fa-award me-1" style="color:#10b981;"></i> TOPLAM ${config.isLgsFinal ? 'LGS' : config.stageTitle.toUpperCase()} <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(90 Soru)</span>
-                                </td>
-                                <td style="padding:8px 6px; text-align:center; color:#10b981; font-size:13px;" id="koc-den-toplam-d">0</td>
-                                <td style="padding:8px 6px; text-align:center; color:#ef4444; font-size:13px;" id="koc-den-toplam-y">0</td>
-                                <td style="padding:8px 6px; text-align:center; color:var(--text-muted); font-size:13px;" id="koc-den-toplam-b">90</td>
-                                <td style="padding:8px 12px; text-align:center;">
-                                    <input type="number" id="koc-den-toplam" readonly style="width:90px; text-align:center; padding:6px; border-radius:6px; border:2px solid #10b981; background:rgba(16,185,129,0.15); font-weight:900; font-size:14.5px; color:#10b981;">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Katlanabilir TDE Metrik Paneli -->
-                <div id="koc-tde-details-panel" style="display:none; background:var(--card-bg); border:1px dashed var(--secondary); border-radius:8px; padding:14px; margin-bottom:12px;">
-                    <div style="font-size:12px; font-weight:700; color:var(--secondary); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                        <span><i class="fas fa-stopwatch me-1"></i> ${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru (TDE)'} Parametreleri</span>
-                        <span id="koc-live-tde-badge" style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#f59e0b;">
-                            Hesaplanan TDE: 75/100
-                        </span>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:10px;">
-                        <div>
-                            <label style="font-size:11px; font-weight:700;">ÇÖZÜM SIRASI:</label>
-                            <select id="koc-tde-sira" onchange="liveCalculateTdePreview()" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                                <option value="Fen-Mat" selected>Önce Fen, Sonra Mat (Önerilen)</option>
-                                <option value="Mat-Fen">Önce Mat, Sonra Fen</option>
-                                <option value="Karisik">Karışık / Turlamasız</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:700;">FEN 1. TUR SÜRE (DK):</label>
-                            <input type="number" id="koc-tde-fen1" value="${config.isLgsFinal ? 32 : 28}" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= ${config.isLgsFinal ? 32 : 28}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:700;">MAT 1. TUR SÜRE (DK):</label>
-                            <input type="number" id="koc-tde-mat1" value="${config.isLgsFinal ? 30 : 25}" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= ${config.isLgsFinal ? 30 : 25}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:700;">İNATLAŞILAN SORU (&gt;2 DK):</label>
-                            <input type="number" id="koc-tde-inat" value="0" oninput="liveCalculateTdePreview()" placeholder="İdeal: 0" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:700;">FEN 2. TUR NET KAZANCI:</label>
-                            <input type="number" id="koc-tde-fen2" value="2" oninput="liveCalculateTdePreview()" placeholder="İdeal: &gt;= 2" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:700;">MAT 2. TUR NET KAZANCI:</label>
-                            <input type="number" id="koc-tde-mat2" value="3" oninput="liveCalculateTdePreview()" placeholder="İdeal: &gt;= 3" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
-                        </div>
-                    </div>
-
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="koc-tde-optik" checked onchange="liveCalculateTdePreview()" style="width:16px; height:16px;">
-                        <label for="koc-tde-optik" style="font-size:12px; font-weight:600; cursor:pointer;">
-                            Sınavın son 3 dakikasında sayfa sayfa optik kontrol ve turlama kontrolü uygulandı (+15p)
-                        </label>
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end;">
-                    <button class="btn btn-primary" onclick="saveNewDenemeEntry('${item.id}')" style="padding:7px 18px; font-size:12px; font-weight:700; border-radius:6px;">
-                        <i class="fas fa-check me-1"></i> Deneme Sonucunu &amp; TDE Kaydet
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="switchDenemeSubSegment('yeni-giris')" style="font-weight:700;">
+                        <i class="fas fa-plus me-1"></i> Yeni Deneme Ekle &rarr;
                     </button>
                 </div>
             </div>
 
-            <!-- Tablo -->
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; text-align:left;">
-                    <thead>
-                        <tr style="background:var(--tab-bg); border-bottom:2px solid var(--border); font-size:11.5px; color:var(--text-muted); text-transform:uppercase;">
-                            <th style="padding:10px;">Deneme Adı</th>
-                            <th style="padding:10px;">Tarih</th>
-                            <th style="padding:10px; text-align:center;">Sözel (50)</th>
-                            <th style="padding:10px; text-align:center;">Mat (20)</th>
-                            <th style="padding:10px; text-align:center;">Fen (20)</th>
-                            <th style="padding:10px; text-align:center;">Toplam Net</th>
-                            <th style="padding:10px; text-align:center;">${config.isLgsFinal ? 'TDE Skoru &amp; Teşhis' : 'Strateji Skoru &amp; Teşhis'}</th>
-                            <th style="padding:10px; text-align:right;">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsHtml || '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Henüz deneme kaydı yok.</td></tr>'}
-                    </tbody>
-                </table>
+            <!-- SEGMENT 2: YENİ DENEME GİRİŞİ (MOBİL DOKUNMATİK UYUMLU) -->
+            <div id="koc-deneme-seg-yeni-giris" style="${activeSeg === 'yeni-giris' ? 'display:block;' : 'display:none;'}">
+                <div style="background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                        <h5 style="margin:0; font-size:13.5px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-plus-circle" style="color:var(--secondary);"></i> Yeni Deneme ve ${config.isLgsFinal ? 'TDE Strateji' : 'Süre & Strateji'} Girişi
+                        </h5>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-clear" onclick="if (typeof window.syncAllExamsToKocluk === 'function') { window.syncAllExamsToKocluk(false); const cur = (window.koclukData||[]).find(k=>k.id==='${item.id}'); if(cur) renderSubTabDenemeler(cur); }" style="font-size:11.5px; padding:5px 11px; border:1px solid rgba(2,132,199,0.35); border-radius:6px; background:rgba(2,132,199,0.08); color:#0284c7; font-weight:700;">
+                                <i class="fas fa-sync-alt me-1"></i> 🦅 8. Sınav Analizden Güncelle
+                            </button>
+                            <button type="button" class="btn btn-clear" onclick="toggleTdeDetailsPanel()" style="font-size:11.5px; padding:5px 11px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg);">
+                                <i class="fas fa-cog me-1" style="color:var(--secondary);"></i> <span id="tde-toggle-text">${config.isLgsFinal ? 'TDE Turlama Detaylarını Göster' : 'Süre & Turlama Detaylarını Göster'}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Deneme Adı & Tarih -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-main);">DENEME ADI:</label>
+                            <input type="text" id="koc-den-ad" onfocus="this.select(); kocAutoScrollOnFocus(this);" placeholder="Örn: Kurumsal Deneme 4" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border); font-size:12.5px; font-weight:600;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--text-main);">TARİH:</label>
+                            <input type="text" id="koc-den-tarih" onfocus="this.select(); kocAutoScrollOnFocus(this);" value="${new Date().toLocaleDateString('tr-TR')}" style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border); font-size:12.5px;">
+                        </div>
+                    </div>
+
+                    <!-- Doğru - Yanlış - Boş ve Otomatik Net Hesaplama Matrisi -->
+                    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <table class="koc-exam-matrix-table">
+                            <thead>
+                                <tr>
+                                    <th style="padding:8px 12px; text-align:left;">Ders / Bölüm</th>
+                                    <th style="padding:8px 6px; text-align:center; width:80px;">Doğru (D)</th>
+                                    <th style="padding:8px 6px; text-align:center; width:80px;">Yanlış (Y)</th>
+                                    <th style="padding:8px 6px; text-align:center; width:80px;">Boş (B)</th>
+                                    <th style="padding:8px 12px; text-align:center; width:115px;">Otomatik Net</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- SÖZEL BÖLÜM -->
+                                <!-- 1. Türkçe (20 Soru) -->
+                                <tr class="koc-matrix-row" style="border-bottom:1px solid var(--border);">
+                                    <td class="koc-td-title" style="padding:7px 12px; font-weight:700; color:#ef4444;">
+                                        <span><i class="fas fa-book me-1" style="color:#ef4444;"></i> Türkçe</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(20 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-tr-d" min="0" max="20" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('tr', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-tr-y" min="0" max="20" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('tr', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-tr-b" min="0" max="20" placeholder="20" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBoşChange('tr', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:5px 12px; text-align:center;">
+                                        <input type="number" id="koc-sub-tr-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #ef4444; background:rgba(239,68,68,0.08); font-weight:800; color:#ef4444; font-size:13px;">
+                                    </td>
+                                </tr>
+
+                                <!-- 2. Sosyal Bilgiler / İnkılap Tarihi (10 Soru) -->
+                                <tr class="koc-matrix-row" style="border-bottom:1px solid var(--border);">
+                                    <td class="koc-td-title" style="padding:7px 12px; font-weight:700; color:#f59e0b;">
+                                        <span><i class="${config.sosyalDersIcon} me-1" style="color:#f59e0b;"></i> ${config.sosyalDersAdi}</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-ink-d" min="0" max="10" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-ink-y" min="0" max="10" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-ink-b" min="0" max="10" placeholder="10" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBoşChange('ink', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:5px 12px; text-align:center;">
+                                        <input type="number" id="koc-sub-ink-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #f59e0b; background:rgba(245,158,11,0.08); font-weight:800; color:#d97706; font-size:13px;">
+                                    </td>
+                                </tr>
+
+                                <!-- 3. Din Kültürü (10 Soru) -->
+                                <tr class="koc-matrix-row" style="border-bottom:1px solid var(--border);">
+                                    <td class="koc-td-title" style="padding:7px 12px; font-weight:700; color:#10b981;">
+                                        <span><i class="fas fa-mosque me-1" style="color:#10b981;"></i> Din Kültürü ve A.B.</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-din-d" min="0" max="10" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('din', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-din-y" min="0" max="10" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('din', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-din-b" min="0" max="10" placeholder="10" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBoşChange('din', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:5px 12px; text-align:center;">
+                                        <input type="number" id="koc-sub-din-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #10b981; background:rgba(16,185,129,0.08); font-weight:800; color:#10b981; font-size:13px;">
+                                    </td>
+                                </tr>
+
+                                <!-- 4. İngilizce (10 Soru) -->
+                                <tr class="koc-matrix-row" style="border-bottom:1px solid var(--border);">
+                                    <td class="koc-td-title" style="padding:7px 12px; font-weight:700; color:#8b5cf6;">
+                                        <span><i class="fas fa-globe me-1" style="color:#8b5cf6;"></i> Yabancı Dil (İngilizce)</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(10 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-ing-d" min="0" max="10" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('ing', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-ing-y" min="0" max="10" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBrans('ing', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-sub-ing-b" min="0" max="10" placeholder="10" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcSubBoşChange('ing', 10)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:5px 12px; text-align:center;">
+                                        <input type="number" id="koc-sub-ing-net" step="0.25" placeholder="0.00" readonly style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid #8b5cf6; background:rgba(139,92,246,0.08); font-weight:800; color:#8b5cf6; font-size:13px;">
+                                    </td>
+                                </tr>
+
+                                <!-- SÖZEL BÖLÜM TOPLAMI -->
+                                <tr class="koc-matrix-row koc-matrix-summary-row" style="background:rgba(99,102,241,0.06); border-bottom:2px solid #6366f1;">
+                                    <td class="koc-td-title" style="padding:8px 12px; font-weight:800; color:#4f46e5;">
+                                        <span><i class="fas fa-book-reader me-1" style="color:#6366f1;"></i> SÖZEL BÖLÜM TOPLAMI</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(50 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-den-sozel-d" min="0" max="50" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('sozel', 50)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #6366f1; font-weight:800; color:#10b981; font-size:12.5px; background:var(--card-bg);">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-den-sozel-y" min="0" max="50" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('sozel', 50)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #6366f1; font-weight:800; color:#ef4444; font-size:12.5px; background:var(--card-bg);">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-den-sozel-b" min="0" max="50" placeholder="50" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybBoşChange('sozel', 50)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #6366f1; font-weight:700; color:var(--text-muted); font-size:12.5px; background:var(--card-bg);">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:5px 12px; text-align:center;">
+                                        <input type="number" id="koc-den-sozel" step="0.25" placeholder="0.00" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:2px solid #6366f1; background:rgba(99,102,241,0.12); font-weight:900; color:#4f46e5; font-size:13.5px;">
+                                    </td>
+                                </tr>
+
+                                <!-- Matematik Satırı -->
+                                <tr class="koc-matrix-row" style="border-bottom:1px solid var(--border);">
+                                    <td class="koc-td-title" style="padding:8px 12px; font-weight:700; color:var(--secondary);">
+                                        <span><i class="fas fa-calculator me-1" style="color:var(--secondary);"></i> Matematik</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(20 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:6px; text-align:center;">
+                                        <input type="number" id="koc-den-mat-d" min="0" max="20" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('mat', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:6px; text-align:center;">
+                                        <input type="number" id="koc-den-mat-y" min="0" max="20" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('mat', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:6px; text-align:center;">
+                                        <input type="number" id="koc-den-mat-b" min="0" max="20" placeholder="20" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybBoşChange('mat', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:6px 12px; text-align:center;">
+                                        <input type="number" id="koc-den-mat" step="0.25" placeholder="0.00" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--secondary); background:rgba(59,130,246,0.08); font-weight:800; color:var(--secondary); font-size:13px;">
+                                    </td>
+                                </tr>
+
+                                <!-- Fen Bilimleri Satırı -->
+                                <tr class="koc-matrix-row" style="border-bottom:1px solid var(--border);">
+                                    <td class="koc-td-title" style="padding:8px 12px; font-weight:700; color:var(--teal);">
+                                        <span><i class="fas fa-atom me-1" style="color:var(--teal);"></i> Fen Bilimleri</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:500;">(20 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:6px; text-align:center;">
+                                        <input type="number" id="koc-den-fen-d" min="0" max="20" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('fen', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#10b981; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:6px; text-align:center;">
+                                        <input type="number" id="koc-den-fen-y" min="0" max="20" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('fen', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:700; color:#ef4444; font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:6px; text-align:center;">
+                                        <input type="number" id="koc-den-fen-b" min="0" max="20" placeholder="20" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybBoşChange('fen', 20)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--border); font-weight:600; color:var(--text-muted); font-size:12.5px;">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:6px 12px; text-align:center;">
+                                        <input type="number" id="koc-den-fen" step="0.25" placeholder="0.00" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:1px solid var(--teal); background:rgba(20,184,166,0.08); font-weight:800; color:var(--teal); font-size:13px;">
+                                    </td>
+                                </tr>
+
+                                <!-- SAYISAL BÖLÜM TOPLAMI -->
+                                <tr class="koc-matrix-row koc-matrix-summary-row" style="background:rgba(2,132,199,0.06); border-bottom:2px solid #0284c7;">
+                                    <td class="koc-td-title" style="padding:8px 12px; font-weight:800; color:#0369a1;">
+                                        <span><i class="fas fa-brain me-1" style="color:#0284c7;"></i> SAYISAL BÖLÜM TOPLAMI</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(40 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-den-sayisal-d" min="0" max="40" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('sayisal', 40)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #0284c7; font-weight:800; color:#10b981; font-size:12.5px; background:var(--card-bg);">
+                                    </td>
+                                    <td class="koc-td-y" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-den-sayisal-y" min="0" max="40" placeholder="0" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybNet('sayisal', 40)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #0284c7; font-weight:800; color:#ef4444; font-size:12.5px; background:var(--card-bg);">
+                                    </td>
+                                    <td class="koc-td-b" style="padding:5px; text-align:center;">
+                                        <input type="number" id="koc-den-sayisal-b" min="0" max="40" placeholder="40" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="calcDybBoşChange('sayisal', 40)" style="width:65px; text-align:center; padding:5px; border-radius:6px; border:1px solid #0284c7; font-weight:700; color:var(--text-muted); font-size:12.5px; background:var(--card-bg);">
+                                    </td>
+                                    <td class="koc-td-net" style="padding:5px 12px; text-align:center;">
+                                        <input type="number" id="koc-den-sayisal" step="0.25" placeholder="0.00" onfocus="this.select(); kocAutoScrollOnFocus(this);" oninput="updateAutoToplamNet()" style="width:85px; text-align:center; padding:5px; border-radius:6px; border:2px solid #0284c7; background:rgba(2,132,199,0.12); font-weight:900; color:#0369a1; font-size:13.5px;">
+                                    </td>
+                                </tr>
+
+                                <!-- GENEL TOPLAM Satırı -->
+                                <tr class="koc-matrix-row koc-matrix-total-row" style="background:rgba(16,185,129,0.06); font-weight:800;">
+                                    <td class="koc-td-title" style="padding:10px 12px; color:var(--primary); font-size:12.5px;">
+                                        <span><i class="fas fa-award me-1" style="color:#10b981;"></i> TOPLAM ${config.isLgsFinal ? 'LGS' : config.stageTitle.toUpperCase()}</span>
+                                        <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">(90 Soru)</span>
+                                    </td>
+                                    <td class="koc-td-d" style="padding:8px 6px; text-align:center; color:#10b981; font-size:13px;" id="koc-den-toplam-d">0</td>
+                                    <td class="koc-td-y" style="padding:8px 6px; text-align:center; color:#ef4444; font-size:13px;" id="koc-den-toplam-y">0</td>
+                                    <td class="koc-td-b" style="padding:8px 6px; text-align:center; color:var(--text-muted); font-size:13px;" id="koc-den-toplam-b">90</td>
+                                    <td class="koc-td-net" style="padding:8px 12px; text-align:center;">
+                                        <input type="number" id="koc-den-toplam" readonly style="width:90px; text-align:center; padding:6px; border-radius:6px; border:2px solid #10b981; background:rgba(16,185,129,0.15); font-weight:900; font-size:14.5px; color:#10b981;">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Katlanabilir TDE Metrik Paneli -->
+                    <div id="koc-tde-details-panel" style="display:none; background:var(--card-bg); border:1px dashed var(--secondary); border-radius:8px; padding:14px; margin-bottom:12px;">
+                        <div style="font-size:12px; font-weight:700; color:var(--secondary); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fas fa-stopwatch me-1"></i> ${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru (TDE)'} Parametreleri</span>
+                            <span id="koc-live-tde-badge" style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#f59e0b;">
+                                Hesaplanan TDE: 75/100
+                            </span>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="font-size:11px; font-weight:700;">ÇÖZÜM SIRASI:</label>
+                                <select id="koc-tde-sira" onchange="liveCalculateTdePreview()" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                                    <option value="Fen-Mat" selected>Önce Fen, Sonra Mat (Önerilen)</option>
+                                    <option value="Mat-Fen">Önce Mat, Sonra Fen</option>
+                                    <option value="Karisik">Karışık / Turlamasız</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px; font-weight:700;">FEN 1. TUR SÜRE (DK):</label>
+                                <input type="number" id="koc-tde-fen1" onfocus="this.select(); kocAutoScrollOnFocus(this);" value="${config.isLgsFinal ? 32 : 28}" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= ${config.isLgsFinal ? 32 : 28}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; font-weight:700;">MAT 1. TUR SÜRE (DK):</label>
+                                <input type="number" id="koc-tde-mat1" onfocus="this.select(); kocAutoScrollOnFocus(this);" value="${config.isLgsFinal ? 30 : 25}" oninput="liveCalculateTdePreview()" placeholder="İdeal: &lt;= ${config.isLgsFinal ? 30 : 25}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; font-weight:700;">İNATLAŞILAN SORU (&gt;2 DK):</label>
+                                <input type="number" id="koc-tde-inat" onfocus="this.select(); kocAutoScrollOnFocus(this);" value="0" oninput="liveCalculateTdePreview()" placeholder="İdeal: 0" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; font-weight:700;">FEN 2. TUR NET KAZANCI:</label>
+                                <input type="number" id="koc-tde-fen2" onfocus="this.select(); kocAutoScrollOnFocus(this);" value="2" oninput="liveCalculateTdePreview()" placeholder="İdeal: &gt;= 2" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; font-weight:700;">MAT 2. TUR NET KAZANCI:</label>
+                                <input type="number" id="koc-tde-mat2" onfocus="this.select(); kocAutoScrollOnFocus(this);" value="3" oninput="liveCalculateTdePreview()" placeholder="İdeal: &gt;= 3" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--border);">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="koc-tde-optik" checked onchange="liveCalculateTdePreview()" style="width:16px; height:16px;">
+                            <label for="koc-tde-optik" style="font-size:12px; font-weight:600; cursor:pointer;">
+                                Sınavın son 3 dakikasında sayfa sayfa optik kontrol ve turlama kontrolü uygulandı (+15p)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="saveNewDenemeEntry('${item.id}')" style="padding:8px 20px; font-size:12.5px; font-weight:700; border-radius:6px;">
+                            <i class="fas fa-check me-1"></i> Deneme Sonucunu &amp; TDE Kaydet
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEGMENT 3: DENEME GEÇMİŞİ KÜTÜĞÜ -->
+            <div id="koc-deneme-seg-gecmis" style="${activeSeg === 'gecmis' ? 'display:block;' : 'display:none;'}">
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <thead>
+                            <tr style="background:var(--tab-bg); border-bottom:2px solid var(--border); font-size:11.5px; color:var(--text-muted); text-transform:uppercase;">
+                                <th style="padding:10px;">Deneme Adı</th>
+                                <th style="padding:10px;">Tarih</th>
+                                <th style="padding:10px; text-align:center;">Sözel (50)</th>
+                                <th style="padding:10px; text-align:center;">Mat (20)</th>
+                                <th style="padding:10px; text-align:center;">Fen (20)</th>
+                                <th style="padding:10px; text-align:center;">Toplam Net</th>
+                                <th style="padding:10px; text-align:center;">${config.isLgsFinal ? 'TDE Skoru &amp; Teşhis' : 'Strateji Skoru &amp; Teşhis'}</th>
+                                <th style="padding:10px; text-align:right;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml || '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Henüz deneme kaydı yok. "➕ Yeni Deneme Girişi" sekmesinden ilk denemeyi kaydedebilirsiniz.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+
+                ${denemeler.length === 0 ? `
+                <div style="margin-top:14px; text-align:center;">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="switchDenemeSubSegment('yeni-giris')" style="font-weight:700;">
+                        <i class="fas fa-plus me-1"></i> İlk Deneme Sınavını Gir
+                    </button>
+                </div>` : ''}
             </div>
         `;
     }
@@ -2701,6 +3017,7 @@
             showGlobalToast('Deneme sınavı ve TDE strateji analizi başarıyla kaydedildi.', 'success');
         }
 
+        window.activeDenemeSubSegment = 'gecmis';
         renderSubTabDenemeler(item);
         renderKoclukModule();
     }
@@ -4754,6 +5071,14 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     window.saveNewKoclukStudent = saveNewKoclukStudent;
     window.deleteKoclukStudent = deleteKoclukStudent;
     window.openKoclukDetailModal = openKoclukDetailModal;
+    window.populateKoclukQuickSwitcher = populateKoclukQuickSwitcher;
+    window.navigateKoclukStudent = navigateKoclukStudent;
+    window.switchDenemeSubSegment = switchDenemeSubSegment;
+    window.switchHataSubSegment = switchHataSubSegment;
+    window.toggleKoclukFormsMenu = toggleKoclukFormsMenu;
+    window.toggleKoclukParentMenu = toggleKoclukParentMenu;
+    window.hideKoclukDropdowns = hideKoclukDropdowns;
+    window.kocAutoScrollOnFocus = kocAutoScrollOnFocus;
     window.switchDetailSubTab = switchDetailSubTab;
     window.saveKoclukProfileChanges = saveKoclukProfileChanges;
     window.addHataDefteriEntry = addHataDefteriEntry;
