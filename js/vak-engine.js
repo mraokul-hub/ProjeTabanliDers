@@ -929,7 +929,9 @@ Hiçbir önsöz, açıklama veya markdown bloğu olmadan, doğrudan aşağıdaki
         const recs = details.actionable_recommendations;
 
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-        const formLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(student.sinif || '')}&no=${encodeURIComponent(student.no || '')}&ad=${encodeURIComponent(student.adSoyad || '')}`;
+        const teacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+        const uidParam = teacherUid ? '&uid=' + encodeURIComponent(teacherUid) : '';
+        const formLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(student.sinif || '')}&no=${encodeURIComponent(student.no || '')}&ad=${encodeURIComponent(student.adSoyad || '')}${uidParam}`;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(formLink)}&color=0284c7`;
 
         const printWin = window.open('', '_blank');

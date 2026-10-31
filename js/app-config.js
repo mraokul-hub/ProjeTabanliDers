@@ -552,6 +552,14 @@ window.sanitizeFormula = function(val) {
     return str;
 };
 
+// Çoklu Kiracı / Öğretmen İzolasyonlu Form Açıcı (BOLA/IDOR Önleyici)
+window.openTeacherForm = function(url) {
+    const uid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+    const separator = url.includes('?') ? '&' : '?';
+    const fullUrl = uid ? `${url}${separator}uid=${encodeURIComponent(uid)}` : url;
+    window.open(fullUrl, '_blank');
+};
+
 // ============================================================
 // MOBİL PERFORMANS & EVRENSEL MODAL YÖNETİMİ (UX / ACCELERATION)
 // ============================================================

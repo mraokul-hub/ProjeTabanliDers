@@ -7,6 +7,8 @@
 // Yasaklı karakterler: . # $ / [ ] ve ayrıştırma belirteci %
 function encodeFirebaseKey(key) {
     if (typeof key !== 'string') return String(key || '');
+    // Çift encode (double-encoding) önleme: Yasaklı karakter yoksa tekrar % -> %25 yapma
+    if (!/[\.\#\$\/\[\]]/.test(key)) return key;
     return key
         .replace(/%/g, '%25')
         .replace(/[\.\#\$\/\[\]]/g, match => '%' + match.charCodeAt(0).toString(16).toUpperCase());
@@ -21,7 +23,6 @@ function decodeFirebaseKey(key) {
 window.encodeFirebaseKey = encodeFirebaseKey;
 window.decodeFirebaseKey = decodeFirebaseKey;
 
-// Global referanslar (Diff motoru için son kaydedilen durumlar)
 // Global referanslar (Diff motoru için son kaydedilen durumlar)
 let _lastSavedRefs = {
     students: {},
@@ -1686,7 +1687,17 @@ function listenToStudentForms() {
     if (window._studentFormsRef) {
         try { window._studentFormsRef.off(); } catch (e) {}
     }
-    window._studentFormsRef = window.db.ref('student_forms').orderByKey().limitToLast(100);
+
+    const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
+    const teacherUid = currentUser ? currentUser.uid : window.activeWorkspaceUid;
+    const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+
+    // BOLA/IDOR Koruması: Öğretmen kendi alt dizinini dinler, admin root seviyesini denetleyebilir
+    const formsTargetRef = (teacherUid && !isUserAdmin)
+        ? window.db.ref('student_forms/' + teacherUid).orderByKey().limitToLast(100)
+        : window.db.ref('student_forms').orderByKey().limitToLast(100);
+
+    window._studentFormsRef = formsTargetRef;
     window._studentFormsRef.on('value', (snapshot) => {
         if (!snapshot.exists()) {
             listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz doldurulmuş form bulunmuyor.</div>';
@@ -1694,11 +1705,26 @@ function listenToStudentForms() {
         }
         listContainer.innerHTML = '';
         const formsObj = snapshot.val();
-        const formsArray = Object.keys(formsObj).map(key => ({ id: key, ...formsObj[key] })).reverse();
+        let formsArray = [];
+        if (formsObj) {
+            Object.keys(formsObj).forEach(key => {
+                const val = formsObj[key];
+                if (val && typeof val === 'object') {
+                    if (val.timestamp !== undefined || val.ogrenciNo !== undefined) {
+                        formsArray.push({ id: key, ...val });
+                    } else {
+                        Object.keys(val).forEach(subKey => {
+                            if (val[subKey] && typeof val[subKey] === 'object') {
+                                formsArray.push({ id: subKey, ...val[subKey] });
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        formsArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         // Çoklu Kiracı / Rol İzolasyonu: Sadece öğretmenin kendi öğrencilerine ait formlar listelenir (Admin hariç)
-        const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
-        const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
         const myStudents = Array.isArray(studentData) ? studentData : [];
         const formsToRender = isUserAdmin ? formsArray : formsArray.filter(f => {
             if (!f) return false;
