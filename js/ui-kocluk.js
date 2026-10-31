@@ -1162,8 +1162,9 @@
         }
 
         const targetSubTab = keepSubTab || (modal.style.display === 'flex' && activeDetailSubTab ? activeDetailSubTab : 'tab-koc-profil');
-        switchDetailSubTab(targetSubTab);
         modal.style.display = 'flex';
+        if (typeof window.lockBodyScroll === 'function') window.lockBodyScroll();
+        switchDetailSubTab(targetSubTab);
     }
 
     function switchDetailSubTab(tabId) {
@@ -5058,6 +5059,7 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) modal.style.display = 'none';
+        if (typeof window.unlockBodyScroll === 'function') window.unlockBodyScroll();
     }
 
     // ─────────────────────────────────────────────────────────────

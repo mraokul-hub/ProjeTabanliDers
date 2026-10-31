@@ -849,7 +849,7 @@
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'ileri-grup-liste-modal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;';
             modal.innerHTML = `
                 <div style="background:var(--card-bg, #ffffff);border-radius:16px;border:1px solid var(--border, #e2e8f0);width:100%;max-width:960px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);overflow:hidden;">
                     <!-- Başlık Çubuğu -->

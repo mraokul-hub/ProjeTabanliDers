@@ -749,11 +749,13 @@
 
         renderChecklistModalTable();
         modal.style.display = 'block';
+        if (typeof window.lockBodyScroll === 'function') window.lockBodyScroll();
     }
 
     function closeChecklistModal() {
         const modal = document.getElementById('checklist-eval-modal');
         if (modal) modal.style.display = 'none';
+        if (typeof window.unlockBodyScroll === 'function') window.unlockBodyScroll();
         _activeModalChecklistId = null;
         window._activeModalChecklistId = null;
         renderChecklistList();

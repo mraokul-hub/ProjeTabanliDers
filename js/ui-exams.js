@@ -1968,6 +1968,7 @@
         function closeEvaluation() {
             const modal = document.getElementById('evaluation-modal');
             if (modal) modal.style.display = 'none';
+            if (typeof window.unlockBodyScroll === 'function') window.unlockBodyScroll();
             activeTrackingId = null;
             activeExamId = null;
             const finishBtn = document.getElementById('finish-evaluation-btn');
@@ -1989,6 +1990,16 @@
             const masterList = Array.isArray(window.studentData) ? window.studentData : [];
             const studentMap = new Map();
 
+            // Performans Optimizasyonu: O(N*M) yerine O(1) indeksli Map eşleştirmesi
+            const masterByNo = new Map();
+            const masterByName = new Map();
+            masterList.forEach(st => {
+                const sNo = String(st.no || '').trim();
+                const sName = String(st.adSoyad || '').trim().toLocaleLowerCase('tr-TR');
+                if (sNo && sNo !== '0' && sNo !== '-') masterByNo.set(sNo, st);
+                if (sName) masterByName.set(sName, st);
+            });
+
             // Sınav sonuçlarındaki tüm öğrencileri topla ve studentData ile eşleştir
             if (exam.results && typeof exam.results === 'object') {
                 Object.keys(exam.results).forEach(sName => {
@@ -1999,11 +2010,11 @@
                     // 1. Numara doğruysa masterList'ten eşleştir
                     let matchedSt = null;
                     if (rawNo && rawNo !== '0' && rawNo !== '-') {
-                        matchedSt = masterList.find(st => String(st.no || '').trim() === rawNo);
+                        matchedSt = masterByNo.get(rawNo);
                     }
                     // 2. Numara ile bulunamadıysa isim ile eşleştir
                     if (!matchedSt && cleanName) {
-                        matchedSt = masterList.find(st => String(st.adSoyad || '').trim().toLocaleLowerCase('tr-TR') === cleanName);
+                        matchedSt = masterByName.get(cleanName);
                     }
 
                     // Numara doğruysa sınıfı otomatik getir, yoksa mevcut sınıfı koru
@@ -2530,6 +2541,14 @@
             const body = document.getElementById('eval-body'); 
             body.innerHTML = '';
 
+            // Koçluk öğrencileri Set önbelleği (Performans: O(1) lookup)
+            const lgsKocNos = new Set((window.koclukData || []).map(k => String(k.studentNo || '').trim()));
+            const lgsKocNames = new Set((window.koclukData || []).map(k => (k.adSoyad || '').toLocaleLowerCase('tr-TR').trim()));
+            const yksKocNos = new Set((window.yksKoclukData || []).map(k => String(k.studentNo || '').trim()));
+            const yksKocNames = new Set((window.yksKoclukData || []).map(k => (k.adSoyad || '').toLocaleLowerCase('tr-TR').trim()));
+
+            const evalFrag = document.createDocumentFragment();
+
             allStudents.forEach(s => {
                 const res = exam.results[s.adSoyad] || { Turkce: '', Matematik: '', Sosyal: '', Fen: '', DinKulturu: '', Ingilizce: '', totalNet: '', rank: '' };
                 const safeName = escapeFn(s.adSoyad);
@@ -2539,10 +2558,12 @@
                 const jsSafeName = (s.adSoyad || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 const safeTotalId = 'total-' + encodeURIComponent(s.adSoyad || '').replace(/%/g, '_');
 
-                // Koçluk durumu rozeti
+                // Koçluk durumu rozeti (O(1) Set kontrolü)
                 let koclukBadge = '';
-                const isLgsKoc = (window.koclukData || []).some(k => String(k.studentNo) === String(s.no) || (s.adSoyad && k.adSoyad.toLocaleLowerCase('tr-TR').trim() === s.adSoyad.toLocaleLowerCase('tr-TR').trim()));
-                const isYksKoc = (window.yksKoclukData || []).some(k => String(k.studentNo) === String(s.no) || (s.adSoyad && k.adSoyad.toLocaleLowerCase('tr-TR').trim() === s.adSoyad.toLocaleLowerCase('tr-TR').trim()));
+                const sCleanName = (s.adSoyad || '').toLocaleLowerCase('tr-TR').trim();
+                const sCleanNo = String(s.no || '').trim();
+                const isLgsKoc = (sCleanNo && lgsKocNos.has(sCleanNo)) || (sCleanName && lgsKocNames.has(sCleanName));
+                const isYksKoc = (sCleanNo && yksKocNos.has(sCleanNo)) || (sCleanName && yksKocNames.has(sCleanName));
                 if (isLgsKoc) {
                     koclukBadge = `<span style="background:rgba(99,102,241,0.12); color:#6366f1; border:1px solid rgba(99,102,241,0.3); font-size:10px; font-weight:800; padding:1px 5px; border-radius:4px; margin-left:6px;" title="13. LGS Bilişsel Koçluk Takibinde (Girişler koçluğa anında yansır)"><i class="fas fa-brain me-1"></i>LGS Koçluk</span>`;
                 } else if (isYksKoc) {
@@ -2727,10 +2748,12 @@
                         </td>
                     `;
                 }
-                body.appendChild(tr);
+                evalFrag.appendChild(tr);
             });
+            body.appendChild(evalFrag);
             updateExamSelectedCount();
             document.getElementById('evaluation-modal').style.display = 'block';
+            if (typeof window.lockBodyScroll === 'function') window.lockBodyScroll();
         }
 
         function toggleAllExamStudentCheckboxes(masterCb) {

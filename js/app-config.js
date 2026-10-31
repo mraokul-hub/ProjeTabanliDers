@@ -552,5 +552,164 @@ window.sanitizeFormula = function(val) {
     return str;
 };
 
+// ============================================================
+// MOBİL PERFORMANS & EVRENSEL MODAL YÖNETİMİ (UX / ACCELERATION)
+// ============================================================
+
+let _openModalsCount = 0;
+let _scrollLockPosY = 0;
+let _isScrollLocked = false;
+
+window.lockBodyScroll = function() {
+    if (!_isScrollLocked) {
+        _scrollLockPosY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+        document.body.classList.add('modal-open');
+        document.body.style.top = `-${_scrollLockPosY}px`;
+        _isScrollLocked = true;
+    }
+    _openModalsCount++;
+};
+
+window.unlockBodyScroll = function(forceAll = false) {
+    if (forceAll) {
+        _openModalsCount = 0;
+    } else {
+        _openModalsCount = Math.max(0, _openModalsCount - 1);
+    }
+    if (_openModalsCount === 0 && _isScrollLocked) {
+        document.body.classList.remove('modal-open');
+        const scrollY = Math.abs(parseInt(document.body.style.top || '0', 10)) || _scrollLockPosY;
+        document.body.style.top = '';
+        window.scrollTo(0, scrollY);
+        _isScrollLocked = false;
+    }
+};
+
+window.syncModalScrollLock = function() {
+    // Görünür herhangi bir modal var mı kontrol et
+    const visibleModal = document.querySelector(`
+        .modal[style*="display: flex"], .modal[style*="display: block"],
+        .pg-modal-overlay[style*="display: block"], .pg-modal-overlay[style*="display: flex"],
+        [id$="-modal"][style*="display: block"], [id$="-modal"][style*="display: flex"],
+        [id*="modal-"][style*="display: block"], [id*="modal-"][style*="display: flex"],
+        #evaluation-modal[style*="display: block"], #checklist-eval-modal[style*="display: block"],
+        #checklist-criteria-modal[style*="display: block"], #chart-modal[style*="display: block"],
+        #xp-modal[style*="display: block"], #rubric-modal[style*="display: block"],
+        #observation-modal[style*="display: block"], #group-eval-modal[style*="display: block"],
+        #cbl-report-modal[style*="display: block"], #soru-takip-scanner-modal[style*="display: flex"],
+        #kume-ocr-modal[style*="display: flex"]
+    `);
+
+    if (visibleModal) {
+        if (!_isScrollLocked) {
+            _scrollLockPosY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+            document.body.classList.add('modal-open');
+            document.body.style.top = `-${_scrollLockPosY}px`;
+            _isScrollLocked = true;
+        }
+    } else {
+        if (_isScrollLocked) {
+            document.body.classList.remove('modal-open');
+            const scrollY = Math.abs(parseInt(document.body.style.top || '0', 10)) || _scrollLockPosY;
+            document.body.style.top = '';
+            window.scrollTo(0, scrollY);
+            _isScrollLocked = false;
+            _openModalsCount = 0;
+        }
+    }
+};
+
+// Evrensel Modal Açma / Kapatma
+window.openModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    requestAnimationFrame(() => {
+        modal.style.display = 'flex';
+        window.lockBodyScroll();
+    });
+};
+
+window.closeModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    window.unlockBodyScroll();
+    window.syncModalScrollLock();
+};
+
+// Sayfa yüklendiğinde ESC tuşu, backdrop tıklaması ve MutationObserver dinleyicilerini başlat
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. ESC Tuşu ile Modal Kapatma
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            let closedAny = false;
+            const openModals = document.querySelectorAll(`
+                .modal, .pg-modal-overlay, [id$="-modal"], [id*="modal-"],
+                #evaluation-modal, #checklist-eval-modal, #checklist-criteria-modal,
+                #chart-modal, #xp-modal, #rubric-modal, #observation-modal, #group-eval-modal,
+                #cbl-report-modal, #soru-takip-scanner-modal, #kume-ocr-modal
+            `);
+            openModals.forEach(m => {
+                if (m.style.display && m.style.display !== 'none') {
+                    m.style.display = 'none';
+                    closedAny = true;
+                }
+            });
+            if (closedAny) {
+                window.unlockBodyScroll(true);
+            }
+        }
+    });
+
+    // 2. Backdrop (Koyu Arka Plan) Tıklaması ile Kapatma
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const isBackdrop = target.classList.contains('modal') ||
+                           target.classList.contains('pg-modal-overlay') ||
+                           (target.id && (target.id.endsWith('-modal') || target.id.startsWith('modal-'))) ||
+                           target.id === 'evaluation-modal' ||
+                           target.id === 'checklist-eval-modal' ||
+                           target.id === 'chart-modal' ||
+                           target.id === 'xp-modal' ||
+                           target.id === 'rubric-modal' ||
+                           target.id === 'observation-modal' ||
+                           target.id === 'group-eval-modal' ||
+                           target.id === 'cbl-report-modal' ||
+                           target.id === 'soru-takip-scanner-modal' ||
+                           target.id === 'kume-ocr-modal';
+
+        if (isBackdrop && target.style.display !== 'none' && target.style.display !== '') {
+            target.style.display = 'none';
+            window.syncModalScrollLock();
+        }
+    });
+
+    // 3. MutationObserver: Sayfa genelinde herhangi bir modal display değiştiğinde scroll lock senkronizasyonu
+    try {
+        const modalObserver = new MutationObserver(function(mutations) {
+            for (let mutation of mutations) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    window.syncModalScrollLock();
+                    break;
+                }
+            }
+        });
+
+        const allModals = document.querySelectorAll(`
+            .modal, .pg-modal-overlay, [id$="-modal"], [id*="modal-"],
+            #evaluation-modal, #checklist-eval-modal, #checklist-criteria-modal,
+            #chart-modal, #xp-modal, #rubric-modal, #observation-modal, #group-eval-modal,
+            #cbl-report-modal, #soru-takip-scanner-modal, #kume-ocr-modal
+        `);
+        allModals.forEach(m => {
+            modalObserver.observe(m, { attributes: true, attributeFilter: ['style', 'class'] });
+        });
+    } catch (e) {
+        console.warn("[ModalObserver] Desteklenmiyor veya hata:", e);
+    }
+});
+
 
 

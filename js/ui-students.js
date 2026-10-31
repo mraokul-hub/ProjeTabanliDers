@@ -159,12 +159,14 @@ function generateGroups() {
         if (aNo !== bNo) return aNo - bNo;
         return (a.adSoyad || '').localeCompare(b.adSoyad || '', 'tr-TR');
     }));
-    const container = document.getElementById('groups-container'); container.innerHTML = '';
+    const container = document.getElementById('groups-container');
+    if (container) container.innerHTML = '';
 
     // Önceki sınıftan kalan rastgele grupları database'den siliyoruz ki yenisi yazılsın
     const safeClass = selectedClass.replace(/\//g, '_');
     if (typeof groupData === 'object') groupData[safeClass] = [];
 
+    let allGroupsHtml = '';
     groups.forEach((group, index) => {
         let html = `<div class="group-card"><h3><input type="text" class="group-title-input" value="Küme ${index + 1}" oninput="this.setAttribute('value', this.value); saveData()"><button class="action-btn btn-delete" onclick="if(confirm('Kümeyi silmek istiyor musunuz?')){this.closest('.group-card').remove(); updateStudentPickers(); saveData();}" title="Küme Sil"><i class="fas fa-times"></i></button></h3><ul style="padding:0;list-style:none;">`;
         group.forEach(m => {
@@ -178,8 +180,9 @@ function generateGroups() {
                     <div style="display:flex; gap:8px; align-items:center;"><select class="role-select" onchange="this.querySelectorAll('option').forEach(o => o.value === this.value ? o.setAttribute('selected', 'selected') : o.removeAttribute('selected')); updateRoleColor(this); saveData()"><option value="">Görev...</option><option value="Proje Koordinatörü">Proje Koordinatörü</option><option value="Veri Analisti">Veri Analisti</option><option value="Ar-Ge Sorumlusu">Ar-Ge Sorumlusu</option><option value="Halkla İlişkiler">Halkla İlişkiler</option><option value="Üye">Üye</option></select>
                         <button class="btn-remove-student" onclick="if(confirm('Öğrenciyi kümeden silmek istiyor musunuz?')){this.closest('li').remove(); updateStudentPickers(); saveData();}"><i class="fas fa-user-minus"></i></button></div></li>`;
         });
-        container.innerHTML += html + `</ul><div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div></div></div>`;
+        allGroupsHtml += html + `</ul><div class="group-footer"><button class="btn btn-purple" style="font-size:11px; padding:8px;" onclick="openGroupEvalModal(this)"><i class="fas fa-users-cog"></i> Grubu Değerlendir</button><div style="display:flex; gap:5px; align-items:flex-end;"><div class="student-multi-picker"><button type="button" class="picker-toggle" onclick="toggleStudentPicker(this)"><span class="picker-label">Öğrenci seç...</span><i class="fas fa-chevron-down picker-arrow"></i></button><div class="picker-dropdown" style="display:none;"><input type="text" class="picker-search-input" placeholder="Ara..." oninput="filterPickerItems(this)"><label class="picker-item picker-select-all"><input type="checkbox" class="picker-cb-all" onchange="toggleAllPickerItems(this)"> Tümünü Seç</label></div></div><button class="btn" onclick="addStudentToGroupUI(this)" style="padding:10px 15px; font-size:12px; white-space:nowrap;"><i class="fas fa-plus"></i> Ekle</button></div></div></div>`;
     });
+    if (container) container.innerHTML = allGroupsHtml;
     updateStudentPickers(); saveData();
 }
 

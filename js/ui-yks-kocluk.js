@@ -1343,9 +1343,12 @@
         const modal = document.getElementById('yks-kocluk-detail-modal');
         const targetSubTab = keepSubTab || (modal && modal.style.display === 'flex' && activeYksDetailSubTab ? activeYksDetailSubTab : 'tab-yks-profil');
 
-        switchYksDetailSubTab(targetSubTab);
+        if (modal) {
+            modal.style.display = 'flex';
+            if (typeof window.lockBodyScroll === 'function') window.lockBodyScroll();
+        }
 
-        if (modal) modal.style.display = 'flex';
+        switchYksDetailSubTab(targetSubTab);
     }
 
     function switchYksDetailSubTab(subTabId) {

@@ -163,6 +163,8 @@ function renderStudentTable(dataToRender = null) {
     const tbody = document.getElementById('student-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
+    
+    const fragment = document.createDocumentFragment();
     dataToRender.forEach((student) => {
         const realIndex = studentData.indexOf(student);
 
@@ -216,8 +218,9 @@ function renderStudentTable(dataToRender = null) {
                     </div>
                 </td>
             `;
-        tbody.appendChild(tr);
+        fragment.appendChild(tr);
     });
+    tbody.appendChild(fragment);
     const selectAllEl = document.getElementById('select-all');
     if (selectAllEl) selectAllEl.checked = false;
     updateClassDropdown();
@@ -236,14 +239,16 @@ function updateClassDropdown() {
     if (classFilter) {
         if (classes.length === 0) classFilter.innerHTML = '<option value="">Önce sisteme öğrenci yükleyin...</option>';
         else {
-            classFilter.innerHTML = '<option value="">-- Sınıf Seçiniz --</option>';
-            classes.forEach(c => classFilter.innerHTML += `<option value="${c}">${c}</option>`);
+            const escapeFn = (typeof escapeHTML === 'function') ? escapeHTML : s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const opts = classes.map(c => `<option value="${escapeFn(c)}">${escapeFn(c)}</option>`).join('');
+            classFilter.innerHTML = '<option value="">-- Sınıf Seçiniz --</option>' + opts;
             if (classes.includes(currentVal)) classFilter.value = currentVal;
         }
     }
     if (classViewFilter) {
-        classViewFilter.innerHTML = '<option value="">Tüm Sınıflar</option>';
-        classes.forEach(c => classViewFilter.innerHTML += `<option value="${c}">${c}</option>`);
+        const escapeFn = (typeof escapeHTML === 'function') ? escapeHTML : s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const opts = classes.map(c => `<option value="${escapeFn(c)}">${escapeFn(c)}</option>`).join('');
+        classViewFilter.innerHTML = '<option value="">Tüm Sınıflar</option>' + opts;
         if (classes.includes(currentViewVal)) classViewFilter.value = currentViewVal;
     }
 
