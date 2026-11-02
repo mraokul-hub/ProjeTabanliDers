@@ -7,8 +7,6 @@
 // Yasaklı karakterler: . # $ / [ ] ve ayrıştırma belirteci %
 function encodeFirebaseKey(key) {
     if (typeof key !== 'string') return String(key || '');
-    // Çift encode (double-encoding) önleme: Yasaklı karakter yoksa tekrar % -> %25 yapma
-    if (!/[\.\#\$\/\[\]]/.test(key)) return key;
     return key
         .replace(/%/g, '%25')
         .replace(/[\.\#\$\/\[\]]/g, match => '%' + match.charCodeAt(0).toString(16).toUpperCase());
@@ -23,6 +21,7 @@ function decodeFirebaseKey(key) {
 window.encodeFirebaseKey = encodeFirebaseKey;
 window.decodeFirebaseKey = decodeFirebaseKey;
 
+// Global referanslar (Diff motoru için son kaydedilen durumlar)
 // Global referanslar (Diff motoru için son kaydedilen durumlar)
 let _lastSavedRefs = {
     students: {},
@@ -136,7 +135,11 @@ function showGlobalToast(message, type = 'success') {
     const toast = document.createElement('div');
     const bg = type === 'success' ? '#10b981' : (type === 'warning' ? '#f59e0b' : (type === 'error' ? '#ef4444' : '#3b82f6'));
     toast.style = `pointer-events:auto; background:${bg}; color:#ffffff; padding:10px 18px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 10px 25px -5px rgba(0,0,0,0.3); display:flex; align-items:center; gap:8px; opacity:0; transform:translateX(30px); transition:all 0.3s cubic-bezier(0.4,0,0.2,1);`;
-    toast.innerHTML = message;
+    // Güvenlik (CWE-79 DOM XSS Önleme): Zararlı script veya event handler enjeksiyonlarını arındır
+    const safeContent = (typeof message === 'string') 
+        ? message.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/\son\w+=["'][^"']*["']/gi, '').replace(/\son\w+=\S+/gi, '')
+        : String(message || '');
+    toast.innerHTML = safeContent;
     container.appendChild(toast);
     setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
     setTimeout(() => {
@@ -1687,17 +1690,11 @@ function listenToStudentForms() {
     if (window._studentFormsRef) {
         try { window._studentFormsRef.off(); } catch (e) {}
     }
-
-    const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
-    const teacherUid = currentUser ? currentUser.uid : window.activeWorkspaceUid;
-    const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
-
-    // BOLA/IDOR Koruması: Öğretmen kendi alt dizinini dinler, admin root seviyesini denetleyebilir
-    const formsTargetRef = (teacherUid && !isUserAdmin)
-        ? window.db.ref('student_forms/' + teacherUid).orderByKey().limitToLast(100)
-        : window.db.ref('student_forms').orderByKey().limitToLast(100);
-
-    window._studentFormsRef = formsTargetRef;
+    const currentUserForForms = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
+    const isUserAdminForForms = (currentUserForForms && currentUserForForms.email && currentUserForForms.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+    const targetUidForForms = window.activeWorkspaceUid || (!isUserAdminForForms ? currentUserForForms?.uid : null);
+    const formsPath = targetUidForForms ? ('student_forms/' + targetUidForForms) : 'student_forms/_legacy';
+    window._studentFormsRef = window.db.ref(formsPath).orderByKey().limitToLast(100);
     window._studentFormsRef.on('value', (snapshot) => {
         if (!snapshot.exists()) {
             listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Henüz doldurulmuş form bulunmuyor.</div>';
@@ -1705,26 +1702,11 @@ function listenToStudentForms() {
         }
         listContainer.innerHTML = '';
         const formsObj = snapshot.val();
-        let formsArray = [];
-        if (formsObj) {
-            Object.keys(formsObj).forEach(key => {
-                const val = formsObj[key];
-                if (val && typeof val === 'object') {
-                    if (val.timestamp !== undefined || val.ogrenciNo !== undefined) {
-                        formsArray.push({ id: key, ...val });
-                    } else {
-                        Object.keys(val).forEach(subKey => {
-                            if (val[subKey] && typeof val[subKey] === 'object') {
-                                formsArray.push({ id: subKey, ...val[subKey] });
-                            }
-                        });
-                    }
-                }
-            });
-        }
-        formsArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const formsArray = Object.keys(formsObj).map(key => ({ id: key, ...formsObj[key] })).reverse();
 
         // Çoklu Kiracı / Rol İzolasyonu: Sadece öğretmenin kendi öğrencilerine ait formlar listelenir (Admin hariç)
+        const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
+        const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
         const myStudents = Array.isArray(studentData) ? studentData : [];
         const formsToRender = isUserAdmin ? formsArray : formsArray.filter(f => {
             if (!f) return false;
@@ -1752,7 +1734,21 @@ function listenToStudentForms() {
 
         const fragment = document.createDocumentFragment();
         formsToRender.forEach(data => {
-            const typeText = data.type === 'BEFORE' ? '<span style="color:var(--yellow); font-weight:bold;"><i class="fas fa-home"></i> Dersten Önce</span>' : '<span style="color:#8b5cf6; font-weight:bold;"><i class="fas fa-graduation-cap"></i> Dersten Sonra</span>';
+            let typeText = '';
+            let borderStyle = '';
+            if (data.type === 'LGS_BEFORE') {
+                typeText = '<span style="color:#ea580c; font-weight:bold;"><i class="fas fa-bullseye"></i> 🎯 LGS Seans Öncesi</span>';
+                borderStyle = '4px solid #ea580c';
+            } else if (data.type === 'LGS_AFTER') {
+                typeText = '<span style="color:#059669; font-weight:bold;"><i class="fas fa-clipboard-check"></i> 🏁 LGS Seans Sonu</span>';
+                borderStyle = '4px solid #059669';
+            } else if (data.type === 'BEFORE') {
+                typeText = '<span style="color:var(--yellow); font-weight:bold;"><i class="fas fa-home"></i> Dersten Önce</span>';
+                borderStyle = '4px solid var(--yellow)';
+            } else {
+                typeText = '<span style="color:#8b5cf6; font-weight:bold;"><i class="fas fa-graduation-cap"></i> Dersten Sonra</span>';
+                borderStyle = '4px solid #8b5cf6';
+            }
 
             if (data.type === 'BEFORE' && data.formResponse) {
                 let vakAnswers = [];
@@ -1800,7 +1796,37 @@ function listenToStudentForms() {
             }
 
             let answersHTML = '';
-            if (data.formResponse) {
+            if (data.type === 'LGS_BEFORE') {
+                const focusStars = '⭐'.repeat(Math.min(5, Math.max(1, Number(data.focusScore) || 3)));
+                answersHTML = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-top:8px;">
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Branş:</strong> ${escapeHTML(data.brans || '-')}</div>
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Odaklanma:</strong> ${focusStars} (${escapeHTML(data.focusScore || '-')}/5)</div>
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Hedef Soru:</strong> <span style="font-weight:bold; color:#ea580c;">${escapeHTML(data.targetQuestions || '-')}</span></div>
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>120 sn Kuralı:</strong> ${data.kural120Kabul ? '<span style="color:#10b981; font-weight:bold;">✅ Kabul</span>' : '<span style="color:#ef4444;">❌</span>'}</div>
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Öz-Yeterlik:</strong> ${escapeHTML(data.selfEfficacy || '-')}/5</div>
+                </div>
+                ${data.ogrenciNot ? `<div style="margin-top:8px; font-size:12px; background:rgba(234,88,12,0.06); padding:8px; border-radius:6px; border-left:3px solid #ea580c;"><strong>Öğrenci Notu:</strong> ${escapeHTML(data.ogrenciNot)}</div>` : ''}
+                `;
+            } else if (data.type === 'LGS_AFTER') {
+                let causesHtml = '';
+                if (Array.isArray(data.rootCauses) && data.rootCauses.length > 0) {
+                    causesHtml = data.rootCauses.map(rc => `<span style="display:inline-block; font-size:11px; font-weight:700; background:rgba(239,68,68,0.12); color:#dc2626; padding:2px 8px; border-radius:12px; margin-right:4px; margin-top:2px;">${escapeHTML(rc)}</span>`).join('');
+                }
+                answersHTML = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin-top:8px;">
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Branş:</strong> ${escapeHTML(data.brans || '-')}</div>
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Soru:</strong> ${escapeHTML(data.totalQuestions || '0')} (D:${escapeHTML(data.dogru || 0)} Y:${escapeHTML(data.yanlis || 0)} B:${escapeHTML(data.bos || 0)})</div>
+                    <div style="background:rgba(5,150,105,0.08); padding:6px 10px; border-radius:6px; font-size:12px; border:1px solid rgba(5,150,105,0.2);"><strong>Net:</strong> <span style="font-weight:800; font-size:14px; color:#059669;">${escapeHTML(data.net || '0')}</span></div>
+                    <div style="background:var(--bg); padding:6px 10px; border-radius:6px; font-size:12px;"><strong>Süre:</strong> ${escapeHTML(data.durationMin || '0')} dk</div>
+                    <div style="background:rgba(59,130,246,0.08); padding:6px 10px; border-radius:6px; font-size:12px; border:1px solid rgba(59,130,246,0.2);"><strong>Hız:</strong> <span style="font-weight:700; color:#2563eb;">${escapeHTML(data.secPerQuestion || '-')} sn/soru</span></div>
+                </div>
+                ${causesHtml ? `<div style="margin-top:8px;"><strong>Hata Teşhisi:</strong> ${causesHtml}</div>` : ''}
+                ${data.eksikKazanim ? `<div style="margin-top:8px; background:rgba(239,68,68,0.1); padding:10px; border-radius:6px; border-left:4px solid var(--red); font-size:13px; color:var(--text-main);"><strong style="color:var(--red);"><i class="fas fa-exclamation-triangle"></i> Eksik Kazanım (Ev Ödevi):</strong><br>${escapeHTML(data.eksikKazanim)}</div>` : ''}
+                ${data.hataDefteriZamani ? `<div style="margin-top:6px; font-size:11.5px; color:var(--text-muted);"><i class="fas fa-book-open text-primary me-1"></i> Hata Defteri Planı: <strong>${escapeHTML(data.hataDefteriZamani)}</strong></div>` : ''}
+                ${data.ogrenciNot ? `<div style="margin-top:6px; font-size:12px; background:var(--bg); padding:6px 10px; border-radius:4px;"><strong>Not:</strong> ${escapeHTML(data.ogrenciNot)}</div>` : ''}
+                `;
+            } else if (data.formResponse) {
                 for (const [key, val] of Object.entries(data.formResponse)) {
                     const safeKey = escapeHTML(key);
                     const safeVal = escapeHTML(val);
@@ -1821,7 +1847,7 @@ function listenToStudentForms() {
 
             const div = document.createElement('div');
             div.className = 'group-card';
-            div.style.borderLeft = data.type === 'BEFORE' ? '4px solid var(--yellow)' : '4px solid #8b5cf6';
+            div.style.borderLeft = borderStyle;
             div.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
                 <div>

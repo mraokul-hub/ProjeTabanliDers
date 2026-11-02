@@ -4297,9 +4297,9 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                                     </select>
                                 </div>
                             </div>
-                            <div
-                                style="position:relative; margin-top:12px; background:var(--input-bg); border-radius:10px; padding:10px;">
-                                <canvas id="progressChart" style="max-height:320px;"></canvas>
+                            <div id="chart-canvas-container"
+                                style="position:relative; margin-top:12px; background:var(--input-bg); border-radius:10px; padding:15px 10px 25px 10px; height:380px; min-height:350px; width:100%; box-sizing:border-box;">
+                                <canvas id="progressChart" style="width:100%; height:100%; touch-action:manipulation;"></canvas>
                             </div>
                             <div id="chart-stats" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
                             </div>
@@ -4333,7 +4333,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             style="background: var(--input-bg); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 10px; word-break: break-all; border: 1px solid var(--border);">
                             dersten_once_formu.html
                         </div>
-                        <a href="dersten_once_formu.html" onclick="event.preventDefault(); window.openTeacherForm('dersten_once_formu.html');" target="_blank" class="btn"
+                        <a href="dersten_once_formu.html" target="_blank" class="btn"
                             style="background: var(--yellow); color: black; display: block; text-align: center; text-decoration: none;"><i
                                 class="fas fa-external-link-alt"></i> Formu Aç</a>
                     </div>
@@ -4347,7 +4347,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             style="background: var(--input-bg); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 10px; word-break: break-all; border: 1px solid var(--border);">
                             dersten_sonra_formu.html
                         </div>
-                        <a href="dersten_sonra_formu.html" onclick="event.preventDefault(); window.openTeacherForm('dersten_sonra_formu.html');" target="_blank" class="btn"
+                        <a href="dersten_sonra_formu.html" target="_blank" class="btn"
                             style="background: #8b5cf6; display: block; text-align: center; text-decoration: none;"><i
                                 class="fas fa-external-link-alt"></i> Formu Aç</a>
                     </div>
@@ -4375,10 +4375,40 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                                 style="flex:1; background:#0284c7; color:#fff; font-weight:700; font-size:12px; padding:9px; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
                                 <i class="fas fa-laptop-code"></i> Dijital Giriş Yap
                             </button>
-                            <a href="vak_formu.html" onclick="event.preventDefault(); window.openTeacherForm('vak_formu.html');" target="_blank" class="btn btn-clear"
+                            <a href="vak_formu.html" target="_blank" class="btn btn-clear"
                                 style="padding:9px 12px; font-size:12px; text-decoration:none; display:flex; align-items:center; gap:5px;"
                                 title="Öğrenci Bağımsız Web Formu">
                                 <i class="fas fa-external-link-alt"></i> Form
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- LGS Bilişsel Koçluk Formları (Özel Bölüm) -->
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed rgba(249, 115, 22, 0.4);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                            <h4 style="color: #ea580c; margin:0; font-size:13.5px;"><i class="fas fa-bullseye"></i> LGS Üstbilişsel Koçluk Formları</h4>
+                            <span style="font-size:10px; background:rgba(249,115,22,0.15); color:#ea580c; padding:2px 8px; border-radius:10px; font-weight:800;">8. Sınıf LGS Özel</span>
+                        </div>
+                        
+                        <div class="form-box" style="border-left: 5px solid #f97316; margin-bottom: 12px; background: rgba(249,115,22,0.02);">
+                            <h5 style="color: #ea580c; margin: 0 0 5px 0; font-size: 13px;"><i class="fas fa-play-circle"></i> LGS Seans Öncesi Hazırlık ve Hedef Sözleşmesi</h5>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Odaklanma düzeyi (1-5), seans hedef soru sayısı, 120 sn kural taahhüdü ve öz-yeterlik bildirimi.</p>
+                            <div style="background: var(--input-bg); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 11px; margin-bottom: 8px; border: 1px solid var(--border);">
+                                lgs_seans_oncesi_formu.html
+                            </div>
+                            <a href="lgs_seans_oncesi_formu.html" target="_blank" class="btn" style="background: #f97316; color: white; display: block; text-align: center; text-decoration: none; padding: 7px 12px; font-size: 12px; font-weight: 600;">
+                                <i class="fas fa-external-link-alt"></i> Seans Öncesi Formunu Aç
+                            </a>
+                        </div>
+
+                        <div class="form-box" style="border-left: 5px solid #059669; margin-bottom: 12px; background: rgba(5,150,105,0.02);">
+                            <h5 style="color: #059669; margin: 0 0 5px 0; font-size: 13px;"><i class="fas fa-clipboard-check"></i> LGS Seans Sonu Çıkış Bileti ve Hata Teşhisi</h5>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Çözülen soru, D/Y/B, Net ve soru başına sn hesaplama, 4 kök hata teşhisi (KOD 1-4) ve eksik kazanım bildirimi.</p>
+                            <div style="background: var(--input-bg); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 11px; margin-bottom: 8px; border: 1px solid var(--border);">
+                                lgs_seans_sonrasi_formu.html
+                            </div>
+                            <a href="lgs_seans_sonrasi_formu.html" target="_blank" class="btn" style="background: #059669; color: white; display: block; text-align: center; text-decoration: none; padding: 7px 12px; font-size: 12px; font-weight: 600;">
+                                <i class="fas fa-external-link-alt"></i> Seans Sonu Formunu Aç
                             </a>
                         </div>
                     </div>
@@ -5612,13 +5642,220 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             başlıklardan sistemin tüm modüllerinde neyi, nasıl yapacağınızı adım adım öğrenebilirsiniz.
         </p>
 
+        
+        <style>
+            #tab10 {
+                scroll-behavior: smooth;
+                position: relative;
+            }
+            .guide-quick-nav-wrapper {
+                position: sticky;
+                top: 10px;
+                z-index: 45;
+                background: var(--card-bg, #ffffff);
+                padding: 10px 8px;
+                margin-bottom: 20px;
+                border-radius: 12px;
+                border: 1px solid var(--border-color, rgba(0,0,0,0.08));
+                box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+                backdrop-filter: blur(8px);
+            }
+            .guide-quick-nav-title {
+                font-size: 11px;
+                font-weight: 700;
+                color: var(--text-muted, #64748b);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .guide-quick-nav {
+                display: flex;
+                gap: 8px;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 4px 2px 6px 2px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+            }
+            .guide-quick-nav::-webkit-scrollbar {
+                height: 4px;
+            }
+            .guide-quick-nav::-webkit-scrollbar-thumb {
+                background: rgba(99, 102, 241, 0.25);
+                border-radius: 4px;
+            }
+            .guide-nav-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 7px 12px;
+                font-size: 12.5px;
+                font-weight: 600;
+                color: var(--text-main, #334155);
+                background: rgba(99, 102, 241, 0.08);
+                border: 1px solid rgba(99, 102, 241, 0.18);
+                border-radius: 20px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                user-select: none;
+                flex-shrink: 0;
+                touch-action: manipulation;
+                text-decoration: none;
+            }
+            .guide-nav-chip:hover, .guide-nav-chip:active {
+                background: var(--primary, #4f46e5);
+                color: #ffffff;
+                border-color: var(--primary, #4f46e5);
+                transform: translateY(-1px);
+            }
+            .guide-card {
+                scroll-margin-top: 75px;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+            .guide-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid rgba(0,0,0,0.06);
+            }
+            .guide-go-tab-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 12px;
+                font-size: 11.5px;
+                font-weight: 700;
+                color: white;
+                background: var(--primary, #4f46e5);
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                touch-action: manipulation;
+                white-space: nowrap;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            .guide-go-tab-btn:hover {
+                filter: brightness(1.12);
+                transform: translateY(-1px);
+            }
+            .guide-go-tab-btn:active {
+                transform: scale(0.96);
+            }
+            .guide-back-to-top {
+                position: fixed;
+                bottom: 24px;
+                right: 20px;
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: var(--primary, #4f46e5);
+                color: #ffffff;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+                cursor: pointer;
+                z-index: 9999;
+                opacity: 0.95;
+                transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
+                touch-action: manipulation;
+                border: 2px solid rgba(255, 255, 255, 0.4);
+            }
+            .guide-back-to-top:hover {
+                opacity: 1;
+                transform: translateY(-3px) scale(1.05);
+                background: #4338ca;
+            }
+            .guide-back-to-top:active {
+                transform: scale(0.92);
+            }
+            @media (max-width: 768px) {
+                #tab10 .form-box {
+                    padding: 14px 12px !important;
+                    margin-bottom: 14px !important;
+                    border-radius: 10px;
+                }
+                #tab10 h2 {
+                    font-size: 1.35rem !important;
+                }
+                #tab10 h3 {
+                    font-size: 1.05rem !important;
+                    line-height: 1.35 !important;
+                }
+                #tab10 ul {
+                    padding-left: 16px !important;
+                }
+                #tab10 li {
+                    margin-bottom: 8px !important;
+                    line-height: 1.55 !important;
+                    font-size: 13.5px !important;
+                }
+                .guide-quick-nav-wrapper {
+                    top: 6px;
+                    padding: 8px 6px;
+                    margin-bottom: 14px;
+                }
+                .guide-nav-chip {
+                    padding: 6px 11px;
+                    font-size: 12px;
+                }
+                .guide-card-header {
+                    gap: 8px;
+                    margin-bottom: 10px;
+                }
+                .guide-card-header h3 {
+                    flex: 1 1 auto;
+                }
+                .guide-go-tab-btn {
+                    padding: 5px 10px;
+                    font-size: 11px;
+                }
+            }
+        </style>
+
+        <!-- Mobil Hızlı Konu Menüsü (Yatay Kaydırılabilir) -->
+        <div class="guide-quick-nav-wrapper">
+            <div class="guide-quick-nav-title">
+                <i class="fas fa-compass"></i> Hızlı Modül Seçimi (Tek Tıkla Geçiş)
+            </div>
+            <div class="guide-quick-nav">
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-sync')"><i class="fas fa-cloud"></i> ⚡ Senkron</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-1')"><i class="fas fa-users"></i> 1. Öğrenci</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-2')"><i class="fas fa-layer-group"></i> 2. Sınıf</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-3')"><i class="fas fa-fire"></i> 3. Buz Kırma</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-4')"><i class="fas fa-chalkboard-teacher"></i> 4. Strateji</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-5')"><i class="fas fa-calendar-alt"></i> 5. Program</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-6')"><i class="fas fa-tasks"></i> 6. Ödev</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-7')"><i class="fas fa-chart-line"></i> 7. Deneme</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-8')"><i class="fas fa-clipboard-check"></i> 8. VAK Formu</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-9')"><i class="fas fa-rocket"></i> 9. İleri Grup</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-10')"><i class="fas fa-medal"></i> 10. Proje/Kriz</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-11')"><i class="fas fa-chart-bar"></i> 11. Soru Takip</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-12')"><i class="fas fa-clipboard-list"></i> 12. Çizelgeler</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-13')"><i class="fas fa-brain"></i> 13. LGS Koçluk</button>
+                <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-14')"><i class="fas fa-graduation-cap"></i> 14. YKS Koçluk</button>
+            </div>
+        </div>
+
         <div class="grid-layout" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <!-- 0: Veri Tabanı Canlı Senkronizasyon -->
-            <div class="form-box"
+            <div id="guide-card-sync" class="form-box guide-card"
                 style="border-left: 4px solid var(--accent); background: linear-gradient(to right, rgba(16,185,129,0.05), transparent);">
-                <h3 style="color: var(--accent); margin-top:0; display:flex; align-items:center; gap:8px;">
-                    <i class="fas fa-cloud-upload-alt"></i> ⚡ Veri Tabanı Canlı Senkronizasyon
-                </h3>
+                <div class="guide-card-header">
+                    <h3 style="color: var(--accent); margin:0; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-cloud-upload-alt"></i> ⚡ Veri Tabanı Canlı Senkronizasyon
+                    </h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="if(typeof triggerManualSync === 'function') triggerManualSync(); else location.reload();" title="Şimdi Senkronize Et"><i class="fas fa-sync-alt"></i> Senkronize Et</button>
+                </div>
                 <p style="font-size:13.5px; margin-bottom:10px; color:var(--text-main);">
                     Sistemimiz, yaptığınız tüm işlemleri (öğrenci notları, ödevler, projeler, yoklama ve sınavlar)
                     <strong>Firebase NoSQL Realtime Database</strong> üzerinde anlık ve atomik diff motoruyla çift yönlü
@@ -5681,9 +5918,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 1 -->
-            <div class="form-box" style="border-left: 4px solid var(--primary);">
-                <h3 style="color: var(--primary); margin-top:0;"><i class="fas fa-users"></i> 1. Öğrenci Bilgi Sistemi
-                    (Veri Tabanı ve XP)</h3>
+            <div id="guide-card-1" class="form-box guide-card" style="border-left: 4px solid var(--primary);">
+                <div class="guide-card-header">
+                    <h3 style="color: var(--primary); margin:0;"><i class="fas fa-users"></i> 1. Öğrenci Bilgi Sistemi (Veri Tabanı ve XP)</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab1')" title="Öğrenci Yönetimi Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Öğrenci Eklemek İçin:</strong> Sınıf seçip "Öğrenci Ekle" formunu kullanarak manuel
                         kayıt yapabilir veya sağ üstteki <strong>"Excel'den Yükle"</strong> butonuna basarak e-Okul
@@ -5696,9 +5935,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 2 -->
-            <div class="form-box" style="border-left: 4px solid var(--secondary);">
-                <h3 style="color: var(--secondary); margin-top:0;"><i class="fas fa-layer-group"></i> 2. Sınıf Yönetimi
-                    ve Kümeleme</h3>
+            <div id="guide-card-2" class="form-box guide-card" style="border-left: 4px solid var(--secondary);">
+                <div class="guide-card-header">
+                    <h3 style="color: var(--secondary); margin:0;"><i class="fas fa-layer-group"></i> 2. Sınıf Yönetimi ve Kümeleme</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab2')" title="Sınıf Yönetimi Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Grup Oluşturmak İçin:</strong> Üstteki menüden bir sınıf seçin. Sınıfı hızlıca dağıtmak
                         için <strong>"Rastgele Otomatik Grupla"</strong> butonunu kullanın. Kendi gruplarınızı kurmak
@@ -5712,8 +5953,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 3 -->
-            <div class="form-box" style="border-left: 4px solid #ef4444;">
-                <h3 style="color: #ef4444; margin-top:0;"><i class="fas fa-fire"></i> 3. Buz Kırma Etkinlikleri</h3>
+            <div id="guide-card-3" class="form-box guide-card" style="border-left: 4px solid #ef4444;">
+                <div class="guide-card-header">
+                    <h3 style="color: #ef4444; margin:0;"><i class="fas fa-fire"></i> 3. Buz Kırma Etkinlikleri</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab-buz-kirma')" title="Buz Kırma Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Etkinlik Seçimi:</strong> Yeni bir sınıfa girerken veya derste enerjinin düştüğünü
                         hissettiğinizde bu sekmedeki listeden uygun bir oyunu seçin.</li>
@@ -5723,9 +5967,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 4 -->
-            <div class="form-box" style="border-left: 4px solid #10b981;">
-                <h3 style="color: #10b981; margin-top:0;"><i class="fas fa-chalkboard-teacher"></i> 4. Ders İşleme &
-                    Strateji (Yapay Zeka Destekli)</h3>
+            <div id="guide-card-4" class="form-box guide-card" style="border-left: 4px solid #10b981;">
+                <div class="guide-card-header">
+                    <h3 style="color: #10b981; margin:0;"><i class="fas fa-chalkboard-teacher"></i> 4. Ders İşleme &amp; Strateji (Yapay Zeka Destekli)</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab3')" title="Ders Stratejisi Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Konu Girme:</strong> Metin kutularına o günkü dersinizin adını ve hedefini (Örn:
                         Hücrenin Yapısı) yazın.</li>
@@ -5739,9 +5985,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 5 -->
-            <div class="form-box" style="border-left: 4px solid #f59e0b;">
-                <h3 style="color: #f59e0b; margin-top:0;"><i class="fas fa-calendar-alt"></i> 5. Öğretmen Ders Programı
-                </h3>
+            <div id="guide-card-5" class="form-box guide-card" style="border-left: 4px solid #f59e0b;">
+                <div class="guide-card-header">
+                    <h3 style="color: #f59e0b; margin:0;"><i class="fas fa-calendar-alt"></i> 5. Öğretmen Ders Programı</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab4')" title="Ders Programı Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Programı Doldurma:</strong> Tablodaki boş kutucukların üzerine tıklayarak o saatte derse
                         gireceğiniz sınıfın adını doğrudan yazın.</li>
@@ -5753,9 +6001,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 6 -->
-            <div class="form-box" style="border-left: 4px solid #6366f1;">
-                <h3 style="color: #6366f1; margin-top:0;"><i class="fas fa-tasks"></i> 6. Ödev & Proje Takip Sistemi
-                </h3>
+            <div id="guide-card-6" class="form-box guide-card" style="border-left: 4px solid #6366f1;">
+                <div class="guide-card-header">
+                    <h3 style="color: #6366f1; margin:0;"><i class="fas fa-tasks"></i> 6. Ödev &amp; Proje Takip Sistemi</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab5')" title="Ödev Takip Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Yeni Görev Atama:</strong> "Görev Türü", "Konu", "XP Puanı" ve "Son Tarih" kısımlarını
                         doldurup <strong>"Çalışmayı Başlat"</strong> butonuna basarak bir takip kartı oluşturun.</li>
@@ -5773,9 +6023,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 7 -->
-            <div class="form-box" style="border-left: 4px solid #db2777;">
-                <h3 style="color: #db2777; margin-top:0;"><i class="fas fa-chart-line"></i> 7. Deneme Sınavları &
-                    Detaylı Grafik Analiz</h3>
+            <div id="guide-card-7" class="form-box guide-card" style="border-left: 4px solid #db2777;">
+                <div class="guide-card-header">
+                    <h3 style="color: #db2777; margin:0;"><i class="fas fa-chart-line"></i> 7. Deneme Sınavları &amp; Detaylı Grafik Analiz</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab6')" title="Deneme Sınavları Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Veri Yükleme:</strong> Optik okuyucudan aldığınız sınav sonuçlarını içeren Excel
                         dosyasını seçin.</li>
@@ -5788,9 +6040,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 8 / 9: Öz Değerlendirme & Formlar -->
-            <div class="form-box" style="border-left: 4px solid #8b5cf6;">
-                <h3 style="color: #8b5cf6; margin-top:0;"><i class="fas fa-clipboard-check"></i> 9. Öz Değerlendirme,
-                    Formlar &amp; VAK Envanteri</h3>
+            <div id="guide-card-8" class="form-box guide-card" style="border-left: 4px solid #8b5cf6;">
+                <div class="guide-card-header">
+                    <h3 style="color: #8b5cf6; margin:0;"><i class="fas fa-clipboard-check"></i> 8. Öz Değerlendirme, Formlar &amp; VAK Envanteri</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab7')" title="Öz Değerlendirme Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Öz Değerlendirme Formları &amp; Bilişsel Envanter:</strong>
                         <em>1. Aşama:</em> Dersten Önce (hazırlık formu),
@@ -5812,9 +6066,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 9 -->
-            <div class="form-box" style="border-left: 4px solid #14b8a6;">
-                <h3 style="color: #14b8a6; margin-top:0;"><i class="fas fa-rocket"></i> 9. İleri Çalışma Grupları
-                    Tespiti</h3>
+            <div id="guide-card-9" class="form-box guide-card" style="border-left: 4px solid #14b8a6;">
+                <div class="guide-card-header">
+                    <h3 style="color: #14b8a6; margin:0;"><i class="fas fa-rocket"></i> 9. İleri Çalışma Grupları Tespiti</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab8')" title="İleri Çalışma Grupları Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Öğrenci Tespiti:</strong> Sistem; sınıftaki en yüksek XP'ye ve anket katılımına sahip
                         elit öğrencileri sizin için otomatik hesaplar ve ekranda listeler.</li>
@@ -5826,9 +6082,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 10 -->
-            <div class="form-box" style="border-left: 4px solid #059669;">
-                <h3 style="color: #059669; margin-top:0;"><i class="fas fa-medal"></i> 10. Proje Grupları ve AI Kriz
-                    Değerlendirmesi</h3>
+            <div id="guide-card-10" class="form-box guide-card" style="border-left: 4px solid #059669;">
+                <div class="guide-card-header">
+                    <h3 style="color: #059669; margin:0;"><i class="fas fa-medal"></i> 10. Proje Grupları ve AI Kriz Değerlendirmesi</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab9')" title="Proje Grupları Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Kriz Kartları:</strong> İleri gruplara online Proje Formu'nu gönderin. Sistemi
                         doldururken %20 ihtimalle karşılarına dijital bir "Kriz Kartı" (Örn: Bütçe bitti) çıkacak ve
@@ -5844,9 +6102,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 11 -->
-            <div class="form-box" style="border-left: 4px solid #f97316;">
-                <h3 style="color: #f97316; margin-top:0;"><i class="fas fa-chart-bar"></i> 11. Soru Çözüm Takip Sistemi
-                </h3>
+            <div id="guide-card-11" class="form-box guide-card" style="border-left: 4px solid #f97316;">
+                <div class="guide-card-header">
+                    <h3 style="color: #f97316; margin:0;"><i class="fas fa-chart-bar"></i> 11. Soru Çözüm Takip Sistemi</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab11')" title="Soru Çözüm Takip Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Veli Veri Girişi:</strong> Öğrenci seçildiğinde beliren WhatsApp butonuyla veliye özel,
                         otomatik tanımlanmış bir form linki gönderebilirsiniz. Veliler bu linkten öğrencinin soru
@@ -5863,9 +6123,11 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 12: Takip & Kontrol Çizelgeleri (Rubrikler) -->
-            <div class="form-box" style="border-left: 4px solid #0d9488;">
-                <h3 style="color: #0d9488; margin-top:0;"><i class="fas fa-clipboard-list"></i> 12. Takip & Kontrol
-                    Çizelgeleri (Maarif Modeli Rubrikleri)</h3>
+            <div id="guide-card-12" class="form-box guide-card" style="border-left: 4px solid #0d9488;">
+                <div class="guide-card-header">
+                    <h3 style="color: #0d9488; margin:0;"><i class="fas fa-clipboard-list"></i> 12. Takip &amp; Kontrol Çizelgeleri (Maarif Modeli Rubrikleri)</h3>
+                    <button type="button" class="guide-go-tab-btn" onclick="openTab('tab-checklists')" title="Kontrol Çizelgeleri Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                </div>
                 <ul style="line-height:1.6; margin:0; padding-left:20px; font-size: 14px;">
                     <li><strong>Yeni Çizelge Oluşturma:</strong> "Yeni Çizelge Oluştur" butonuyla sınıf, çalışma türü
                         (Deney, Etkinlik, Ürün Dosyası, Süreç İzleme), değerlendirme tipi (Puanlama veya Simgeli) ve MEB
@@ -5882,16 +6144,16 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 13: LGS & Ortaokul (5-8. Sınıf) Bilişsel Koçluk & Mentorluk Sistemi (Modül 13 v3.0) -->
-            <div class="form-box"
+            <div id="guide-card-13" class="form-box guide-card"
                 style="border-left: 4px solid #8b5cf6; background: linear-gradient(to right, rgba(139,92,246,0.04), transparent);">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; border-bottom:1px solid rgba(139,92,246,0.2); padding-bottom:8px;">
+                <div class="guide-card-header" style="border-bottom:1px solid rgba(139,92,246,0.2);">
                     <h3 style="color: #8b5cf6; margin:0; display:flex; align-items:center; gap:8px;">
                         <i class="fas fa-brain"></i> 13. LGS &amp; Ortaokul (5-8. Sınıf) Bilişsel Koçluk &amp; Mentorluk Sistemi (v3.0 Hibrit Ekosistem)
                     </h3>
-                    <span
-                        style="background:#8b5cf6; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">Pedagojik
-                        &amp; Bilişsel Analitik (5-8. Sınıf)</span>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="background:#8b5cf6; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">Pedagojik &amp; Bilişsel Analitik (5-8. Sınıf)</span>
+                        <button type="button" class="guide-go-tab-btn" onclick="openTab('tab-kocluk')" title="LGS Koçluk Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                    </div>
                 </div>
 
                 <p style="font-size:13.5px; color:var(--text-main); margin-bottom:14px; line-height:1.5;">
@@ -5997,17 +6259,16 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             </div>
 
             <!-- 14: 12. Sınıf YKS (TYT-AYT) Bilişsel İcra & Stratejik Mentorluk Modülü -->
-            <div class="form-box"
+            <div id="guide-card-14" class="form-box guide-card"
                 style="border-left: 4px solid #0284c7; background: linear-gradient(to right, rgba(2,132,199,0.04), transparent);">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; border-bottom:1px solid rgba(2,132,199,0.2); padding-bottom:8px;">
+                <div class="guide-card-header" style="border-bottom:1px solid rgba(2,132,199,0.2);">
                     <h3 style="color: #0284c7; margin:0; display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-graduation-cap"></i> 14. 12. Sınıf YKS (TYT-AYT) Bilişsel İcra &amp; Stratejik
-                        Mentorluk Sistemi
+                        <i class="fas fa-graduation-cap"></i> 14. 12. Sınıf YKS (TYT-AYT) Bilişsel İcra &amp; Stratejik Mentorluk Sistemi
                     </h3>
-                    <span
-                        style="background:#0284c7; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">ÖSYM
-                        Üst Bilişsel Analitik</span>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="background:#0284c7; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">ÖSYM Üst Bilişsel Analitik</span>
+                        <button type="button" class="guide-go-tab-btn" onclick="openTab('tab-yks-kocluk')" title="YKS Koçluk Modülünü Aç"><i class="fas fa-external-link-alt"></i> Modülü Aç</button>
+                    </div>
                 </div>
 
                 <p style="font-size:13.5px; color:var(--text-main); margin-bottom:14px; line-height:1.5;">
@@ -6101,10 +6362,60 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                 </ul>
             </div>
 
+        
+        <!-- Mobil Sabit Başa Dön Butonu -->
+        <div id="guide-back-to-top" class="guide-back-to-top" onclick="scrollToGuideTop()" title="Kılavuz Başına Dön">
+            <i class="fas fa-chevron-up"></i>
+        </div>
+
+        <script>
+            function scrollToGuideCard(cardId) {
+                const el = document.getElementById(cardId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            function scrollToGuideTop() {
+                try {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (e) {
+                    window.scrollTo(0, 0);
+                }
+                if (document.documentElement) document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+                if (document.body) document.body.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            // Sayfa kaydırıldığında yukarı dön butonunu akıllı göster/gizle
+            function updateGuideBackToTop() {
+                const btn = document.getElementById('guide-back-to-top');
+                const tab = document.getElementById('tab10');
+                if (!btn || !tab) return;
+                const scrollPos = window.pageYOffset || document.documentElement.scrollTop || (document.body ? document.body.scrollTop : 0) || window.scrollY || 0;
+                if (tab.classList.contains('active') && scrollPos > 180) {
+                    btn.style.display = 'flex';
+                } else {
+                    btn.style.display = 'none';
+                }
+            }
+            window.addEventListener('scroll', updateGuideBackToTop, { passive: true });
+            // Sekme aktifliği değiştiğinde buton durumunu anlık kontrol et
+            if (window.MutationObserver) {
+                const tabEl = document.getElementById('tab10');
+                if (tabEl) {
+                    new MutationObserver(function(mutations) {
+                        mutations.forEach(function(m) {
+                            if (m.attributeName === 'class') {
+                                updateGuideBackToTop();
+                            }
+                        });
+                    }).observe(tabEl, { attributes: true });
+                }
+            }
+        </script>
+
         </div>
     </div>
 
-    <!-- CBL KARNE MODAL -->
+<!-- CBL KARNE MODAL -->
     <div id="cbl-report-modal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; justify-content:center; align-items:center;">
         <div
@@ -6642,6 +6953,10 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                     style="padding: 10px 18px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 12px rgba(245,158,11,0.3); border: none; cursor: pointer;">
                     <i class="fas fa-bolt"></i> ⚡ 60 Sn Hızlı Giriş
                 </button>
+                <button class="btn" onclick="openLgsSessionFormsModal()"
+                    style="padding: 10px 18px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; box-shadow: 0 4px 12px rgba(249,115,22,0.3); border: none; cursor: pointer;">
+                    <i class="fas fa-clipboard-list"></i> 🎯 LGS Seans Formları
+                </button>
             </div>
         </div>
 
@@ -6918,6 +7233,18 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <a href="javascript:void(0)" onclick="printSmartForm(window.activeKoclukId, 4); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:8px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
                                 <span style="background:rgba(139,92,246,0.12); color:#8b5cf6; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">FORM-4</span>
                                 <span>Resmi Veli Mutabakatı &amp; Raporu</span>
+                            </a>
+                            <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                            <div style="padding:4px 12px; font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">
+                                <i class="fas fa-bullseye me-1"></i> Dijital LGS Seans Formları
+                            </div>
+                            <a href="javascript:void(0)" onclick="openStudentLgsForm(window.activeKoclukId, 'before'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:7px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="background:rgba(249,115,22,0.15); color:#ea580c; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">LGS-ÖNCE</span>
+                                <span>🎯 Seans Öncesi Hedef Sözleşmesi</span>
+                            </a>
+                            <a href="javascript:void(0)" onclick="openStudentLgsForm(window.activeKoclukId, 'after'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:7px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="background:rgba(5,150,105,0.15); color:#059669; padding:3px 6px; border-radius:4px; font-weight:800; font-size:10px;">LGS-SONU</span>
+                                <span>🏁 Çıkış Bileti &amp; Hata Teşhisi</span>
                             </a>
                             <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
                             <a href="javascript:void(0)" onclick="openKoclukPrintCenter(window.activeKoclukId); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:7px 12px; color:var(--primary); text-decoration:none; font-weight:700;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
@@ -7384,6 +7711,82 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         <i class="fas fa-bolt"></i> ⚡ Kaydet ve Yeni Haftanın Formunu (FORM-1) Yazdır
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: LGS Üstbilişsel Seans Formları Hub                      -->
+    <!-- ============================================================ -->
+    <div id="lgs-session-forms-modal" class="modal"
+        style="display:none; position:fixed; z-index:100050; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:15px;">
+        <div style="background:var(--card-bg); border-radius:14px; border:1px solid var(--border); max-width:680px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 50px rgba(0,0,0,0.35); overflow:hidden; animation:fadeIn 0.25s ease;">
+            <!-- Modal Header -->
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, rgba(249,115,22,0.1), rgba(5,150,105,0.08));">
+                <div>
+                    <h3 style="margin:0; font-size:16px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-bullseye" style="color:#f97316;"></i> 🎯 LGS Üstbilişsel Seans Formları
+                    </h3>
+                    <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Öğrenciye ders/soru öncesi taahhüt ve seans sonrası hata teşhis formları</div>
+                </div>
+                <button class="action-btn" onclick="closeModal('lgs-session-forms-modal')"
+                    style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <!-- Form 1: Seans Öncesi -->
+                <div style="border:1px solid rgba(249,115,22,0.3); border-left:5px solid #f97316; border-radius:10px; padding:15px; background:rgba(249,115,22,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span style="font-size:10px; font-weight:800; background:rgba(249,115,22,0.15); color:#ea580c; padding:2px 8px; border-radius:10px; text-transform:uppercase;">Çalışma Öncesi</span>
+                            <h4 style="margin:6px 0 4px 0; color:#ea580c; font-size:14px;"><i class="fas fa-play-circle me-1"></i> LGS Seans Öncesi Hazırlık ve Hedef Sözleşmesi</h4>
+                            <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px 0;">Öğrencinin masaya oturmadan önce odaklanma düzeyini (1-5), hedef soru sayısını ve 120 sn kural taahhüdünü girmesini sağlar.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <a href="lgs_seans_oncesi_formu.html" target="_blank" class="btn" style="background:#f97316; color:white; padding:7px 14px; font-size:12px; text-decoration:none; font-weight:600; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fas fa-external-link-alt"></i> Formu Yeni Sekmede Aç
+                        </a>
+                        <button type="button" class="btn btn-clear" onclick="navigator.clipboard.writeText(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/lgs_seans_oncesi_formu.html'); alert('Link kopyalandı!');" style="padding:7px 12px; font-size:12px; border:1px solid var(--border);">
+                            <i class="fas fa-copy me-1"></i> Linki Kopyala
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form 2: Seans Sonu -->
+                <div style="border:1px solid rgba(5,150,105,0.3); border-left:5px solid #059669; border-radius:10px; padding:15px; background:rgba(5,150,105,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span style="font-size:10px; font-weight:800; background:rgba(5,150,105,0.15); color:#059669; padding:2px 8px; border-radius:10px; text-transform:uppercase;">Çalışma Sonu</span>
+                            <h4 style="margin:6px 0 4px 0; color:#059669; font-size:14px;"><i class="fas fa-clipboard-check me-1"></i> LGS Seans Sonu Çıkış Bileti ve Hata Teşhisi</h4>
+                            <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px 0;">Çözülen soru sayısı, D/Y/B, net, soru başı süre, 4 kök-neden sınıflandırması (KOD 1-4) ve eksik kazanım ödev kaydı.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <a href="lgs_seans_sonrasi_formu.html" target="_blank" class="btn" style="background:#059669; color:white; padding:7px 14px; font-size:12px; text-decoration:none; font-weight:600; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fas fa-external-link-alt"></i> Formu Yeni Sekmede Aç
+                        </a>
+                        <button type="button" class="btn btn-clear" onclick="navigator.clipboard.writeText(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/lgs_seans_sonrasi_formu.html'); alert('Link kopyalandı!');" style="padding:7px 12px; font-size:12px; border:1px solid var(--border);">
+                            <i class="fas fa-copy me-1"></i> Linki Kopyala
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bilgilendirme ve QR Yönlendirme -->
+                <div style="background:var(--input-bg); border-radius:8px; padding:12px 14px; border:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <div style="font-size:12px; color:var(--text-muted); flex:1; min-width:240px;">
+                        <i class="fas fa-qrcode text-primary me-1"></i> <strong>Sınıfa Özel QR Kod Üretimi:</strong> 8. sınıf öğrencilerine numarası ve adı hazır gelen QR kod üretmek için Öz Değerlendirme &amp; Form sekmesini kullanabilirsiniz.
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="closeModal('lgs-session-forms-modal'); openTab('tab7');" style="white-space:nowrap; padding:8px 14px; font-size:12px; font-weight:700;">
+                        <i class="fas fa-arrow-right me-1"></i> Form Yönetimi &amp; QR'a Git
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; background:var(--tab-bg);">
+                <button type="button" class="btn btn-clear" onclick="closeModal('lgs-session-forms-modal')" style="padding:8px 18px;">Kapat</button>
             </div>
         </div>
     </div>

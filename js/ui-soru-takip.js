@@ -1041,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
 
             this.currentData = entries;
+            const fragment = document.createDocumentFragment();
 
             // Soru Tipi badge
             const tipiBadge = {
@@ -1089,8 +1090,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>`;
-                this.tableBody.appendChild(tr);
+                fragment.appendChild(tr);
             });
+            this.tableBody.appendChild(fragment);
         },
 
         // Kural 2: Fotoğraflı soru köprüsü — fotoğraf popup (XSS & Protocol Injection korumalı)
@@ -1183,8 +1185,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     options: {
                         responsive: true,
+                        layout: { padding: { top: 15, bottom: 25, left: 20, right: 20 } },
                         plugins: { legend: { position: 'top' } },
-                        scales: { r: { beginAtZero: true } }
+                        scales: { r: { beginAtZero: true, pointLabels: { font: { size: 11, weight: 'bold' }, padding: 10 } } }
                     }
                 });
             }

@@ -280,16 +280,11 @@
             try { window._pgFormsRef.off(); } catch (e) { }
         }
         try {
-            const currentUser = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
-            const teacherUid = currentUser ? currentUser.uid : window.activeWorkspaceUid;
-            const isUserAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
-
-            // BOLA/IDOR Koruması: Öğretmen kendi grubuna ait formları dinler, admin root seviyesini denetler
-            const targetRef = (teacherUid && !isUserAdmin)
-                ? window.db.ref('project_group_forms/' + teacherUid).orderByKey().limitToLast(100)
-                : window.db.ref('project_group_forms').orderByKey().limitToLast(100);
-
-            window._pgFormsRef = targetRef;
+            const currentUserForPg = window.currentUser || ((typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null);
+            const isUserAdminForPg = (currentUserForPg && currentUserForPg.email && currentUserForPg.email.toLowerCase().trim() === 'mremzi@gmail.com') || window.isAdminUser;
+            const targetUidForPg = window.activeWorkspaceUid || (!isUserAdminForPg ? currentUserForPg?.uid : null);
+            const pgFormsPath = targetUidForPg ? ('project_group_forms/' + targetUidForPg) : 'project_group_forms/_legacy';
+            window._pgFormsRef = window.db.ref(pgFormsPath).orderByKey().limitToLast(100);
             window._pgFormsRef.on('value', (snapshot) => {
                 if (!snapshot.exists()) {
                     pgFormsData = [];
@@ -298,24 +293,7 @@
                     return;
                 }
                 const formsObj = snapshot.val();
-                let formsList = [];
-                if (formsObj) {
-                    Object.keys(formsObj).forEach(key => {
-                        const val = formsObj[key];
-                        if (val && typeof val === 'object') {
-                            if (val.timestamp !== undefined || val.grupAdi !== undefined) {
-                                formsList.push({ id: key, ...val });
-                            } else {
-                                Object.keys(val).forEach(subKey => {
-                                    if (val[subKey] && typeof val[subKey] === 'object') {
-                                        formsList.push({ id: subKey, ...val[subKey] });
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-                pgFormsData = formsList;
+                pgFormsData = Object.keys(formsObj).map(key => ({ id: key, ...formsObj[key] }));
                 const dModal = document.getElementById('pg-detail-modal');
                 if (dModal && dModal.style.display === 'block') pgRenderMessages();
             }, (error) => {
@@ -881,7 +859,8 @@
         const milestones = g.milestones || PG_MILESTONES_DEFAULT;
 
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-        const formLink = `${baseUrl}/proje_grubu_takip_formu.html?grupAdi=${encodeURIComponent(g.title || g.projeAdi)}&sinif=${encodeURIComponent(g.sinif)}`;
+        const targetUid = (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : (window.activeWorkspaceUid || "");
+        const formLink = `${baseUrl}/proje_grubu_takip_formu.html?grupAdi=${encodeURIComponent(g.title || g.projeAdi)}&sinif=${encodeURIComponent(g.sinif)}${targetUid ? "&uid=" + encodeURIComponent(targetUid) : ""}`;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(formLink)}&color=1e293b`;
 
         const certHtml = `
@@ -1030,10 +1009,8 @@
     }
 
     function pgCopyFormLink(grupAdi, sinif) {
-        const teacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
-        const uidParam = teacherUid ? '&uid=' + encodeURIComponent(teacherUid) : '';
         let baseURL = window.location.href.split('/').slice(0, -1).join('/') + '/proje_grubu_takip_formu.html';
-        let fullURL = baseURL + '?grupAdi=' + encodeURIComponent(grupAdi) + '&sinif=' + encodeURIComponent(sinif) + uidParam;
+        let fullURL = baseURL + '?grupAdi=' + encodeURIComponent(grupAdi) + '&sinif=' + encodeURIComponent(sinif);
         navigator.clipboard.writeText(fullURL).then(() => {
             alert('Proje Takip Formu linki panoya kopyalandı!\n\nWhatsApp üzerinden gruba gönderebilirsiniz. Link tıklandığında sınıf ve grup adı otomatik doldurulacaktır.');
         }).catch(() => {
@@ -1046,8 +1023,6 @@
         const members = g ? (g.members || g.uyeler || []) : [];
         if (!members.length) return alert('Bu grupta öğrenci bulunamadı.');
 
-        const teacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
-        const uidParam = teacherUid ? '&uid=' + encodeURIComponent(teacherUid) : '';
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
         const printWindow = window.open('', '_blank');
         const safeGrupAdi = escapeHTML(grupAdi || '');
@@ -1076,7 +1051,8 @@
             <h3>${safeSinif} Sınıfı Proje Takip Formları</h3>
             <div class="grid">
                 ${members.map(s => {
-                    const formLink = `${baseUrl}/proje_grubu_takip_formu.html?grupAdi=${encodeURIComponent(grupAdi)}&sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no || '')}&ad=${encodeURIComponent(s.name || s.adSoyad)}${uidParam}`;
+                    const targetUid = (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : (window.activeWorkspaceUid || "");
+            const formLink = `${baseUrl}/proje_grubu_takip_formu.html?grupAdi=${encodeURIComponent(grupAdi)}&sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no || '')}&ad=${encodeURIComponent(s.name || s.adSoyad)}${targetUid ? "&uid=" + encodeURIComponent(targetUid) : ""}`;
                     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formLink)}&color=2563eb`;
                     return `
                         <div class="student-card">

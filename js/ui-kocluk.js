@@ -5062,12 +5062,43 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         if (typeof window.unlockBodyScroll === 'function') window.unlockBodyScroll();
     }
 
+    function openLgsSessionFormsModal() {
+        const modal = document.getElementById('lgs-session-forms-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            if (typeof window.lockBodyScroll === 'function') window.lockBodyScroll();
+        }
+    }
+
+    function closeLgsSessionFormsModal() {
+        const modal = document.getElementById('lgs-session-forms-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            if (typeof window.unlockBodyScroll === 'function') window.unlockBodyScroll();
+        }
+    }
+
+    function openStudentLgsForm(studentId, formType) {
+        const targetId = studentId || activeKoclukId;
+        const item = (window.koclukData || []).find(k => String(k.id) === String(targetId));
+        const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        const page = (formType === 'before') ? 'lgs_seans_oncesi_formu.html' : 'lgs_seans_sonrasi_formu.html';
+        let url = `${baseUrl}/${page}`;
+        if (item) {
+            url += `?sinif=${encodeURIComponent(item.sinif || '')}&no=${encodeURIComponent(item.studentNo || '')}&ad=${encodeURIComponent(item.adSoyad || '')}`;
+        }
+        window.open(url, '_blank');
+    }
+
     // ─────────────────────────────────────────────────────────────
     // GLOBAL BAĞLANTILAR (Window Export)
     // ─────────────────────────────────────────────────────────────
     window.renderKoclukModule = renderKoclukModule;
     window.openAddKoclukModal = openAddKoclukModal;
     window.closeModal = closeModal;
+    window.openLgsSessionFormsModal = openLgsSessionFormsModal;
+    window.closeLgsSessionFormsModal = closeLgsSessionFormsModal;
+    window.openStudentLgsForm = openStudentLgsForm;
     window.onKoclukClassChange = onKoclukClassChange;
     window.onKoclukStudentSelectChange = onKoclukStudentSelectChange;
     window.saveNewKoclukStudent = saveNewKoclukStudent;

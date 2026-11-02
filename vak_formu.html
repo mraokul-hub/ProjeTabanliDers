@@ -361,12 +361,11 @@
                 sinif: sinif
             });
 
-            // Firebase student_forms tablosuna kaydet (BOLA/IDOR Korumalı)
+            // Firebase student_forms tablosuna kaydet
             try {
                 if (window.db) {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const teacherUid = urlParams.get('uid') || urlParams.get('u') || '_general';
-                    const formsRef = window.db.ref('student_forms/' + encodeURIComponent(teacherUid));
+                    const teacherId = params.get('uid') || '_legacy';
+                const formsRef = window.db.ref('student_forms/' + teacherId);
                     const formPayload = {
                         type: 'BEFORE',
                         formTitle: 'VAK Bilişsel Öğrenme Stili Envanteri',

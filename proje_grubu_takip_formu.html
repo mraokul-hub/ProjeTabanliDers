@@ -410,10 +410,9 @@
             };
 
             try {
-                // Veritabanında BOLA/IDOR korumalı öğretmen tablosuna yazıyoruz: project_group_forms/${teacherUid}
-                const urlParams = new URLSearchParams(window.location.search);
-                const teacherUid = urlParams.get('uid') || urlParams.get('u') || '_general';
-                await db.ref("project_group_forms/" + encodeURIComponent(teacherUid)).push(formData);
+                // Veritabanında ayrı bir tabloya yazıyoruz: project_group_forms
+                const teacherId = urlParams.get("uid") || "_legacy";
+            await db.ref("project_group_forms/" + teacherId).push(formData);
                 document.getElementById('main-form-container').style.display = 'none';
                 document.getElementById('success-container').style.display = 'block';
             } catch (error) {

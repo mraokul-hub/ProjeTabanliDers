@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGS Seans Sonu Metabilişsel Çıkış Bileti & Hata Teşhisi | Yabgu Koçluk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { 
+            --primary: #7c3aed;
+            --primary-dark: #6d28d9;
+            --secondary: #0284c7;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --radius: 12px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        [data-theme='light'] {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.1);
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --highlight: #f5f3ff;
+        }
+        [data-theme='dark'] {
+            --bg: #0b132b;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            --input-bg: #0f172a;
+            --input-border: #475569;
+            --highlight: #2e1065;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            padding: 24px 12px; 
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 660px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            border-top: 8px solid var(--primary);
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.35s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header {
+            padding: 24px 20px 16px 20px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), transparent);
+        }
+        .header h1 {
+            color: var(--primary-dark);
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .header p {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .form-body { padding: 20px; }
+        .student-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+            background: rgba(124, 58, 237, 0.04);
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px dashed var(--primary);
+        }
+        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+        .input-group.full-width { grid-column: 1 / -1; }
+        label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 13.5px;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-family: inherit;
+            transition: var(--transition);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+        .section-card {
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card-bg);
+        }
+        .section-header {
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 58, 237, 0.08);
+            color: var(--primary-dark);
+            border-bottom: 1px solid var(--border);
+        }
+        .section-body { padding: 14px; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .metric-input-card {
+            background: var(--bg);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .metric-input-card label {
+            font-size: 10.5px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .metric-input-card input {
+            text-align: center;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .live-calc-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: var(--highlight);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 6px;
+            text-align: center;
+        }
+        .live-calc-item { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .live-calc-item strong {
+            display: block;
+            font-size: 15px;
+            color: var(--primary-dark);
+            margin-top: 2px;
+        }
+
+        .root-causes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .root-cause-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .root-cause-item:hover {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.04);
+        }
+        .root-cause-item input[type="radio"] {
+            accent-color: var(--primary);
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+        }
+        .root-cause-label {
+            font-size: 12.5px;
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0;
+            text-transform: none;
+        }
+        .root-cause-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 800;
+            margin-left: auto;
+        }
+        .badge-kod1 { background: #fee2e2; color: #b91c1c; }
+        .badge-kod2 { background: #fef3c7; color: #b45309; }
+        .badge-kod3 { background: #e0e7ff; color: #3730a3; }
+        .badge-kod4 { background: #f3e8ff; color: #6b21a8; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+        }
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .success-card {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .success-card i { color: var(--accent); font-size: 55px; margin-bottom: 12px; }
+        @media (max-width: 600px) {
+            .student-info-grid { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: 1fr 1fr; }
+            .live-calc-bar { grid-template-columns: 1fr; gap: 6px; }
+            .form-container { border-radius: 0; border: none; min-height: 100vh; }
+            body { padding: 0; }
+        }
+    </style>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div class="form-container" id="main-container">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Temayı Değiştir">
+            <i class="fas fa-moon" id="theme-icon"></i>
+        </button>
+        <div class="header">
+            <h1><i class="fas fa-graduation-cap"></i> LGS Seans Sonu Çıkış Bileti</h1>
+            <p>Seans bitti. Verilerini dürüstçe gir, eksik kalan yerini tespit et ve nete dönüştür.</p>
+        </div>
+        <div class="form-body">
+            <form id="lgsAfterForm" onsubmit="submitLgsAfterForm(event)">
+                
+                <!-- Öğrenci Bilgileri -->
+                <div class="student-info-grid">
+                    <div class="input-group">
+                        <label>Öğrenci Numarası *</label>
+                        <input type="number" id="ogrenciNo" required placeholder="Örn: 1071">
+                    </div>
+                    <div class="input-group">
+                        <label>Sınıfı *</label>
+                        <input type="text" id="sinif" required placeholder="Örn: 8-A">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Adı ve Soyadı *</label>
+                        <input type="text" id="adSoyad" required placeholder="Adınızı ve soyadınızı giriniz">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Seans Tarihi *</label>
+                        <input type="date" id="tarih" required>
+                    </div>
+                </div>
+
+                <!-- 1. BÖLÜM: SEANS İCRA VE NET HESAPLAMA METRİKLERİ -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-calculator"></i> 1. SEANS İCRA SAYISAL VERİLERİ
+                    </div>
+                    <div class="section-body">
+                        <div class="input-group">
+                            <label>Çalışılan LGS Branşı *</label>
+                            <select id="brans" required>
+                                <option value="" disabled selected>Branş seçiniz...</option>
+                                <option value="Matematik">Matematik</option>
+                                <option value="Fen Bilimleri">Fen Bilimleri</option>
+                                <option value="Türkçe">Türkçe</option>
+                                <option value="T.C. İnkılap Tarihi">T.C. İnkılap Tarihi</option>
+                                <option value="Din Kültürü">Din Kültürü</option>
+                                <option value="İngilizce">İngilizce</option>
+                            </select>
+                        </div>
+                        
+                        <div class="metrics-grid">
+                            <div class="metric-input-card">
+                                <label style="color:#0284c7;">Toplam Soru</label>
+                                <input type="number" id="toplamSoru" required min="1" max="300" oninput="calculateLiveMetrics()" placeholder="0">
+                            </div>
+                            <div class="metric-input-card">
+                                <label style="color:#10b981;">Doğru (D)</label>
+                                <input type="number" id="dogru" required min="0" max="300" oninput="calculateLiveMetrics()" placeholder="0">
+                            </div>
+                            <div class="metric-input-card">
+                                <label style="color:#ef4444;">Yanlış (Y)</label>
+                                <input type="number" id="yanlis" required min="0" max="300" oninput="calculateLiveMetrics()" placeholder="0">
+                            </div>
+                            <div class="metric-input-card">
+                                <label style="color:#64748b;">Boş (B)</label>
+                                <input type="number" id="bos" required min="0" max="300" oninput="calculateLiveMetrics()" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Harcanan Gerçek Net Süre (Dakika) *</label>
+                            <input type="number" id="harcananSure" required min="5" max="300" oninput="calculateLiveMetrics()" placeholder="Örn: 45">
+                        </div>
+
+                        <!-- Canlı Hesaplanan Gösterge Paneli -->
+                        <div class="live-calc-bar">
+                            <div class="live-calc-item">
+                                LGS Netim:
+                                <strong id="liveNet">0.00 Net</strong>
+                            </div>
+                            <div class="live-calc-item">
+                                Soru Başına Süre:
+                                <strong id="liveSaniyePerSoru">0 Sn / Soru</strong>
+                            </div>
+                            <div class="live-calc-item">
+                                Başarı Oranım:
+                                <strong id="liveBasariOrani">%0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. BÖLÜM: BİLİŞSEL ÇIKIŞ BİLETİ (TİK ATILAMAYANLAR) -->
+                <div class="section-card" style="border-left: 4px solid var(--danger);">
+                    <div class="section-header" style="background: rgba(239, 68, 68, 0.08); color: var(--danger);">
+                        <i class="fas fa-clipboard-check"></i> 2. METABİLİŞSEL ÇIKIŞ BİLETİ (EV ÖDEVİM)
+                    </div>
+                    <div class="section-body">
+                        <div class="input-group">
+                            <label>Bugün Masada Tik Atamadığım (Kavrayamadığım) Mikro-Kazanım *</label>
+                            <textarea id="eksikKazanim" rows="2" required placeholder="Örn: EBOB probleminde dikdörtgeni kare parsellere bölme mantığını oturtamadım."></textarea>
+                            <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                <i class="fas fa-info-circle"></i> Bu alan bir sonraki ders/koçluk oturumunun başlangıç gündemini ve ev ödevini oluşturur.
+                            </span>
+                        </div>
+
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>En Çok Takıldığım / Vakit Kaybettiren Soru Kökü veya Şekil Tipi</label>
+                            <input type="text" id="zorlananSoruTipi" placeholder="Örn: 'Buna göre kesinlikle ulaşılamaz' kökü / Grafik karşılaştırma">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. BÖLÜM: 4 KÖK NEDEN ÖZ-DEĞERLENDİRMESİ -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-search-plus"></i> 3. BASKIN HATA KÖK NEDENİM (ÖZ-TEŞHİS)
+                    </div>
+                    <div class="section-body">
+                        <label style="margin-bottom: 8px; display: block;">Yanlış yaptığım soruların çoğunluğu neyden kaynaklandı? *</label>
+                        <div class="root-causes-list">
+                            <label class="root-cause-item">
+                                <input type="radio" name="kokNeden" value="KOD 1 (Bilgi/Formül Eksikliği)" required>
+                                <span class="root-cause-label">Konu formülünü veya kuralı tam bilmiyordum / Eksik öğrendim.</span>
+                                <span class="root-cause-badge badge-kod1">KOD-1 BİLGİ</span>
+                            </label>
+                            <label class="root-cause-item">
+                                <input type="radio" name="kokNeden" value="KOD 2 (Dikkat/İşlem Hatası)">
+                                <span class="root-cause-label">Biliyordum ama 4 işlemde kaydım veya satır atladım.</span>
+                                <span class="root-cause-badge badge-kod2">KOD-2 DİKKAT</span>
+                            </label>
+                            <label class="root-cause-item">
+                                <input type="radio" name="kokNeden" value="KOD 3 (Süre Baskısı/Panik)">
+                                <span class="root-cause-label">Süre yetmedi, panikleyip alelacele işaretledim.</span>
+                                <span class="root-cause-badge badge-kod3">KOD-3 SÜRE</span>
+                            </label>
+                            <label class="root-cause-item">
+                                <input type="radio" name="kokNeden" value="KOD 4 (Soru Kökü Yanılsaması)">
+                                <span class="root-cause-label">"Değildir"i "öyledir" okudum / Şıkları aceleyle eledim.</span>
+                                <span class="root-cause-badge badge-kod4">KOD-4 KÖK</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. BÖLÜM: HATA DEFTERİ EYLEM PLANI -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-book-medical"></i> 4. HATA DEFTERİ VE SONRAKİ ADIM
+                    </div>
+                    <div class="section-body">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Yanlış Soruları Hata Defterine Ne Zaman İşleyeceksin? *</label>
+                            <select id="hataDefteriZamani" required>
+                                <option value="Bu akşam 21:00'den önce (Veli formundan önce)" selected>Bu akşam 21:00'den önce (Veli formundan önce)</option>
+                                <option value="Yarın sabah ilk etüt saatinde">Yarın sabah ilk etüt saatinde</option>
+                                <option value="Hemen şimdi seans bitiminde (Tavsiye edilen)">Hemen şimdi seans bitiminde (Tavsiye edilen)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-paper-plane"></i> Çıkış Biletini ve Seans Verilerini Gönder
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Başarı Ekranı -->
+    <div class="form-container success-card" id="success-container">
+        <i class="fas fa-check-circle"></i>
+        <h2 style="font-size: 20px; color: var(--primary-dark); margin-bottom: 8px;">Çıkış Biletin Başarıyla İletildi!</h2>
+        <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+            Harika bir iş çıkardın! Yanlış sorularını şimdi makasla kesip <strong>Hata Defterine</strong> yapıştırmayı ve video çözümlerini izlemeyi unutma.
+        </p>
+        <button class="btn-submit" onclick="location.reload()" style="background: var(--secondary);">
+            <i class="fas fa-redo"></i> Yeni Seans Kaydı
+        </button>
+    </div>
+
+    <script>
+        let currentTheme = 'light';
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', currentTheme);
+            icon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        function calculateLiveMetrics() {
+            const toplam = parseInt(document.getElementById('toplamSoru').value, 10) || 0;
+            const dogru = parseInt(document.getElementById('dogru').value, 10) || 0;
+            const yanlis = parseInt(document.getElementById('yanlis').value, 10) || 0;
+            const sure = parseInt(document.getElementById('harcananSure').value, 10) || 0;
+
+            // LGS 3 Yanlış 1 Doğru Kuralı
+            const net = Math.max(0, dogru - (yanlis / 3));
+            document.getElementById('liveNet').innerText = net.toFixed(2) + ' Net';
+
+            // Soru Başına Ortalama Saniye
+            if (toplam > 0 && sure > 0) {
+                const saniyePerSoru = Math.round((sure * 60) / toplam);
+                document.getElementById('liveSaniyePerSoru').innerText = saniyePerSoru + ' Sn / Soru';
+            } else {
+                document.getElementById('liveSaniyePerSoru').innerText = '0 Sn / Soru';
+            }
+
+            // Başarı Oranı
+            if (toplam > 0) {
+                const basari = Math.round((dogru / toplam) * 100);
+                document.getElementById('liveBasariOrani').innerText = '%' + basari;
+            } else {
+                document.getElementById('liveBasariOrani').innerText = '%0';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tarih').valueAsDate = new Date();
+            const urlParams = new URLSearchParams(window.location.search);
+            const sinifParam = urlParams.get('sinif');
+            const noParam = urlParams.get('no');
+            const adParam = urlParams.get('ad');
+            if (sinifParam) { document.getElementById('sinif').value = decodeURIComponent(sinifParam); document.getElementById('sinif').readOnly = true; }
+            if (noParam) { document.getElementById('ogrenciNo').value = decodeURIComponent(noParam); document.getElementById('ogrenciNo').readOnly = true; }
+            if (adParam) { document.getElementById('adSoyad').value = decodeURIComponent(adParam); document.getElementById('adSoyad').readOnly = true; }
+        });
+
+        async function submitLgsAfterForm(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Veriler İletiliyor...';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const teacherId = urlParams.get("uid") || window._activeTeacherUid || "_legacy";
+
+            const toplam = parseInt(document.getElementById('toplamSoru').value, 10) || 0;
+            const dogru = parseInt(document.getElementById('dogru').value, 10) || 0;
+            const yanlis = parseInt(document.getElementById('yanlis').value, 10) || 0;
+            const bos = parseInt(document.getElementById('bos').value, 10) || 0;
+            const sure = parseInt(document.getElementById('harcananSure').value, 10) || 0;
+            const net = Math.max(0, dogru - (yanlis / 3));
+
+            const kokNedenEl = document.querySelector('input[name="kokNeden"]:checked');
+
+            const formData = {
+                ogrenciNo: document.getElementById('ogrenciNo').value,
+                sinif: document.getElementById('sinif').value,
+                adSoyad: document.getElementById('adSoyad').value,
+                tarih: document.getElementById('tarih').value,
+                type: 'LGS_AFTER',
+                brans: document.getElementById('brans').value,
+                toplamSoru: toplam,
+                dogru: dogru,
+                yanlis: yanlis,
+                bos: bos,
+                net: parseFloat(net.toFixed(2)),
+                harcananSureDk: sure,
+                saniyePerSoru: toplam > 0 && sure > 0 ? Math.round((sure * 60) / toplam) : 0,
+                eksikKazanim: document.getElementById('eksikKazanim').value,
+                zorlananSoruTipi: document.getElementById('zorlananSoruTipi').value,
+                baskinKokNeden: kokNedenEl ? kokNedenEl.value : 'Belirtilmedi',
+                hataDefteriZamani: document.getElementById('hataDefteriZamani').value,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            try {
+                if (typeof db !== 'undefined') {
+                    await db.ref("student_forms/" + teacherId).push(formData);
+                } else if (typeof firebase !== 'undefined' && firebase.database) {
+                    await firebase.database().ref("student_forms/" + teacherId).push(formData);
+                }
+                document.getElementById('main-container').style.display = 'none';
+                document.getElementById('success-container').style.display = 'block';
+            } catch (error) {
+                console.error("Firebase kayıt hatası:", error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Tekrar Dene';
+                alert("Bağlantı hatası! Lütfen internetinizi kontrol edip tekrar deneyin.");
+            }
+        }
+    </script>
+</body>
+</html>

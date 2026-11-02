@@ -329,9 +329,8 @@
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const teacherUid = urlParams.get('uid') || urlParams.get('u') || '_general';
-                await db.ref("student_forms/" + encodeURIComponent(teacherUid)).push(formData);
+                const teacherId = urlParams.get("uid") || "_legacy";
+            await db.ref("student_forms/" + teacherId).push(formData);
                 document.getElementById('main-form-container').style.display = 'none';
                 document.getElementById('success-container').style.display = 'block';
             } catch (error) {

@@ -995,6 +995,7 @@
         tbody.innerHTML = '';
 
         const evals = item.evaluations || {};
+        const fragment = document.createDocumentFragment();
 
         students.forEach(s => {
             const studentEval = evals[s.adSoyad] || {};
@@ -1079,8 +1080,9 @@
                     </div>
                 </td>
             `;
-            tbody.appendChild(tr);
+            fragment.appendChild(tr);
         });
+        tbody.appendChild(fragment);
     }
 
     // ── HÜCRE DEĞER GÜNCELLEMELERİ ──

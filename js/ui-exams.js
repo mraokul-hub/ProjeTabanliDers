@@ -3591,13 +3591,17 @@
                 d = findFirstPositiveOrValid(res.Matematik_d, res.MatematikD, res.matD, res.mat_d);
                 y = findFirstPositiveOrValid(res.Matematik_y, res.MatematikY, res.matY, res.mat_y) || 0;
             } else if (subjKey === 'Fen') {
-                direct = findFirstPositiveOrValid(res.Fen, res.fen, res['Fen Bilimleri'], res['Fen'], res.fenNet, res.fen_net);
+                direct = findFirstPositiveOrValid(
+                    res.Fen, res.fen, res['Fen Bilimleri'], res['Fen'], res['FEN'], res['FEN BİLİMLERİ'],
+                    res['Fen Bilgisi'], res.fenNet, res.fen_net, res.fen_bilimleri, res.FenBilimleri,
+                    res.Fen_Net, res.fen_Net, res.FenNet, res.fb, res.FB
+                );
                 if (direct === null || direct === 0) {
-                    const scanned = scanKeysForValue(['fen']);
+                    const scanned = scanKeysForValue(['fen', 'bilimleri', 'fb']);
                     if (scanned !== null && scanned > 0) direct = scanned;
                 }
-                d = findFirstPositiveOrValid(res.Fen_d, res.FenD, res.fenD, res.fen_d);
-                y = findFirstPositiveOrValid(res.Fen_y, res.FenY, res.fenY, res.fen_y) || 0;
+                d = findFirstPositiveOrValid(res.Fen_d, res.FenD, res.fenD, res.fen_d, res.fen_D, res.fb_d, res.fbD);
+                y = findFirstPositiveOrValid(res.Fen_y, res.FenY, res.fenY, res.fen_y, res.fen_Y, res.fb_y, res.fbY) || 0;
             } else if (subjKey === 'Sosyal') {
                 direct = findFirstPositiveOrValid(
                     res.Sosyal, res.sosyal, res.inkilap, res.Inkilap, res.ink, res.Ink, res.sos, res.Sos, res.tarih, res.Tarih,
@@ -3931,15 +3935,48 @@
                     label: e.title,
                     data: fields.map(f => getSubjectNetFromExamResult(sRes, f, e, studentName)),
                     borderColor: colors[i % colors.length],
-                    backgroundColor: colors[i % colors.length] + '22',
+                    backgroundColor: colors[i % colors.length] + '25',
                     pointBackgroundColor: colors[i % colors.length],
-                    borderWidth: 2,
-                    pointRadius: 4
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    borderWidth: 2.5,
+                    pointRadius: 6,
+                    pointHoverRadius: 10,
+                    pointHitRadius: 35
                 };
             });
 
+            // En son sınavın ders bazlı netlerini al ve alt barda rozet olarak göster
+            const lastExam = sortedExams[sortedExams.length - 1];
+            const lastRes = findStudentResult(lastExam);
+            const scores = fields.map((f, idx) => ({
+                label: fLabels[idx],
+                net: getSubjectNetFromExamResult(lastRes, f, lastExam, studentName)
+            }));
+
+            const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
             const statsEl = document.getElementById('chart-stats');
-            if (statsEl) statsEl.innerHTML = `<span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;">Son ${datasets.length} sınav karşılaştırılıyor</span>`;
+            if (statsEl) {
+                let pillsHtml = scores.map(sc => {
+                    const isFen = sc.label === 'Fen';
+                    const bg = isFen ? 'rgba(239, 68, 68, 0.15)' : 'var(--card-bg)';
+                    const color = isFen ? '#ef4444' : 'var(--text-main)';
+                    const border = isFen ? '1.5px solid #ef4444' : '1px solid var(--border)';
+                    const icon = isFen ? '🧬 ' : '';
+                    return `<span style="background:${bg}; border:${border}; color:${color}; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">${icon}${sc.label}: <strong style="font-size:12px;">${sc.net} Net</strong></span>`;
+                }).join('');
+
+                statsEl.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:4px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                        <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);"><i class="fas fa-clipboard-check text-primary me-1"></i> ${escapeFn(lastExam.title)} — Ders Bazlı Net Dağılımı:</span>
+                        <span style="font-size:10.5px; color:var(--text-muted);">Son ${datasets.length} sınav karşılaştırılıyor</span>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        ${pillsHtml}
+                    </div>
+                </div>`;
+            }
 
             renderChart('radar', fLabels, datasets);
         }
@@ -3951,31 +3988,72 @@
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
             const textColor = isDark ? '#94a3b8' : '#64748b';
+            const isRadar = (type === 'radar');
+
+            // Radar grafiğinde alttaki "Fen" ve üstteki "Türkçe" etiketlerinin kesilmesini önlemek için özel layout padding
+            const layoutPadding = isRadar 
+                ? { top: 25, bottom: 45, left: 35, right: 35 } 
+                : { top: 10, bottom: 10, left: 10, right: 10 };
 
             myChart = new Chart(ctx, {
                 type,
                 data: { labels, datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: layoutPadding
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
                     plugins: {
-                        legend: { labels: { color: textColor, font: { size: 11 }, boxWidth: 12 } },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: textColor,
+                                font: { size: 11, weight: '600' },
+                                boxWidth: 14,
+                                padding: 12
+                            }
+                        },
                         tooltip: {
-                            mode: 'index', intersect: false, callbacks: {
-                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== undefined ? ctx.parsed.y : (ctx.parsed.r !== undefined ? ctx.parsed.r : ctx.raw)}`
+                            enabled: true,
+                            mode: 'nearest',
+                            intersect: false,
+                            padding: 10,
+                            cornerRadius: 8,
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            callbacks: {
+                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== undefined ? ctx.parsed.y : (ctx.parsed.r !== undefined ? ctx.parsed.r : ctx.raw)} Net`
                             }
                         }
                     },
-                    scales: type !== 'radar' ? {
+                    scales: !isRadar ? {
                         x: { ticks: { color: textColor, maxRotation: 35, font: { size: 10 } }, grid: { color: gridColor } },
                         y: { beginAtZero: true, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
                     } : {
                         r: {
                             beginAtZero: true,
                             min: 0,
-                            ticks: { color: textColor, backdropColor: 'transparent', font: { size: 9 }, stepSize: 2 },
+                            suggestedMax: 20,
+                            ticks: {
+                                color: textColor,
+                                backdropColor: 'transparent',
+                                font: { size: 9 },
+                                stepSize: 2,
+                                showLabelBackdrop: false
+                            },
                             grid: { color: gridColor },
-                            pointLabels: { color: textColor, font: { size: 11, weight: 'bold' } }
+                            angleLines: { color: gridColor },
+                            pointLabels: {
+                                color: textColor,
+                                font: { size: 12, weight: 'bold' },
+                                padding: 14 // "Fen" ve diğer etiketlerin en dış nokta ile çakışmasını ve kesilmesini engeller
+                            }
                         }
                     }
                 }
@@ -4216,17 +4294,27 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             }
 
             const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-            const teacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
-            const uidParam = teacherUid ? `&uid=${encodeURIComponent(teacherUid)}` : '';
+            const isLgs8 = String(sinif || '').trim().startsWith('8');
 
             studentsInClass.forEach(s => {
-                const formALink = `${baseUrl}/dersten_once_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidParam}`;
-                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidParam}`;
-                const formDELink = `${baseUrl}/dersten_sonra_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidParam}`;
+                const beforeFile = isLgs8 ? 'lgs_seans_oncesi_formu.html' : 'dersten_once_formu.html';
+                const afterFile = isLgs8 ? 'lgs_seans_sonrasi_formu.html' : 'dersten_sonra_formu.html';
+                const beforeColor = isLgs8 ? 'ea580c' : 'f59e0b';
+                const afterColor = isLgs8 ? '059669' : '8b5cf6';
+                const beforeLabel = isLgs8 ? 'LGS Seans Öncesi' : '1. Aşama (Önce)';
+                const afterLabel = isLgs8 ? 'LGS Seans Sonu' : '3. Aşama (Sonra)';
+                const beforeBorderColor = isLgs8 ? '#ea580c' : 'var(--yellow)';
+                const afterBorderColor = isLgs8 ? '#059669' : '#8b5cf6';
+                const beforeBg = isLgs8 ? 'rgba(234, 88, 12, 0.05)' : 'rgba(245, 158, 11, 0.05)';
+                const afterBg = isLgs8 ? 'rgba(5, 150, 105, 0.05)' : 'rgba(139, 92, 246, 0.05)';
 
-                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formALink)}&color=f59e0b`;
+                const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+                const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+
+                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formALink)}&color=${beforeColor}`;
                 const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formVakLink)}&color=0284c7`;
-                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formDELink)}&color=8b5cf6`;
+                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formDELink)}&color=${afterColor}`;
 
                 const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
                 const safeName = escapeFn(s.adSoyad || '-');
@@ -4236,32 +4324,33 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 card.style = "background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:12px;";
 
                 card.innerHTML = `
-                <div style="border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <div style="border-bottom: 1px solid var(--border); padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
                     <h5 style="margin: 0; color: var(--primary); font-size: 15px;"><i class="fas fa-user-graduate me-2"></i> ${safeNo} - ${safeName}</h5>
+                    ${isLgs8 ? '<span style="font-size:10.5px; background:rgba(234,88,12,0.12); color:#ea580c; font-weight:800; padding:2px 8px; border-radius:10px;">🎯 LGS Koçluk Formları</span>' : ''}
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px; background: rgba(245, 158, 11, 0.05); padding: 8px; border-radius: 8px; border: 1px dashed var(--yellow);">
+                    <div style="display: flex; align-items: center; gap: 10px; background: ${beforeBg}; padding: 8px; border-radius: 8px; border: 1px dashed ${beforeBorderColor};">
                         <div style="background: white; padding: 3px; border-radius: 4px; border: 1px solid #ddd;">
-                            <img src="${qrAUrl}" alt="A Form QR" style="width: 65px; height: 65px; display: block;">
+                            <img src="${qrAUrl}" alt="Önce Form QR" style="width: 65px; height: 65px; display: block;">
                         </div>
                         <div style="flex: 1;">
-                            <span style="font-size: 10.5px; font-weight: 800; color: var(--yellow); text-transform: uppercase;">1. Aşama (Önce)</span>
+                            <span style="font-size: 10.5px; font-weight: 800; color: ${beforeBorderColor}; text-transform: uppercase;">${beforeLabel}</span>
                             <div style="display:flex; gap:4px; margin-top:4px;">
-                                <a href="${formALink}" target="_blank" class="btn" style="padding: 3px 6px; font-size: 9.5px; background: var(--yellow); color: black; text-decoration: none; flex:1; text-align:center;">Aç</a>
+                                <a href="${formALink}" target="_blank" class="btn" style="padding: 3px 6px; font-size: 9.5px; background: ${beforeBorderColor}; color: white; text-decoration: none; flex:1; text-align:center;">Aç</a>
                                 <button class="btn" style="padding: 3px 6px; font-size: 9.5px; background: var(--text-muted); flex:1;" onclick="copyToClipboard('${formALink}')">Kopyala</button>
                             </div>
                         </div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 10px; background: rgba(139, 92, 246, 0.05); padding: 8px; border-radius: 8px; border: 1px dashed #8b5cf6;">
+                    <div style="display: flex; align-items: center; gap: 10px; background: ${afterBg}; padding: 8px; border-radius: 8px; border: 1px dashed ${afterBorderColor};">
                         <div style="background: white; padding: 3px; border-radius: 4px; border: 1px solid #ddd;">
-                            <img src="${qrDEUrl}" alt="D-E Form QR" style="width: 65px; height: 65px; display: block;">
+                            <img src="${qrDEUrl}" alt="Sonra Form QR" style="width: 65px; height: 65px; display: block;">
                         </div>
                         <div style="flex: 1;">
-                            <span style="font-size: 10.5px; font-weight: 800; color: #8b5cf6; text-transform: uppercase;">3. Aşama (Sonra)</span>
+                            <span style="font-size: 10.5px; font-weight: 800; color: ${afterBorderColor}; text-transform: uppercase;">${afterLabel}</span>
                             <div style="display:flex; gap:4px; margin-top:4px;">
-                                <a href="${formDELink}" target="_blank" class="btn" style="padding: 3px 6px; font-size: 9.5px; background: #8b5cf6; text-decoration: none; flex:1; text-align:center;">Aç</a>
+                                <a href="${formDELink}" target="_blank" class="btn" style="padding: 3px 6px; font-size: 9.5px; background: ${afterBorderColor}; color: white; text-decoration: none; flex:1; text-align:center;">Aç</a>
                                 <button class="btn" style="padding: 3px 6px; font-size: 9.5px; background: var(--text-muted); flex:1;" onclick="copyToClipboard('${formDELink}')">Kopyala</button>
                             </div>
                         </div>
@@ -4324,34 +4413,42 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             <h1>${safeSinifTitle} Sınıfı - Öğrenci QR Kodları</h1>
             <div class="grid">`;
 
-            const teacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
-            const uidParam = teacherUid ? `&uid=${encodeURIComponent(teacherUid)}` : '';
+            const isLgs8 = String(sinif || '').trim().startsWith('8');
 
             studentsInClass.forEach(s => {
                 const safeName = escapeFn(s.adSoyad || '');
                 const safeNo = escapeFn(s.no || '');
-                const formALink = `${baseUrl}/dersten_once_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidParam}`;
-                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidParam}`;
-                const formDELink = `${baseUrl}/dersten_sonra_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidParam}`;
+                const beforeFile = isLgs8 ? 'lgs_seans_oncesi_formu.html' : 'dersten_once_formu.html';
+                const afterFile = isLgs8 ? 'lgs_seans_sonrasi_formu.html' : 'dersten_sonra_formu.html';
+                const beforeColor = isLgs8 ? 'ea580c' : 'f59e0b';
+                const afterColor = isLgs8 ? '059669' : '8b5cf6';
+                const beforeTitle = isLgs8 ? 'LGS SEANS ÖNCESİ' : '1. AŞAMA';
+                const beforeSub = isLgs8 ? '(Hedef &amp; Odak)' : '(Dersten Önce)';
+                const afterTitle = isLgs8 ? 'LGS SEANS SONU' : '3. AŞAMA';
+                const afterSub = isLgs8 ? '(Çıkış &amp; Hata Teşhis)' : '(Dersten Sonra)';
+
+                const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+                const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
 
                 // Higher resolution for printing
-                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formALink)}&color=f59e0b`;
+                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formALink)}&color=${beforeColor}`;
                 const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formVakLink)}&color=0284c7`;
-                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formDELink)}&color=8b5cf6`;
+                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formDELink)}&color=${afterColor}`;
 
                 html += `
                 <div class="student-card">
-                    <div class="student-name">${safeNo} - ${safeName}</div>
+                    <div class="student-name">${safeNo} - ${safeName} ${isLgs8 ? '<span style="font-size:11px; float:right; color:#ea580c; font-weight:normal;">[LGS Koçluk]</span>' : ''}</div>
                     <div class="qr-container">
                         <div class="qr-box">
                             <img src="${qrAUrl}" alt="QR">
-                            <div class="qr-title color-1">1. AŞAMA</div>
-                            <div style="font-size:9.5px; color:#64748b;">(Dersten Önce)</div>
+                            <div class="qr-title" style="color:#${beforeColor}; font-weight:bold;">${beforeTitle}</div>
+                            <div style="font-size:9.5px; color:#64748b;">${beforeSub}</div>
                         </div>
                         <div class="qr-box">
                             <img src="${qrDEUrl}" alt="QR">
-                            <div class="qr-title color-3">3. AŞAMA</div>
-                            <div style="font-size:9.5px; color:#64748b;">(Dersten Sonra)</div>
+                            <div class="qr-title" style="color:#${afterColor}; font-weight:bold;">${afterTitle}</div>
+                            <div style="font-size:9.5px; color:#64748b;">${afterSub}</div>
                         </div>
                         <div class="qr-box">
                             <img src="${qrVakUrl}" alt="QR">
