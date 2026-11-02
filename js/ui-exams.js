@@ -4308,9 +4308,12 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 const beforeBg = isLgs8 ? 'rgba(234, 88, 12, 0.05)' : 'rgba(245, 158, 11, 0.05)';
                 const afterBg = isLgs8 ? 'rgba(5, 150, 105, 0.05)' : 'rgba(139, 92, 246, 0.05)';
 
-                const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
-                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
-                const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+                const currentTeacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+                const uidQueryParam = currentTeacherUid ? `&uid=${encodeURIComponent(currentTeacherUid)}` : '';
+
+                const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParam}`;
+                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParam}`;
+                const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParam}`;
 
                 const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formALink)}&color=${beforeColor}`;
                 const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formVakLink)}&color=0284c7`;
@@ -4427,9 +4430,12 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 const afterTitle = isLgs8 ? 'LGS SEANS SONU' : '3. AŞAMA';
                 const afterSub = isLgs8 ? '(Çıkış &amp; Hata Teşhis)' : '(Dersten Sonra)';
 
-                const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
-                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
-                const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}`;
+                const currentTeacherUidPrint = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+                const uidQueryParamPrint = currentTeacherUidPrint ? `&uid=${encodeURIComponent(currentTeacherUidPrint)}` : '';
+
+                const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParamPrint}`;
+                const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParamPrint}`;
+                const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParamPrint}`;
 
                 // Higher resolution for printing
                 const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formALink)}&color=${beforeColor}`;

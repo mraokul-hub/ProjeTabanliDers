@@ -5083,9 +5083,13 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
         const item = (window.koclukData || []).find(k => String(k.id) === String(targetId));
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
         const page = (formType === 'before') ? 'lgs_seans_oncesi_formu.html' : 'lgs_seans_sonrasi_formu.html';
+        const currentTeacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+        const uidParam = currentTeacherUid ? `&uid=${encodeURIComponent(currentTeacherUid)}` : '';
         let url = `${baseUrl}/${page}`;
         if (item) {
-            url += `?sinif=${encodeURIComponent(item.sinif || '')}&no=${encodeURIComponent(item.studentNo || '')}&ad=${encodeURIComponent(item.adSoyad || '')}`;
+            url += `?sinif=${encodeURIComponent(item.sinif || '')}&no=${encodeURIComponent(item.studentNo || '')}&ad=${encodeURIComponent(item.adSoyad || '')}${uidParam}`;
+        } else if (currentTeacherUid) {
+            url += `?uid=${encodeURIComponent(currentTeacherUid)}`;
         }
         window.open(url, '_blank');
     }

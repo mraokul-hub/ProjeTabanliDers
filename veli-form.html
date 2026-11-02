@@ -747,21 +747,6 @@
     } else if (sid) {
         document.getElementById('studentNameDisplay').textContent =
             `Öğrenci No: ${sid} için veri girişi yapıyorsunuz.`;
-        if (uid && typeof firebase !== 'undefined') {
-            try {
-                firebase.database().ref(`app_data/${uid}/students`).once('value', snap => {
-                    if (snap.exists()) {
-                        const list = snap.val();
-                        const arr = Array.isArray(list) ? list : Object.values(list || {});
-                        const found = arr.find(s => String(s.no) === String(sid));
-                        if (found && found.adSoyad) {
-                            document.getElementById('studentNameDisplay').textContent =
-                                `${found.adSoyad} (${found.no}) için veri girişi yapıyorsunuz.`;
-                        }
-                    }
-                });
-            } catch(e) {}
-        }
     }
 
     // Ders Otomatik Seçimi
