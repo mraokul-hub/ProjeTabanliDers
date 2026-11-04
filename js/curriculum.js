@@ -8857,21 +8857,29 @@ const curriculumData = {
 
 
 function toggleInputMode() {
-    const mode = document.querySelector('input[name="input-mode"]:checked').value;
+    const mode = document.querySelector('input[name="input-mode"]:checked')?.value || 'mufredat';
+    const mufredatCont = document.getElementById('mufredat-container');
+    const serbestCont = document.getElementById('serbest-container');
+    const toggleDiv = document.getElementById('new-model-terminology-toggle');
     if (mode === 'mufredat') {
-        document.getElementById('mufredat-container').style.display = 'grid';
-        document.getElementById('serbest-container').style.display = 'none';
+        if (mufredatCont) mufredatCont.style.display = 'grid';
+        if (serbestCont) serbestCont.style.display = 'none';
+        const classVal = document.getElementById('mufredat-class')?.value;
+        if (toggleDiv) toggleDiv.style.display = isNewModelClass(classVal) ? 'flex' : 'none';
     } else {
-        document.getElementById('mufredat-container').style.display = 'none';
-        document.getElementById('serbest-container').style.display = 'grid';
+        if (mufredatCont) mufredatCont.style.display = 'none';
+        if (serbestCont) serbestCont.style.display = 'grid';
+        if (toggleDiv) toggleDiv.style.display = 'none';
     }
 }
 
 function initMufredat() {
     const classSelect = document.getElementById('mufredat-class');
     if (!classSelect) return;
+    if (classSelect.options.length > 1 && classSelect.value) return;
     classSelect.innerHTML = '<option value="">Sınıf Seçin...</option>';
-    Object.keys(curriculumData).forEach(function (c) {
+    const cData = (typeof curriculumData !== 'undefined' && curriculumData) ? curriculumData : (window.curriculumData || {});
+    Object.keys(cData).forEach(function (c) {
         classSelect.innerHTML += '<option value="' + c + '">' + c + '</option>';
     });
 }
@@ -9054,7 +9062,13 @@ window.updateMufredatKonu = updateMufredatKonu;
 window.toggleInputMode = toggleInputMode;
 window.initMufredat = initMufredat;
 
-document.addEventListener('DOMContentLoaded', initMufredat);
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMufredat);
+    } else {
+        initMufredat();
+    }
+}
 
 // ── Web 2.0 Materyal Motoru ──
 function getWeb2Tools(dersAdi, konu) {
@@ -9117,3 +9131,7 @@ function getExitTickets(konu, dersAdi) {
     return [baseQ, extraQ];
 }
 
+
+window.getWeb2Tools = getWeb2Tools;
+window.getKonuOzeti = getKonuOzeti;
+window.getExitTickets = getExitTickets;

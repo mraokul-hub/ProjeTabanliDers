@@ -4,36 +4,48 @@
 // ============================================================
 
         function suggestAIStrategy() {
-            const mode = document.querySelector('input[name="input-mode"]:checked').value;
+            const mode = document.querySelector('input[name="input-mode"]:checked')?.value || 'mufredat';
             let classInput, nameInput, uniteInput, topicInput;
             if (mode === 'mufredat') {
-                classInput = document.getElementById('mufredat-class').value || 'Belirtilmedi';
-                nameInput = document.getElementById('mufredat-ders').value || 'Belirtilmedi';
-                uniteInput = document.getElementById('mufredat-unite').value || 'Genel Tema'; // DÜZELTME: mufredat modunda unite okunuyor
+                classInput = document.getElementById('mufredat-class')?.value || '';
+                nameInput = document.getElementById('mufredat-ders')?.value || '';
+                uniteInput = document.getElementById('mufredat-unite')?.value || 'Genel Tema';
                 const konuSel = document.getElementById('mufredat-konu');
-                if (konuSel.multiple) {
+                if (konuSel && konuSel.multiple) {
                     topicInput = Array.from(konuSel.selectedOptions).map(opt => opt.value).filter(v => v !== "").join(' / ');
-                    if (!topicInput) topicInput = 'Genel Konu';
                 } else {
-                    topicInput = konuSel.value || 'Genel Konu';
+                    topicInput = konuSel?.value || '';
+                }
+
+                if (!classInput) {
+                    alert('Lütfen önce bir Sınıf Seviyesi seçiniz.');
+                    return;
+                }
+                if (!nameInput) {
+                    alert('Lütfen bir Ders Adı seçiniz.');
+                    return;
+                }
+                if (!topicInput) {
+                    topicInput = uniteInput || 'Genel Konu';
                 }
             } else {
-                classInput = document.getElementById('free-class').value.trim() || 'Tüm Sınıflar';
-                nameInput = document.getElementById('free-name').value.trim() || 'Genel Ders';
-                uniteInput = document.getElementById('free-unite').value.trim() || 'Genel Ünite';
-                topicInput = document.getElementById('free-topic').value.trim() || 'Genel Konu';
+                classInput = document.getElementById('free-class')?.value.trim() || 'Tüm Sınıflar';
+                nameInput = document.getElementById('free-name')?.value.trim() || 'Genel Ders';
+                uniteInput = document.getElementById('free-unite')?.value.trim() || 'Genel Ünite';
+                topicInput = document.getElementById('free-topic')?.value.trim() || 'Genel Konu';
             }
 
-            const useKolb = document.getElementById('strat-kolb').checked;
-            const useVygotsky = document.getElementById('strat-vygotsky').checked;
-            const useBloom = document.getElementById('strat-bloom').checked;
-            const useAnaliz = document.getElementById('strat-analiz').checked;
-            const useUDL = document.getElementById('strat-udl') && document.getElementById('strat-udl').checked;
-            const useFlipped = document.getElementById('strat-flipped') && document.getElementById('strat-flipped').checked;
+            const useKolb = document.getElementById('strat-kolb')?.checked;
+            const useVygotsky = document.getElementById('strat-vygotsky')?.checked;
+            const useBloom = document.getElementById('strat-bloom')?.checked;
+            const useAnaliz = document.getElementById('strat-analiz')?.checked;
+            const useUDL = document.getElementById('strat-udl')?.checked;
+            const useFlipped = document.getElementById('strat-flipped')?.checked;
             const sureVal = parseInt(document.getElementById('ders-suresi') ? document.getElementById('ders-suresi').value : 40) || 40;
 
             // Sınıfın VAK dağılımını hesapla
-            const classStudents = studentData.filter(s => classInput === 'Tüm Sınıflar' || s.sinif === classInput);
+            const sData = (typeof studentData !== 'undefined' && Array.isArray(studentData)) ? studentData : [];
+            const classStudents = sData.filter(s => classInput === 'Tüm Sınıflar' || s.sinif === classInput || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(classInput)));
             const totalStudents = classStudents.length || 1;
             const vakCounts = { 'Görsel': 0, 'İşitsel': 0, 'Kinestetik': 0, 'Belirtilmedi': 0 };
             classStudents.forEach(s => {
@@ -90,7 +102,8 @@
                 if (useFlipped) activeStrats += ', Flipped Classroom';
 
                 // ── Web 2.0 ──
-                const w2 = getWeb2Tools(nameInput, topicInput);
+                const fnW2 = typeof getWeb2Tools === 'function' ? getWeb2Tools : (window.getWeb2Tools || function() { return { araçlar: 'Padlet, Miro', aciklama: 'Dijital materyal tasarımı ve fikir haritası oluşturun.', link: 'https://padlet.com' }; });
+                const w2 = fnW2(nameInput, topicInput);
 
                 // ── HTML blokları ──
                 const kolbHtml = useKolb
@@ -122,12 +135,14 @@
                     </ul>
                 </div>` : '';
 
-                const exitTickets = getExitTickets(topicInput, nameInput);
+                const fnExit = typeof getExitTickets === 'function' ? getExitTickets : (window.getExitTickets || function(t) { return [`"${t}" kavramını 8 yaşındaki bir çocuğa nasıl açıklardın?`, `"${t}" hakkında aklına takılan soruyu yaz.`]; });
+                const exitTickets = fnExit(topicInput, nameInput);
                 const exitHtml = `
                 <li><strong>Çıkış Bileti 1:</strong> ${exitTickets[0]}</li>
                 <li><strong>Çıkış Bileti 2:</strong> ${exitTickets[1]}</li>`;
 
-                const ozet = getKonuOzeti(topicInput, nameInput, uniteInput);
+                const fnOzet = typeof getKonuOzeti === 'function' ? getKonuOzeti : (window.getKonuOzeti || function(t) { return { kavramlar: [t], beceriler: ['Analitik düşünme'], gunlukBag: 'Günlük hayat uygulamaları' }; });
+                const ozet = fnOzet(topicInput, nameInput, uniteInput);
 
                 const flippedHtml = useFlipped ? `
                 <div style="background:var(--card-bg);border-left:4px solid var(--accent);padding:15px;border-radius:8px;border:1px solid var(--border);border-left-width:4px;">
@@ -378,18 +393,19 @@ DEĞERLENDİRME & ÇIKIŞ BİLETLERİ:
                     fallbackCopy(window.currentGeminiPrompt);
                 }
                 
-                btn.innerHTML = `<i class="fas fa-check-circle"></i> Prompt Kopyalandı!`;
-                btn.style.background = 'var(--accent)';
-
-                setTimeout(() => {
-                    btn.innerHTML = `<i class="fas fa-external-link-alt"></i> Yönlendiriliyor...`;
+                try {
                     window.open("https://gemini.google.com/app", "_blank");
-                }, 800);
+                } catch (_) {}
 
-                setTimeout(() => {
-                    btn.innerHTML = origText;
-                    btn.style.background = '';
-                }, 3000);
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-check-circle"></i> Prompt Kopyalandı &amp; Gemini Açıldı!`;
+                    btn.style.background = 'var(--accent)';
+
+                    setTimeout(() => {
+                        btn.innerHTML = origText;
+                        btn.style.background = '';
+                    }, 3000);
+                }
             } catch (err) {
                 console.error("Kopyalama hatası:", err);
                 alert("Otomatik kopyalama başarısız oldu. Lütfen şu prompt metnini manuel olarak kopyalayın:\n\n" + window.currentGeminiPrompt);
@@ -971,3 +987,5 @@ Lütfen her biri için aşağıdaki şablona sadık kalarak, okunaklı, samimi, 
             `;
         }
         window.generateContextScenarios = generateContextScenarios;
+        window.suggestAIStrategy = suggestAIStrategy;
+        window.copyPromptAndOpenGemini = copyPromptAndOpenGemini;

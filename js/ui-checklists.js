@@ -1871,6 +1871,7 @@
             text += `\n\n⚠️ *EKSİĞİ BULUNANLAR (${missing.length} / ${students.length}):*\n` + (missing.length > 0 ? missing.join('\n') : 'Herkes eksiksiz! 🎉');
         }
 
+        text += `\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         return text;
     }
 
@@ -1897,7 +1898,8 @@
         if (!item) return;
 
         const ev = (item.evaluations && item.evaluations[studentName]) || {};
-        let text = `👤 *ÖĞRENCİ TAKİP BİLGİLENDİRMESİ*\n📌 *Öğrenci:* ${studentName}\n📋 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📅 *Tarih:* ${item.date || '-'}\n\n`;
+        const platformTag = platform === 'bip' ? ' (BiP)' : '';
+        let text = `📋 *ÖĞRENCİ TAKİP BİLGİLENDİRMESİ${platformTag}*\n👤 *Öğrenci:* ${studentName}\n📌 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📅 *Tarih:* ${item.date || '-'}\n\n`;
 
         if (item.evalType === 'score') {
             text += `📊 *Kriter Puanları:*\n`;
@@ -1924,6 +1926,8 @@
         if (ev.note) {
             text += `\n📝 *Öğretmen Notu:* ${ev.note}`;
         }
+
+        text += `\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
 
         if (platform === 'wa') {
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');

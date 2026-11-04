@@ -4396,9 +4396,17 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <div style="background: var(--input-bg); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 11px; margin-bottom: 8px; border: 1px solid var(--border);">
                                 lgs_seans_oncesi_formu.html
                             </div>
-                            <a href="lgs_seans_oncesi_formu.html" target="_blank" class="btn" style="background: #f97316; color: white; display: block; text-align: center; text-decoration: none; padding: 7px 12px; font-size: 12px; font-weight: 600;">
-                                <i class="fas fa-external-link-alt"></i> Seans Öncesi Formunu Aç
-                            </a>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <a href="lgs_seans_oncesi_formu.html" target="_blank" class="btn" style="background: #f97316; color: white; display: inline-flex; align-items:center; justify-content:center; text-decoration: none; padding: 7px 10px; font-size: 11.5px; font-weight: 600; flex:1;">
+                                    <i class="fas fa-external-link-alt me-1"></i> Formu Aç
+                                </a>
+                                <button type="button" class="btn" onclick="quickTargetQR('lgs_before', 'class')" style="background: rgba(249,115,22,0.12); color: #c2410c; border: 1px solid rgba(249,115,22,0.35); padding: 7px 9px; font-size: 11px; font-weight: 700; cursor:pointer;" title="Sınıf panosu için tek barkod afişi oluştur">
+                                    <i class="fas fa-school me-1"></i> Sınıfa Yönlendir
+                                </button>
+                                <button type="button" class="btn" onclick="quickTargetQR('lgs_before', 'student')" style="background: rgba(249,115,22,0.12); color: #c2410c; border: 1px solid rgba(249,115,22,0.35); padding: 7px 9px; font-size: 11px; font-weight: 700; cursor:pointer;" title="Her öğrenciye özel kilitli barkod fişleri oluştur">
+                                    <i class="fas fa-id-card me-1"></i> Öğrenciye Yönlendir
+                                </button>
+                            </div>
                         </div>
 
                         <div class="form-box" style="border-left: 5px solid #059669; margin-bottom: 12px; background: rgba(5,150,105,0.02);">
@@ -4407,35 +4415,76 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <div style="background: var(--input-bg); padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 11px; margin-bottom: 8px; border: 1px solid var(--border);">
                                 lgs_seans_sonrasi_formu.html
                             </div>
-                            <a href="lgs_seans_sonrasi_formu.html" target="_blank" class="btn" style="background: #059669; color: white; display: block; text-align: center; text-decoration: none; padding: 7px 12px; font-size: 12px; font-weight: 600;">
-                                <i class="fas fa-external-link-alt"></i> Seans Sonu Formunu Aç
-                            </a>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <a href="lgs_seans_sonrasi_formu.html" target="_blank" class="btn" style="background: #059669; color: white; display: inline-flex; align-items:center; justify-content:center; text-decoration: none; padding: 7px 10px; font-size: 11.5px; font-weight: 600; flex:1;">
+                                    <i class="fas fa-external-link-alt me-1"></i> Formu Aç
+                                </a>
+                                <button type="button" class="btn" onclick="quickTargetQR('lgs_after', 'class')" style="background: rgba(5,150,105,0.12); color: #065f46; border: 1px solid rgba(5,150,105,0.35); padding: 7px 9px; font-size: 11px; font-weight: 700; cursor:pointer;" title="Sınıf panosu için tek barkod afişi oluştur">
+                                    <i class="fas fa-school me-1"></i> Sınıfa Yönlendir
+                                </button>
+                                <button type="button" class="btn" onclick="quickTargetQR('lgs_after', 'student')" style="background: rgba(5,150,105,0.12); color: #065f46; border: 1px solid rgba(5,150,105,0.35); padding: 7px 9px; font-size: 11px; font-weight: 700; cursor:pointer;" title="Her öğrenciye özel kilitli barkod fişleri oluştur">
+                                    <i class="fas fa-id-card me-1"></i> Öğrenciye Yönlendir
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="right-panel">
+                <div class="right-panel" id="qr-management-panel">
                     <div style="padding: 20px; border-bottom: 1px solid var(--border); background: var(--card-bg);">
-                        <h4 style="margin: 0;"><i class="fas fa-users"></i> Sınıf Bazlı Öğrenci QR Kodları</h4>
-                        <p style="font-size: 12px; color: var(--text-muted); margin: 5px 0 10px 0;">Sınıf seçerek
-                            öğrencilere özel otomatik form linki (QR kod) üretebilirsiniz. Öğrenci kodu okuttuğunda
-                            numarası ve sınıfı formda hazır gelir.</p>
-                        <div class="form-group" style="margin-bottom: 0; display:flex; align-items:flex-end; gap:10px;">
-                            <div style="flex:1;">
-                                <label>Sınıf Seçin:</label>
-                                <select id="eval-class-select" onchange="generateStudentQRs()">
-                                    <option value="">Önce sınıf seçin...</option>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; flex-wrap:wrap; gap:8px;">
+                            <h4 style="margin: 0;"><i class="fas fa-qrcode text-primary me-2"></i> Form &amp; Barkod Yönlendirme Merkezi</h4>
+                            <span style="font-size:11px; background:rgba(234,88,12,0.12); color:#ea580c; padding:3px 10px; border-radius:12px; font-weight:800;">
+                                <i class="fas fa-bullseye me-1"></i> LGS &amp; Sınıf / Öğrenci Barkodları
+                            </span>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 14px 0;">
+                            LGS Seans Öncesi / Sonu veya Genel formları <strong>Sınıf Panosu Barkodu</strong> (tüm sınıf için tek afiş) ya da <strong>Bireysel Öğrenci Barkodu</strong> (öğrenciye özel kilitli kart) olarak üretebilirsiniz.
+                        </p>
+
+                        <!-- Filtre ve Kontrol Alanı -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display:block;">1. Sınıf Seçin:</label>
+                                <select id="eval-class-select" class="form-control" onchange="generateStudentQRs()" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-weight:600;">
+                                    <option value="">-- Sınıf Seçiniz --</option>
                                 </select>
                             </div>
-                            <button class="btn" style="background:#ef4444; padding: 12px 15px;"
-                                onclick="printQRCodes()">
-                                <i class="fas fa-file-pdf me-1"></i> PDF İndir / Yazdır
-                            </button>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display:block;">2. Form Türü:</label>
+                                <select id="eval-form-type-select" class="form-control" onchange="generateStudentQRs()" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-weight:600;">
+                                    <option value="auto">🎯 Otomatik (8. Sınıf: LGS, Diğerleri: Genel)</option>
+                                    <option value="lgs_both">⚡ LGS Seans Paketi (Öncesi + Sonu)</option>
+                                    <option value="lgs_before">🌟 Sadece LGS Seans Öncesi Formu</option>
+                                    <option value="lgs_after">🏁 Sadece LGS Seans Sonu Çıkış Bileti</option>
+                                    <option value="classic">📘 Klasik Ders Paketleri (Önce + Sonra)</option>
+                                    <option value="vak">🧠 Bilişsel Stil Envanteri (VAK)</option>
+                                    <option value="all">🚀 Tümü (LGS + VAK / Bütünsel)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Yönlendirme Modu Butonları (Sınıfa Yönlendir vs. Öğrenciye Yönlendir) -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <div style="display:inline-flex; background:rgba(0,0,0,0.06); padding:3px; border-radius:8px;" id="qr-target-mode-group">
+                                <button type="button" id="btn-mode-class" class="btn" onclick="setQRTargetMode('class')" style="padding:6px 14px; font-size:12px; font-weight:700; border-radius:6px; border:none; cursor:pointer; background:var(--primary); color:white; transition:0.2s;">
+                                    <i class="fas fa-school me-1"></i> Sınıfa Yönlendir (Afiş QR)
+                                </button>
+                                <button type="button" id="btn-mode-student" class="btn" onclick="setQRTargetMode('student')" style="padding:6px 14px; font-size:12px; font-weight:700; border-radius:6px; border:none; cursor:pointer; background:transparent; color:var(--text-main); transition:0.2s;">
+                                    <i class="fas fa-id-card me-1"></i> Öğrenciye Yönlendir (Fişler)
+                                </button>
+                            </div>
+
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn" id="btn-print-qr" style="background:#ef4444; color:white; padding:8px 14px; font-size:12px; font-weight:700; border-radius:6px; display:flex; align-items:center; gap:6px;" onclick="printQRCodes()">
+                                    <i class="fas fa-print"></i> <span id="print-btn-text">Sınıf Afişi Yazdır (PDF)</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <div id="qr-list-container"
-                        style="padding: 20px; max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: rgba(59, 130, 246, 0.03);">
+                        style="padding: 20px; max-height: 560px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: rgba(59, 130, 246, 0.02);">
                         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
                             <i class="fas fa-qrcode fa-3x" style="margin-bottom: 15px; opacity: 0.5;"></i>
                             <p style="font-weight: 700;">QR Kodlar İçin Sınıf Seçiniz</p>
@@ -5183,8 +5232,8 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                             <i class="fab fa-whatsapp"></i> WhatsApp Sınıf Özeti
                         </button>
                         <button class="btn" onclick="shareActiveChecklistBiP()"
-                            style="background:#0066cc; color:#fff; font-size:12px; padding:8px 14px; font-weight:600;">
-                            <i class="fas fa-comment"></i> BiP Sınıf Özeti
+                            style="background:#00B2FF; color:#fff; font-size:12px; padding:8px 14px; font-weight:600; border:none; cursor:pointer;" title="BiP ile Sınıf Özeti Paylaş">
+                            <i class="fas fa-comment-dots"></i> BiP Sınıf Özeti
                         </button>
                     </div>
                     <div style="display:flex; gap:10px;">
@@ -5842,6 +5891,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                 <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-11')"><i class="fas fa-chart-bar"></i> 11. Soru Takip</button>
                 <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-12')"><i class="fas fa-clipboard-list"></i> 12. Çizelgeler</button>
                 <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-13')"><i class="fas fa-brain"></i> 13. LGS Koçluk</button>
+                <button type="button" class="guide-nav-chip" style="background:rgba(234,88,12,0.12); color:#ea580c; border-color:rgba(234,88,12,0.4); font-weight:700;" onclick="scrollToGuideCard('guide-card-lgs-pdf')"><i class="fas fa-file-pdf"></i> 📄 LGS PDF Kılavuzları</button>
                 <button type="button" class="guide-nav-chip" onclick="scrollToGuideCard('guide-card-14')"><i class="fas fa-graduation-cap"></i> 14. YKS Koçluk</button>
             </div>
         </div>
@@ -6256,6 +6306,123 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         5-8. sınıf kademesine, aktif takvim fazına (LGS Faz 1-4 veya Ortaokul Faz 1-4), branş netlerine ve TDE skoruna duyarlı 5 modüllü bilimsel prompt üretir. Veliler için deneme sonrası evde öğrenciye net sormamayı ve çaba takdirini teminat altına alan <em>"10 Dakikalık Krizsiz Analiz Rehberi"</em> bültenini tek tıkla WhatsApp veya BiP üzerinden paylaşır.
                     </li>
                 </ul>
+
+                <!-- Resmî PDF Dokümanları Hızlı İndirme Kutucuğu (Kart İçi) -->
+                <div style="margin-top:14px; background:rgba(234,88,12,0.06); border:1px solid rgba(234,88,12,0.25); border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <strong style="color:#c2410c; font-size:13px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-file-pdf text-danger"></i> Resmî LGS Koçluk ve Öğrenci PDF Dokümanları:
+                        </strong>
+                        <span style="font-size:12px; color:var(--text-muted);">12 yaşındaki öğrenciye ve koçuna adım adım rehberlik eden A4 master PDF kılavuzları:</span>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <a href="LGS_Kocluk_Master_Raporu.pdf" target="_blank" class="btn" style="background:#0284c7; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Koç Protokolünü Aç"><i class="fas fa-user-tie"></i> Koç Raporu</a>
+                        <a href="LGS_Ogrenci_Basari_Kilavuzu.pdf" target="_blank" class="btn" style="background:#059669; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Öğrenci Kılavuzunu Aç"><i class="fas fa-user-graduate"></i> Öğrenci Kılavuzu</a>
+                        <a href="uygulama%20ad%C4%B1mlar%C4%B1.pdf" target="_blank" class="btn" style="background:#ea580c; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Uygulama Adımları Çizelgesini Aç"><i class="fas fa-stream"></i> Uygulama Adımları</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEDİKATED SHOWCASE CARD: LGS Bilişsel Koçluk & Öğrenci Başarı PDF Kılavuzları -->
+            <div id="guide-card-lgs-pdf" class="form-box guide-card"
+                style="border-left: 5px solid #ea580c; background: linear-gradient(135deg, rgba(234,88,12,0.04) 0%, rgba(249,115,22,0.01) 100%); box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+                <div class="guide-card-header" style="border-bottom: 1px solid rgba(234,88,12,0.2);">
+                    <h3 style="color: #ea580c; margin:0; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-file-pdf text-danger"></i> 📚 LGS Bilişsel Koçluk ve Öğrenci İcra Dokümanları (Resmî PDF Kılavuzlar)
+                    </h3>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="background:rgba(234,88,12,0.15); color:#ea580c; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:800;">
+                            <i class="fas fa-check-circle me-1"></i> A4 Baskıya &amp; İndirmeye Hazır
+                        </span>
+                        <button type="button" class="guide-go-tab-btn" style="background:#ea580c;" onclick="openTab('tab-kocluk')" title="LGS Koçluk Modülünü Aç">
+                            <i class="fas fa-brain me-1"></i> LGS Modülüne Git
+                        </button>
+                    </div>
+                </div>
+
+                <p style="font-size:13.5px; color:var(--text-main); margin-bottom:14px; line-height:1.5;">
+                    LGS 8. sınıf öğrencileri ve eğitim koçları için hazırlanan, MEB Maarif Modeli ile %100 uyumlu, 12 yaşındaki bir çocuğun ders masasında adım adım uygulayacağı resmî PDF kılavuzları aşağıdan doğrudan görüntüleyebilir veya cihazınıza indirebilirsiniz:
+                </p>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-bottom:8px;">
+                    <!-- PDF 1: Koç Master Raporu -->
+                    <div style="background:var(--card-bg); border:1.5px solid rgba(2,132,199,0.3); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                                <span style="font-size:10.5px; font-weight:800; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; text-transform:uppercase;">
+                                    <i class="fas fa-user-tie me-1"></i> Koç Protokolü
+                                </span>
+                                <span style="font-size:11px; color:var(--text-muted); font-weight:600;"><i class="fas fa-file-pdf text-danger me-1"></i> 440 KB</span>
+                            </div>
+                            <h4 style="margin:0 0 6px 0; color:#0284c7; font-size:14px; font-weight:800;">
+                                🛡️ LGS Koçluk Master Raporu
+                            </h4>
+                            <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin:0 0 12px 0;">
+                                <strong>Uzman Eğitim Koçu Uygulama ve İzleme Protokolü:</strong> 12 yaşındaki çocuğa pedagojik yaklaşım, TDE skoru analizi, plato ve kriz yönetimi, 30 dakikalık haftalık görüşme ajandası ve iki modlu veli bülteni yönergesi.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <a href="LGS_Kocluk_Master_Raporu.pdf" target="_blank" class="btn" style="flex:1; background:#0284c7; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                                <i class="fas fa-external-link-alt"></i> Aç / İncele
+                            </a>
+                            <a href="LGS_Kocluk_Master_Raporu.pdf" download="LGS_Kocluk_Master_Raporu.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PDF 2: Öğrenci Başarı Kılavuzu -->
+                    <div style="background:var(--card-bg); border:1.5px solid rgba(5,150,105,0.3); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                                <span style="font-size:10.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:6px; text-transform:uppercase;">
+                                    <i class="fas fa-user-graduate me-1"></i> Öğrenci Rehberi
+                                </span>
+                                <span style="font-size:11px; color:var(--text-muted); font-weight:600;"><i class="fas fa-file-pdf text-danger me-1"></i> 790 KB</span>
+                            </div>
+                            <h4 style="margin:0 0 6px 0; color:#059669; font-size:14px; font-weight:800;">
+                                🏆 LGS Öğrenci Başarı Kılavuzu
+                            </h4>
+                            <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin:0 0 12px 0;">
+                                <strong>12 Yaşındaki Şampiyonun Masada Günlük İcra Rehberi:</strong> Ders masasında barkod okutma, 120 saniye kuralı, turlama tekniği, akşam 20:30 Hata Defteri seansı (1-3-14 gün tekrarı) ve 24 saatlik mükemmel gün rutini.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <a href="LGS_Ogrenci_Basari_Kilavuzu.pdf" target="_blank" class="btn" style="flex:1; background:#059669; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                                <i class="fas fa-external-link-alt"></i> Aç / İncele
+                            </a>
+                            <a href="LGS_Ogrenci_Basari_Kilavuzu.pdf" download="LGS_Ogrenci_Basari_Kilavuzu.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PDF 3: Uygulama Adımları -->
+                    <div style="background:var(--card-bg); border:1.5px solid rgba(234,88,12,0.3); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                                <span style="font-size:10.5px; font-weight:800; background:#ffedd5; color:#c2410c; padding:3px 8px; border-radius:6px; text-transform:uppercase;">
+                                    <i class="fas fa-stream me-1"></i> Süreç Çizelgesi
+                                </span>
+                                <span style="font-size:11px; color:var(--text-muted); font-weight:600;"><i class="fas fa-file-pdf text-danger me-1"></i> 477 KB</span>
+                            </div>
+                            <h4 style="margin:0 0 6px 0; color:#ea580c; font-size:14px; font-weight:800;">
+                                ⏱️ LGS Koçluk Uygulama Adımları
+                            </h4>
+                            <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin:0 0 12px 0;">
+                                <strong>Ne Zaman, Hangi Form İle, Neyi Yapmalı?:</strong> 8 Aşamalı süreç matrisi, 4 Kök Hata eylem ve iyileştirme rehberi, 30 dakikalık görüşme akışı ve resmî form dizin tablosu (FRM-01 &rarr; FRM-07).
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <a href="uygulama%20ad%C4%B1mlar%C4%B1.pdf" target="_blank" class="btn" style="flex:1; background:#ea580c; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                                <i class="fas fa-external-link-alt"></i> Aç / İncele
+                            </a>
+                            <a href="uygulama%20ad%C4%B1mlar%C4%B1.pdf" download="uygulama adımları.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- 14: 12. Sınıf YKS (TYT-AYT) Bilişsel İcra & Stratejik Mentorluk Modülü -->
@@ -6433,8 +6600,10 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
                 <button class="btn" style="background:var(--secondary);" onclick="window.print()"><i
                         class="fas fa-file-pdf"></i> PDF İndir / Yazdır</button>
-                <button class="btn" id="cbl-whatsapp-btn" style="background:#25D366;"><i class="fab fa-whatsapp"></i>
-                    Veliye Gönder</button>
+                <button class="btn" id="cbl-whatsapp-btn" style="background:#25D366; color:white; border:none; cursor:pointer;" onclick="shareCblReportWhatsApp()"><i class="fab fa-whatsapp"></i>
+                    Veliye WA</button>
+                <button class="btn" id="cbl-bip-btn" style="background:#00B2FF; color:white; border:none; cursor:pointer;" onclick="shareCblReportBip()"><i class="fas fa-comment-dots"></i>
+                    Veliye BiP</button>
             </div>
         </div>
     </div>
@@ -6570,11 +6739,17 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                                     <i class="fas fa-external-link-alt"></i> Forma Git
                                 </button>
                             </div>
-                            <!-- İKİNCİL YEDEK BUTON: WHATSAPP -->
-                            <button type="button" class="btn" id="soru-takip-whatsapp-btn"
-                                style="width: 100%; padding: 6px 10px; font-size: 11px; background: #25D366; color:#fff; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:6px; border:none; cursor:pointer;">
-                                <i class="fab fa-whatsapp"></i> İsteğe Bağlı: WhatsApp'tan Paylaş
-                            </button>
+                            <!-- İKİNCİL YEDEK BUTONLAR: WHATSAPP VE BİP -->
+                            <div style="display:flex; gap:6px; margin-top:8px;">
+                                <button type="button" class="btn" id="soru-takip-whatsapp-btn"
+                                    style="flex:1; padding: 7px 10px; font-size: 11px; background: #25D366; color:#fff; display:flex; align-items:center; justify-content:center; gap:5px; border-radius:6px; border:none; cursor:pointer;" title="Veliye WhatsApp ile Gönder">
+                                    <i class="fab fa-whatsapp"></i> Veliye WA
+                                </button>
+                                <button type="button" class="btn" id="soru-takip-bip-btn"
+                                    style="flex:1; padding: 7px 10px; font-size: 11px; background: #00B2FF; color:#fff; display:flex; align-items:center; justify-content:center; gap:5px; border-radius:6px; border:none; cursor:pointer;" title="Veliye BiP ile Gönder">
+                                    <i class="fas fa-comment-dots"></i> Veliye BiP
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -7258,25 +7433,42 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         <button id="btn-koc-parent-dropdown" type="button" class="btn btn-outline-success btn-sm"
                             onclick="toggleKoclukParentMenu(event)"
                             style="display:inline-flex; align-items:center; gap:5px; font-weight:700; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;"
-                            title="Veli WhatsApp Bülteni Gönder">
-                            <i class="fab fa-whatsapp" style="color:#10b981;"></i> 📱 Veli Bülteni <i class="fas fa-caret-down" style="font-size:10px;"></i>
+                            title="WhatsApp ve BiP Veli Bülteni Gönder">
+                            <i class="fab fa-whatsapp" style="color:#25D366;"></i> 📱 Veli Bülteni <i class="fas fa-caret-down" style="font-size:10px;"></i>
                         </button>
-                        <div id="koc-parent-dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:100050; min-width:250px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); padding:6px 0; font-size:12px;">
+                        <div id="koc-parent-dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:100050; min-width:270px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); padding:6px 0; font-size:12px;">
                             <div style="padding:6px 12px; font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border);">
-                                <i class="fab fa-whatsapp text-success me-1"></i> WhatsApp Web Şablonları
+                                <i class="fab fa-whatsapp text-success me-1"></i> WhatsApp Şablonları
                             </div>
                             <a href="javascript:void(0)" onclick="sendParentWhatsAppMessage(window.activeKoclukId, 'standart'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
-                                <span style="color:#10b981; font-size:14px;"><i class="fas fa-check-circle"></i></span>
+                                <span style="color:#25D366; font-size:14px;"><i class="fab fa-whatsapp"></i></span>
                                 <div>
-                                    <div style="font-weight:700;">🟢 Standart Veli Bülteni</div>
+                                    <div style="font-weight:700;">🟢 Standart Veli Bülteni (WA)</div>
                                     <div style="font-size:10.5px; color:var(--text-muted);">Haftalık genel durum ve net özeti</div>
                                 </div>
                             </a>
                             <a href="javascript:void(0)" onclick="sendParentWhatsAppMessage(window.activeKoclukId, 'krizsiz'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
                                 <span style="color:#ef4444; font-size:14px;"><i class="fas fa-shield-alt"></i></span>
                                 <div>
-                                    <div style="font-weight:700; color:#ef4444;">🛡️ Krizsiz Plato Modu</div>
+                                    <div style="font-weight:700; color:#ef4444;">🛡️ Krizsiz Plato Modu (WA)</div>
                                     <div style="font-size:10.5px; color:var(--text-muted);">Net konuşmama &amp; süre taktiği rehberi</div>
+                                </div>
+                            </a>
+                            <div style="padding:6px 12px; font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border); border-top:1px solid var(--border); margin-top:4px;">
+                                <i class="fas fa-comment-dots text-info me-1"></i> BiP Şablonları
+                            </div>
+                            <a href="javascript:void(0)" onclick="sendParentBipMessage(window.activeKoclukId, 'standart'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="color:#00B2FF; font-size:14px;"><i class="fas fa-comment-dots"></i></span>
+                                <div>
+                                    <div style="font-weight:700;">💬 Standart Veli Bülteni (BiP)</div>
+                                    <div style="font-size:10.5px; color:var(--text-muted);">Önizle, düzenle ve BiP'te paylaş</div>
+                                </div>
+                            </a>
+                            <a href="javascript:void(0)" onclick="sendParentBipMessage(window.activeKoclukId, 'krizsiz'); hideKoclukDropdowns();" style="display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--text-main); text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='var(--tab-bg)'" onmouseout="this.style.background='transparent'">
+                                <span style="color:#ef4444; font-size:14px;"><i class="fas fa-shield-alt"></i></span>
+                                <div>
+                                    <div style="font-weight:700; color:#ef4444;">🛡️ Krizsiz Plato Modu (BiP)</div>
+                                    <div style="font-size:10.5px; color:var(--text-muted);">BiP uyumlu krizsiz rehberlik bülteni</div>
                                 </div>
                             </a>
                         </div>
@@ -9214,9 +9406,23 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
                         <div style="font-weight:700; font-size:13px; color:#059669;">5. Veli Bilgilendirme WhatsApp
                             Bülteni Gönder</div>
                         <div style="font-size:11px; color:var(--text-muted);">Öğrencinin stiline özel veli ev destek
-                            rehberini tek tıkla kopyala ve WhatsApp Web'e gönder.</div>
+                            rehberini tek tıkla kopyala ve WhatsApp'a gönder.</div>
                     </div>
                     <i class="fas fa-share" style="color:#059669; font-size:13px;"></i>
+                </button>
+
+                <!-- 6. Veli BiP Bülteni -->
+                <button type="button" class="btn btn-clear" onclick="VakEngine.sendVakBip()"
+                    style="text-align:left; padding:12px 14px; border-radius:8px; display:flex; align-items:center; gap:12px; border:1px solid #00B2FF; background:rgba(0,178,255,0.06); cursor:pointer;">
+                    <div
+                        style="background:#00B2FF; color:#fff; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; font-size:13px; color:#0284c7;">6. Veli Bilgilendirme BiP Bülteni Gönder</div>
+                        <div style="font-size:11px; color:var(--text-muted);">Öğrencinin stiline özel veli rehberini BiP modalında incele, düzenle ve BiP Web'de paylaş.</div>
+                    </div>
+                    <i class="fas fa-share" style="color:#0284c7; font-size:13px;"></i>
                 </button>
             </div>
 
@@ -9847,7 +10053,7 @@ Lütfen çıktıyı okunaklı, samimi ve ilham verici bir metin (markdown) olara
     <script src="js/app-config.js?v=8"></script>
     <script src="js/db-services.js?v=9"></script>
     <script src="js/ui-controller.js?v=6"></script>
-    <script src="js/curriculum.js?v=6"></script>
+    <script src="js/curriculum.js?v=6" onerror="this.onerror=null;this.src='js/curriculum1.js';"></script>
     <script src="js/ui-strategy.js?v=5"></script>
     <script src="js/ui-students.js?v=6"></script>
     <script src="js/ui-schedule.js?v=4"></script>

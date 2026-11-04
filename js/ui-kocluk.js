@@ -31,6 +31,10 @@
                 grade: 5,
                 gradeLabel: '5. Sınıf',
                 stageTitle: 'Bilişsel Temel & Okuma Dayanıklılığı',
+                examFocus: 'İOKBS Bursluluk & Temel Beceriler',
+                pomodoroDk: 25,
+                molaDk: 5,
+                focusDesc: '25 dk odak + 5 dk mola (Pomodoro Modeli)',
                 piramit: { kavrama: 60, orta: 25, yeniNesil: 15, kavramaCount: 240, ortaCount: 100, yeniNesilCount: 60 },
                 idealPiramit: { kavrama: 60, orta: 25, yeniNesil: 15 },
                 konforThreshold: 10, // Yeni Nesil < %10 ise alarm
@@ -61,6 +65,10 @@
                 grade: 6,
                 gradeLabel: '6. Sınıf',
                 stageTitle: 'Muhakeme & Analitik Genişleme',
+                examFocus: 'Muhakeme & Bursluluk Hazırlık',
+                pomodoroDk: 30,
+                molaDk: 5,
+                focusDesc: '30 dk odak + 5 dk mola',
                 piramit: { kavrama: 45, orta: 35, yeniNesil: 20, kavramaCount: 225, ortaCount: 175, yeniNesilCount: 100 },
                 idealPiramit: { kavrama: 45, orta: 35, yeniNesil: 20 },
                 konforThreshold: 20, // Yeni Nesil < %20 ise alarm
@@ -91,6 +99,10 @@
                 grade: 7,
                 gradeLabel: '7. Sınıf',
                 stageTitle: 'Ön LGS Çıraklığı & Zırhlanma',
+                examFocus: 'Ön LGS & Beceri Temelli Tarama',
+                pomodoroDk: 40,
+                molaDk: 10,
+                focusDesc: '40 dk odak + 10 dk mola (Derin Odaklanma)',
                 piramit: { kavrama: 30, orta: 35, yeniNesil: 35, kavramaCount: 180, ortaCount: 210, yeniNesilCount: 210 },
                 idealPiramit: { kavrama: 30, orta: 35, yeniNesil: 35 },
                 konforThreshold: 30, // Yeni Nesil < %30 ise alarm
@@ -122,6 +134,10 @@
                 grade: 8,
                 gradeLabel: '8. Sınıf',
                 stageTitle: 'LGS Ustalığı & Sınav Otomasyonu',
+                examFocus: 'LGS Sınav Otomasyonu & TDE Turlama',
+                pomodoroDk: 40,
+                molaDk: 10,
+                focusDesc: '40+10 dk veya LGS Simülasyon Blokları (75 dk Sözel / 80 dk Sayısal)',
                 piramit: { kavrama: 20, orta: 30, yeniNesil: 50, kavramaCount: 120, ortaCount: 180, yeniNesilCount: 300 },
                 idealPiramit: { kavrama: 20, orta: 30, yeniNesil: 50 },
                 konforThreshold: 45, // Yeni Nesil < %45 ise alarm
@@ -602,7 +618,7 @@
                     <button type="button" onclick="openKoclukDetailModal('${safeId}')" style="background: linear-gradient(135deg, #4f46e5, #4338ca); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25); transition: all 0.2s ease;">
                         <i class="fas fa-sliders-h"></i> Süreç &amp; Kokpit
                     </button>
-                    <button type="button" onclick="runAiCoachingForStudent('${safeId}')" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25); transition: all 0.2s ease;">
+                    <button type="button" onclick="openKoclukAiTab('${safeId}')" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25); transition: all 0.2s ease;">
                         <i class="fas fa-brain"></i> AI Koçluk
                     </button>
                     <button type="button" onclick="openParentWhatsAppShareModal('${safeId}')" style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25); transition: all 0.2s ease;">
@@ -3842,18 +3858,47 @@
 
         const config = getGradeCognitiveConfig(item.sinif);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
-        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75 };
+        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Dengeli' };
+        const latestNet = getStudentLatestNet(item);
+        const prompt = buildKoclukAiPrompt(item);
+        window.currentGeminiPrompt = prompt;
+
+        const escapeFn = typeof window.escapeHTML === 'function' ? window.escapeHTML : (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
 
         container.innerHTML = `
-            <div style="background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08)); border: 2px dashed #6366f1; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 2.5rem; margin-bottom: 8px;">🧠</div>
-                <h4 style="margin: 0 0 8px 0; color: #4f46e5; font-size: 16px;">5 Modüllük ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk &amp; ${config.isLgsFinal ? 'TDE' : 'Strateji'} Raporu (Google Gemini)</h4>
-                <p style="margin: 0 0 16px 0; color: var(--text-muted); font-size: 13px; max-width: 600px; margin-inline: auto;">
-                    <strong>${escapeFn(item.adSoyad)}</strong> (${escapeFn(item.sinif)}) için branş netleri (Sözel, Mat, Fen), <strong>${config.isLgsFinal ? 'TDE Skoru' : 'Süre & Strateji Skoru'} (${tde.tdePuan}/100)</strong>, baskın hata kök neden kodu ve ${config.isLgsFinal ? 'hedef lise' : 'hedef okul / lise'} parametreleri kademe seviyesine uygun olarak tam otomatik enjekte edilmiştir.
-                </p>
-                <button class="btn btn-purple" onclick="runAiCoachingForStudent('${item.id}')" style="padding: 12px 24px; font-size: 13.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-brain"></i> Promptu Panoya Kopyala &amp; Gemini'yi Aç
-                </button>
+            <div style="background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08)); border: 2px dashed #6366f1; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="font-size: 2.2rem; line-height: 1;">🧠</div>
+                        <div>
+                            <h4 style="margin: 0 0 4px 0; color: #4f46e5; font-size: 15.5px; font-weight: 800;">
+                                5 Modüllük ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk &amp; ${config.isLgsFinal ? 'TDE' : 'Strateji'} Raporu
+                            </h4>
+                            <div style="font-size: 12px; color: var(--text-muted);">
+                                <strong>${escapeFn(item.adSoyad)}</strong> (${escapeFn(item.sinif)}) &bull; Net: <strong style="color:#059669;">${latestNet}/90</strong> &bull; ${config.isLgsFinal ? 'TDE' : 'Strateji'}: <strong style="color:#4f46e5;">${tde.tdePuan}/100</strong> &bull; Hedef: <strong>${escapeFn(item.hedefLise || config.defaultHedefOkul)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <button type="button" class="btn btn-purple" onclick="runAiCoachingForStudent('${item.id}')" style="padding: 9px 15px; font-size: 12.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);">
+                            <i class="fas fa-brain"></i> Promptu Panoya Kopyala &amp; Gemini'yi Aç
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="copyKoclukAiPrompt('${item.id}')" style="padding: 9px 13px; font-size: 12.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <i class="fas fa-copy"></i> Kopyala
+                        </button>
+                        <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="btn" style="background: #4f46e5; color: #ffffff; padding: 9px 13px; font-size: 12.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                            <i class="fas fa-robot"></i> Gemini Web
+                        </a>
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label for="kocluk-ai-prompt-area" style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
+                        <span><i class="fas fa-code me-1"></i> Üretilen Bilişsel Koçluk Promptu (Tam Otomatik Parametrik):</span>
+                        <span style="color: #6366f1;"><i class="fas fa-info-circle me-1"></i> Google Gemini / Claude / ChatGPT uyumludur</span>
+                    </label>
+                    <textarea id="kocluk-ai-prompt-area" readonly style="width: 100%; min-height: 125px; max-height: 240px; resize: vertical; padding: 10px; font-family: monospace; font-size: 11px; line-height: 1.5; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); box-sizing: border-box;">${escapeFn(prompt)}</textarea>
+                </div>
             </div>
 
             <!-- İki Modlu Veli WhatsApp Bülteni Paneli -->
@@ -3882,9 +3927,14 @@
                                 Çabayı, soru çözme disiplinini ve hata defterinde kalıcılaşan soruları öne çıkaran pozitif bilgilendirme.
                             </p>
                         </div>
-                        <button class="btn" style="background:#10b981; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px;" onclick="sendParentWhatsAppMessage('${item.id}', 'standart')">
-                            <i class="fab fa-whatsapp"></i> Standart Bülteni Gönder
-                        </button>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button class="btn" style="flex:1; background:#25D366; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentWhatsAppMessage('${item.id}', 'standart')">
+                                <i class="fab fa-whatsapp"></i> Veliye WA
+                            </button>
+                            <button class="btn" style="flex:1; background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentBipMessage('${item.id}', 'standart')">
+                                <i class="fas fa-comment-dots"></i> Veliye BiP
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Mod 2: Krizsiz Plato / TDE < 70 -->
@@ -3897,9 +3947,14 @@
                                 Veliye net konuşmayı yasaklayan; evde öğrenciyle 10 dakikalık empati ve taktik konuşması yapmasını sağlayan diyalog rehberi.
                             </p>
                         </div>
-                        <button class="btn" style="background:#ef4444; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px;" onclick="sendParentWhatsAppMessage('${item.id}', 'krizsiz')">
-                            <i class="fas fa-shield-heart"></i> Krizsiz Diyalog Bültenini Gönder
-                        </button>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button class="btn" style="flex:1; background:#ef4444; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentWhatsAppMessage('${item.id}', 'krizsiz')">
+                                <i class="fab fa-whatsapp"></i> Krizsiz WA
+                            </button>
+                            <button class="btn" style="flex:1; background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentBipMessage('${item.id}', 'krizsiz')">
+                                <i class="fas fa-comment-dots"></i> Krizsiz BiP
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3909,14 +3964,43 @@
     // ─────────────────────────────────────────────────────────────
     // 6. GELİŞMİŞ GEMINI AI PROMPT ENTEGRASYONU (5-8. SINIF KADEMELİ)
     // ─────────────────────────────────────────────────────────────
-    async function runAiCoachingForStudent(kocId) {
-        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
-        if (!item) return;
 
+    /**
+     * Güvenli pano kopyalama yardımcısı (Clipboard API ve textarea fallback)
+     */
+    async function copyTextToClipboard(text) {
+        if (!text) return false;
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+        } catch (_) {}
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    /**
+     * Öğrencinin kademesine, deneme netlerine ve hata defterine duyarlı
+     * 5 Modüllük pedagojik Google Gemini koçluk promptunu üretir.
+     */
+    function buildKoclukAiPrompt(item) {
+        if (!item) return '';
         const config = getGradeCognitiveConfig(item.sinif);
         const latestNet = getStudentLatestNet(item);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
-        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Normal' };
+        const tde = lastDeneme ? calculateTDE(lastDeneme, item.sinif) : { tdePuan: 75, badgeText: 'Dengeli' };
 
         // Hata Defteri Baskın Kök Neden Analizi
         const errors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
@@ -3948,7 +4032,7 @@
         if (dueErrors.length > 0) {
             hataAnalizMetni = dueErrors.slice(0, 5).map(e => {
                 const meta = getKokNedenMeta(e.kokNeden);
-                return `  • ${e.ders} (${e.konu}): Kod ${meta.code} [${meta.label}] - Soru Notu: ${e.soruNotu || '-'}`;
+                return `  • ${e.ders || 'Genel'} (${e.konu || 'Genel'}): Kod ${meta.code} [${meta.label}] - Soru Notu: ${e.soruNotu || '-'}`;
             }).join('\n');
         } else {
             hataAnalizMetni = '  (Günü gelmiş gecikmiş hata yok, pekiştirme döngüsü düzenli işliyor)';
@@ -3961,7 +4045,7 @@
         const yeniNesil = lastTakip ? (Number(lastTakip.yeniNesilCount ?? lastTakip.yeniNesilSoru) || 0) : 200;
         const totalQ = kavrama + orta + yeniNesil;
         const piramidYuzde = totalQ > 0 ? Math.round((yeniNesil / totalQ) * 100) : 0;
-        const isComfortZone = piramidYuzde < config.konforThreshold;
+        const isComfortZone = piramidYuzde < (config.konforThreshold || 20);
 
         const topicMap = {};
         errors.forEach(err => {
@@ -3974,9 +4058,15 @@
             .map(t => `${t.ders} (${t.konu})`)
             .join(', ') || 'Kritik kırmızı konu yok (Pekiştirme süreci dengeli)';
 
+        const stageTitle = config.stageTitle || 'LGS Ustalığı';
+        const examFocus = config.examFocus || 'LGS Sınav Stratejileri';
+        const pomodoroDk = config.pomodoroDk || 40;
+        const molaDk = config.molaDk || 10;
+        const focusDesc = config.focusDesc || '40 dk odak + 10 dk mola';
+
         const roleIntroduction = config.isLgsFinal
             ? `Sen; 8. sınıf LGS hazırlık süreçlerinde uzmanlaşmış, gelişim psikolojisi, bilişsel koçluk, ergenlik dönemi pedagojisi ve sınav stratejileri alanında 15+ yıl deneyimli kıdemli bir Pedagog ve Bilişsel Eğitim Koçusun.`
-            : `Sen; ortaokul ${config.stageTitle} kademesinde uzmanlaşmış, gelişim psikolojisi (somut işlemlerden soyut işlemlere geçiş), bilişsel koçluk, odaklanma disiplini ve ${config.examFocus} alanında 15+ yıl deneyimli kıdemli bir Pedagog ve Bilişsel Mentor koçusun.`;
+            : `Sen; ortaokul ${stageTitle} kademesinde uzmanlaşmış, gelişim psikolojisi (somut işlemlerden soyut işlemlere geçiş), bilişsel koçluk, odaklanma disiplini ve ${examFocus} alanında 15+ yıl deneyimli kıdemli bir Pedagog ve Bilişsel Mentor koçusun.`;
 
         const prompt = `${roleIntroduction}
 Yaklaşımın; ezberci veya baskıcı değil, "içsel motivasyonu tetikleyen", "Sweller Bilişsel Yük Kuramı ile zihinsel kapasiteyi optimize eden", "Bloom Taksonomisi ile aşamalı derinleşen" ve "metabilişsel (öğrenmeyi öğrenme) becerileri geliştiren" modern eğitim bilimleri ilkelerine dayanır.
@@ -3984,20 +4074,20 @@ Yaklaşımın; ezberci veya baskıcı değil, "içsel motivasyonu tetikleyen", "
 ════════════════════════════════════════════════════════════════════
 ÖĞRENCİ PROFİLİ VE GÜNCEL BİLİŞSEL / DENEME VERİLERİ
 ════════════════════════════════════════════════════════════════════
-- Öğrenci Adı Soyadı : ${item.adSoyad} (Sınıf Kademesi: ${item.sinif}, No: ${item.studentNo})
-- Kademe ve Faz      : ${config.stageTitle} | Aktif Faz: ${phase.name} (${phase.title})
+- Öğrenci Adı Soyadı : ${item.adSoyad || 'Öğrenci'} (Sınıf Kademesi: ${item.sinif || '8/A'}, No: ${item.studentNo || '-'})
+- Kademe ve Faz      : ${stageTitle} | Aktif Faz: ${phase?.name || '1. Dönem'} (${phase?.title || 'Çalışma Dönemi'})
 - Haftanın Stratejisi: "${item.aktifStratejiKurali || 'Süre baskısında takılınan soruya [?] koyup derhal geç.'}"
 - Öğrenme Stili (VAK): ${item.vak || 'Analitik / Görsel'}
-- Mevcut Net Düzeyi  : 90 soru üzerinden ${latestNet} Net (Hedef: ${item.hedefNet} Net | Başlangıç: ${item.baslangicNeti} Net)
-- Son Deneme Branşları: Sözel: ${lastDeneme?.sozelNet ?? 45}/50 [${config.sosyalDersAdi} dahil] | Mat: ${lastDeneme?.matNet ?? 13}/20 | Fen: ${lastDeneme?.fenNet ?? 15}/20
+- Mevcut Net Düzeyi  : 90 soru üzerinden ${latestNet} Net (Hedef: ${item.hedefNet || config.defaultHedefNet || 85} Net | Başlangıç: ${item.baslangicNeti || config.defaultBaslangicNet || 65} Net)
+- Son Deneme Branşları: Sözel: ${lastDeneme?.sozelNet ?? (config.sinifNo <= 7 ? 40 : 45)}/50 [${config.sosyalDersAdi || 'Sosyal Bilgiler'} dahil] | Mat: ${lastDeneme?.matNet ?? 13}/20 | Fen: ${lastDeneme?.fenNet ?? 15}/20
 - ${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru'}: ${tde.tdePuan}/100 (${tde.badgeText})
   * Çözüm Sırası: ${lastDeneme?.cozumSirasi || 'Fen-Mat'}
   * Fen 1. Tur Süresi: ${lastDeneme?.fen1TurSure || (config.isLgsFinal ? 32 : 28)} dk | Mat 1. Tur Süresi: ${lastDeneme?.mat1TurSure || (config.isLgsFinal ? 30 : 25)} dk
   * İnatlaşılan Soru (>2 dk): ${lastDeneme?.inatlasmaSayisi || 0} adet
   * 2. Tur Net Kazancı: Fen +${lastDeneme?.fen2TurKazanc || 0}, Mat +${lastDeneme?.mat2TurKazanc || 0}
-- Hedef Okul / Lise  : ${item.hedefLise} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
-- Soru Kalite Piramidi: %${Math.max(0, 100 - piramidYuzde)} Temel/Uygulama / %${piramidYuzde} Yeni Nesil Beceri Temelli ${isComfortZone ? `(⚠️ Konfor Alanı Tuzağı: Seviye eşiği %${config.konforThreshold}'nin altında, kolay soru ağırlıklı!)` : '(Dengeli Dağılım)'}
-- Haftalık Soru Hedefi: ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} Soru
+- Hedef Okul / Lise  : ${item.hedefLise || config.defaultHedefOkul || 'Hedef Lise'} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
+- Soru Kalite Piramidi: %${Math.max(0, 100 - piramidYuzde)} Temel/Uygulama / %${piramidYuzde} Yeni Nesil Beceri Temelli ${isComfortZone ? `(⚠️ Konfor Alanı Tuzağı: Seviye eşiği %${config.konforThreshold || 20}'nin altında, kolay soru ağırlıklı!)` : '(Dengeli Dağılım)'}
+- Haftalık Soru Hedefi: ${item.haftalikHedefSoru || config.defaultHedefSoru || config.hedefSoruVarsayilan || 600} Soru
 - Bilişsel Gözlem    : ${item.bilesenNotu || 'Çok adımlı analitik sorularda dikkat ve odak dalgalanması yaşayabiliyor, okuduğunu anlama kapasitesi yüksek.'}
 
 Metabilişsel Hata Defteri & Isı Haritası Durumu:
@@ -4008,15 +4098,15 @@ Metabilişsel Hata Defteri & Isı Haritası Durumu:
 ${hataAnalizMetni}
 
 ════════════════════════════════════════════════════════════════════
-GÖREV VE BEKLENEN ÇIKTI MODÜLLERİ (${config.stageTitle.toUpperCase()})
+GÖREV VE BEKLENEN ÇIKTI MODÜLLERİ (${stageTitle.toUpperCase()})
 ════════════════════════════════════════════════════════════════════
 Bu öğrenci için aşağıdaki 5 ana modülü içeren somut, pedagojik ve doğrudan uygulanabilir bir "Bilişsel Koçluk ve Gelişim Sistemi" hazırla:
 
 ---
 MODÜL 1: STRATEJİK HAFTALIK ÇALIŞMA VE DERS DAĞILIM MODELİ
-- Oturum Blokları: ${config.pomodoroDk} dk derin odak + ${config.molaDk} dk zihinsel deşarj pencereleri (${config.focusDesc}).
-- Kademeli Soru Piramidi: %${config.piramit.kavrama} Kavrama/Temel Bilgi, %${config.piramit.orta} Beceri & Uygulama, %${config.piramit.yeniNesil} Üst Düzey Yeni Nesil / Muhakeme.
-- Öğrencinin ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} soru hedefine uygun 7 günlük dengeli program (derslerde Türkçe, Matematik, Fen Bilimleri ve ${config.sosyalDersAdi} dengesini koruyarak).
+- Oturum Blokları: ${pomodoroDk} dk derin odak + ${molaDk} dk zihinsel deşarj pencereleri (${focusDesc}).
+- Kademeli Soru Piramidi: %${config.piramit?.kavrama || 25} Kavrama/Temel Bilgi, %${config.piramit?.orta || 30} Beceri & Uygulama, %${config.piramit?.yeniNesil || 45} Üst Düzey Yeni Nesil / Muhakeme.
+- Öğrencinin ${item.haftalikHedefSoru || config.defaultHedefSoru || config.hedefSoruVarsayilan || 600} soru hedefine uygun 7 günlük dengeli program (derslerde Türkçe, Matematik, Fen Bilimleri ve ${config.sosyalDersAdi || 'Sosyal Bilgiler'} dengesini koruyarak).
 
 ---
 MODÜL 2: METABİLİŞSEL HATA DEFTERİ VE CERRAHİ REÇETE
@@ -4024,20 +4114,20 @@ MODÜL 2: METABİLİŞSEL HATA DEFTERİ VE CERRAHİ REÇETE
 - Ebbinghaus Unutma Eğrisi gereği 1. Gün, 3. Gün ve 14. Gün aralıklı tekrar (Spaced Repetition) için pratik çalışma yönergesi.
 
 ---
-MODÜL 3: SINAV STRATEJİLERİ VE TDE SÜRE YÖNETİMİ (${config.examFocus.toUpperCase()})
+MODÜL 3: SINAV STRATEJİLERİ VE TDE SÜRE YÖNETİMİ (${examFocus.toUpperCase()})
 - Öğrencinin ${tde.tdePuan}/100 olan strateji puanını 90 üzerine çıkarmak için süre ve taktik reçetesi.
 - Takılınan soruyla inatlaşmama, soru köküne turlama işareti [?] koyup geçme refleksi geliştirme antrenmanı.
 - Sınavda zihinsel yorgunluk ve donma yaşandığında uygulanacak 30 saniyelik mikro regülasyon (diyafram nefesi ve zihinsel resetleme).
 
 ---
 MODÜL 4: GELİŞİM PSİKOLOJİSİ, MOTİVASYON VE ÖZ-DÜZENLEME
-- ${latestNet} net bandından ${item.hedefNet} nete ulaşmak için içsel motivasyonu canlı tutma yöntemleri.
+- ${latestNet} net bandından ${item.hedefNet || config.defaultHedefNet || 85} nete ulaşmak için içsel motivasyonu canlı tutma yöntemleri.
 - Hata yapmaktan korkmama (hatayı öğrenme fırsatı olarak kodlama) ve öz-yeterlilik geliştirme.
 - Hafta sonu öğrencinin kendini değerlendireceği 5 maddelik somut rubrik.
 
 ---
 MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
-- Evdeki çalışma ortamı, uyku hijyeni (${config.sinifNo <= 6 ? '21:30 - 22:00' : '22:30'} yatak saati) ve ekran detoksu standartları.
+- Evdeki çalışma ortamı, uyku hijyeni (${(config.sinifNo || 8) <= 6 ? '21:30 - 22:00' : '22:30'} yatak saati) ve ekran detoksu standartları.
 - Haftalık 10-15 dakikalık "Krizsiz Değerlendirme Çemberi" konuşma taslağı (Öğrenciye kesinlikle söylenmemesi gereken tetikleyici cümleler ve yapıcı sorular).
 
 ════════════════════════════════════════════════════════════════════
@@ -4046,24 +4136,49 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
 - Dil: Pedagojik açıdan yapıcı, motive edici, net ve doğrudan eyleme dönük.
 - Biçimlendirme: Markdown tabloları, kalın başlıklar ve net kontrol listeleri (bullet points) kullan.`;
 
+        return prompt;
+    }
+
+    async function copyKoclukAiPrompt(kocId) {
+        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
+        if (!item) return;
+        const prompt = buildKoclukAiPrompt(item);
+        window.currentGeminiPrompt = prompt;
+        const ok = await copyTextToClipboard(prompt);
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast(ok ? '📋 Gemini AI Koçluk Promptu Panoya Kopyalandı!' : '⚠️ Prompt panoya kopyalanamadı, lütfen metin kutusundan seçiniz.', ok ? 'success' : 'warning');
+        }
+    }
+
+    async function runAiCoachingForStudent(kocId) {
+        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
+        if (!item) return;
+
+        const config = getGradeCognitiveConfig(item.sinif);
+        const prompt = buildKoclukAiPrompt(item);
         window.currentGeminiPrompt = prompt;
 
-        try {
-            await navigator.clipboard.writeText(prompt);
-        } catch (_) {
-            const ta = document.createElement('textarea');
-            ta.value = prompt;
-            ta.style.cssText = 'position:fixed;opacity:0;';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            ta.remove();
-        }
+        await copyTextToClipboard(prompt);
 
-        window.open('https://gemini.google.com/', '_blank');
+        try {
+            window.open('https://gemini.google.com/app', '_blank');
+        } catch (_) {}
 
         if (typeof showGlobalToast === 'function') {
             showGlobalToast(`🧠 ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk Promptu Panoya Kopyalandı ve Gemini Açıldı!`, 'success');
+        }
+    }
+
+    async function openKoclukAiTab(kocId) {
+        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
+        if (item) {
+            const prompt = buildKoclukAiPrompt(item);
+            window.currentGeminiPrompt = prompt;
+            await copyTextToClipboard(prompt);
+        }
+        openKoclukDetailModal(kocId, 'tab-koc-ai');
+        if (typeof showGlobalToast === 'function') {
+            showGlobalToast('🧠 AI Koçluk Kokpiti Açıldı & Prompt Panoya Kopyalandı!', 'success');
         }
     }
 
@@ -4075,10 +4190,8 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         switchDetailSubTab('tab-koc-ai');
     }
 
-    async function sendParentWhatsAppMessage(kocId, mode = 'standart') {
-        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
-        if (!item) return;
-
+    function buildParentCoachingMessage(item, mode = 'standart', platform = 'wa') {
+        if (!item) return '';
         const config = getGradeCognitiveConfig(item.sinif);
         const latestNet = getStudentLatestNet(item);
         const lastDeneme = (Array.isArray(item.denemeler) && item.denemeler.length > 0) ? item.denemeler[item.denemeler.length - 1] : null;
@@ -4086,58 +4199,81 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         const errors = Array.isArray(item.hataDefteri) ? item.hataDefteri : [];
         const completedErrors = errors.filter(h => h.tekrar1 && h.tekrar3 && h.tekrar14).length;
         const dueErrors = errors.filter(h => getHataRepeatStatus(h).isDue).length;
-
-        let msg = '';
+        const platformTag = platform === 'bip' ? ' (BiP)' : '';
 
         if (mode === 'krizsiz') {
-            // Mod 2: TDE < 70 / Plato Krizsiz Analiz Modu
-            msg = `🛡️ *${config.isLgsFinal ? 'LGS Hazırlık Süreci' : config.stageTitle + ' Süreci'}: Veli Krizsiz Rehberlik Bülteni* 🛡️
+            return `🛡️ *${config.isLgsFinal ? 'LGS HAZIRLIK SÜRECİ' : config.stageTitle.toUpperCase()}: VELİ KRİZSİZ REHBERLİK BÜLTENİ${platformTag}* 🛡️
+👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
+🏫 *Sınıf:* ${item.sinif || '-'}
+🎯 *Hedef:* ${item.hedefLise || 'Lise Hedefi'} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
 
-Değerli Velimiz,
-Öğrencimiz *${item.adSoyad}* (${item.sinif}) ile yürüttüğümüz son çalışma ve deneme analizinde önemli bir pedagojik bulgu tespit ettik.
-
-📊 *Süreç Teşhisi:*
-Öğrencimizin konu bilgi eksiği değil; sınav/soru çözümü esnasında süre yönetimi ve turlama stratejisi dalgalanması (${config.isLgsFinal ? 'TDE Skoru' : 'Strateji Skoru'}: ${tde.tdePuan}/100) yaşadığını gözlemledik.
+📊 *SÜREÇ TEŞHİSİ:*
+Öğrencimizin konu bilgi eksiği bulunmamakta; sınav esnasında süre yönetimi ve turlama stratejisi dalgalanması (${config.isLgsFinal ? 'TDE Skoru' : 'Strateji Skoru'}: *${tde.tdePuan}/100*) tespit edilmiştir.
 
 ⚠️ *ÇOK ÖNEMLİ RİCA:*
 Lütfen öğrencimizle bu akşam *kesinlikle net, doğru/yanlış sayısı veya sıralama konuşmayınız!*
 
-🏠 *Evde Uygulanacak 10 Dakikalık "Krizsiz Analiz" Konuşma Rehberi:*
+🏠 *Evde Uygulanacak 10 Dakikalık "Krizsiz Analiz" Rehberi:*
 1. *Güvenli Alan:* "Bugünkü sonucun ne olursa olsun bizim için çok kıymetlisin. Bu sadece bir taktik ve odaklanma tatbikatı."
 2. *Nesnel Süre İncelemesi:* "Hangi sorularda gereğinden fazla inatlaştın? O sorulardan bir iki tanesini birlikte inceleyelim mi?"
-3. *Batık Maliyet Farkındalığı:* "Zor bir soruyla inatlaşmayıp 'işaret koyup geçmek' kayıp değil; arkadaki çözebileceğin soruları kurtarır."
-4. *Gelecek Uygulama İçin Tek Kural:* "Gelecek çalışmada senden tek bir hedef istiyoruz: Takıldığın soruyu hemen turlayıp geçmek."
+3. *Batık Maliyet Farkındalığı:* "Zor bir soruyla inatlaşmayıp işaret koyup geçmek kayıp değil; arkadaki çözebileceğin soruları kurtarır."
+4. *Gelecek Uygulama Kuralı:* "Gelecek çalışmada senden tek bir hedef istiyoruz: Takıldığın soruyu hemen turlayıp geçmek."
 
-Unutmayınız; başarı hiç hata yapmamak değil, hatalardan en hızlı strateji üretebilmektir. Birlikte aşacağız! 🚀`;
+💡 *Özet:* Başarı hiç hata yapmamak değil, hatalardan en hızlı stratejiyi üretebilmektir. Birlikte aşacağız! 🚀
+
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         } else {
-            // Mod 1: Standart Haftalık Gelişim Bülteni
-            msg = `🌟 *${config.isLgsFinal ? 'LGS Hazırlık' : config.stageTitle} & Bilişsel Gelişim Bülteni* 🌟
+            return `🌟 *${config.isLgsFinal ? 'LGS HAZIRLIK' : config.stageTitle.toUpperCase()} & BİLİŞSEL GELİŞİM BÜLTENİ${platformTag}* 🌟
+👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
+🏫 *Sınıf:* ${item.sinif || '-'}
+🎯 *${config.isLgsFinal ? 'Hedef Lise' : 'Hedef Okul'}:* ${item.hedefLise || 'Belirtilmedi'} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
 
-Değerli Velimiz,
-Öğrencimiz *${item.adSoyad}* (${item.sinif}) ile yürüttüğümüz bilişsel koçluk ve gelişim sürecine dair bu haftaki değerlendirme özetimiz:
-
-🎯 *${config.isLgsFinal ? 'Hedef Lise' : 'Hedef Okul / Lise'}:* ${item.hedefLise} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
-📊 *Son Net Seviyesi:* ${latestNet} Net (Hedef: ${item.hedefNet} Net)
-⏱️ *${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru'}:* ${tde.tdePuan}/100 (${tde.badgeText})
-📚 *Haftalık Soru Disiplini:* Hedeflenen ${item.haftalikHedefSoru || config.hedefSoruVarsayilan} soru temposunda ilerliyor.
-📕 *Metabilişsel Hata Defteri:* Toplam ${errors.length} analiz edilmiş sorudan *${completedErrors} adedi kalıcı hafızaya alındı.* (${dueErrors} soru aralıklı tekrar havuzunda).
+📊 *GÜNCEL GELİŞİM GÖSTERGELERİ:*
+🎯 *Son Net Seviyesi:* *${latestNet} Net* (Hedef: ${item.hedefNet} Net)
+⏱️ *${config.isLgsFinal ? 'Turlama Disiplin Endeksi (TDE)' : 'Süre & Strateji Disiplin Skoru'}:* *${tde.tdePuan}/100* (${tde.badgeText})
+📚 *Haftalık Soru Disiplini:* Hedeflenen *${item.haftalikHedefSoru || config.hedefSoruVarsayilan}* soru temposunda ilerliyor.
+📕 *Metabilişsel Hata Defteri:* Toplam ${errors.length} sorudan *${completedErrors} adedi kalıcı hafızaya alındı* (${dueErrors} soru tekrar havuzunda).
 
 💡 *Ev İçi Koçluk Tavsiyemiz:*
-Lütfen net sayısından ziyade, öğrencimizin soru çözerken gösterdiği odaklanma süresini ve gösterdiği gayreti takdir ediniz. Dinlenme saatlerinde ekran yerine zihinsel dinlenme sağlayan aktivitelere teşvik edelim.
+Lütfen net sayısından ziyade, öğrencimizin soru çözerken gösterdiği odaklanma süresini ve gayretini takdir ediniz. Dinlenme saatlerinde ekran yerine zihinsel dinlenme sağlayan aktivitelere teşvik edelim.
 
-Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
+    }
+
+    async function sendParentWhatsAppMessage(kocId, mode = 'standart') {
+        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
+        if (!item) return;
+
+        const msg = buildParentCoachingMessage(item, mode, 'wa');
 
         try {
             await navigator.clipboard.writeText(msg);
             if (typeof showGlobalToast === 'function') {
                 showGlobalToast(`📱 ${mode === 'krizsiz' ? 'Krizsiz Analiz' : 'Standart'} Veli WhatsApp mesajı kopyalandı! WhatsApp açılıyor...`, 'success');
             }
-        } catch (_) {
-            alert('Mesaj kopyalanamadı:\n\n' + msg);
-        }
+        } catch (_) {}
 
-        window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    async function sendParentBipMessage(kocId, mode = 'standart') {
+        const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
+        if (!item) return;
+
+        const msg = buildParentCoachingMessage(item, mode, 'bip');
+
+        if (typeof window.shareViaBip === 'function') {
+            window.shareViaBip(msg, `${item.adSoyad} - Veli Bülteni (${mode === 'krizsiz' ? 'Krizsiz' : 'Standart'})`);
+        } else {
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(msg);
+                if (typeof showGlobalToast === 'function') {
+                    showGlobalToast(`💬 BiP mesajı kopyalandı. BiP Web açılıyor...`, 'success');
+                }
+            }
+            window.open('https://web.bip.com/', '_blank');
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -5134,8 +5270,12 @@ Göstermiş olduğunuz iş birliği için teşekkür ederiz. 🚀`;
     window.saveEditGorusme = saveEditGorusme;
     window.deleteGorusmeNote = deleteGorusmeNote;
     window.runAiCoachingForStudent = runAiCoachingForStudent;
+    window.buildKoclukAiPrompt = buildKoclukAiPrompt;
+    window.copyKoclukAiPrompt = copyKoclukAiPrompt;
+    window.openKoclukAiTab = openKoclukAiTab;
     window.openParentWhatsAppShareModal = openParentWhatsAppShareModal;
     window.sendParentWhatsAppMessage = sendParentWhatsAppMessage;
+    window.sendParentBipMessage = sendParentBipMessage;
     window.printKoclukReport = printKoclukReport;
     window.openKoclukPrintCenter = openKoclukPrintCenter;
     window.printSmartForm = printSmartForm;

@@ -259,6 +259,7 @@
             <p>Masa başına oturmadan önce zihnini seansa kilitle, hedefini belirle ve sözleşmeni kur.</p>
         </div>
         <div class="form-body">
+            <div id="routingBadge" style="display:none; margin-bottom: 16px; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.4;"></div>
             <form id="lgsBeforeForm" onsubmit="submitLgsBeforeForm(event)">
                 
                 <!-- Öğrenci Bilgileri -->
@@ -420,10 +421,79 @@
             const sinifParam = urlParams.get('sinif');
             const noParam = urlParams.get('no');
             const adParam = urlParams.get('ad');
-            if (sinifParam) { document.getElementById('sinif').value = decodeURIComponent(sinifParam); document.getElementById('sinif').readOnly = true; }
-            if (noParam) { document.getElementById('ogrenciNo').value = decodeURIComponent(noParam); document.getElementById('ogrenciNo').readOnly = true; }
-            if (adParam) { document.getElementById('adSoyad').value = decodeURIComponent(adParam); document.getElementById('adSoyad').readOnly = true; }
+            const badge = document.getElementById('routingBadge');
+
+            if (sinifParam) {
+                const decodedSinif = decodeURIComponent(sinifParam);
+                const sinifEl = document.getElementById('sinif');
+                sinifEl.value = decodedSinif;
+                sinifEl.readOnly = true;
+                sinifEl.style.backgroundColor = 'var(--input-bg)';
+                sinifEl.style.cursor = 'not-allowed';
+                sinifEl.title = 'QR / Barkod yönlendirmesi ile otomatik kilitlendi';
+            }
+
+            if (noParam && adParam) {
+                // Bireysel Öğrenci Yönlendirmesi
+                const decodedNo = decodeURIComponent(noParam);
+                const decodedAd = decodeURIComponent(adParam);
+                const noEl = document.getElementById('ogrenciNo');
+                const adEl = document.getElementById('adSoyad');
+                noEl.value = decodedNo;
+                noEl.readOnly = true;
+                noEl.style.backgroundColor = 'var(--input-bg)';
+                noEl.style.cursor = 'not-allowed';
+
+                adEl.value = decodedAd;
+                adEl.readOnly = true;
+                adEl.style.backgroundColor = 'var(--input-bg)';
+                adEl.style.cursor = 'not-allowed';
+
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '12px';
+                    badge.style.background = 'rgba(234, 88, 12, 0.08)';
+                    badge.style.border = '1.5px solid rgba(234, 88, 12, 0.35)';
+                    badge.style.color = '#c2410c';
+                    badge.innerHTML = `
+                        <i class="fas fa-id-badge" style="font-size:24px; color:#ea580c; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:800; font-size:13.5px; color:#c2410c;">🎯 Bireysel Öğrenci Barkoduyla Bağlanıldı</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Hoş geldin <strong>${escapeHTML(decodedAd)}</strong> (${sinifParam ? escapeHTML(decodeURIComponent(sinifParam)) : '-'} &bull; No: <strong>${escapeHTML(decodedNo)}</strong>). Bilgilerin otomatik kilitlendi.
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (sinifParam) {
+                // Sınıf Panosu Yönlendirmesi
+                const decodedSinif = decodeURIComponent(sinifParam);
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '12px';
+                    badge.style.background = 'rgba(59, 130, 246, 0.08)';
+                    badge.style.border = '1.5px solid rgba(59, 130, 246, 0.35)';
+                    badge.style.color = '#1d4ed8';
+                    badge.innerHTML = `
+                        <i class="fas fa-school" style="font-size:24px; color:#2563eb; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:800; font-size:13.5px; color:#1d4ed8;">🏛️ ${escapeHTML(decodedSinif)} Sınıf Panosu Barkoduyla Bağlanıldı</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Sınıfın otomatik kilitlendi. Lütfen <strong>öğrenci numaranı</strong> ve <strong>adını</strong> girerek seans hedefini belirle.
+                            </div>
+                        </div>
+                    `;
+                }
+                const noEl = document.getElementById('ogrenciNo');
+                if (noEl) setTimeout(() => noEl.focus(), 300);
+            }
         });
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
 
         async function submitLgsBeforeForm(event) {
             event.preventDefault();
@@ -434,21 +504,34 @@
             const urlParams = new URLSearchParams(window.location.search);
             const teacherId = urlParams.get("uid") || window._activeTeacherUid || "_legacy";
 
+            const hedefSoruVal = parseInt(document.getElementById('hedefSoru').value, 10) || 0;
+            const planlananSureVal = parseInt(document.getElementById('planlananSure').value, 10) || 0;
+            const odaklanmaVal = parseInt(document.getElementById('odaklanmaPuani').value, 10) || 3;
+            const ozYeterlikVal = parseInt(document.getElementById('ozYeterlikPuani').value, 10) || 3;
+            const kural120Val = document.getElementById('kural120Sn').checked;
+            const seansNotuVal = document.getElementById('seansNotu').value || '';
+
             const formData = {
                 ogrenciNo: document.getElementById('ogrenciNo').value,
                 sinif: document.getElementById('sinif').value,
                 adSoyad: document.getElementById('adSoyad').value,
                 tarih: document.getElementById('tarih').value,
                 type: 'LGS_BEFORE',
+                formTitle: 'LGS Seans Öncesi Hazırlık',
                 brans: document.getElementById('brans').value,
                 kazanim: document.getElementById('kazanim').value,
-                hedefSoru: parseInt(document.getElementById('hedefSoru').value, 10) || 0,
-                planlananSure: parseInt(document.getElementById('planlananSure').value, 10) || 0,
-                odaklanmaPuani: parseInt(document.getElementById('odaklanmaPuani').value, 10) || 3,
-                ozYeterlikPuani: parseInt(document.getElementById('ozYeterlikPuani').value, 10) || 3,
-                kural120Sn: document.getElementById('kural120Sn').checked,
-                seansNotu: document.getElementById('seansNotu').value,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                hedefSoru: hedefSoruVal,
+                targetQuestions: hedefSoruVal,
+                planlananSure: planlananSureVal,
+                odaklanmaPuani: odaklanmaVal,
+                focusScore: odaklanmaVal,
+                ozYeterlikPuani: ozYeterlikVal,
+                selfEfficacy: ozYeterlikVal,
+                kural120Sn: kural120Val,
+                kural120Kabul: kural120Val,
+                seansNotu: seansNotuVal,
+                ogrenciNot: seansNotuVal,
+                timestamp: (typeof firebase !== 'undefined' && firebase.database && firebase.database.ServerValue) ? firebase.database.ServerValue.TIMESTAMP : Date.now()
             };
 
             try {

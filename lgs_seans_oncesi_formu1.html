@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGS Seans Öncesi Bilişsel Hazırlık & Hedef Sözleşmesi | Yabgu Koçluk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #d97706;
+            --primary-dark: #b45309;
+            --secondary: #0284c7;
+            --accent: #10b981;
+            --radius: 12px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme='light'] {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.1);
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+        }
+
+        [data-theme='dark'] {
+            --bg: #0b132b;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            --input-bg: #0f172a;
+            --input-border: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            padding: 24px 12px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 640px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            border-top: 8px solid var(--primary);
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.35s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            padding: 24px 20px 16px 20px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.05), transparent);
+        }
+
+        .header h1 {
+            color: var(--primary-dark);
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .student-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+            background: rgba(217, 119, 6, 0.04);
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px dashed var(--primary);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 14px;
+        }
+
+        .input-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 13.5px;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+        }
+
+        .section-card {
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card-bg);
+        }
+
+        .section-header {
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--primary-dark);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-body {
+            padding: 14px;
+        }
+
+        .likert-group {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .likert-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .likert-btn:hover {
+            border-color: var(--primary);
+            background: rgba(217, 119, 6, 0.08);
+        }
+
+        .likert-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary-dark);
+            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
+        }
+
+        .likert-desc {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .toggle-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(16, 185, 129, 0.07);
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+        }
+
+        .toggle-box input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .toggle-box label {
+            text-transform: none;
+            font-size: 12.5px;
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.35);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .success-card {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-card i {
+            color: var(--accent);
+            font-size: 55px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .student-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-container {
+                border-radius: 0;
+                border: none;
+                min-height: 100vh;
+            }
+
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+
+<body>
+    <div class="form-container" id="main-container">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Temayı Değiştir">
+            <i class="fas fa-moon" id="theme-icon"></i>
+        </button>
+        <div class="header">
+            <h1><i class="fas fa-bullseye"></i> LGS Seans Öncesi Hazırlık Formu</h1>
+            <p>Masa başına oturmadan önce zihnini seansa kilitle, hedefini belirle ve sözleşmeni kur.</p>
+        </div>
+        <div class="form-body">
+            <div id="routingBadge"
+                style="display:none; margin-bottom: 16px; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.4;">
+            </div>
+            <form id="lgsBeforeForm" onsubmit="submitLgsBeforeForm(event)">
+
+                <!-- Öğrenci Bilgileri -->
+                <div class="student-info-grid">
+                    <div class="input-group">
+                        <label>Öğrenci Numarası *</label>
+                        <input type="number" id="ogrenciNo" required placeholder="Örn: 1071">
+                    </div>
+                    <div class="input-group">
+                        <label>Sınıfı *</label>
+                        <input type="text" id="sinif" required placeholder="Örn: 8-A">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Adı ve Soyadı *</label>
+                        <input type="text" id="adSoyad" required placeholder="Adınızı ve soyadınızı giriniz">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Seans Tarihi *</label>
+                        <input type="date" id="tarih" required>
+                    </div>
+                </div>
+
+                <!-- 1. BÖLÜM: BRANŞ VE BİLİŞSEL HEDEF SÖZLEŞMESİ -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-book-reader"></i> 1. BRANŞ VE SEANS HEDEFİ
+                    </div>
+                    <div class="section-body">
+                        <div class="input-group">
+                            <label>Çalışılacak LGS Branşı *</label>
+                            <select id="brans" required>
+                                <option value="" disabled selected>Branş seçiniz...</option>
+                                <option value="Matematik">Matematik (Katsayı: 4)</option>
+                                <option value="Fen Bilimleri">Fen Bilimleri (Katsayı: 4)</option>
+                                <option value="Türkçe">Türkçe (Katsayı: 4)</option>
+                                <option value="T.C. İnkılap Tarihi">T.C. İnkılap Tarihi (Katsayı: 1)</option>
+                                <option value="Din Kültürü">Din Kültürü ve Ahlak Bilgisi (Katsayı: 1)</option>
+                                <option value="İngilizce">Yabancı Dil / İngilizce (Katsayı: 1)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Hedeflenen Mikro-Kazanım / Konu Başlığı *</label>
+                            <input type="text" id="kazanim" required
+                                placeholder="Örn: Kareköklü İfadelerde Çarpma ve Bölme İşlemi">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="input-group">
+                                <label>Hedef Soru Sayısı *</label>
+                                <input type="number" id="hedefSoru" required min="5" max="200" placeholder="Örn: 35">
+                            </div>
+                            <div class="input-group">
+                                <label>Planlanan Süre (Dakika) *</label>
+                                <input type="number" id="planlananSure" required min="10" max="180"
+                                    placeholder="Örn: 45">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. BÖLÜM: BİLİŞSEL HAZIRBULUNUŞLUK VE ENERJİ -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-brain"></i> 2. BİLİŞSEL HAZIRLIK VE ENERJİ SEVİYEM
+                    </div>
+                    <div class="section-body">
+                        <div class="input-group">
+                            <label>Şu Anki Zihinsel Enerjim & Odaklanma Düzeyim (1-5) *</label>
+                            <div class="likert-group" id="odaklanmaLikert">
+                                <div class="likert-btn" onclick="selectLikert('odaklanma', 1)">1</div>
+                                <div class="likert-btn" onclick="selectLikert('odaklanma', 2)">2</div>
+                                <div class="likert-btn active" onclick="selectLikert('odaklanma', 3)">3</div>
+                                <div class="likert-btn" onclick="selectLikert('odaklanma', 4)">4</div>
+                                <div class="likert-btn" onclick="selectLikert('odaklanma', 5)">5</div>
+                            </div>
+                            <div class="likert-desc">
+                                <span>1: Çok Düşük / Dağınık</span>
+                                <span>5: Zirvede / Tam Odaklı</span>
+                            </div>
+                            <input type="hidden" id="odaklanmaPuani" value="3" required>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>Bu Konudaki Bilişsel Güvenim / Öz-Yeterliğim (1-5) *</label>
+                            <div class="likert-group" id="ozYeterlikLikert">
+                                <div class="likert-btn" onclick="selectLikert('ozYeterlik', 1)">1</div>
+                                <div class="likert-btn" onclick="selectLikert('ozYeterlik', 2)">2</div>
+                                <div class="likert-btn active" onclick="selectLikert('ozYeterlik', 3)">3</div>
+                                <div class="likert-btn" onclick="selectLikert('ozYeterlik', 4)">4</div>
+                                <div class="likert-btn" onclick="selectLikert('ozYeterlik', 5)">5</div>
+                            </div>
+                            <div class="likert-desc">
+                                <span>1: Konuyu Bilmiyorum / Tedirginim</span>
+                                <span>5: Konuya Tamamen Hakimim</span>
+                            </div>
+                            <input type="hidden" id="ozYeterlikPuani" value="3" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. BÖLÜM: TAKTİKSEL STRATEJİ VE 120 SN KURALI -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-stopwatch"></i> 3. SEANS TAKTİK VE ZAMAN STRATEJİSİ
+                    </div>
+                    <div class="section-body">
+                        <div class="toggle-box" style="margin-bottom: 12px;">
+                            <input type="checkbox" id="kural120Sn" checked required>
+                            <label for="kural120Sn">
+                                <strong>120 Saniye Kuralını Kabul Ediyorum:</strong> Bir soruda 120 saniyede net bir
+                                algoritma kuramazsam soruyla kavga etmeyecek, yanına (?) koyup sonraki soruya geçeceğim.
+                            </label>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Bu Seanstaki Özel Taktik / Zihin Notum</label>
+                            <textarea id="seansNotu" rows="2"
+                                placeholder="Örn: Soru kökünün altını fosforlayacağım, şekli parçalayacağım..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-play"></i> Seans Hedefini Onayla ve Başla
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Başarı Ekranı -->
+    <div class="form-container success-card" id="success-container">
+        <i class="fas fa-check-circle"></i>
+        <h2 style="font-size: 20px; color: var(--primary-dark); margin-bottom: 8px;">Seans Hedefin Kaydedildi!</h2>
+        <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+            Zihnin hedefine kilitlendi. Şimdi kronometreni başlat, masandaki <strong>A4 Soru Çözüm Formu</strong> ile
+            120 saniye kuralına sadık kalarak seansına başla!
+        </p>
+        <button class="btn-submit" onclick="location.reload()" style="background: var(--secondary);">
+            <i class="fas fa-redo"></i> Yeni Seans Başlat
+        </button>
+    </div>
+
+    <script>
+        let currentTheme = 'light';
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', currentTheme);
+            icon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        function selectLikert(type, value) {
+            document.getElementById(type + 'Puani').value = value;
+            const container = document.getElementById(type + 'Likert');
+            const buttons = container.getElementsByClassName('likert-btn');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            buttons[value - 1].classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tarih').valueAsDate = new Date();
+            const urlParams = new URLSearchParams(window.location.search);
+            const sinifParam = urlParams.get('sinif');
+            const noParam = urlParams.get('no');
+            const adParam = urlParams.get('ad');
+            const badge = document.getElementById('routingBadge');
+
+            if (sinifParam) {
+                const decodedSinif = decodeURIComponent(sinifParam);
+                const sinifEl = document.getElementById('sinif');
+                sinifEl.value = decodedSinif;
+                sinifEl.readOnly = true;
+                sinifEl.style.backgroundColor = 'var(--input-bg)';
+                sinifEl.style.cursor = 'not-allowed';
+                sinifEl.title = 'QR / Barkod yönlendirmesi ile otomatik kilitlendi';
+            }
+
+            if (noParam && adParam) {
+                // Bireysel Öğrenci Yönlendirmesi
+                const decodedNo = decodeURIComponent(noParam);
+                const decodedAd = decodeURIComponent(adParam);
+                const noEl = document.getElementById('ogrenciNo');
+                const adEl = document.getElementById('adSoyad');
+                noEl.value = decodedNo;
+                noEl.readOnly = true;
+                noEl.style.backgroundColor = 'var(--input-bg)';
+                noEl.style.cursor = 'not-allowed';
+
+                adEl.value = decodedAd;
+                adEl.readOnly = true;
+                adEl.style.backgroundColor = 'var(--input-bg)';
+                adEl.style.cursor = 'not-allowed';
+
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '12px';
+                    badge.style.background = 'rgba(234, 88, 12, 0.08)';
+                    badge.style.border = '1.5px solid rgba(234, 88, 12, 0.35)';
+                    badge.style.color = '#c2410c';
+                    badge.innerHTML = `
+                        <i class="fas fa-id-badge" style="font-size:24px; color:#ea580c; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:800; font-size:13.5px; color:#c2410c;">🎯 Bireysel Öğrenci Barkoduyla Bağlanıldı</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Hoş geldin <strong>${escapeHTML(decodedAd)}</strong> (${sinifParam ? escapeHTML(decodeURIComponent(sinifParam)) : '-'} &bull; No: <strong>${escapeHTML(decodedNo)}</strong>). Bilgilerin otomatik kilitlendi.
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (sinifParam) {
+                // Sınıf Panosu Yönlendirmesi
+                const decodedSinif = decodeURIComponent(sinifParam);
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '12px';
+                    badge.style.background = 'rgba(59, 130, 246, 0.08)';
+                    badge.style.border = '1.5px solid rgba(59, 130, 246, 0.35)';
+                    badge.style.color = '#1d4ed8';
+                    badge.innerHTML = `
+                        <i class="fas fa-school" style="font-size:24px; color:#2563eb; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:800; font-size:13.5px; color:#1d4ed8;">🏛️ ${escapeHTML(decodedSinif)} Sınıf Panosu Barkoduyla Bağlanıldı</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Sınıfın otomatik kilitlendi. Lütfen <strong>öğrenci numaranı</strong> ve <strong>adını</strong> girerek seans hedefini belirle.
+                            </div>
+                        </div>
+                    `;
+                }
+                const noEl = document.getElementById('ogrenciNo');
+                if (noEl) setTimeout(() => noEl.focus(), 300);
+            }
+        });
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function submitLgsBeforeForm(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Hedef Kaydediliyor...';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const teacherId = urlParams.get("uid") || window._activeTeacherUid || "_legacy";
+
+            const hedefSoruVal = parseInt(document.getElementById('hedefSoru').value, 10) || 0;
+            const planlananSureVal = parseInt(document.getElementById('planlananSure').value, 10) || 0;
+            const odaklanmaVal = parseInt(document.getElementById('odaklanmaPuani').value, 10) || 3;
+            const ozYeterlikVal = parseInt(document.getElementById('ozYeterlikPuani').value, 10) || 3;
+            const kural120Val = document.getElementById('kural120Sn').checked;
+            const seansNotuVal = document.getElementById('seansNotu').value || '';
+
+            const formData = {
+                ogrenciNo: document.getElementById('ogrenciNo').value,
+                sinif: document.getElementById('sinif').value,
+                adSoyad: document.getElementById('adSoyad').value,
+                tarih: document.getElementById('tarih').value,
+                type: 'LGS_BEFORE',
+                formTitle: 'LGS Seans Öncesi Hazırlık',
+                brans: document.getElementById('brans').value,
+                kazanim: document.getElementById('kazanim').value,
+                hedefSoru: hedefSoruVal,
+                targetQuestions: hedefSoruVal,
+                planlananSure: planlananSureVal,
+                odaklanmaPuani: odaklanmaVal,
+                focusScore: odaklanmaVal,
+                ozYeterlikPuani: ozYeterlikVal,
+                selfEfficacy: ozYeterlikVal,
+                kural120Sn: kural120Val,
+                kural120Kabul: kural120Val,
+                seansNotu: seansNotuVal,
+                ogrenciNot: seansNotuVal,
+                timestamp: (typeof firebase !== 'undefined' && firebase.database && firebase.database.ServerValue) ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+            };
+
+            try {
+                if (typeof db !== 'undefined') {
+                    await db.ref("student_forms/" + teacherId).push(formData);
+                } else if (typeof firebase !== 'undefined' && firebase.database) {
+                    await firebase.database().ref("student_forms/" + teacherId).push(formData);
+                }
+                document.getElementById('main-container').style.display = 'none';
+                document.getElementById('success-container').style.display = 'block';
+            } catch (error) {
+                console.error("Firebase kayıt hatası:", error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-play"></i> Tekrar Dene';
+                alert("Bağlantı hatası! Lütfen internetinizi kontrol edip tekrar deneyin.");
+            }
+        }
+    </script>
+</body>
+
+</html>

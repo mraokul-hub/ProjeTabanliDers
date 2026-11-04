@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.studentSelect   = document.getElementById('soru-takip-student-select');
             this.linkOutput      = document.getElementById('soru-takip-link-output');
             this.whatsappBtn     = document.getElementById('soru-takip-whatsapp-btn');
+            this.bipBtn          = document.getElementById('soru-takip-bip-btn');
             this.tableBody       = document.getElementById('soru-takip-table-body');
             this.aiResultBox     = document.getElementById('soru-takip-ai-result');
 
@@ -343,18 +344,60 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tapOverlay) tapOverlay.addEventListener('click', handleManualPlay);
             if (this.scannerVideo) this.scannerVideo.addEventListener('click', handleManualPlay);
 
+            // Mesaj Şablonu Oluşturucu (Deneme Sınavları Standardında)
+            const buildSoruTakipVeliMessage = (platform = 'wa') => {
+                const link = this.linkOutput?.value;
+                if (!link) return null;
+                const student = typeof studentData !== 'undefined' ? studentData.find(s => String(s.no) === String(this.studentSelect?.value)) : null;
+                const sname = student ? student.adSoyad : '';
+                const sno = student ? student.no : '';
+                const sinif = student ? student.sinif : (this.classSelect?.value || '-');
+                const ders = this.dersSelect?.value || 'Tüm Dersler';
+                const periodDesc = this.dersSelect?.value ? '21 Günlük Çizelge' : `${this.currentWeekNo}. Hafta Soru Takibi`;
+                const platformTag = platform === 'bip' ? ' (BiP)' : '';
+
+                return `📊 *HAFTALIK SORU ÇÖZÜM TAKİBİ${platformTag}*
+👤 *Öğrenci:* ${sno ? sno + ' - ' : ''}${sname || 'Öğrencimiz'}
+🏫 *Sınıf:* ${sinif}
+📚 *Kapsam:* ${ders} — ${periodDesc}
+
+Değerli Velimiz,
+Öğrencimizin evdeki günlük soru çözüm sayılarını, doğru/yanlışlarını ve çalışma sürelerini aşağıdaki bağlantıdan sisteme girebilirsiniz:
+
+🔗 *Veri Giriş Bağlantısı:*
+${link}
+
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+            };
+
             // WhatsApp Butonu
             if (this.whatsappBtn) {
                 this.whatsappBtn.addEventListener('click', () => {
-                    const link = this.linkOutput?.value;
-                    if (link) {
-                        const student = typeof studentData !== 'undefined' ? studentData.find(s => s.no == this.studentSelect?.value) : null;
-                        const sname = student ? student.adSoyad : '';
-                        const ders = this.dersSelect?.value || '';
-                        const dersText = ders ? `${ders} dersi ` : '';
-                        const periodDesc = ders ? '21 günlük takip çizelgesi' : `${this.currentWeekNo}. Hafta`;
-                        const text = `Sayın Velimiz, ${sname ? sname + ' öğrencimizin ' : ''}${dersText}${periodDesc} soru çözüm verilerini girmek için bağlantınız:\n${link}`;
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                    const text = buildSoruTakipVeliMessage('wa');
+                    if (text) {
+                        window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
+                    } else {
+                        alert('Lütfen önce bir öğrenci seçiniz.');
+                    }
+                });
+            }
+
+            // BiP Butonu
+            if (!this.bipBtn) {
+                this.bipBtn = document.getElementById('soru-takip-bip-btn');
+            }
+            if (this.bipBtn) {
+                this.bipBtn.addEventListener('click', () => {
+                    const text = buildSoruTakipVeliMessage('bip');
+                    if (text) {
+                        const student = typeof studentData !== 'undefined' ? studentData.find(s => String(s.no) === String(this.studentSelect?.value)) : null;
+                        const sname = student ? student.adSoyad : 'Öğrenci';
+                        if (typeof window.shareViaBip === 'function') {
+                            window.shareViaBip(text, `${sname} - Soru Takip Formu`);
+                        } else {
+                            if (window.copyTextToClipboard) window.copyTextToClipboard(text);
+                            window.open('https://web.bip.com/', '_blank');
+                        }
                     } else {
                         alert('Lütfen önce bir öğrenci seçiniz.');
                     }
@@ -1301,7 +1344,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ÖĞRENCİ BİLGİSİ VE PROFİLİ
 ═══════════════════════════════════
 Ad Soyad : ${ad}${sinif ? '\nSınıf    : ' + sinif : ''}
-Öğrenme Stili (VAK): ${student.ogrenmeStili || student.vak || 'Bilinmiyor'}
+Öğrenme Stili (VAK): ${student?.ogrenmeStili || student?.vak || 'Bilinmiyor'}
 Toplam Soru Girişi : ${toplamKayit} adet veri
 
 ═══════════════════════════════════
@@ -1399,10 +1442,13 @@ Türkçe yaz. Sade, anlaşılır ve uygulanabilir ol.`;
 
             const sid = this.studentSelect.value;
             const student = typeof studentData !== 'undefined' ? studentData.find(s => String(s.no) === String(sid)) : null;
-            if (!student) return;
+            if (!student) {
+                alert('Veli raporu için lütfen önce geçerli bir öğrenci seçiniz.');
+                return;
+            }
 
-            const ad = student.adSoyad;
-            const sinif = student.sinif;
+            const ad = student.adSoyad || 'Öğrenci';
+            const sinif = student.sinif || '';
             const toplamKayit = this.currentData.length;
 
             const dersOzet = {};
@@ -1438,8 +1484,8 @@ Türkçe yaz. Sade, anlaşılır ve uygulanabilir ol.`;
 ÖĞRENCİ BİLGİSİ
 ═══════════════════════════════════
 Öğrenci: ${ad} (${sinif || ''})
-XP Puanı: ${student.xp || 0}
-Öğrenme Stili: ${student.ogrenmeStili || student.vak || 'Bilinmiyor'}
+XP Puanı: ${student?.xp || 0}
+Öğrenme Stili: ${student?.ogrenmeStili || student?.vak || 'Bilinmiyor'}
 Çözülen Soru Verisi: Toplam ${toplamKayit} kayıt
 Son Durum:
 ${dersTablosu}

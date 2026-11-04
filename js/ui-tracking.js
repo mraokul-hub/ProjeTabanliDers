@@ -1075,6 +1075,7 @@
                 text += `\n\n⚪ *GELMEYENLER (${absent.length}):*\n` + (absent.length > 0 ? '▫️ ' + absent.join('\n▫️ ') : 'Gelmeyen öğrenci yok');
                 text += `\n\n🔒 *Not:* Bireysel öğrenci durumları için veli bilgilendirme mesajı ayrıca iletilebilir.`;
             }
+            text += `\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             return text;
         }
 
@@ -1109,7 +1110,14 @@
             } else {
                 durumText = '⏳ Henüz Teslim Edilmedi / Bekliyor (0 XP)';
             }
-            return `🎯 *${item.type.toUpperCase()} DEĞERLENDİRME*\n👤 *Öğrenci:* ${name}\n📌 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📊 *Durum:* ${durumText}`;
+            return `🎯 *${(item.type || 'ÖDEV').toUpperCase()} DEĞERLENDİRME*
+👤 *Öğrenci:* ${name}
+🏫 *Sınıf:* ${item.sinif || '-'}
+📌 *Çalışma:* ${item.title || '-'}
+📅 *Tarih:* ${item.date ? new Date(item.date).toLocaleString('tr-TR') : '-'}
+📊 *Sonuç / Durum:* ${durumText}
+
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
 
         function shareStudentResult(id, name) {

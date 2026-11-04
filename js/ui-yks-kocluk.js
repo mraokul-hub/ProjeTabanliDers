@@ -1237,6 +1237,49 @@
         }
     }
 
+    function buildYksParentMessage(item, mode = 'standard', platform = 'wa') {
+        if (!item) return '';
+        const seviye = detectSinifSeviyesi(item.sinifSeviyesi || item.sinif);
+        const lastDeneme = (Array.isArray(item.denemeler) ? item.denemeler : []).slice(-1)[0];
+        const plateau = diagnoseYksNetPlateau(item);
+        const obp = calculateObpShield(item);
+        const kai = calculateKai(item.haftalikSoruSayisi);
+        const platformTag = platform === 'bip' ? ' (BiP)' : '';
+
+        if (mode === 'plato') {
+            return `🛡️ *YKS BİLİŞSEL KOÇLUK: VELİ KRİZSİZ REHBERLİK BÜLTENİ${platformTag}* 🛡️
+👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
+🏫 *Sınıf / Alan:* ${item.sinif || (seviye + '. Sınıf')} (${item.alan || 'YKS'})
+🎯 *Hedef:* ${item.hedefProgram || item.hedefBolum || 'Hedef Lisans'}
+
+📊 *SÜREÇ TEŞHİSİ:*
+${plateau.status}
+
+💡 *UZMAN CERRAHİ REÇETE:*
+${plateau.recete}
+
+🏠 *Ev İçi Destek Protokolü:*
+1. Ev ortamında kesinlikle net veya deneme puanı sorgulanmamalı, sınav baskısı kurulmamalıdır.
+2. Nöral konsolidasyon ve bellek oturması için günlük 7.5 - 8 saat kaliteli uyku ritmi korunmalıdır.
+3. Öğrencimizle mutabık kalınan haftalık çalışma ve turlama kuralına güvenilmelidir.
+
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        } else {
+            return `🎓 *YKS AKADEMİK VE BİLİŞSEL GELİŞİM BÜLTENİ${platformTag}*
+👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
+🏫 *Sınıf / Alan:* ${item.sinif || (seviye + '. Sınıf')} (${item.alan || 'YKS'})
+🎯 *Akademik Hedef:* ${item.hedefProgram || item.hedefBolum || 'Hedef Lisans'} (İlk ${item.hedefSiralama || '20.000'})
+
+📊 *GÜNCEL PERFORMANS GÖSTERGELERİ:*
+${lastDeneme ? `⏱️ *Son Deneme (${lastDeneme.tur}):* *${Number(lastDeneme.netler?.toplam || 0).toFixed(2)} Net* (TDE Skoru: ${calculateYksTde(lastDeneme).tdePuan}/100)\n` : ''}📈 *Konfor Alanı İndeksi (KAİ):* %${kai.kai} (${kai.label})
+${seviye === 9 || seviye === 10 ? `🛡️ *Tahmini OBP Kalkanı:* +${obp.yerlestirmeKatkisi} Puan (Diploma: ${obp.diplomaNotu})\n` : ''}
+💡 *Koçluk Önerisi:*
+Öğrencimizin haftalık soru çözüm ve turlama disiplini takip edilmektedir. Ev ortamında net sayısından ziyade odaklanma sürelerinin desteklenmesi rica olunur.
+
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        }
+    }
+
     /**
      * Veli WhatsApp Mesajı Gönder / Kopyala
      */
@@ -1244,59 +1287,35 @@
         const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
         if (!item) return;
 
-        const seviye = detectSinifSeviyesi(item.sinifSeviyesi || item.sinif);
-        const lastDeneme = (Array.isArray(item.denemeler) ? item.denemeler : []).slice(-1)[0];
-        const plateau = diagnoseYksNetPlateau(item);
-        const obp = calculateObpShield(item);
-        const kai = calculateKai(item.haftalikSoruSayisi);
-
-        let msg = '';
-        if (mode === 'plato') {
-            msg = `Sayın Velimiz, ${item.adSoyad} isimli öğrencimizin YKS hazırlık sürecinde bilişsel koçluk takibinde net platosu/süre tıkanıklığı teşhis edilmiştir.\n\n` +
-                  `📌 Durum Teşhisi: ${plateau.status}\n` +
-                  `💡 Uzman Cerrahi Reçete: ${plateau.recete}\n\n` +
-                  `🛡️ Evde Alınacak Önlemler (Krizsiz Protokol):\n` +
-                  `1. Ev ortamında kesinlikle net veya deneme puanı sorgulanmamalı, sınav baskısı kurulmamalıdır.\n` +
-                  `2. Nöral konsolidasyon ve bellek oturması için günlük 7.5 - 8 saat kaliteli uyku ritmi korunmalıdır.\n` +
-                  `3. Öğrencimizle mutabık kalınan haftalık çalışma ve turlama kuralına güvenilmelidir.\n\n` +
-                  `Bilişsel Mentorluk ve Psikometrik Takip Servisi`;
-        } else {
-            msg = `Sayın Velimiz, ${item.adSoyad} (${item.sinif || (seviye + '. Sınıf')} - ${item.alan || 'YKS'}) isimli öğrencimizin bilişsel gelişim bülteni oluşturulmuştur:\n\n` +
-                  `🎯 Akademik Hedef: ${item.hedefProgram || item.hedefBolum || 'Hedef Lisans'} (İlk ${item.hedefSiralama || '20.000'})\n` +
-                  (lastDeneme ? `⏱️ Son Deneme (${lastDeneme.tur}): Toplam ${Number(lastDeneme.netler?.toplam || 0).toFixed(2)} Net (TDE: ${calculateYksTde(lastDeneme).tdePuan}/100)\n` : '') +
-                  `📊 Konfor Alanı İndeksi (KAİ): %${kai.kai} (${kai.label})\n` +
-                  (seviye === 9 || seviye === 10 ? `🛡️ Tahmini OBP Kalkanı: +${obp.yerlestirmeKatkisi} Puan (Diploma: ${obp.diplomaNotu})\n` : '') +
-                  `\nDetaylı analiz okul portalımızda veli incelemesine açıktır.`;
-        }
+        const msg = buildYksParentMessage(item, mode, 'wa');
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(msg).then(() => {
                 if (typeof showGlobalToast === 'function') {
-                    showGlobalToast('Veli bülteni panoya kopyalandı. WhatsApp Web açılıyor...', 'success');
-                } else {
-                    alert('Veli bülteni panoya kopyalandı.');
+                    showGlobalToast('Veli WhatsApp bülteni panoya kopyalandı. WhatsApp açılıyor...', 'success');
                 }
-            });
+            }).catch(() => {});
         }
-        const waUrl = 'https://web.whatsapp.com/send?text=' + encodeURIComponent(msg);
-        window.open(waUrl, '_blank');
+        window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(msg), '_blank');
     }
 
     /**
      * BiP ile Sadeleştirilmiş Paylaşım
      */
-    function shareYksViaBip() {
+    function shareYksViaBip(mode = 'standard') {
         const item = (window.yksKoclukData || []).find(k => String(k.id) === String(activeYksKoclukId));
         if (!item) return;
-        const kai = calculateKai(item.haftalikSoruSayisi);
-        const lastDeneme = (Array.isArray(item.denemeler) ? item.denemeler : []).slice(-1)[0];
-        const msg = `BiP Öğrenci Bilgilendirme: ${item.adSoyad} | ` +
-                    (lastDeneme ? `Son Net: ${Number(lastDeneme.netler?.toplam || 0).toFixed(2)} | ` : '') +
-                    `KAİ: %${kai.kai} | Hedef: ${item.hedefProgram || 'YKS'}`;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(msg);
-            if (typeof showGlobalToast === 'function') showGlobalToast('BiP mesajı panoya kopyalandı.', 'success');
-            else alert('BiP mesajı kopyalandı.');
+
+        const msg = buildYksParentMessage(item, mode, 'bip');
+
+        if (typeof window.shareViaBip === 'function') {
+            window.shareViaBip(msg, `${item.adSoyad} - YKS Veli Bülteni`);
+        } else {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(msg);
+                if (typeof showGlobalToast === 'function') showGlobalToast('BiP mesajı panoya kopyalandı.', 'success');
+            }
+            window.open('https://web.bip.com/', '_blank');
         }
     }
 
@@ -3996,11 +4015,14 @@ Yukarıdaki verilere dayanarak;
 
                 <div style="margin-bottom:14px;">
                     <label style="font-size:11px; font-weight:700;">Hazır Gemini AI Koçluk Promptu:</label>
-                    <textarea readonly style="width:100%; min-height:110px; padding:10px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:11.5px; font-family:monospace;">${escapeFn(promptText)}</textarea>
+                    <textarea id="yks-ai-prompt-area" readonly style="width:100%; min-height:110px; padding:10px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:11.5px; font-family:monospace;">${escapeFn(promptText)}</textarea>
                     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
-                        <button class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(\`${promptText.replace(/`/g, '\\`')}\`); alert('Gemini AI promptu kopyalandı.');" style="font-size:11px; padding:5px 12px;">
+                        <button class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('yks-ai-prompt-area').value); if(typeof showGlobalToast==='function') showGlobalToast('Gemini AI promptu kopyalandı!', 'success'); else alert('Gemini AI promptu kopyalandı.');" style="font-size:11px; padding:5px 12px; cursor:pointer;">
                             <i class="fas fa-copy me-1"></i> Promptu Kopyala
                         </button>
+                        <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="btn" style="background:#4f46e5; color:white; font-size:11px; padding:5px 12px; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                            <i class="fas fa-robot me-1"></i> Gemini'yi Aç
+                        </a>
                     </div>
                 </div>
 
@@ -4008,11 +4030,11 @@ Yukarıdaki verilere dayanarak;
                     <label style="font-size:11px; font-weight:700; color:#059669;"><i class="fab fa-whatsapp me-1"></i> Tek Tıkla Veli Bülteni (WhatsApp &amp; BiP):</label>
                     <textarea id="yks-wa-text" style="width:100%; min-height:75px; padding:8px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); font-size:12px;">${escapeFn(waText)}</textarea>
                     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
-                        <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('yks-wa-text').value); alert('WhatsApp mesajı panoya kopyalandı.');" style="background:#25D366; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px;">
-                            <i class="fab fa-whatsapp me-1"></i> WhatsApp Kopyala
+                        <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('yks-wa-text').value); window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(document.getElementById('yks-wa-text').value), '_blank');" style="background:#25D366; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px; border:none; cursor:pointer;">
+                            <i class="fab fa-whatsapp me-1"></i> Veliye WA
                         </button>
-                        <button class="btn" onclick="if(typeof window.shareViaBip==='function'){window.shareViaBip(document.getElementById('yks-wa-text').value);}else{alert('BiP modalı açılamadı.');}" style="background:#0284c7; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px;">
-                            <i class="fas fa-comment-dots me-1"></i> BiP ile Paylaş (Sadeleştir)
+                        <button class="btn" onclick="if(typeof window.shareViaBip==='function'){window.shareViaBip(document.getElementById('yks-wa-text').value, 'YKS Veli Bülteni');}else{alert('BiP modalı açılamadı.');}" style="background:#00B2FF; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px; border:none; cursor:pointer;">
+                            <i class="fas fa-comment-dots me-1"></i> Veliye BiP
                         </button>
                     </div>
                 </div>

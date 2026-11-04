@@ -493,6 +493,24 @@ window.shareViaBip = function(text, title) {
     window.openBipShareModal(text, title);
 };
 
+// CBL Karne WhatsApp & BiP Paylaşım Yöneticileri
+window.shareCblReportWhatsApp = function() {
+    const content = document.getElementById('cbl-report-content')?.innerText?.trim() || 'Özel Bağlam Eğilimi Karnesi';
+    const text = `🎯 *ÖZEL BAĞLAM EĞİLİMİ KARNESİ*\n\n${content}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+    window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(text), '_blank');
+};
+
+window.shareCblReportBip = function() {
+    const content = document.getElementById('cbl-report-content')?.innerText?.trim() || 'Özel Bağlam Eğilimi Karnesi';
+    const text = `🎯 *ÖZEL BAĞLAM EĞİLİMİ KARNESİ (BiP)*\n\n${content}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+    if (typeof window.shareViaBip === 'function') {
+        window.shareViaBip(text, 'Özel Bağlam Eğilimi Karnesi');
+    } else {
+        if (window.copyTextToClipboard) window.copyTextToClipboard(text);
+        window.open('https://web.bip.com/', '_blank');
+    }
+};
+
 // ESC Tuşu ile BiP Modalını Kapatma Dinleyicisi
 if (!window._bipEscBound) {
     window._bipEscBound = true;

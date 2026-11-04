@@ -1238,34 +1238,59 @@ Hiçbir önsöz, açıklama veya markdown bloğu olmadan, doğrudan aşağıdaki
         }
     }
 
+    function buildVakParentMessage(student, style, recs, platform = 'wa') {
+        const platformTag = platform === 'bip' ? ' (BiP)' : '';
+        return `🧠 *BİLİŞSEL ÖĞRENME STİLİ VE VELİ REHBERLİK BÜLTENİ${platformTag}*
+👤 *Öğrenci:* ${student.no ? student.no + ' - ' : ''}${student.adSoyad}
+🏫 *Sınıf:* ${student.sinif || '-'}
+🎨 *Baskın Bilişsel Stil:* *${style.toUpperCase()}*
+
+Değerli Velimiz,
+Öğrencimiz ile gerçekleştirdiğimiz pedagojik VAK (Görsel-İşitsel-Kinestetik) envanteri sonucunda, bilgiyi en kalıcı ve verimli şekilde *${style}* duyusal kanalıyla işlediği tespit edilmiştir.
+
+💡 *Evde Öğrenciyi Destekleme Rehberi:*
+${recs.length > 0 ? recs.map((r, i) => `▫️ ${r}`).join('\n') : '▫️ Öğrencinin bireysel öğrenme stiline uygun görsel ve işitsel materyallerle desteklenmesi önerilir.'}
+
+_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+    }
+
     async function sendVakWhatsApp() {
         const student = (window.studentData || []).find(s => String(s.no) === String(activeLinkStudentNo));
         if (!student) return;
 
-        const grade = parseGradeLevel(student.sinif);
         const style = student.vak || 'Görsel';
         const details = student.vakDetails || {};
         const recs = details.actionable_recommendations ? (details.actionable_recommendations.for_parent || []) : [];
-
-        const msg = `🌟 *Bilişsel Öğrenme Stili & Gelişim Bülteni* 🌟
-
-Değerli Velimiz,
-Öğrencimiz *${student.adSoyad}* (${student.sinif}) ile gerçekleştirdiğimiz pedagojik VAK envanteri neticesinde, öğrencimizin bilgiyi en kalıcı şekilde *${style}* duyusal kanalıyla işlediği belirlenmiştir.
-
-💡 *Evde Öğrenciyi Destekleme Rehberi:*
-${recs.map((r, i) => `${i + 1}. ${r}`).join('\n')}
-
-Öğrencimizin ders çalışma verimini artırmak adına evdeki çalışma masasını ve molalarını bu doğrultuda yapılandırmanızı rica ederiz.
-Saygılarımızla, Proje Tabanlı Başarı Ekibi.`;
+        const msg = buildVakParentMessage(student, style, recs, 'wa');
 
         try {
-            await navigator.clipboard.writeText(msg);
-            alert('📱 Veli WhatsApp bilgilendirme mesajı panoya kopyalandı! WhatsApp Web açılıyor...');
-        } catch (_) {
-            alert('Mesaj:\n\n' + msg);
-        }
+            if (navigator.clipboard) await navigator.clipboard.writeText(msg);
+            if (typeof showGlobalToast === 'function') {
+                showGlobalToast('📱 Veli WhatsApp bilgilendirme mesajı kopyalandı! WhatsApp açılıyor...', 'success');
+            }
+        } catch (_) {}
 
-        window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    async function sendVakBip() {
+        const student = (window.studentData || []).find(s => String(s.no) === String(activeLinkStudentNo));
+        if (!student) return;
+
+        const style = student.vak || 'Görsel';
+        const details = student.vakDetails || {};
+        const recs = details.actionable_recommendations ? (details.actionable_recommendations.for_parent || []) : [];
+        const msg = buildVakParentMessage(student, style, recs, 'bip');
+
+        if (typeof window.shareViaBip === 'function') {
+            window.shareViaBip(msg, `${student.adSoyad} - Bilişsel Stil (VAK)`);
+        } else {
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(msg);
+                if (typeof showGlobalToast === 'function') showGlobalToast('BiP mesajı kopyalandı.', 'success');
+            }
+            window.open('https://web.bip.com/', '_blank');
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -1293,6 +1318,7 @@ Saygılarımızla, Proje Tabanlı Başarı Ekibi.`;
         linkToLgsCoaching,
         linkToYksCoaching,
         sendVakWhatsApp,
+        sendVakBip,
         questionBanks: VAK_QUESTION_BANKS
     };
 

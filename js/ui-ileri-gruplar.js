@@ -677,8 +677,11 @@
                         <button class="btn" style="flex:1;font-size:11px;padding:6px 8px;background:var(--secondary);" onclick="window.ileriGrupTekilYazdir('${esc(g.id)}')">
                             <i class="fas fa-print me-1"></i>A4 Gözlem
                         </button>
-                        <button class="btn" style="font-size:11px;padding:6px 10px;background:#25D366;" onclick="window.ileriGrupWhatsappTekil('${esc(g.id)}')">
+                        <button class="btn" style="font-size:11px;padding:6px 10px;background:#25D366;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="window.ileriGrupWhatsappTekil('${esc(g.id)}')" title="WhatsApp ile Paylaş">
                             <i class="fab fa-whatsapp"></i>
+                        </button>
+                        <button class="btn" style="font-size:11px;padding:6px 10px;background:#00B2FF;color:white;border:none;border-radius:6px;cursor:pointer;" onclick="window.ileriGrupBipTekil('${esc(g.id)}')" title="BiP ile Paylaş">
+                            <i class="fas fa-comment-dots"></i>
                         </button>
                     </div>
                 </div>`;
@@ -1269,27 +1272,30 @@
     window.ileriGrupWhatsapp = function () {
         const groups = getAdvData();
         if (!groups || groups.length === 0) return alert('Aktif grup yok.');
-        let text = `*🌙 İLERİ ÇALIŞMA & İSTASYON GRUPLARI LİSTESİ*\n\n`;
+        let text = `🚀 *İLERİ ÇALIŞMA & İSTASYON GRUPLARI LİSTESİ*\n\n`;
         groups.forEach((g, idx) => {
-            text += `*${idx + 1}. ${g.grupAdi}* (${g.seviye})\n`;
+            text += `📦 *${idx + 1}. ${g.grupAdi}* (${g.seviye || 'Düzey'})\n`;
             text += `🎯 İstasyon: ${g.istasyonTipi}\n`;
             text += `👥 Üyeler: ${g.ogrenciler.map(o => o.adSoyad).join(', ')}\n\n`;
         });
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        text += `_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     window.ileriGrupBip = function () {
         const groups = getAdvData();
         if (!groups || groups.length === 0) return alert('Aktif grup yok.');
-        let text = `*🌙 İLERİ ÇALIŞMA & İSTASYON GRUPLARI LİSTESİ*\n\n`;
+        let text = `🚀 *İLERİ ÇALIŞMA & İSTASYON GRUPLARI (BiP)*\n\n`;
         groups.forEach((g, idx) => {
-            text += `*${idx + 1}. ${g.grupAdi}* (${g.seviye})\n`;
+            text += `📦 *${idx + 1}. ${g.grupAdi}* (${g.seviye || 'Düzey'})\n`;
             text += `🎯 İstasyon: ${g.istasyonTipi}\n`;
             text += `👥 Üyeler: ${g.ogrenciler.map(o => o.adSoyad).join(', ')}\n\n`;
         });
+        text += `_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         if (typeof window.shareViaBip === 'function') {
             window.shareViaBip(text, 'İleri Çalışma Grupları');
         } else {
+            if (window.copyTextToClipboard) window.copyTextToClipboard(text);
             window.open('https://web.bip.com/', '_blank');
         }
     };
@@ -1298,15 +1304,37 @@
         const groups = getAdvData();
         const g = groups.find(x => x && x.id === groupId);
         if (!g) return;
-        let text = `*🌙 ${g.grupAdi.toUpperCase()} GÖREV FORMU*\n`;
-        text += `🎯 İstasyon: ${g.istasyonTipi}\n`;
-        text += `📌 Odak Hedef: ${g.odakKonu}\n`;
-        text += `👥 Takım Üyeleri: ${g.ogrenciler.map(o => o.adSoyad).join(', ')}\n\n`;
-        text += `*Görevler:*\n`;
+        let text = `🚀 *${g.grupAdi.toUpperCase()} GÖREV FORMU*\n`;
+        text += `🎯 *İstasyon:* ${g.istasyonTipi}\n`;
+        text += `📌 *Odak Hedef:* ${g.odakKonu || '-'}\n`;
+        text += `👥 *Takım Üyeleri:* ${g.ogrenciler.map(o => o.adSoyad).join(', ')}\n\n`;
+        text += `📋 *Görevler:*\n`;
         (g.gorevler || []).forEach(t => {
             text += `- [${t.durum === 'tamamlandi' ? 'X' : ' '}] ${t.baslik}\n`;
         });
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        text += `\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
+    };
+
+    window.ileriGrupBipTekil = function (groupId) {
+        const groups = getAdvData();
+        const g = groups.find(x => x && x.id === groupId);
+        if (!g) return;
+        let text = `🚀 *${g.grupAdi.toUpperCase()} GÖREV FORMU (BiP)*\n`;
+        text += `🎯 *İstasyon:* ${g.istasyonTipi}\n`;
+        text += `📌 *Odak Hedef:* ${g.odakKonu || '-'}\n`;
+        text += `👥 *Takım Üyeleri:* ${g.ogrenciler.map(o => o.adSoyad).join(', ')}\n\n`;
+        text += `📋 *Görevler:*\n`;
+        (g.gorevler || []).forEach(t => {
+            text += `- [${t.durum === 'tamamlandi' ? 'X' : ' '}] ${t.baslik}\n`;
+        });
+        text += `\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        if (typeof window.shareViaBip === 'function') {
+            window.shareViaBip(text, `${g.grupAdi} Görev Formu`);
+        } else {
+            if (window.copyTextToClipboard) window.copyTextToClipboard(text);
+            window.open('https://web.bip.com/', '_blank');
+        }
     };
 
     // ── 2. Sınıf Yönetimi Kümelerine Aktar ──

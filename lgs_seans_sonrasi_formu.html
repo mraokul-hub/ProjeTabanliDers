@@ -292,6 +292,7 @@
             <p>Seans bitti. Verilerini dürüstçe gir, eksik kalan yerini tespit et ve nete dönüştür.</p>
         </div>
         <div class="form-body">
+            <div id="routingBadge" style="display:none; margin-bottom: 16px; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.4;"></div>
             <form id="lgsAfterForm" onsubmit="submitLgsAfterForm(event)">
                 
                 <!-- Öğrenci Bilgileri -->
@@ -507,10 +508,79 @@
             const sinifParam = urlParams.get('sinif');
             const noParam = urlParams.get('no');
             const adParam = urlParams.get('ad');
-            if (sinifParam) { document.getElementById('sinif').value = decodeURIComponent(sinifParam); document.getElementById('sinif').readOnly = true; }
-            if (noParam) { document.getElementById('ogrenciNo').value = decodeURIComponent(noParam); document.getElementById('ogrenciNo').readOnly = true; }
-            if (adParam) { document.getElementById('adSoyad').value = decodeURIComponent(adParam); document.getElementById('adSoyad').readOnly = true; }
+            const badge = document.getElementById('routingBadge');
+
+            if (sinifParam) {
+                const decodedSinif = decodeURIComponent(sinifParam);
+                const sinifEl = document.getElementById('sinif');
+                sinifEl.value = decodedSinif;
+                sinifEl.readOnly = true;
+                sinifEl.style.backgroundColor = 'var(--input-bg)';
+                sinifEl.style.cursor = 'not-allowed';
+                sinifEl.title = 'QR / Barkod yönlendirmesi ile otomatik kilitlendi';
+            }
+
+            if (noParam && adParam) {
+                // Bireysel Öğrenci Yönlendirmesi
+                const decodedNo = decodeURIComponent(noParam);
+                const decodedAd = decodeURIComponent(adParam);
+                const noEl = document.getElementById('ogrenciNo');
+                const adEl = document.getElementById('adSoyad');
+                noEl.value = decodedNo;
+                noEl.readOnly = true;
+                noEl.style.backgroundColor = 'var(--input-bg)';
+                noEl.style.cursor = 'not-allowed';
+
+                adEl.value = decodedAd;
+                adEl.readOnly = true;
+                adEl.style.backgroundColor = 'var(--input-bg)';
+                adEl.style.cursor = 'not-allowed';
+
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '12px';
+                    badge.style.background = 'rgba(5, 150, 105, 0.08)';
+                    badge.style.border = '1.5px solid rgba(5, 150, 105, 0.35)';
+                    badge.style.color = '#065f46';
+                    badge.innerHTML = `
+                        <i class="fas fa-id-badge" style="font-size:24px; color:#059669; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:800; font-size:13.5px; color:#065f46;">🎯 Bireysel Öğrenci Barkoduyla Bağlanıldı</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Hoş geldin <strong>${escapeHTML(decodedAd)}</strong> (${sinifParam ? escapeHTML(decodeURIComponent(sinifParam)) : '-'} &bull; No: <strong>${escapeHTML(decodedNo)}</strong>). Bilgilerin otomatik kilitlendi.
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (sinifParam) {
+                // Sınıf Panosu Yönlendirmesi
+                const decodedSinif = decodeURIComponent(sinifParam);
+                if (badge) {
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '12px';
+                    badge.style.background = 'rgba(59, 130, 246, 0.08)';
+                    badge.style.border = '1.5px solid rgba(59, 130, 246, 0.35)';
+                    badge.style.color = '#1d4ed8';
+                    badge.innerHTML = `
+                        <i class="fas fa-school" style="font-size:24px; color:#2563eb; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:800; font-size:13.5px; color:#1d4ed8;">🏛️ ${escapeHTML(decodedSinif)} Sınıf Panosu Barkoduyla Bağlanıldı</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Sınıfın otomatik kilitlendi. Lütfen <strong>öğrenci numaranı</strong> ve <strong>adını</strong> girerek çıkış biletini tamamla.
+                            </div>
+                        </div>
+                    `;
+                }
+                const noEl = document.getElementById('ogrenciNo');
+                if (noEl) setTimeout(() => noEl.focus(), 300);
+            }
         });
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
 
         async function submitLgsAfterForm(event) {
             event.preventDefault();
@@ -529,6 +599,8 @@
             const net = Math.max(0, dogru - (yanlis / 3));
 
             const kokNedenEl = document.querySelector('input[name="kokNeden"]:checked');
+            const baskinKokVal = kokNedenEl ? kokNedenEl.value : 'Belirtilmedi';
+            const zorlananTipi = document.getElementById('zorlananSoruTipi').value || '';
 
             const formData = {
                 ogrenciNo: document.getElementById('ogrenciNo').value,
@@ -536,19 +608,25 @@
                 adSoyad: document.getElementById('adSoyad').value,
                 tarih: document.getElementById('tarih').value,
                 type: 'LGS_AFTER',
+                formTitle: 'LGS Seans Sonu Çıkış Bileti',
                 brans: document.getElementById('brans').value,
                 toplamSoru: toplam,
+                totalQuestions: toplam,
                 dogru: dogru,
                 yanlis: yanlis,
                 bos: bos,
                 net: parseFloat(net.toFixed(2)),
                 harcananSureDk: sure,
+                durationMin: sure,
                 saniyePerSoru: toplam > 0 && sure > 0 ? Math.round((sure * 60) / toplam) : 0,
+                secPerQuestion: toplam > 0 && sure > 0 ? Math.round((sure * 60) / toplam) : 0,
                 eksikKazanim: document.getElementById('eksikKazanim').value,
-                zorlananSoruTipi: document.getElementById('zorlananSoruTipi').value,
-                baskinKokNeden: kokNedenEl ? kokNedenEl.value : 'Belirtilmedi',
+                zorlananSoruTipi: zorlananTipi,
+                ogrenciNot: zorlananTipi,
+                baskinKokNeden: baskinKokVal,
+                rootCauses: kokNedenEl ? [baskinKokVal] : [],
                 hataDefteriZamani: document.getElementById('hataDefteriZamani').value,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                timestamp: (typeof firebase !== 'undefined' && firebase.database && firebase.database.ServerValue) ? firebase.database.ServerValue.TIMESTAMP : Date.now()
             };
 
             try {

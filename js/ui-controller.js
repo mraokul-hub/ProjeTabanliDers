@@ -68,6 +68,10 @@ function openTab(tabId) {
         if (typeof updateStudentPickers === 'function') updateStudentPickers();
     }
 
+    if (tabId === 'tab3') {
+        if (typeof window.initMufredat === 'function') window.initMufredat();
+    }
+
     if (tabId === 'tab-checklists') {
         if (typeof updateChecklistClassContainer === 'function') updateChecklistClassContainer();
         if (typeof renderChecklistList === 'function') renderChecklistList();

@@ -4261,6 +4261,58 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             }
         }, 30000);
 
+        window.currentQRTargetMode = window.currentQRTargetMode || 'class';
+
+        function setQRTargetMode(mode) {
+            window.currentQRTargetMode = mode;
+            const btnClass = document.getElementById('btn-mode-class');
+            const btnStudent = document.getElementById('btn-mode-student');
+            const printText = document.getElementById('print-btn-text');
+
+            if (btnClass && btnStudent) {
+                if (mode === 'class') {
+                    btnClass.style.background = 'var(--primary)';
+                    btnClass.style.color = 'white';
+                    btnStudent.style.background = 'transparent';
+                    btnStudent.style.color = 'var(--text-main)';
+                    if (printText) printText.textContent = 'Sınıf Afişi Yazdır (PDF)';
+                } else {
+                    btnStudent.style.background = 'var(--primary)';
+                    btnStudent.style.color = 'white';
+                    btnClass.style.background = 'transparent';
+                    btnClass.style.color = 'var(--text-main)';
+                    if (printText) printText.textContent = 'Öğrenci Fişlerini Yazdır (PDF)';
+                }
+            }
+            generateStudentQRs();
+        }
+
+        function quickTargetQR(formType, targetMode) {
+            const formSelect = document.getElementById('eval-form-type-select');
+            if (formSelect) formSelect.value = formType;
+
+            const classSelect = document.getElementById('eval-class-select');
+            if (classSelect && (!classSelect.value || classSelect.value === '')) {
+                const classes = [...new Set(studentData.map(s => s.sinif).filter(c => c && c.toString().trim() !== ''))].sort();
+                const lgsClass = classes.find(c => String(c).trim().startsWith('8'));
+                if (lgsClass) {
+                    classSelect.value = lgsClass;
+                } else if (classes.length > 0) {
+                    classSelect.value = classes[0];
+                }
+            }
+
+            setQRTargetMode(targetMode || 'class');
+
+            const panel = document.getElementById('qr-management-panel');
+            if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                panel.style.transition = 'box-shadow 0.4s ease';
+                panel.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.4)';
+                setTimeout(() => { panel.style.boxShadow = ''; }, 1500);
+            }
+        }
+
         function updateEvalClassDropdown() {
             const select = document.getElementById('eval-class-select');
             if (!select) return;
@@ -4273,44 +4325,196 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
 
         function generateStudentQRs() {
-            const sinif = document.getElementById('eval-class-select').value;
+            const sinifSelect = document.getElementById('eval-class-select');
+            const sinif = sinifSelect ? sinifSelect.value : '';
             const container = document.getElementById('qr-list-container');
+            if (!container) return;
             container.innerHTML = '';
 
             if (!sinif) {
                 container.innerHTML = `
                 <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
                     <i class="fas fa-qrcode fa-3x" style="margin-bottom: 15px; opacity: 0.5;"></i>
-                    <p style="font-weight: 700;">QR Kodlar İçin Sınıf Seçiniz</p>
+                    <p style="font-weight: 700;">Barkod ve QR Kodlar İçin Lütfen Yukarıdan Sınıf Seçiniz</p>
                 </div>`;
                 return;
             }
 
-            const studentsInClass = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => a.no - b.no);
+            const formTypeSelect = document.getElementById('eval-form-type-select');
+            const formType = formTypeSelect ? formTypeSelect.value : 'auto';
+            const isLgs8 = formType.startsWith('lgs') ? true : (formType === 'classic' ? false : String(sinif || '').trim().startsWith('8'));
+            const targetMode = window.currentQRTargetMode || 'class';
 
-            if (studentsInClass.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Bu sınıfta öğrenci bulunamadı.</p>';
+            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+            const currentTeacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+            const uidQueryParam = currentTeacherUid ? `&uid=${encodeURIComponent(currentTeacherUid)}` : '';
+
+            const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+            const safeSinif = escapeFn(sinif);
+            const safeSinifJs = (sinif || '').replace(/'/g, "\\'");
+
+            // ══════════════════════════════════════════════
+            // MOD 1: SINIF GENELİ BARKOD / QR (SINIF PANOSU AFİŞİ)
+            // ══════════════════════════════════════════════
+            if (targetMode === 'class') {
+                const beforeFile = isLgs8 ? 'lgs_seans_oncesi_formu.html' : 'dersten_once_formu.html';
+                const afterFile = isLgs8 ? 'lgs_seans_sonrasi_formu.html' : 'dersten_sonra_formu.html';
+
+                const classBeforeLink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}${uidQueryParam}`;
+                const classAfterLink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}${uidQueryParam}`;
+                const classVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}${uidQueryParam}`;
+
+                const qrBeforeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(classBeforeLink)}&color=${isLgs8 ? 'ea580c' : 'f59e0b'}`;
+                const qrAfterUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(classAfterLink)}&color=${isLgs8 ? '059669' : '8b5cf6'}`;
+                const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(classVakLink)}&color=0284c7`;
+
+                let showBefore = (formType === 'auto' || formType === 'lgs_both' || formType === 'lgs_before' || formType === 'classic' || formType === 'all');
+                let showAfter = (formType === 'auto' || formType === 'lgs_both' || formType === 'lgs_after' || formType === 'classic' || formType === 'all');
+                let showVak = (formType === 'vak' || formType === 'all');
+
+                const posterCard = document.createElement('div');
+                posterCard.style = "background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);";
+
+                posterCard.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h4 style="margin:0; color:var(--primary); font-size:16px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-school text-primary"></i> ${safeSinif} Sınıf Panosu Barkod &amp; QR Afişi
+                        </h4>
+                        <p style="margin:4px 0 0 0; font-size:12px; color:var(--text-muted);">
+                            Öğrenciler kamerayı tuttuğunda <strong>${safeSinif}</strong> sınıfı otomatik kilitli gelir. Öğrenci sadece numara ve adını girerek başlar.
+                        </p>
+                    </div>
+                    <span style="font-size:11px; font-weight:800; background:rgba(234,88,12,0.12); color:#ea580c; padding:4px 10px; border-radius:12px;">
+                        <i class="fas fa-bullseye me-1"></i> ${isLgs8 ? 'LGS Koçluk Seans Panosu' : 'Sınıf Genel Panosu'}
+                    </span>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+                    ${showBefore ? `
+                    <div style="background:rgba(234,88,12,0.03); border:2px dashed #ea580c; border-radius:10px; padding:16px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+                        <div>
+                            <span style="display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; color:#c2410c; background:rgba(234,88,12,0.12); padding:3px 10px; border-radius:10px; margin-bottom:10px;">
+                                ${isLgs8 ? '1. Seans Öncesi Hazırlık' : '1. Aşama: Dersten Önce'}
+                            </span>
+                            <div style="background:white; padding:8px; border-radius:8px; display:inline-block; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:12px;">
+                                <img src="${qrBeforeUrl}" alt="Seans Öncesi QR" style="width:140px; height:140px; display:block;">
+                            </div>
+                            <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.4;">
+                                ${isLgs8 ? 'Masa başına oturmadan önce hedefini, odaklanmanı ve 120 sn kuralını onayla.' : 'Derse hazırlık ve ön öğrenme öz-değerlendirme formu.'}
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px; width:100%;">
+                            <a href="${classBeforeLink}" target="_blank" class="btn" style="flex:1; background:#ea580c; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:7px 8px; border-radius:6px; text-align:center;">
+                                <i class="fas fa-external-link-alt me-1"></i> Aç
+                            </a>
+                            <button class="btn" style="flex:1; background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; padding:7px 8px; border-radius:6px;" onclick="copyToClipboard('${classBeforeLink}')">
+                                <i class="fas fa-copy me-1"></i> Kopyala
+                            </button>
+                            <button class="btn" style="background:#25D366; color:white; font-size:11.5px; padding:7px 10px; border-radius:6px;" onclick="shareClassFormsToWhatsApp('${safeSinifJs}', 'before', '${classBeforeLink}', '')" title="WhatsApp ile Paylaş">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        </div>
+                    </div>` : ''}
+
+                    ${showAfter ? `
+                    <div style="background:rgba(5,150,105,0.03); border:2px dashed #059669; border-radius:10px; padding:16px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+                        <div>
+                            <span style="display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; color:#065f46; background:rgba(5,150,105,0.12); padding:3px 10px; border-radius:10px; margin-bottom:10px;">
+                                ${isLgs8 ? '2. Seans Sonu Çıkış Bileti' : '3. Aşama: Dersten Sonra'}
+                            </span>
+                            <div style="background:white; padding:8px; border-radius:8px; display:inline-block; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:12px;">
+                                <img src="${qrAfterUrl}" alt="Seans Sonu QR" style="width:140px; height:140px; display:block;">
+                            </div>
+                            <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.4;">
+                                ${isLgs8 ? 'Netini, soru başına saniyeni ve 4 kök hata nedenini teşhis et.' : 'Dersten sonra kazanım ve araştırma değerlendirme formu.'}
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px; width:100%;">
+                            <a href="${classAfterLink}" target="_blank" class="btn" style="flex:1; background:#059669; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:7px 8px; border-radius:6px; text-align:center;">
+                                <i class="fas fa-external-link-alt me-1"></i> Aç
+                            </a>
+                            <button class="btn" style="flex:1; background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; padding:7px 8px; border-radius:6px;" onclick="copyToClipboard('${classAfterLink}')">
+                                <i class="fas fa-copy me-1"></i> Kopyala
+                            </button>
+                            <button class="btn" style="background:#25D366; color:white; font-size:11.5px; padding:7px 10px; border-radius:6px;" onclick="shareClassFormsToWhatsApp('${safeSinifJs}', 'after', '', '${classAfterLink}')" title="WhatsApp ile Paylaş">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        </div>
+                    </div>` : ''}
+
+                    ${showVak ? `
+                    <div style="background:rgba(2,132,199,0.03); border:2px dashed #0284c7; border-radius:10px; padding:16px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">
+                        <div>
+                            <span style="display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; color:#0369a1; background:rgba(2,132,199,0.12); padding:3px 10px; border-radius:10px; margin-bottom:10px;">
+                                Bilişsel Stil Envanteri (VAK)
+                            </span>
+                            <div style="background:white; padding:8px; border-radius:8px; display:inline-block; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:12px;">
+                                <img src="${qrVakUrl}" alt="VAK QR" style="width:140px; height:140px; display:block;">
+                            </div>
+                            <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.4;">
+                                Öğrencinin Görsel, İşitsel veya Kinestetik öğrenme stilini belirleyen envanter.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px; width:100%;">
+                            <a href="${classVakLink}" target="_blank" class="btn" style="flex:1; background:#0284c7; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:7px 8px; border-radius:6px; text-align:center;">
+                                <i class="fas fa-external-link-alt me-1"></i> Aç
+                            </a>
+                            <button class="btn" style="flex:1; background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; padding:7px 8px; border-radius:6px;" onclick="copyToClipboard('${classVakLink}')">
+                                <i class="fas fa-copy me-1"></i> Kopyala
+                            </button>
+                            <button class="btn" style="background:#25D366; color:white; font-size:11.5px; padding:7px 10px; border-radius:6px;" onclick="shareClassFormsToWhatsApp('${safeSinifJs}', 'vak', '${classVakLink}', '')" title="WhatsApp ile Paylaş">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        </div>
+                    </div>` : ''}
+                </div>
+
+                <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn" style="background:#25D366; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:flex; align-items:center; gap:6px;" onclick="shareClassFormsToWhatsApp('${safeSinifJs}', 'both', '${classBeforeLink}', '${classAfterLink}')">
+                            <i class="fab fa-whatsapp"></i> Sınıfa WA Bülteni At
+                        </button>
+                        <button class="btn" style="background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:flex; align-items:center; gap:6px;" onclick="shareClassFormsToBip('${safeSinifJs}', 'both', '${classBeforeLink}', '${classAfterLink}')">
+                            <i class="fas fa-comment-dots"></i> BiP ile Paylaş
+                        </button>
+                    </div>
+                    <button class="btn" style="background:#ef4444; color:white; font-size:12px; font-weight:700; padding:8px 16px; border-radius:6px; display:flex; align-items:center; gap:6px;" onclick="printQRCodes()">
+                        <i class="fas fa-print"></i> Sınıf Afişini Yazdır (A4)
+                    </button>
+                </div>
+                `;
+
+                container.appendChild(posterCard);
                 return;
             }
 
-            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-            const isLgs8 = String(sinif || '').trim().startsWith('8');
+            // ══════════════════════════════════════════════
+            // MOD 2: ÖĞRENCİYE ÖZEL BİREYSEL BARKOD / QR KARTLARI
+            // ══════════════════════════════════════════════
+            const studentsInClass = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => a.no - b.no);
+
+            if (studentsInClass.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">Bu sınıfta kayıtlı öğrenci bulunamadı.</p>';
+                return;
+            }
+
+            const beforeFile = isLgs8 ? 'lgs_seans_oncesi_formu.html' : 'dersten_once_formu.html';
+            const afterFile = isLgs8 ? 'lgs_seans_sonrasi_formu.html' : 'dersten_sonra_formu.html';
+            const beforeColor = isLgs8 ? 'ea580c' : 'f59e0b';
+            const afterColor = isLgs8 ? '059669' : '8b5cf6';
+            const beforeLabel = isLgs8 ? 'LGS Seans Öncesi' : '1. Aşama (Önce)';
+            const afterLabel = isLgs8 ? 'LGS Seans Sonu' : '3. Aşama (Sonra)';
+            const beforeBorderColor = isLgs8 ? '#ea580c' : 'var(--yellow)';
+            const afterBorderColor = isLgs8 ? '#059669' : '#8b5cf6';
+            const beforeBg = isLgs8 ? 'rgba(234, 88, 12, 0.05)' : 'rgba(245, 158, 11, 0.05)';
+            const afterBg = isLgs8 ? 'rgba(5, 150, 105, 0.05)' : 'rgba(139, 92, 246, 0.05)';
+
+            let showBefore = (formType === 'auto' || formType === 'lgs_both' || formType === 'lgs_before' || formType === 'classic' || formType === 'all');
+            let showAfter = (formType === 'auto' || formType === 'lgs_both' || formType === 'lgs_after' || formType === 'classic' || formType === 'all');
+            let showVak = (formType === 'vak' || formType === 'all');
 
             studentsInClass.forEach(s => {
-                const beforeFile = isLgs8 ? 'lgs_seans_oncesi_formu.html' : 'dersten_once_formu.html';
-                const afterFile = isLgs8 ? 'lgs_seans_sonrasi_formu.html' : 'dersten_sonra_formu.html';
-                const beforeColor = isLgs8 ? 'ea580c' : 'f59e0b';
-                const afterColor = isLgs8 ? '059669' : '8b5cf6';
-                const beforeLabel = isLgs8 ? 'LGS Seans Öncesi' : '1. Aşama (Önce)';
-                const afterLabel = isLgs8 ? 'LGS Seans Sonu' : '3. Aşama (Sonra)';
-                const beforeBorderColor = isLgs8 ? '#ea580c' : 'var(--yellow)';
-                const afterBorderColor = isLgs8 ? '#059669' : '#8b5cf6';
-                const beforeBg = isLgs8 ? 'rgba(234, 88, 12, 0.05)' : 'rgba(245, 158, 11, 0.05)';
-                const afterBg = isLgs8 ? 'rgba(5, 150, 105, 0.05)' : 'rgba(139, 92, 246, 0.05)';
-
-                const currentTeacherUid = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
-                const uidQueryParam = currentTeacherUid ? `&uid=${encodeURIComponent(currentTeacherUid)}` : '';
-
                 const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParam}`;
                 const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParam}`;
                 const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParam}`;
@@ -4319,20 +4523,27 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formVakLink)}&color=0284c7`;
                 const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(formDELink)}&color=${afterColor}`;
 
-                const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
                 const safeName = escapeFn(s.adSoyad || '-');
                 const safeNo = escapeFn(s.no || '-');
+                const safeAdJs = (s.adSoyad || '').replace(/'/g, "\\'");
+                const safeNoJs = (s.no || '').toString().replace(/'/g, "\\'");
 
                 const card = document.createElement('div');
                 card.style = "background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display:flex; flex-direction:column; gap:12px;";
 
                 card.innerHTML = `
-                <div style="border-bottom: 1px solid var(--border); padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="border-bottom: 1px solid var(--border); padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                     <h5 style="margin: 0; color: var(--primary); font-size: 15px;"><i class="fas fa-user-graduate me-2"></i> ${safeNo} - ${safeName}</h5>
-                    ${isLgs8 ? '<span style="font-size:10.5px; background:rgba(234,88,12,0.12); color:#ea580c; font-weight:800; padding:2px 8px; border-radius:10px;">🎯 LGS Koçluk Formları</span>' : ''}
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        ${isLgs8 ? '<span style="font-size:10.5px; background:rgba(234,88,12,0.12); color:#ea580c; font-weight:800; padding:2px 8px; border-radius:10px;">🎯 LGS Koçluk</span>' : ''}
+                        <button class="btn" style="padding:2px 8px; font-size:10.5px; background:#25D366; color:white; border-radius:6px;" onclick="shareStudentFormsToWhatsApp('${safeSinifJs}', '${safeNoJs}', '${safeAdJs}', '${formALink}', '${formDELink}')" title="Öğrenciye Özel Linkleri WhatsApp'tan Gönder">
+                            <i class="fab fa-whatsapp me-1"></i> Velisine İlet
+                        </button>
+                    </div>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    ${showBefore ? `
                     <div style="display: flex; align-items: center; gap: 10px; background: ${beforeBg}; padding: 8px; border-radius: 8px; border: 1px dashed ${beforeBorderColor};">
                         <div style="background: white; padding: 3px; border-radius: 4px; border: 1px solid #ddd;">
                             <img src="${qrAUrl}" alt="Önce Form QR" style="width: 65px; height: 65px; display: block;">
@@ -4344,8 +4555,9 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                                 <button class="btn" style="padding: 3px 6px; font-size: 9.5px; background: var(--text-muted); flex:1;" onclick="copyToClipboard('${formALink}')">Kopyala</button>
                             </div>
                         </div>
-                    </div>
+                    </div>` : ''}
 
+                    ${showAfter ? `
                     <div style="display: flex; align-items: center; gap: 10px; background: ${afterBg}; padding: 8px; border-radius: 8px; border: 1px dashed ${afterBorderColor};">
                         <div style="background: white; padding: 3px; border-radius: 4px; border: 1px solid #ddd;">
                             <img src="${qrDEUrl}" alt="Sonra Form QR" style="width: 65px; height: 65px; display: block;">
@@ -4357,8 +4569,9 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                                 <button class="btn" style="padding: 3px 6px; font-size: 9.5px; background: var(--text-muted); flex:1;" onclick="copyToClipboard('${formDELink}')">Kopyala</button>
                             </div>
                         </div>
-                    </div>
+                    </div>` : ''}
 
+                    ${showVak ? `
                     <div style="display: flex; align-items: center; gap: 10px; background: rgba(2, 132, 199, 0.05); padding: 8px; border-radius: 8px; border: 1px dashed #0284c7;">
                         <div style="background: white; padding: 3px; border-radius: 4px; border: 1px solid #ddd;">
                             <img src="${qrVakUrl}" alt="VAK Form QR" style="width: 65px; height: 65px; display: block;">
@@ -4370,7 +4583,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                                 <button class="btn" style="padding: 3px 6px; font-size: 9.5px; background: var(--text-muted); flex:1;" onclick="copyToClipboard('${formVakLink}')">Kopyala</button>
                             </div>
                         </div>
-                    </div>
+                    </div>` : ''}
                 </div>
             `;
                 container.appendChild(card);
@@ -4378,45 +4591,155 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
 
         function printQRCodes() {
-            const sinif = document.getElementById('eval-class-select').value;
+            const sinifSelect = document.getElementById('eval-class-select');
+            const sinif = sinifSelect ? sinifSelect.value : '';
             if (!sinif) return alert('Lütfen önce PDF olarak indirmek/yazdırmak istediğiniz sınıfı seçin.');
 
-            const studentsInClass = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => a.no - b.no);
-            if (studentsInClass.length === 0) return alert('Bu sınıfta yazdırılacak öğrenci bulunamadı.');
+            const formTypeSelect = document.getElementById('eval-form-type-select');
+            const formType = formTypeSelect ? formTypeSelect.value : 'auto';
+            const isLgs8 = formType.startsWith('lgs') ? true : (formType === 'classic' ? false : String(sinif || '').trim().startsWith('8'));
+            const targetMode = window.currentQRTargetMode || 'class';
 
             const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-            const printWindow = window.open('', '_blank');
+            const currentTeacherUidPrint = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
+            const uidQueryParamPrint = currentTeacherUidPrint ? `&uid=${encodeURIComponent(currentTeacherUidPrint)}` : '';
 
             const escapeFn = window.escapeHTML || function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
             const safeSinifTitle = escapeFn(sinif);
 
-            let html = `<!DOCTYPE html>
-        <html>
-        <head>
-            <title>${safeSinifTitle} Sınıfı - Öğrenci QR Kodları</title>
-            <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
-                h1 { text-align: center; color: #1e293b; margin-bottom: 25px; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; }
-                .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-                .student-card { border: 2px dashed #cbd5e1; padding: 12px; border-radius: 12px; break-inside: avoid; page-break-inside: avoid; }
-                .student-name { font-size: 15px; font-weight: bold; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; color: #0f172a; }
-                .qr-container { display: flex; justify-content: space-around; gap: 8px; }
-                .qr-box { text-align: center; }
-                .qr-box img { width: 85px; height: 85px; margin-bottom: 4px; }
-                .qr-title { font-size: 11px; font-weight: bold; }
-                .color-1 { color: #d97706; }
-                .color-2 { color: #0284c7; }
-                .color-3 { color: #6d28d9; }
-                @media print {
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                }
-            </style>
-        </head>
-        <body>
-            <h1>${safeSinifTitle} Sınıfı - Öğrenci QR Kodları</h1>
-            <div class="grid">`;
+            const printWindow = window.open('', '_blank');
 
-            const isLgs8 = String(sinif || '').trim().startsWith('8');
+            // ──────────────────────────────────────────────
+            // A) SINIF PANOSU AFİŞİ YAZDIRMA (A4 TEK SAYFA POSTER)
+            // ──────────────────────────────────────────────
+            if (targetMode === 'class') {
+                const beforeFile = isLgs8 ? 'lgs_seans_oncesi_formu.html' : 'dersten_once_formu.html';
+                const afterFile = isLgs8 ? 'lgs_seans_sonrasi_formu.html' : 'dersten_sonra_formu.html';
+
+                const classBeforeLink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}${uidQueryParamPrint}`;
+                const classAfterLink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}${uidQueryParamPrint}`;
+
+                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(classBeforeLink)}&color=${isLgs8 ? 'ea580c' : 'f59e0b'}`;
+                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(classAfterLink)}&color=${isLgs8 ? '059669' : '8b5cf6'}`;
+
+                let posterHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${safeSinifTitle} Sınıfı - LGS Seans Panosu Afişi</title>
+    <style>
+        @page { size: A4 portrait; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; color: #1e293b; background: #fff; }
+        .poster-container { border: 4px double #ea580c; border-radius: 16px; padding: 24px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+        .motto-bar { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #ea580c; margin-bottom: 6px; }
+        h1 { margin: 0 0 6px 0; font-size: 26px; color: #0f172a; font-weight: 900; }
+        .subtitle { font-size: 14px; color: #64748b; margin-bottom: 22px; font-weight: 600; }
+        .qr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .qr-card { border: 2.5px solid #e2e8f0; border-radius: 14px; padding: 20px 14px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+        .qr-card.before { border-color: #ea580c; background: #fffbf7; }
+        .qr-card.after { border-color: #059669; background: #f0fdf4; }
+        .badge { font-size: 12px; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px; }
+        .badge.before { background: #ea580c; color: #fff; }
+        .badge.after { background: #059669; color: #fff; }
+        .qr-img { width: 200px; height: 200px; padding: 8px; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 10px; margin-bottom: 12px; }
+        .instructions { font-size: 13px; line-height: 1.45; color: #334155; margin: 0; text-align: left; }
+        .instructions li { margin-bottom: 4px; font-weight: 600; }
+        .rule-120-box { background: #fef2f2; border: 2px dashed #dc2626; border-radius: 10px; padding: 12px 18px; margin-top: 15px; }
+        .rule-120-box strong { color: #dc2626; font-size: 14px; }
+        .footer { font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 15px; display: flex; justify-content: space-between; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="poster-container">
+        <div>
+            <div class="motto-bar">T.C. MİLLÎ EĞİTİM BAKANLIĞI MAARİF MODELİ &bull; BİLİŞSEL KOÇLUK SİSTEMİ</div>
+            <h1>🏛️ ${safeSinifTitle} SINIFI LGS SEANS &amp; HATA TEŞHİS PANOSU</h1>
+            <div class="subtitle">Telefonunuzun kamerası ile QR kodu okutun, sınıfınız kilitli gelsin!</div>
+
+            <div class="qr-grid">
+                <!-- Seans Öncesi -->
+                <div class="qr-card before">
+                    <span class="badge before">1. SEANS ÖNCESİ HAZIRLIK</span>
+                    <img class="qr-img" src="${qrAUrl}" alt="Seans Öncesi QR">
+                    <ol class="instructions">
+                        <li>Kameranı QR koda tut ve formu aç.</li>
+                        <li>Öğrenci numaranı ve adını yaz.</li>
+                        <li>Hedef soru, odaklanma ve 120 sn kuralını onayla!</li>
+                    </ol>
+                </div>
+
+                <!-- Seans Sonu -->
+                <div class="qr-card after">
+                    <span class="badge after">2. SEANS SONU ÇIKIŞ BİLETİ</span>
+                    <img class="qr-img" src="${qrDEUrl}" alt="Seans Sonu QR">
+                    <ol class="instructions">
+                        <li>Seansın bitince QR kodu okut.</li>
+                        <li>Toplam soru, Doğru / Yanlış / Boş gir.</li>
+                        <li>4 Kök Hatadan birini seç ve netini gör!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="rule-120-box">
+                <strong>⏱️ 120 SANİYE KURALI &amp; TURLAMA TEKNİĞİ:</strong><br>
+                <span style="font-size: 12.5px; color: #475569;">
+                    Bir soruda 120 saniyede net bir algoritma kuramazsanız soruyla inatlaşmayın! Yanına (?) işareti koyup turlama tekniğiyle sonraki soruya geçin.
+                </span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span>Proje Tabanlı Ders İşleme &bull; Bilişsel Mentorluk</span>
+            <span>Öğretmen Çalışma Alanı</span>
+            <span>Tarih: ${new Date().toLocaleDateString('tr-TR')}</span>
+        </div>
+    </div>
+    <script>
+        window.onload = () => { setTimeout(() => { window.print(); }, 800); }
+    <\/script>
+</body>
+</html>`;
+                printWindow.document.write(posterHtml);
+                printWindow.document.close();
+                return;
+            }
+
+            // ──────────────────────────────────────────────
+            // B) ÖĞRENCİYE ÖZEL BİREYSEL FİŞLER (A4 KESİLEBİLİR KARTLAR)
+            // ──────────────────────────────────────────────
+            const studentsInClass = studentData.filter(s => s.sinif === sinif || (window.normSinif && window.normSinif(s.sinif) === window.normSinif(sinif))).sort((a, b) => a.no - b.no);
+            if (studentsInClass.length === 0) return alert('Bu sınıfta yazdırılacak öğrenci bulunamadı.');
+
+            let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${safeSinifTitle} Sınıfı - Bireysel Öğrenci QR Fişleri</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; color: #333; margin: 0; }
+        h1 { text-align: center; color: #1e293b; margin-bottom: 18px; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; font-size: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .student-card { border: 2px dashed #cbd5e1; padding: 12px; border-radius: 10px; break-inside: avoid; page-break-inside: avoid; background: #fff; }
+        .student-name { font-size: 14px; font-weight: bold; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 8px; color: #0f172a; display: flex; justify-content: space-between; align-items: center; }
+        .qr-container { display: flex; justify-content: space-around; gap: 8px; }
+        .qr-box { text-align: center; }
+        .qr-box img { width: 90px; height: 90px; margin-bottom: 4px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px; }
+        .qr-title { font-size: 10.5px; font-weight: bold; }
+        .color-1 { color: #ea580c; }
+        .color-2 { color: #059669; }
+        .color-3 { color: #0284c7; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <h1>${safeSinifTitle} Sınıfı - Bireysel Öğrenci QR Fişleri</h1>
+    <div class="grid">`;
 
             studentsInClass.forEach(s => {
                 const safeName = escapeFn(s.adSoyad || '');
@@ -4430,36 +4753,35 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 const afterTitle = isLgs8 ? 'LGS SEANS SONU' : '3. AŞAMA';
                 const afterSub = isLgs8 ? '(Çıkış &amp; Hata Teşhis)' : '(Dersten Sonra)';
 
-                const currentTeacherUidPrint = (window.currentUser && window.currentUser.uid) || window.activeWorkspaceUid || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '');
-                const uidQueryParamPrint = currentTeacherUidPrint ? `&uid=${encodeURIComponent(currentTeacherUidPrint)}` : '';
-
                 const formALink = `${baseUrl}/${beforeFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParamPrint}`;
                 const formVakLink = `${baseUrl}/vak_formu.html?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParamPrint}`;
                 const formDELink = `${baseUrl}/${afterFile}?sinif=${encodeURIComponent(sinif)}&no=${encodeURIComponent(s.no)}&ad=${encodeURIComponent(s.adSoyad)}${uidQueryParamPrint}`;
 
-                // Higher resolution for printing
-                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formALink)}&color=${beforeColor}`;
-                const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formVakLink)}&color=0284c7`;
-                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formDELink)}&color=${afterColor}`;
+                const qrAUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(formALink)}&color=${beforeColor}`;
+                const qrVakUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(formVakLink)}&color=0284c7`;
+                const qrDEUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(formDELink)}&color=${afterColor}`;
 
                 html += `
                 <div class="student-card">
-                    <div class="student-name">${safeNo} - ${safeName} ${isLgs8 ? '<span style="font-size:11px; float:right; color:#ea580c; font-weight:normal;">[LGS Koçluk]</span>' : ''}</div>
+                    <div class="student-name">
+                        <span>${safeNo} - ${safeName}</span>
+                        <span style="font-size:10px; color:${isLgs8 ? '#ea580c' : '#0284c7'}; font-weight:700;">${isLgs8 ? '[LGS Koçluk]' : '[Genel Form]'}</span>
+                    </div>
                     <div class="qr-container">
                         <div class="qr-box">
                             <img src="${qrAUrl}" alt="QR">
-                            <div class="qr-title" style="color:#${beforeColor}; font-weight:bold;">${beforeTitle}</div>
-                            <div style="font-size:9.5px; color:#64748b;">${beforeSub}</div>
+                            <div class="qr-title color-1">${beforeTitle}</div>
+                            <div style="font-size:9px; color:#64748b;">${beforeSub}</div>
                         </div>
                         <div class="qr-box">
                             <img src="${qrDEUrl}" alt="QR">
-                            <div class="qr-title" style="color:#${afterColor}; font-weight:bold;">${afterTitle}</div>
-                            <div style="font-size:9.5px; color:#64748b;">${afterSub}</div>
+                            <div class="qr-title color-2">${afterTitle}</div>
+                            <div style="font-size:9px; color:#64748b;">${afterSub}</div>
                         </div>
                         <div class="qr-box">
                             <img src="${qrVakUrl}" alt="QR">
-                            <div class="qr-title color-2">BİLİŞSEL STİL</div>
-                            <div style="font-size:9.5px; color:#64748b;">(VAK Envanteri)</div>
+                            <div class="qr-title color-3">BİLİŞSEL STİL</div>
+                            <div style="font-size:9px; color:#64748b;">(VAK Envanteri)</div>
                         </div>
                     </div>
                 </div>`;
@@ -4469,7 +4791,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             </div>
             <script>
                 window.onload = () => {
-                    setTimeout(() => { window.print(); }, 1000);
+                    setTimeout(() => { window.print(); }, 800);
                 }
             <\/script>
         </body>
@@ -4480,12 +4802,55 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Link kopyalandı!");
-            }).catch(err => {
-                console.error('Kopyalama başarısız', err);
-            });
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("Form bağlantısı panoya kopyalandı!");
+                }).catch(err => {
+                    prompt("Bağlantıyı kopyalayabilirsiniz:", text);
+                });
+            } else {
+                prompt("Bağlantıyı kopyalayabilirsiniz:", text);
+            }
         }
+
+        function shareClassFormsToWhatsApp(sinif, mode, beforeUrl, afterUrl) {
+            let msg = `🎯 *${sinif} Sınıfı LGS Bilişsel Seans Formları*\n\nDeğerli Öğrencilerimiz,\nLGS çalışma seanslarınızı üstbilişsel olarak takip edebilmeniz için hazırlanan dijital form linkleri aşağıdadır:\n\n`;
+            if (beforeUrl) {
+                msg += `🌟 *1. Seans Öncesi Hazırlık ve Hedef Sözleşmesi:*\n(Masa başına oturmadan önce hedefinizi belirleyin)\n🔗 ${beforeUrl}\n\n`;
+            }
+            if (afterUrl) {
+                msg += `🏁 *2. Seans Sonu Çıkış Bileti ve Hata Teşhisi:*\n(Seansınız bittiğinde netinizi ve kök hatanızı girin)\n🔗 ${afterUrl}\n\n`;
+            }
+            msg += `📌 *120 Saniye Kuralını Unutmayın!*\nSoruda takılırsanız soruyla inatlaşmayın, turlama tekniğini uygulayın. İyi çalışmalar dileriz.`;
+            window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(msg), '_blank');
+        }
+
+        function shareClassFormsToBip(sinif, mode, beforeUrl, afterUrl) {
+            shareClassFormsToWhatsApp(sinif, mode, beforeUrl, afterUrl);
+        }
+
+        function shareStudentFormsToWhatsApp(sinif, no, ad, beforeUrl, afterUrl) {
+            let msg = `🎯 *LGS Bilişsel Koçluk & Seans Takip Formu*\n\nSevgili *${ad}* (${sinif} - No: ${no}),\nLGS çalışma seanslarını kaydetmen ve hata teşhisini yapman için kişisel form linklerin hazırlandı:\n\n`;
+            if (beforeUrl) {
+                msg += `🌟 *Seans Öncesi Hazırlık Formun:*\n🔗 ${beforeUrl}\n\n`;
+            }
+            if (afterUrl) {
+                msg += `🏁 *Seans Sonu Çıkış Biletin:*\n🔗 ${afterUrl}\n\n`;
+            }
+            msg += `✨ *Hedefine kilitlen, 120 saniye kuralına sadık kal!*`;
+            window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(msg), '_blank');
+        }
+
+        // Global dışa aktarımlar
+        window.updateEvalClassDropdown = updateEvalClassDropdown;
+        window.setQRTargetMode = setQRTargetMode;
+        window.quickTargetQR = quickTargetQR;
+        window.generateStudentQRs = generateStudentQRs;
+        window.printQRCodes = printQRCodes;
+        window.copyToClipboard = copyToClipboard;
+        window.shareClassFormsToWhatsApp = shareClassFormsToWhatsApp;
+        window.shareClassFormsToBip = shareClassFormsToBip;
+        window.shareStudentFormsToWhatsApp = shareStudentFormsToWhatsApp;
 
         // Global window dışa aktarımları
         window.renderExams = renderExams;

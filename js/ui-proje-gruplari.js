@@ -1152,12 +1152,37 @@ Lütfen SADECE JSON formatında döndür:
   { "name": "Öğrenci Adı", "score": 85, "aktif": true, "sdg_rozeti": "İklim Savunucusu" }
 ]`;
 
-        navigator.clipboard.writeText(promptText).then(() => {
-            alert("✨ AI Değerlendirme promptu panoya kopyalandı! Gemini veya ChatGPT'ye yapıştırıp sonucu aşağıdaki alana aktarabilirsiniz.");
+        const copyPrompt = async (text) => {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (_) {}
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+                return true;
+            } catch (_) {
+                return false;
+            }
+        };
+
+        copyPrompt(promptText).then(() => {
             const pasteArea = document.getElementById('pg-ai-paste-area');
             if (pasteArea) pasteArea.style.display = 'block';
-        }).catch(err => {
-            console.error(err);
+            try { window.open('https://gemini.google.com/app', '_blank'); } catch (_) {}
+            if (typeof showGlobalToast === 'function') {
+                showGlobalToast("✨ AI Değerlendirme promptu kopyalandı ve Gemini açıldı!", "success");
+            } else {
+                alert("✨ AI Değerlendirme promptu panoya kopyalandı! Gemini veya ChatGPT'ye yapıştırıp sonucu aşağıdaki alana aktarabilirsiniz.");
+            }
         });
     }
 
@@ -1336,23 +1361,30 @@ Lütfen SADECE JSON formatında döndür:
     function pgShareMsgWhatsapp() {
         const g = _pgData().find(x => x && String(x.id) === String(pgActiveId));
         if (!g) return;
-        let text = `📋 *${g.title || g.projeAdi}* — Takım İletişim Akışı\n\n`;
+        let text = `📋 *${(g.title || g.projeAdi || 'PROJE TAKIMI').toUpperCase()} — İLETİŞİM AKIŞI*\n`;
+        text += `🏫 *Sınıf:* ${g.sinif || '-'}\n\n`;
+        text += `💬 *Son Mesajlar:*\n`;
         (g.mesajlar || []).slice(-10).forEach(m => {
-            text += `${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'}: ${m.metin}\n`;
+            text += `▫️ ${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'}: ${m.metin}\n`;
         });
+        text += `\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(text), '_blank');
     }
 
     function pgShareMsgBip() {
         const g = _pgData().find(x => x && String(x.id) === String(pgActiveId));
         if (!g) return;
-        let text = `📋 *${g.title || g.projeAdi}* — Takım İletişim Akışı\n\n`;
+        let text = `📋 *${(g.title || g.projeAdi || 'PROJE TAKIMI').toUpperCase()} — İLETİŞİM AKIŞI (BiP)*\n`;
+        text += `🏫 *Sınıf:* ${g.sinif || '-'}\n\n`;
+        text += `💬 *Son Mesajlar:*\n`;
         (g.mesajlar || []).slice(-10).forEach(m => {
-            text += `${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'}: ${m.metin}\n`;
+            text += `▫️ ${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'}: ${m.metin}\n`;
         });
+        text += `\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         if (typeof window.shareViaBip === 'function') {
             window.shareViaBip(text, `${g.title || g.projeAdi} İletişim`);
         } else {
+            if (window.copyTextToClipboard) window.copyTextToClipboard(text);
             window.open('https://web.bip.com/', '_blank');
         }
     }
