@@ -8876,12 +8876,33 @@ function toggleInputMode() {
 function initMufredat() {
     const classSelect = document.getElementById('mufredat-class');
     if (!classSelect) return;
-    if (classSelect.options.length > 1 && classSelect.value) return;
-    classSelect.innerHTML = '<option value="">Sınıf Seçin...</option>';
-    const cData = (typeof curriculumData !== 'undefined' && curriculumData) ? curriculumData : (window.curriculumData || {});
+
+    // Zaten 12 sınıf yüklüyse ve zorunlu yenileme istenmediyse mevcut listeyi koru
+    if (classSelect.options.length > 1 && !classSelect.dataset.forceReload) {
+        return;
+    }
+
+    const cData = (typeof curriculumData !== 'undefined' && curriculumData) 
+        ? curriculumData 
+        : ((typeof window !== 'undefined' && window.curriculumData) ? window.curriculumData : null);
+
+    if (!cData || Object.keys(cData).length === 0) {
+        // Asenkron script yükleme gecikmesine karşı otomatik yeniden deneme
+        setTimeout(initMufredat, 250);
+        return;
+    }
+
+    const currentVal = classSelect.value;
+    let html = '<option value="">Sınıf Seçin...</option>';
     Object.keys(cData).forEach(function (c) {
-        classSelect.innerHTML += '<option value="' + c + '">' + c + '</option>';
+        html += '<option value="' + c + '">' + c + '</option>';
     });
+    classSelect.innerHTML = html;
+    delete classSelect.dataset.forceReload;
+
+    if (currentVal && cData[currentVal]) {
+        classSelect.value = currentVal;
+    }
 }
 
 function getNewModelNaming() {

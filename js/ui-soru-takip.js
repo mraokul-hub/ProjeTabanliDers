@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const periodDesc = this.dersSelect?.value ? '21 Günlük Çizelge' : `${this.currentWeekNo}. Hafta Soru Takibi`;
                 const platformTag = platform === 'bip' ? ' (BiP)' : '';
 
-                return `📊 *HAFTALIK SORU ÇÖZÜM TAKİBİ${platformTag}*
+                let msg = `📊 *HAFTALIK SORU ÇÖZÜM TAKİBİ${platformTag}*
 👤 *Öğrenci:* ${sno ? sno + ' - ' : ''}${sname || 'Öğrencimiz'}
 🏫 *Sınıf:* ${sinif}
 📚 *Kapsam:* ${ders} — ${periodDesc}
@@ -368,6 +368,11 @@ Değerli Velimiz,
 ${link}
 
 _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+
+                if (platform === 'bip') {
+                    msg = msg.replace(/\*/g, '').replace(/_([^_\r\n]+)_/g, '$1');
+                }
+                return msg;
             };
 
             // WhatsApp Butonu
@@ -392,8 +397,9 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                     if (text) {
                         const student = typeof studentData !== 'undefined' ? studentData.find(s => String(s.no) === String(this.studentSelect?.value)) : null;
                         const sname = student ? student.adSoyad : 'Öğrenci';
+                        const phone = student ? (student.veliTelefon || student.veliTel || student.telefon || student.tel || '') : '';
                         if (typeof window.shareViaBip === 'function') {
-                            window.shareViaBip(text, `${sname} - Soru Takip Formu`);
+                            window.shareViaBip(text, `${sname} - Soru Takip Formu`, phone);
                         } else {
                             if (window.copyTextToClipboard) window.copyTextToClipboard(text);
                             window.open('https://web.bip.com/', '_blank');
@@ -853,11 +859,15 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 this.loadStudentData(foundStudent.no);
 
                 if (this.scannerFeedback) {
-                    const dersBadge = targetDers ? ` &middot; 📘 ${targetDers}` : '';
+                    const esc = (typeof window.escapeHTML === 'function') ? window.escapeHTML : (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
+                    const safeAdSoyad = esc(foundStudent.adSoyad || '');
+                    const safeNo = esc(foundStudent.no || '');
+                    const safeDers = targetDers ? esc(targetDers) : '';
+                    const dersBadge = safeDers ? ` &middot; 📘 ${safeDers}` : '';
                     this.scannerFeedback.innerHTML = `
                         <div style="background:#ecfdf5; border:1.5px solid #059669; border-radius:8px; padding:10px; margin-top:4px;">
                             <div style="font-size:13.5px; font-weight:800; color:#065f46;">
-                                🎉 <strong>${foundStudent.adSoyad} (${foundStudent.no})</strong> Tanındı!
+                                🎉 <strong>${safeAdSoyad} (${safeNo})</strong> Tanındı!
                             </div>
                             <div style="font-size:11.5px; color:#047857; margin-top:3px;">
                                 📅 ${this.currentWeekNo}. Hafta${dersBadge} &middot; Sistem Senkronize Edildi
@@ -877,7 +887,9 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 this.generateLink(targetSid);
                 this.loadStudentData(targetSid);
                 if (this.scannerFeedback) {
-                    this.scannerFeedback.innerHTML = `🎉 <strong>Öğrenci No: ${targetSid}</strong> Başarıyla Tanındı!`;
+                    const esc = (typeof window.escapeHTML === 'function') ? window.escapeHTML : (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
+                    const safeSid = esc(targetSid || '');
+                    this.scannerFeedback.innerHTML = `🎉 <strong>Öğrenci No: ${safeSid}</strong> Başarıyla Tanındı!`;
                     this.scannerFeedback.style.color = "#059669";
                 }
             }
@@ -1382,12 +1394,20 @@ Lütfen şu başlıkları içeren bir koçluk raporu hazırla:
 
 Türkçe yaz. Sade, anlaşılır ve uygulanabilir ol.`;
 
+            // ── Gemini.com'u doğrudan senkron aç (açılır pencere engelleyicisine takılmaz) ──
+            try {
+                window.open('https://gemini.google.com/', '_blank');
+            } catch (_) {}
+
             // ── Panoya kopyala ──
             let kopyalandi = false;
             try {
-                await navigator.clipboard.writeText(prompt);
-                kopyalandi = true;
-            } catch (_) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(prompt);
+                    kopyalandi = true;
+                }
+            } catch (_) {}
+            if (!kopyalandi) {
                 // Clipboard API erişimi yoksa fallback
                 const ta = document.createElement('textarea');
                 ta.value = prompt;
@@ -1398,9 +1418,6 @@ Türkçe yaz. Sade, anlaşılır ve uygulanabilir ol.`;
                 ta.remove();
                 kopyalandi = true;
             }
-
-            // ── Gemini.com'u aç ──
-            window.open('https://gemini.google.com/', '_blank');
 
             // ── Kullanıcıya bilgi kutusu göster ──
             if (aiBox) {
@@ -1499,10 +1516,20 @@ BEKLENEN FORMAT (Veliye Hitaben)
 - VAK (öğrenme stili) bilgisine uygun 1-2 çok basit ev içi pratik tavsiyesi verilmeli.
 - Uzun paragraflar yerine madde işaretleri ve emojiler kullanılmalı.`;
 
-            // Panoya kopyala
+            // Gemini.com'u doğrudan senkron aç (açılır pencere engelleyicisine takılmaz)
             try {
-                await navigator.clipboard.writeText(prompt);
-            } catch (_) {
+                window.open('https://gemini.google.com/', '_blank');
+            } catch (_) {}
+
+            // Panoya kopyala
+            let kopyalandi = false;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(prompt);
+                    kopyalandi = true;
+                }
+            } catch (_) {}
+            if (!kopyalandi) {
                 const ta = document.createElement('textarea');
                 ta.value = prompt;
                 ta.style.cssText = 'position:fixed;opacity:0;';
@@ -1511,8 +1538,6 @@ BEKLENEN FORMAT (Veliye Hitaben)
                 document.execCommand('copy');
                 ta.remove();
             }
-
-            window.open('https://gemini.google.com/', '_blank');
             
             const aiBox = document.getElementById('soru-takip-ai-result');
             if (aiBox) {

@@ -3236,7 +3236,7 @@
                     <button class="btn" style="font-size:11px;padding:6px 12px;background:#8b5cf6;" onclick="ileriGrupProjeAktar()" title="Grupları 11. Proje Grupları sekmesine aktarır"><i class="fas fa-project-diagram me-1"></i>Proje Gruplarına Aktar</button>
                     <button class="btn" style="font-size:11px;padding:6px 12px;background:var(--secondary);" onclick="ileriGrupKaydet()" title="Grupları 2. Sınıf Yönetimi kümelerine aktarır"><i class="fas fa-campground me-1"></i>Sınıf Kümelerine Aktar</button>
                     <button class="btn" style="font-size:11px;padding:6px 12px;background:#25D366;" onclick="ileriGrupWhatsapp()"><i class="fab fa-whatsapp me-1"></i>Velilere WA</button>
-                    <button class="btn" style="font-size:11px;padding:6px 12px;background:#00B2FF;" onclick="ileriGrupBip()"><i class="fas fa-comment-dots me-1"></i>Velilere BiP</button>
+                    <button class="btn" style="font-size:11px;padding:6px 12px;background:#00B2FF;cursor:pointer;" onclick="ileriGrupBip()" title="İleri Çalışma Gruplarını BiP ile Paylaş (BiP Web)"><i class="fas fa-comment-dots me-1"></i>Velilere BiP</button>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px;">`;
@@ -3397,13 +3397,13 @@
         function ileriGrupBip() {
             const advData = _getNormAdvData();
             if (!advData || advData.length === 0) return alert('Önce analiz yapın!');
-            let mesaj = '🚀 *İLERİ ÇALIŞMA GRUPLARI*\n\n';
+            let mesaj = '🚀 İLERİ ÇALIŞMA GRUPLARI\n\n';
             advData.forEach((grup, gi) => {
-                mesaj += `📦 *İleri Grup ${gi + 1}:*\n`;
+                mesaj += `📦 İleri Grup ${gi + 1}:\n`;
                 grup.forEach((o, oi) => { mesaj += `   ${oi + 1}. ${o.adSoyad} (${o._skor || 0}p)\n`; });
                 mesaj += '\n';
             });
-            mesaj += '_Proje Tabanlı Ders İşleme Sistemi tarafından oluşturulmuştur._';
+            mesaj += 'Proje Tabanlı Ders İşleme Sistemi tarafından oluşturulmuştur.';
             if (typeof window.shareViaBip === 'function') {
                 window.shareViaBip(mesaj, 'İleri Çalışma Grupları');
             } else {
@@ -3866,8 +3866,9 @@
                     backgroundColor: colors6[i] + 'bb', borderColor: colors6[i], borderWidth: 1
                 }));
                 if (studentLabels.length === 0) { renderEmptyChart('Seçili sınav için öğrenci verisi yok.'); return; }
+                const esc = (typeof window.escapeHTML === 'function') ? window.escapeHTML : (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
                 const statsEl = document.getElementById('chart-stats');
-                if (statsEl) statsEl.innerHTML = `<span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;">📋 ${lastExam.title} sınavı — ${studentLabels.length} öğrenci</span>`;
+                if (statsEl) statsEl.innerHTML = `<span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;">📋 ${esc(lastExam.title || '')} sınavı — ${studentLabels.length} öğrenci</span>`;
                 renderChart('bar', studentLabels, datasets);
                 return;
             }
@@ -3883,9 +3884,10 @@
             if (labels.length === 0) { renderEmptyChart('Seçili sınav için öğrenci verisi yok.'); return; }
 
             const avg = (data.reduce((a, b) => a + b, 0) / data.length).toFixed(2);
+            const esc = (typeof window.escapeHTML === 'function') ? window.escapeHTML : (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
             const statsEl = document.getElementById('chart-stats');
             if (statsEl) statsEl.innerHTML = `
-            <span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;">📋 ${lastExam.title}</span>
+            <span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;">📋 ${esc(lastExam.title || '')}</span>
             <span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;">👥 ${labels.length} öğrenci</span>
             <span style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;">📊 Sınıf Ort: <span style="color:var(--secondary)">${avg}</span></span>`;
 
@@ -4209,7 +4211,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                 const sinifSonuclar = Object.values(lastExam.results).filter(x => x.sinif === targetStudent.sinif);
                 if (sinifSonuclar.length > 1) {
                     const sinifOrt = (sinifSonuclar.reduce((s, x) => s + (parseFloat(x.totalNet) || 0), 0) / sinifSonuclar.length).toFixed(2);
-                    sinifOrtaText = `\n📊 *Sınıf (${targetStudent.sinif}) Ortalaması:* ${sinifOrt}`;
+                    sinifOrtaText = `\n📊 Sınıf (${targetStudent.sinif}) Ortalaması: ${sinifOrt}`;
                 }
             }
 
@@ -4220,17 +4222,18 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             if (sortedExams.length > 1) {
                 const prev = sortedExams[sortedExams.length - 2].results[studentName];
                 const diff = +((r.totalNet || 0) - (prev.totalNet || 0)).toFixed(2);
-                if (diff > 0) trendText = `\n📈 Bir önceki sınava göre *+${diff} net* artış. Tebrikler!`;
-                else if (diff < 0) trendText = `\n📉 Bir önceki sınava göre *${diff} net* düşüş. Eksik konular tekrar edilmeli.`;
+                if (diff > 0) trendText = `\n📈 Bir önceki sınava göre +${diff} net artış. Tebrikler!`;
+                else if (diff < 0) trendText = `\n📉 Bir önceki sınava göre ${diff} net düşüş. Eksik konular tekrar edilmeli.`;
                 else trendText = `\n➖ Bir önceki sınavla aynı net.`;
             }
 
             let yorum = (r.totalNet || 0) >= 80 ? '🌟 Harika bir performans!' : (r.totalNet || 0) >= 60 ? '👍 İyi gidiyorsun!' : (r.totalNet || 0) >= 40 ? '⚠️ Biraz daha çalışman gerekiyor.' : '🔴 Ciddi çalışma gerekiyor!';
 
-            const mesaj = `📊 *DENEME SINAVI SONUCU (BiP)*\n👤 *Öğrenci:* ${targetStudent ? targetStudent.no + ' - ' + targetStudent.adSoyad : studentName}\n🏫 *Sınıf:* ${targetStudent ? targetStudent.sinif : '-'}\n📋 *Sınav:* ${lastExam.title}${lastExam.date ? ' (' + new Date(lastExam.date).toLocaleDateString('tr-TR') + ')' : ''}\n\n📝 *DERS BAZLI NETLER:*\n🇹🇷 Türkçe: *${r.Turkce || 0}*\n🧮 Matematik: *${r.Matematik || 0}*\n🔬 Fen: *${r.Fen || 0}*\n🌍 Sosyal: *${r.Sosyal || 0}*\n☪️ Din Kültürü: *${r.DinKulturu || 0}*\n🇬🇧 İngilizce: *${r.Ingilizce || 0}*\n\n🎯 *TOPLAM NET:* *${r.totalNet || 0}*  |  Sıra: *${r.rank || '-'}*${sinifOrtaText}${trendText}\n\n💡 ${yorum}\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+            const mesaj = `📊 DENEME SINAVI SONUCU (BiP)\n👤 Öğrenci: ${targetStudent ? targetStudent.no + ' - ' + targetStudent.adSoyad : studentName}\n🏫 Sınıf: ${targetStudent ? targetStudent.sinif : '-'}\n📋 Sınav: ${lastExam.title}${lastExam.date ? ' (' + new Date(lastExam.date).toLocaleDateString('tr-TR') + ')' : ''}\n\n📝 DERS BAZLI NETLER:\n🇹🇷 Türkçe: ${r.Turkce || 0}\n🧮 Matematik: ${r.Matematik || 0}\n🔬 Fen: ${r.Fen || 0}\n🌍 Sosyal: ${r.Sosyal || 0}\n☪️ Din Kültürü: ${r.DinKulturu || 0}\n🇬🇧 İngilizce: ${r.Ingilizce || 0}\n\n🎯 TOPLAM NET: ${r.totalNet || 0}  |  Sıra: ${r.rank || '-'}${sinifOrtaText}${trendText}\n\n💡 ${yorum}\n\nProje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur.`;
 
+            const phone = targetStudent ? (targetStudent.veliTelefon || targetStudent.veliTel || targetStudent.telefon || '') : '';
             if (typeof window.shareViaBip === 'function') {
-                window.shareViaBip(mesaj, `${studentName} - Sınav Sonucu`);
+                window.shareViaBip(mesaj, `${studentName} - Sınav Sonucu`, phone);
             } else {
                 if (typeof window.copyTextToClipboard === 'function') window.copyTextToClipboard(mesaj);
                 window.open('https://web.bip.com/', '_blank');
@@ -4475,7 +4478,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                         <button class="btn" style="background:#25D366; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:flex; align-items:center; gap:6px;" onclick="shareClassFormsToWhatsApp('${safeSinifJs}', 'both', '${classBeforeLink}', '${classAfterLink}')">
                             <i class="fab fa-whatsapp"></i> Sınıfa WA Bülteni At
                         </button>
-                        <button class="btn" style="background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:flex; align-items:center; gap:6px;" onclick="shareClassFormsToBip('${safeSinifJs}', 'both', '${classBeforeLink}', '${classAfterLink}')">
+                        <button class="btn" style="background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer;" onclick="shareClassFormsToBip('${safeSinifJs}', 'both', '${classBeforeLink}', '${classAfterLink}')" title="Sınıf Formlarını BiP ile Paylaş (BiP Web)">
                             <i class="fas fa-comment-dots"></i> BiP ile Paylaş
                         </button>
                     </div>
@@ -4536,8 +4539,11 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
                     <h5 style="margin: 0; color: var(--primary); font-size: 15px;"><i class="fas fa-user-graduate me-2"></i> ${safeNo} - ${safeName}</h5>
                     <div style="display:flex; align-items:center; gap:6px;">
                         ${isLgs8 ? '<span style="font-size:10.5px; background:rgba(234,88,12,0.12); color:#ea580c; font-weight:800; padding:2px 8px; border-radius:10px;">🎯 LGS Koçluk</span>' : ''}
-                        <button class="btn" style="padding:2px 8px; font-size:10.5px; background:#25D366; color:white; border-radius:6px;" onclick="shareStudentFormsToWhatsApp('${safeSinifJs}', '${safeNoJs}', '${safeAdJs}', '${formALink}', '${formDELink}')" title="Öğrenciye Özel Linkleri WhatsApp'tan Gönder">
-                            <i class="fab fa-whatsapp me-1"></i> Velisine İlet
+                        <button class="btn" style="padding:2px 8px; font-size:10.5px; background:#25D366; color:white; border-radius:6px; cursor:pointer;" onclick="shareStudentFormsToWhatsApp('${safeSinifJs}', '${safeNoJs}', '${safeAdJs}', '${formALink}', '${formDELink}')" title="Öğrenciye Özel Linkleri WhatsApp'tan Gönder">
+                            <i class="fab fa-whatsapp me-1"></i> Velisine WA
+                        </button>
+                        <button class="btn" style="padding:2px 8px; font-size:10.5px; background:#00B2FF; color:white; border-radius:6px; cursor:pointer;" onclick="shareStudentFormsToBip('${safeSinifJs}', '${safeNoJs}', '${safeAdJs}', '${formALink}', '${formDELink}')" title="Öğrenciye Özel Linkleri BiP ile Gönder (BiP Web)">
+                            <i class="fas fa-comment-dots me-1"></i> Velisine BiP
                         </button>
                     </div>
                 </div>
@@ -4826,7 +4832,21 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
 
         function shareClassFormsToBip(sinif, mode, beforeUrl, afterUrl) {
-            shareClassFormsToWhatsApp(sinif, mode, beforeUrl, afterUrl);
+            let msg = `🎯 ${sinif} Sınıfı LGS Bilişsel Koçluk Formları (BiP) 🎯\n\nDeğerli Velilerimiz ve Sevgili Öğrencilerimiz,\nÇalışma seanslarınızı analiz etmek ve net/hata kök nedenlerini tespit etmek için kişisel form linkleri hazırlanmıştır:\n\n`;
+            if (beforeUrl) {
+                msg += `🌟 1. Seans Öncesi Hazırlık ve Hedef Belirleme:\n🔗 ${beforeUrl}\n\n`;
+            }
+            if (afterUrl) {
+                msg += `🏁 2. Seans Sonu Çıkış Bileti ve Hata Teşhisi:\n(Seansınız bittiğinde netinizi ve kök hatanızı girin)\n🔗 ${afterUrl}\n\n`;
+            }
+            msg += `📌 120 Saniye Kuralını Unutmayın!\nSoruda takılırsanız soruyla inatlaşmayın, turlama tekniğini uygulayın. İyi çalışmalar dileriz.`;
+
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(msg, `${sinif} - Seans Formları`);
+            } else {
+                if (typeof window.copyToClipboard === 'function') window.copyToClipboard(msg);
+                window.open('https://web.bip.com/', '_blank');
+            }
         }
 
         function shareStudentFormsToWhatsApp(sinif, no, ad, beforeUrl, afterUrl) {
@@ -4841,6 +4861,27 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
             window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(msg), '_blank');
         }
 
+        function shareStudentFormsToBip(sinif, no, ad, beforeUrl, afterUrl) {
+            let msg = `🎯 LGS Bilişsel Koçluk & Seans Takip Formu (BiP)\n\nSevgili ${ad} (${sinif} - No: ${no}),\nLGS çalışma seanslarını kaydetmen ve hata teşhisini yapman için kişisel form linklerin hazırlandı:\n\n`;
+            if (beforeUrl) {
+                msg += `🌟 Seans Öncesi Hazırlık Formun:\n🔗 ${beforeUrl}\n\n`;
+            }
+            if (afterUrl) {
+                msg += `🏁 Seans Sonu Çıkış Biletin:\n🔗 ${afterUrl}\n\n`;
+            }
+            msg += `✨ Hedefine kilitlen, 120 saniye kuralına sadık kal!`;
+
+            const student = (window.studentData || []).find(s => String(s.no) === String(no) || (s.adSoyad && s.adSoyad.trim().toLowerCase() === String(ad || '').trim().toLowerCase()));
+            const phone = student ? (student.veliTelefon || student.veliTel || student.telefon || student.tel || '') : '';
+
+            if (typeof window.shareViaBip === 'function') {
+                window.shareViaBip(msg, `${ad} - Seans Formları`, phone);
+            } else {
+                if (typeof window.copyToClipboard === 'function') window.copyToClipboard(msg);
+                window.open('https://web.bip.com/', '_blank');
+            }
+        }
+
         // Global dışa aktarımlar
         window.updateEvalClassDropdown = updateEvalClassDropdown;
         window.setQRTargetMode = setQRTargetMode;
@@ -4851,6 +4892,7 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         window.shareClassFormsToWhatsApp = shareClassFormsToWhatsApp;
         window.shareClassFormsToBip = shareClassFormsToBip;
         window.shareStudentFormsToWhatsApp = shareStudentFormsToWhatsApp;
+        window.shareStudentFormsToBip = shareStudentFormsToBip;
 
         // Global window dışa aktarımları
         window.renderExams = renderExams;

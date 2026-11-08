@@ -621,8 +621,8 @@
                     <button type="button" onclick="openKoclukAiTab('${safeId}')" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25); transition: all 0.2s ease;">
                         <i class="fas fa-brain"></i> AI Koçluk
                     </button>
-                    <button type="button" onclick="openParentWhatsAppShareModal('${safeId}')" style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25); transition: all 0.2s ease;">
-                        <i class="fab fa-whatsapp" style="font-size: 13px;"></i> Veli Bülteni
+                    <button type="button" onclick="openParentWhatsAppShareModal('${safeId}')" style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; padding: 8px 10px; font-size: 11.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25); transition: all 0.2s ease;" title="WhatsApp ve BiP Veli Bülteni Paneli">
+                        <i class="fab fa-whatsapp" style="font-size: 13px;"></i><i class="fas fa-comment-dots" style="font-size:11px; margin-left:-2px;"></i> Veli Bülteni
                     </button>
                     <button type="button" onclick="deleteKoclukStudent('${safeId}')" style="background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1.5px solid rgba(239, 68, 68, 0.3); padding: 7px 10px; font-size: 11px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: all 0.2s ease;">
                         <i class="fas fa-trash-alt"></i> Listeden Çıkar
@@ -3931,7 +3931,7 @@
                             <button class="btn" style="flex:1; background:#25D366; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentWhatsAppMessage('${item.id}', 'standart')">
                                 <i class="fab fa-whatsapp"></i> Veliye WA
                             </button>
-                            <button class="btn" style="flex:1; background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentBipMessage('${item.id}', 'standart')">
+                            <button class="btn" style="flex:1; background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentBipMessage('${item.id}', 'standart')" title="Standart Veli Bültenini BiP ile Gönder (BiP Web)">
                                 <i class="fas fa-comment-dots"></i> Veliye BiP
                             </button>
                         </div>
@@ -3951,7 +3951,7 @@
                             <button class="btn" style="flex:1; background:#ef4444; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentWhatsAppMessage('${item.id}', 'krizsiz')">
                                 <i class="fab fa-whatsapp"></i> Krizsiz WA
                             </button>
-                            <button class="btn" style="flex:1; background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentBipMessage('${item.id}', 'krizsiz')">
+                            <button class="btn" style="flex:1; background:#00B2FF; color:white; font-size:12px; font-weight:700; padding:8px 12px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer;" onclick="sendParentBipMessage('${item.id}', 'krizsiz')" title="Krizsiz Plato Bültenini BiP ile Gönder (BiP Web)">
                                 <i class="fas fa-comment-dots"></i> Krizsiz BiP
                             </button>
                         </div>
@@ -4139,18 +4139,19 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         return prompt;
     }
 
-    async function copyKoclukAiPrompt(kocId) {
+    function copyKoclukAiPrompt(kocId) {
         const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
         if (!item) return;
         const prompt = buildKoclukAiPrompt(item);
         window.currentGeminiPrompt = prompt;
-        const ok = await copyTextToClipboard(prompt);
-        if (typeof showGlobalToast === 'function') {
-            showGlobalToast(ok ? '📋 Gemini AI Koçluk Promptu Panoya Kopyalandı!' : '⚠️ Prompt panoya kopyalanamadı, lütfen metin kutusundan seçiniz.', ok ? 'success' : 'warning');
-        }
+        copyTextToClipboard(prompt).then(ok => {
+            if (typeof showGlobalToast === 'function') {
+                showGlobalToast(ok ? '📋 Gemini AI Koçluk Promptu Panoya Kopyalandı!' : '⚠️ Prompt panoya kopyalanamadı, lütfen metin kutusundan seçiniz.', ok ? 'success' : 'warning');
+            }
+        });
     }
 
-    async function runAiCoachingForStudent(kocId) {
+    function runAiCoachingForStudent(kocId) {
         const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
         if (!item) return;
 
@@ -4158,27 +4159,36 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         const prompt = buildKoclukAiPrompt(item);
         window.currentGeminiPrompt = prompt;
 
-        await copyTextToClipboard(prompt);
-
+        // Modern tarayıcı açılır pencere (popup blocker) koruması:
+        // Tıklama olayının senkron akışı içinde HEMEN yeni sekme açılır, await beklenmez!
+        let geminiWin = null;
         try {
-            window.open('https://gemini.google.com/app', '_blank');
+            geminiWin = window.open('https://gemini.google.com/app', '_blank');
         } catch (_) {}
+
+        copyTextToClipboard(prompt);
 
         if (typeof showGlobalToast === 'function') {
             showGlobalToast(`🧠 ${config.isLgsFinal ? 'LGS' : config.stageTitle} Bilişsel Koçluk Promptu Panoya Kopyalandı ve Gemini Açıldı!`, 'success');
         }
     }
 
-    async function openKoclukAiTab(kocId) {
+    function openKoclukAiTab(kocId) {
         const item = (window.koclukData || []).find(k => String(k.id) === String(kocId));
         if (item) {
             const prompt = buildKoclukAiPrompt(item);
             window.currentGeminiPrompt = prompt;
-            await copyTextToClipboard(prompt);
+
+            // Öğrenci kartındaki "AI Koçluk" butonuna basıldığında hem Gemini sekmesini aç hem panoya kopyala
+            try {
+                window.open('https://gemini.google.com/app', '_blank');
+            } catch (_) {}
+
+            copyTextToClipboard(prompt);
         }
         openKoclukDetailModal(kocId, 'tab-koc-ai');
         if (typeof showGlobalToast === 'function') {
-            showGlobalToast('🧠 AI Koçluk Kokpiti Açıldı & Prompt Panoya Kopyalandı!', 'success');
+            showGlobalToast('🧠 AI Koçluk Promptu Panoya Kopyalandı ve Gemini Açıldı!', 'success');
         }
     }
 
@@ -4200,9 +4210,10 @@ MODÜL 5: VELİ VE MENTOR İLETİŞİM PROTOKOLÜ
         const completedErrors = errors.filter(h => h.tekrar1 && h.tekrar3 && h.tekrar14).length;
         const dueErrors = errors.filter(h => getHataRepeatStatus(h).isDue).length;
         const platformTag = platform === 'bip' ? ' (BiP)' : '';
+        let msg = '';
 
         if (mode === 'krizsiz') {
-            return `🛡️ *${config.isLgsFinal ? 'LGS HAZIRLIK SÜRECİ' : config.stageTitle.toUpperCase()}: VELİ KRİZSİZ REHBERLİK BÜLTENİ${platformTag}* 🛡️
+            msg = `🛡️ *${config.isLgsFinal ? 'LGS HAZIRLIK SÜRECİ' : config.stageTitle.toUpperCase()}: VELİ KRİZSİZ REHBERLİK BÜLTENİ${platformTag}* 🛡️
 👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
 🏫 *Sınıf:* ${item.sinif || '-'}
 🎯 *Hedef:* ${item.hedefLise || 'Lise Hedefi'} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
@@ -4223,7 +4234,7 @@ Lütfen öğrencimizle bu akşam *kesinlikle net, doğru/yanlış sayısı veya 
 
 _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         } else {
-            return `🌟 *${config.isLgsFinal ? 'LGS HAZIRLIK' : config.stageTitle.toUpperCase()} & BİLİŞSEL GELİŞİM BÜLTENİ${platformTag}* 🌟
+            msg = `🌟 *${config.isLgsFinal ? 'LGS HAZIRLIK' : config.stageTitle.toUpperCase()} & BİLİŞSEL GELİŞİM BÜLTENİ${platformTag}* 🌟
 👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
 🏫 *Sınıf:* ${item.sinif || '-'}
 🎯 *${config.isLgsFinal ? 'Hedef Lise' : 'Hedef Okul'}:* ${item.hedefLise || 'Belirtilmedi'} (Hedef Dilim: ${item.hedefYuzdelik || '%1.0'})
@@ -4239,6 +4250,11 @@ Lütfen net sayısından ziyade, öğrencimizin soru çözerken gösterdiği oda
 
 _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
+
+        if (platform === 'bip') {
+            msg = msg.replace(/\*/g, '').replace(/_([^_\n\r]+)_/g, '$1');
+        }
+        return msg;
     }
 
     async function sendParentWhatsAppMessage(kocId, mode = 'standart') {
@@ -4262,9 +4278,13 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         if (!item) return;
 
         const msg = buildParentCoachingMessage(item, mode, 'bip');
+        const sObj = (typeof studentData !== 'undefined' && Array.isArray(studentData))
+            ? studentData.find(s => String(s.no) === String(item.studentNo) || (s.adSoyad && s.adSoyad.trim().toLowerCase() === String(item.adSoyad || '').trim().toLowerCase()))
+            : null;
+        const phone = item.veliTelefon || item.telefon || item.veliTel || (sObj && (sObj.veliTelefon || sObj.veliTel || sObj.telefon)) || '';
 
         if (typeof window.shareViaBip === 'function') {
-            window.shareViaBip(msg, `${item.adSoyad} - Veli Bülteni (${mode === 'krizsiz' ? 'Krizsiz' : 'Standart'})`);
+            window.shareViaBip(msg, `${item.adSoyad} - Veli Bülteni (${mode === 'krizsiz' ? 'Krizsiz' : 'Standart'})`, phone);
         } else {
             if (navigator.clipboard) {
                 await navigator.clipboard.writeText(msg);

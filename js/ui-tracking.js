@@ -340,7 +340,7 @@
                 ${isPassive ? `<span style="font-size:10px; color:#6b7280; white-space:nowrap;"><i class="fas fa-info-circle"></i> Tarihi değiştirerek aktif edin</span>` : ''}
                 <button class="btn" style="padding:5px 12px; font-size:11px;" onclick="openEvaluation('${item.id}')">Değerlendir</button>
                 <button class="btn" style="background:#25D366; padding:5px 12px; font-size:11px;" onclick="shareTrackingSummary('${item.id}')"><i class="fab fa-whatsapp"></i> WA Özet</button>
-                <button class="btn" style="background:#00B2FF; padding:5px 12px; font-size:11px;" onclick="shareTrackingSummaryBip('${item.id}')"><i class="fas fa-comment-dots"></i> BiP Özet</button>
+                <button class="btn" style="background:#00B2FF; padding:5px 12px; font-size:11px;" onclick="shareTrackingSummaryBip('${item.id}')" title="BiP ile Sınıf Özeti Paylaş (BiP Web)"><i class="fas fa-comment-dots"></i> BiP Özet</button>
                 <button class="action-btn" style="background:#f59e0b; color:white;" onclick="editTrackingItem('${item.id}')" title="Düzenle"><i class="fas fa-pen"></i></button>
                 <button class="action-btn btn-delete" onclick="deleteTrackingItem('${item.id}')"><i class="fas fa-trash"></i></button>
                 </div></div>`;
@@ -916,23 +916,30 @@
                         <i class="fas fa-sort" style="margin-left:6px; opacity:0.4; font-size:11px;"></i>
                     </span>
                 </th>
-                <th>DURUM</th>
-                <th>GELMEDİ</th>
-                <th>TESLİM ZAMANI</th>
-                <th>XP</th>
-                <th>PAYLAŞ</th>
+                <th style="text-align:center; min-width:85px;">DURUM</th>
+                <th style="text-align:center; min-width:85px;">GELMEDİ</th>
+                <th style="text-align:center; min-width:135px;">ÖDEV MATERYALİ GETİRMEDİ</th>
+                <th style="text-align:center; min-width:130px;">ÖDEV MATERYALİ YOK</th>
+                <th style="min-width:110px;">TESLİM ZAMANI</th>
+                <th style="min-width:70px;">XP</th>
+                <th style="min-width:75px;">PAYLAŞ</th>
             `;
 
             const body = document.getElementById('eval-body'); body.innerHTML = '';
             const submissions = item.submissions || {};
             students.forEach(s => {
-                const sub = submissions[s.adSoyad] || { done: false, absent: false, date: '', xp: item.xp, penalty: item.penaltyXp };
+                const sub = submissions[s.adSoyad] || { done: false, absent: false, getirmedi: false, materyaliYok: false, date: '', xp: item.xp, penalty: item.penaltyXp };
                 
                 let xpText = '';
                 if (sub.absent) {
                     xpText = '<span style="color:#6b7280; font-weight:700;">Muaf (0)</span>';
                 } else if (sub.done) {
                     xpText = `<span style="color:var(--accent); font-weight:700;">+${sub.xp || item.xp}</span>`;
+                } else if (sub.getirmedi) {
+                    const pen = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
+                    xpText = `<span style="color:#d97706; font-weight:700;">${pen > 0 ? '-' + pen : '0'}</span>`;
+                } else if (sub.materyaliYok) {
+                    xpText = '<span style="color:#7c3aed; font-weight:700;">Muaf (0)</span>';
                 } else if (sub.date !== '') {
                     xpText = `<span style="color:var(--red); font-weight:700;">-${sub.penalty || item.penaltyXp}</span>`;
                 } else {
@@ -943,22 +950,28 @@
                 const studentNo = s.no ? ((typeof window.escapeHTML === 'function') ? window.escapeHTML(s.no) : s.no) + ' - ' : '';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td>${studentNo}${escapedName}</td>
-                <td><label><input type="checkbox" class="eval-chk-done" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''}> Yapıldı</label></td>
-                <td><label><input type="checkbox" class="eval-chk-absent" ${sub.absent ? 'checked' : ''}> Gelmedi</label></td>
+                <td style="text-align:center;"><label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><input type="checkbox" class="eval-chk-done" ${sub.done ? 'checked' : ''} ${sub.absent ? 'disabled' : ''}> <span style="font-weight:600; color:var(--accent, #10b981);">Yapıldı</span></label></td>
+                <td style="text-align:center;"><label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><input type="checkbox" class="eval-chk-absent" ${sub.absent ? 'checked' : ''}> <span style="font-weight:600; color:#6b7280;">Gelmedi</span></label></td>
+                <td style="text-align:center;"><label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><input type="checkbox" class="eval-chk-getirmedi" ${sub.getirmedi ? 'checked' : ''} ${sub.absent ? 'disabled' : ''}> <span style="font-weight:600; color:#d97706;">Getirmedi</span></label></td>
+                <td style="text-align:center;"><label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><input type="checkbox" class="eval-chk-materyali-yok" ${sub.materyaliYok ? 'checked' : ''} ${sub.absent ? 'disabled' : ''}> <span style="font-weight:600; color:#7c3aed;">Materyali Yok</span></label></td>
                 <td><span style="font-size:11px;">${sub.date || '-'}</span></td>
                 <td>${xpText}</td>
                 <td style="display:flex;gap:4px;align-items:center;">
                     <button type="button" class="action-btn eval-btn-wa" style="color:#25D366; background:none; font-size:16px; cursor:pointer;" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                    <button type="button" class="action-btn eval-btn-bip" style="color:#00B2FF; background:none; font-size:16px; cursor:pointer;" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                    <button type="button" class="action-btn eval-btn-bip" style="color:#00B2FF; background:none; font-size:16px; cursor:pointer;" title="BiP ile Sonucu İlet"><i class="fas fa-comment-dots"></i></button>
                 </td>`;
 
                 const chkDone = tr.querySelector('.eval-chk-done');
                 const chkAbsent = tr.querySelector('.eval-chk-absent');
+                const chkGetirmedi = tr.querySelector('.eval-chk-getirmedi');
+                const chkMateryaliYok = tr.querySelector('.eval-chk-materyali-yok');
                 const btnWa = tr.querySelector('.eval-btn-wa');
                 const btnBip = tr.querySelector('.eval-btn-bip');
 
                 if (chkDone) chkDone.onchange = (e) => updateSubmissionStatus(s.adSoyad, 'done', e.target.checked);
                 if (chkAbsent) chkAbsent.onchange = (e) => updateSubmissionStatus(s.adSoyad, 'absent', e.target.checked);
+                if (chkGetirmedi) chkGetirmedi.onchange = (e) => updateSubmissionStatus(s.adSoyad, 'getirmedi', e.target.checked);
+                if (chkMateryaliYok) chkMateryaliYok.onchange = (e) => updateSubmissionStatus(s.adSoyad, 'materyaliYok', e.target.checked);
                 if (btnWa) btnWa.onclick = () => shareStudentResult(String(id), s.adSoyad);
                 if (btnBip) btnBip.onclick = () => shareStudentResultBip(String(id), s.adSoyad);
 
@@ -973,13 +986,15 @@
             const item = trackingData.find(i => String(i.id) === String(activeTrackingId));
             if (!item) return;
             if (!item.submissions) item.submissions = {};
-            if (!item.submissions[name]) item.submissions[name] = { done: false, absent: false, date: '', xp: item.xp, penalty: item.penaltyXp };
+            if (!item.submissions[name]) item.submissions[name] = { done: false, absent: false, getirmedi: false, materyaliYok: false, date: '', xp: item.xp, penalty: item.penaltyXp };
 
             const sub = item.submissions[name];
             const sIdx = studentData.findIndex(s => s.adSoyad === name);
 
             const prevDone = !!sub.done;
             const prevAbsent = !!sub.absent;
+            const prevGetirmedi = !!sub.getirmedi;
+            const prevMateryaliYok = !!sub.materyaliYok;
             const prevEvaluated = (sub.date !== '');
 
             // Önceki durumu nötrle (revert)
@@ -990,10 +1005,18 @@
                         let oldAmt = sub.xp !== undefined ? sub.xp : item.xp;
                         studentData[sIdx].xp = (studentData[sIdx].xp || 0) - oldAmt;
                         studentData[sIdx].xpLogs.push({ reason: `${item.title} (İptal)`, amount: -oldAmt, date: new Date().toISOString() });
-                    } else {
+                    } else if (prevGetirmedi) {
                         let oldAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
-                        studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
-                        studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
+                        if (oldAmt > 0) {
+                            studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
+                            studentData[sIdx].xpLogs.push({ reason: `${item.title} (Materyal Getirmedi İptal)`, amount: oldAmt, date: new Date().toISOString() });
+                        }
+                    } else if (!prevMateryaliYok) {
+                        let oldAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
+                        if (oldAmt > 0) {
+                            studentData[sIdx].xp = (studentData[sIdx].xp || 0) + oldAmt;
+                            studentData[sIdx].xpLogs.push({ reason: `${item.title} (Ceza İptal)`, amount: oldAmt, date: new Date().toISOString() });
+                        }
                     }
                 }
             }
@@ -1003,6 +1026,8 @@
             if (field === 'absent') {
                 if (value === true) {
                     sub.done = false;
+                    sub.getirmedi = false;
+                    sub.materyaliYok = false;
                     sub.date = new Date().toLocaleString('tr-TR');
                 } else {
                     sub.date = '';
@@ -1010,12 +1035,40 @@
             } else if (field === 'done') {
                 if (value === true) {
                     sub.absent = false;
+                    sub.getirmedi = false;
+                    sub.materyaliYok = false;
                     sub.date = new Date().toLocaleString('tr-TR');
                     if (sIdx !== -1) {
                         let newAmt = sub.xp !== undefined ? sub.xp : item.xp;
                         studentData[sIdx].xp = (studentData[sIdx].xp || 0) + newAmt;
                         studentData[sIdx].xpLogs.push({ reason: `${item.title} (Tamamladı)`, amount: newAmt, date: new Date().toISOString() });
                     }
+                } else {
+                    sub.date = '';
+                }
+            } else if (field === 'getirmedi') {
+                if (value === true) {
+                    sub.done = false;
+                    sub.absent = false;
+                    sub.materyaliYok = false;
+                    sub.date = new Date().toLocaleString('tr-TR');
+                    if (sIdx !== -1 && (item.penaltyXp || sub.penalty)) {
+                        let penAmt = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
+                        if (penAmt > 0) {
+                            studentData[sIdx].xp = (studentData[sIdx].xp || 0) - penAmt;
+                            studentData[sIdx].xpLogs.push({ reason: `${item.title} (Materyal Getirmedi)`, amount: -penAmt, date: new Date().toISOString() });
+                        }
+                    }
+                } else {
+                    sub.date = '';
+                }
+            } else if (field === 'materyaliYok') {
+                if (value === true) {
+                    sub.done = false;
+                    sub.absent = false;
+                    sub.getirmedi = false;
+                    sub.date = new Date().toLocaleString('tr-TR');
+                    // Materyali Yok durumunda muaf (0 XP) sayılır, ceza uygulanmaz.
                 } else {
                     sub.date = '';
                 }
@@ -1045,49 +1098,63 @@
             if (typeof saveData === 'function') saveData(true);
         }
 
-        function maskStudentNameKVKK(fullName) {
+        function maskStudentNameKVKK(fullName, maskChar = '*') {
             if (!fullName) return '';
             return String(fullName).trim().split(/\s+/).map(part => {
                 if (part.length <= 1) return part;
-                return part.charAt(0) + '*'.repeat(Math.max(1, Math.min(part.length - 1, 3)));
+                return part.charAt(0) + maskChar.repeat(Math.max(1, Math.min(part.length - 1, 3)));
             }).join(' ');
         }
 
-        function buildTrackingSummaryText(id) {
+        function buildTrackingSummaryText(id, platform = 'wa') {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
             if (typeof syncStudentsWithTracking === 'function') syncStudentsWithTracking();
             let students = getTrackingItemStudents(item);
             students.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
 
+            const isBip = platform === 'bip';
+            const b = isBip ? '' : '*';
+            const iTag = isBip ? '' : '_';
+            const maskChar = isBip ? '•' : '*';
+
             const submissions = item.submissions || {};
-            let text = `📍 *${item.type.toUpperCase()} BİLGİLENDİRMESİ*\n📝 *Konu:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n⏰ *Son Tarih:* ${new Date(item.date).toLocaleString('tr-TR')}`;
-            if (item.xp) text += `\n⭐ *Puan:* +${item.xp} XP` + (item.penaltyXp ? ` (Eksik: -${item.penaltyXp} XP)` : '');
+            let text = `📍 ${b}${item.type.toUpperCase()} BİLGİLENDİRMESİ${b}\n📝 ${b}Konu:${b} ${item.title}\n🏫 ${b}Sınıf:${b} ${item.sinif}\n⏰ ${b}Son Tarih:${b} ${new Date(item.date).toLocaleString('tr-TR')}`;
+            if (item.xp) text += `\n⭐ ${b}Puan:${b} +${item.xp} XP` + (item.penaltyXp ? ` (Eksik: -${item.penaltyXp} XP)` : '');
 
             // Ödeve not / değerlendirme verilmediyse (submissions boş ise) yapanlar ve yapmayanlar mesajda görünmez
             const hasEvaluations = Object.keys(submissions).length > 0;
             if (hasEvaluations && students.length > 0) {
                 const done = students.filter(s => submissions[s.adSoyad]?.done).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
                 const absent = students.filter(s => submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + s.adSoyad);
-                // KVKK / Kişisel Verileri Koruma: Toplu veli gruplarında eksik teslim isimleri maskelenir
-                const notDone = students.filter(s => !submissions[s.adSoyad]?.done && !submissions[s.adSoyad]?.absent).map(s => (s.no ? s.no + ' - ' : '') + maskStudentNameKVKK(s.adSoyad));
-                text += `\n\n✅ *TAMAMLAYANLAR (${done.length} / ${students.length}):*\n` + (done.length > 0 ? '🔷 ' + done.join('\n🔷 ') : 'Henüz teslim eden yok');
-                text += `\n\n❌ *EKSİK OLANLAR (${notDone.length} / ${students.length}) [KVKK Uyumlu]:*\n` + (notDone.length > 0 ? '🔸 ' + notDone.join('\n🔸 ') : 'Herkes tamamladı! 🎉');
-                text += `\n\n⚪ *GELMEYENLER (${absent.length}):*\n` + (absent.length > 0 ? '▫️ ' + absent.join('\n▫️ ') : 'Gelmeyen öğrenci yok');
-                text += `\n\n🔒 *Not:* Bireysel öğrenci durumları için veli bilgilendirme mesajı ayrıca iletilebilir.`;
+                const getirmedi = students.filter(s => submissions[s.adSoyad]?.getirmedi).map(s => (s.no ? s.no + ' - ' : '') + maskStudentNameKVKK(s.adSoyad, maskChar));
+                const materyaliYok = students.filter(s => submissions[s.adSoyad]?.materyaliYok).map(s => (s.no ? s.no + ' - ' : '') + maskStudentNameKVKK(s.adSoyad, maskChar));
+                // Toplu veli gruplarında eksik teslim isimleri maskelenir
+                const notDone = students.filter(s => !submissions[s.adSoyad]?.done && !submissions[s.adSoyad]?.absent && !submissions[s.adSoyad]?.getirmedi && !submissions[s.adSoyad]?.materyaliYok).map(s => (s.no ? s.no + ' - ' : '') + maskStudentNameKVKK(s.adSoyad, maskChar));
+
+                text += `\n\n✅ ${b}TAMAMLAYANLAR (${done.length} / ${students.length}):${b}\n` + (done.length > 0 ? '🔷 ' + done.join('\n🔷 ') : 'Henüz teslim eden yok');
+                if (getirmedi.length > 0) {
+                    text += `\n\n📦 ${b}ÖDEV MATERYALİ GETİRMEYENLER (${getirmedi.length}):${b}\n🔷 ` + getirmedi.join('\n🔷 ');
+                }
+                if (materyaliYok.length > 0) {
+                    text += `\n\n⚠️ ${b}ÖDEV MATERYALİ OLMAYANLAR (${materyaliYok.length}):${b}\n🔷 ` + materyaliYok.join('\n🔷 ');
+                }
+                text += `\n\n❌ ${b}EKSİK OLANLAR (${notDone.length} / ${students.length}):${b}\n` + (notDone.length > 0 ? '🔸 ' + notDone.join('\n🔸 ') : 'Herkes tamamladı! 🎉');
+                text += `\n\n⚪ ${b}GELMEYENLER (${absent.length}):${b}\n` + (absent.length > 0 ? '▫️ ' + absent.join('\n▫️ ') : 'Gelmeyen öğrenci yok');
+                text += `\n\n🔒 ${b}Not:${b} Bireysel öğrenci durumları için veli bilgilendirme mesajı ayrıca iletilebilir.`;
             }
-            text += `\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+            text += `\n\n${iTag}Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur.${iTag}`;
             return text;
         }
 
         function shareTrackingSummary(id) {
-            const text = buildTrackingSummaryText(id);
+            const text = buildTrackingSummaryText(id, 'wa');
             if (!text) return;
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function shareTrackingSummaryBip(id) {
             const item = trackingData.find(i => String(i.id) === String(id));
-            const text = buildTrackingSummaryText(id);
+            const text = buildTrackingSummaryText(id, 'bip');
             if (!text) return;
             if (typeof window.shareViaBip === 'function') {
                 window.shareViaBip(text, `${item?.sinif || ''} - ${item?.title || ''} Özeti`);
@@ -1097,41 +1164,53 @@
             }
         }
 
-        function buildStudentResultText(id, name) {
+        function buildStudentResultText(id, name, platform = 'wa') {
             const item = trackingData.find(i => String(i.id) === String(id)); if (!item) return '';
-            const sub = (item.submissions && item.submissions[name]) ? item.submissions[name] : { done: false, absent: false };
+            const sub = (item.submissions && item.submissions[name]) ? item.submissions[name] : { done: false, absent: false, getirmedi: false, materyaliYok: false };
             let durumText = '';
             if (sub.absent) {
                 durumText = '⚪ Gelmedi / Muaf (0 XP)';
             } else if (sub.done) {
                 durumText = '✅ Tamamlandı (+' + (sub.xp || item.xp) + ' XP)';
+            } else if (sub.getirmedi) {
+                const pen = sub.penalty !== undefined ? sub.penalty : item.penaltyXp;
+                durumText = '📦 Ödev Materyali Getirmedi (' + (pen > 0 ? '-' + pen : '0') + ' XP)';
+            } else if (sub.materyaliYok) {
+                durumText = '⚠️ Ödev Materyali Yok (0 XP)';
             } else if (sub.date !== '') {
                 durumText = '❌ Teslim Edilmedi / Eksik (-' + (sub.penalty || item.penaltyXp) + ' XP)';
             } else {
                 durumText = '⏳ Henüz Teslim Edilmedi / Bekliyor (0 XP)';
             }
-            return `🎯 *${(item.type || 'ÖDEV').toUpperCase()} DEĞERLENDİRME*
-👤 *Öğrenci:* ${name}
-🏫 *Sınıf:* ${item.sinif || '-'}
-📌 *Çalışma:* ${item.title || '-'}
-📅 *Tarih:* ${item.date ? new Date(item.date).toLocaleString('tr-TR') : '-'}
-📊 *Sonuç / Durum:* ${durumText}
+            const isBip = platform === 'bip';
+            const b = isBip ? '' : '*';
+            const iTag = isBip ? '' : '_';
 
-_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+            return `🎯 ${b}${(item.type || 'ÖDEV').toUpperCase()} DEĞERLENDİRME${b}
+👤 ${b}Öğrenci:${b} ${name}
+🏫 ${b}Sınıf:${b} ${item.sinif || '-'}
+📌 ${b}Çalışma:${b} ${item.title || '-'}
+📅 ${b}Tarih:${b} ${item.date ? new Date(item.date).toLocaleString('tr-TR') : '-'}
+📊 ${b}Sonuç / Durum:${b} ${durumText}
+
+${iTag}Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur.${iTag}`;
         }
 
         function shareStudentResult(id, name) {
-            const text = buildStudentResultText(id, name);
+            const text = buildStudentResultText(id, name, 'wa');
             if (!text) return;
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function shareStudentResultBip(id, name) {
             const item = trackingData.find(i => String(i.id) === String(id));
-            const text = buildStudentResultText(id, name);
+            const text = buildStudentResultText(id, name, 'bip');
             if (!text) return;
+            const studentObj = (window.studentData || []).find(s => s.adSoyad === name || String(s.id) === String(name) || String(s.no) === String(name));
+            const phone = studentObj?.telefon || studentObj?.veliTel || studentObj?.veliTelefon || studentObj?.tel || '';
+
             if (typeof window.shareViaBip === 'function') {
-                window.shareViaBip(text, `${name} - ${item?.title || ''}`);
+                window.shareViaBip(text, `${name} - ${item?.title || ''}`, phone);
             } else {
                 window.copyTextToClipboard ? window.copyTextToClipboard(text) : null;
                 window.open(`https://web.bip.com/`, '_blank');

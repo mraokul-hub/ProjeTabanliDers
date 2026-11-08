@@ -254,13 +254,27 @@ window.sanitizeTextForBip = function(text) {
     // Art arda gelen mükerrer 🔹 işaretlerini tekleştir
     s = s.replace(/🔹\s*🔹+/g, '🔹');
 
+    // 5. BiP Web: BiP mesajlarında '*' ile kalın yazma özelliği bulunmadığı için '*' karakterlerini tamamen kaldır
+    // ve '[KVKK Uyumlu]:' ifadesini temizle:
+    // a. Maskeli isimlerdeki '***' işaretlerini güvenli '•••' noktalarına dönüştür
+    s = s.replace(/([A-ZÇĞİÖŞÜa-zçğıöşü0-9])\*{2,}/gu, '$1•••');
+    s = s.replace(/\*{2,}/gu, '•••');
+    // b. '[KVKK Uyumlu]:' veya '[KVKK Uyumlu]' ibarelerini temizle
+    s = s.replace(/\s*\[KVKK\s*Uyumlu\]:?/gi, '');
+    // c. Kalın metin biçimlendirmelerini yıldızlardan arındır (Örn: *Konu:* -> Konu:)
+    s = s.replace(/\*([^*\n\r]+)\*/gu, '$1');
+    // d. İtalik metin biçimlendirmelerini alt çizgilerden arındır (Örn: _Metin_ -> Metin)
+    s = s.replace(/_([^_\n\r]+)_/gu, '$1');
+    // e. Kalan tüm '*' yıldız karakterlerini kesin olarak temizle
+    s = s.replace(/\*/g, '');
+
     return s;
 };
 
 /**
  * BiP mesaj düzenleme ve önizleme modalını açar.
  */
-window.openBipShareModal = function(rawText, title) {
+window.openBipShareModal = function(rawText, title, recipientPhone) {
     window._bipOriginalText = rawText || '';
     const cleanText = window.sanitizeTextForBip(rawText);
 
@@ -280,7 +294,7 @@ window.openBipShareModal = function(rawText, title) {
     if (titleEl && title) {
         titleEl.textContent = title;
     } else if (titleEl) {
-        titleEl.textContent = 'BiP Mesajını Düzenle & Gönder';
+        titleEl.textContent = 'BiP Mesajı Paylaşım Paneli';
     }
 
     const textarea = document.getElementById('bip-modal-textarea');
@@ -348,12 +362,12 @@ window.copyBipModalText = function() {
         const oldBg = btn.style.background;
         btn.innerHTML = '<i class="fas fa-check me-1"></i> Kopyalandı! ✔️';
         btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        btn.style.boxShadow = '0 4px 14px rgba(16,185,129,0.35)';
+        btn.style.color = '#ffffff';
 
         setTimeout(() => {
             btn.innerHTML = oldHtml;
             btn.style.background = oldBg;
-            btn.style.boxShadow = '';
+            btn.style.color = '';
         }, 2200);
     }
 
@@ -363,16 +377,28 @@ window.copyBipModalText = function() {
 };
 
 /**
- * BiP Web uygulamasını yeni sekmede açar.
+ * BiP Web uygulamasını yeni sekmede açar ve mesajı panoya kopyalar.
  */
 window.openBipWebDirectly = function() {
     const textarea = document.getElementById('bip-modal-textarea');
-    if (textarea && textarea.value) {
-        window.copyTextToClipboard(textarea.value);
+    const textToCopy = textarea ? textarea.value : '';
+    if (textToCopy) {
+        window.copyTextToClipboard(textToCopy);
     }
+
+    const btn = document.getElementById('btn-bip-open-web');
+    if (btn) {
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i> Kopyalandı! BiP Açılıyor...';
+        setTimeout(() => {
+            btn.innerHTML = oldHtml;
+        }, 2200);
+    }
+
     window.open('https://web.bip.com/', '_blank');
+
     if (typeof window.showGlobalToast === 'function') {
-        window.showGlobalToast('🌐 BiP Web açılıyor, panodaki metni Ctrl + V ile yapıştırabilirsiniz.', 'info');
+        window.showGlobalToast('📋 Mesaj panoya kopyalandı ve BiP Web açılıyor! Sohbete Ctrl + V ile yapıştırabilirsiniz.', 'success');
     }
 };
 
@@ -429,42 +455,82 @@ window.createBipShareModalDom = function() {
     m.onclick = function(e) { if (e.target === m) window.closeBipShareModal(); };
     m.style.cssText = 'display:none; position:fixed; inset:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.82); z-index:100000; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px; box-sizing:border-box; overflow-y:auto;';
     m.innerHTML = `
-        <div style="background:var(--card-bg, #ffffff); border-radius:14px; border:1px solid rgba(0, 178, 255, 0.35); max-width:640px; width:100%; box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 178, 255, 0.25); display:flex; flex-direction:column; overflow:hidden; position:relative;">
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border, #e2e8f0); background:linear-gradient(to right, rgba(0, 178, 255, 0.06), transparent);">
+        <div style="background:var(--card-bg, #ffffff); border-radius:14px; border:1px solid rgba(0, 178, 255, 0.35); max-width:680px; width:100%; box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 178, 255, 0.25); display:flex; flex-direction:column; overflow:hidden; position:relative;">
+            
+            <!-- Modal Başlık Çubuğu -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border, #e2e8f0); background:linear-gradient(to right, rgba(0, 178, 255, 0.08), transparent);">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="background:linear-gradient(135deg, #00B2FF, #0077B6); color:white; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 4px 12px rgba(0, 178, 255, 0.35); flex-shrink:0;">
+                    <div style="background:linear-gradient(135deg, #00B2FF, #0077B6); color:white; width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 4px 12px rgba(0, 178, 255, 0.35); flex-shrink:0;">
                         <i class="fas fa-comment-dots"></i>
                     </div>
                     <div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <h3 id="bip-modal-title" style="margin:0; font-size:15.5px; font-weight:800; color:var(--text-main);">BiP Mesajını Düzenle &amp; Gönder</h3>
-                            <span style="background:rgba(0,178,255,0.12); color:#0284c7; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; border:1px solid rgba(0,178,255,0.3);">BiP Uyumlu</span>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <h3 id="bip-modal-title" style="margin:0; font-size:15.5px; font-weight:800; color:var(--text-main);">
+                                BiP Mesajı Paylaşım Paneli
+                            </h3>
+                            <span id="bip-api-status-badge" style="background:rgba(0,178,255,0.12); color:#0284c7; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; border:1px solid rgba(0,178,255,0.3);">
+                                <i class="fas fa-check-circle me-1" style="color:#10b981;"></i> BiP Web Uyumlu (Sade Metin)
+                            </span>
                         </div>
-                        <p style="margin:2px 0 0 0; font-size:11.5px; color:var(--text-muted);">Karmaşık emojiler sadeleştirildi. Metni dilediğiniz gibi düzenleyip kopyalayabilirsiniz.</p>
+                        <p style="margin:2px 0 0 0; font-size:11.5px; color:var(--text-muted);">
+                            Mesajı düzenleyip panoya kopyalayabilir, BiP Web üzerinden veli veya öğrencinize kolayca iletebilirsiniz.
+                        </p>
                     </div>
                 </div>
-                <button type="button" onclick="closeBipShareModal()" title="Kapat (ESC)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:24px; line-height:1; padding:0 6px; border-radius:6px;">&times;</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" onclick="closeBipShareModal()" title="Kapat (ESC)"
+                        style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:24px; line-height:1; padding:0 6px; border-radius:6px;">
+                        &times;
+                    </button>
+                </div>
             </div>
+
+            <!-- Modal Gövdesi -->
             <div style="padding:16px 20px;">
+                
+                <!-- Hızlı Emoji ve Filtre Araç Çubuğu -->
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
                     <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                        <span style="font-size:11px; font-weight:700; color:var(--text-muted); margin-right:4px;">Hızlı Emojiler:</span>
-                        <button type="button" onclick="insertEmojiAtBipCursor('📌')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">📌</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('📢')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">📢</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('🗓️')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">🗓️</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('✅')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">✅</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('⚠️')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">⚠️</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('ℹ️')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">ℹ️</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('🔹')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">🔹</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('📍')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">📍</button>
-                        <button type="button" onclick="insertEmojiAtBipCursor('⭐')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;">⭐</button>
+                        <span style="font-size:11px; font-weight:700; color:var(--text-muted); margin-right:4px;">
+                            Hızlı Emojiler:
+                        </span>
+                        <button type="button" onclick="insertEmojiAtBipCursor('📌')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Raptiye">📌</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('📢')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Duyuru">📢</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('🗓️')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Takvim/Tarih">🗓️</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('✅')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Onay/Başarı">✅</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('⚠️')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Uyarı/Dikkat">⚠️</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('ℹ️')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Bilgi">ℹ️</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('🔹')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Madde İmi">🔹</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('📍')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Konum/Hedef">📍</button>
+                        <button type="button" onclick="insertEmojiAtBipCursor('⭐')" style="border:1px solid var(--border); background:var(--input-bg); border-radius:6px; padding:3px 7px; font-size:13px; cursor:pointer;" title="Yıldız/Derece">⭐</button>
                     </div>
+
                     <div style="display:flex; align-items:center; gap:6px;">
-                        <button type="button" onclick="reSanitizeBipTextarea()" class="btn" style="background:var(--input-bg); color:var(--text-main); border:1px solid var(--border); font-size:11px; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:600;"><i class="fas fa-magic me-1" style="color:#00B2FF;"></i> Sadeleştir</button>
-                        <button type="button" onclick="resetBipTextareaToOriginal()" class="btn" style="background:var(--input-bg); color:var(--text-muted); border:1px solid var(--border); font-size:11px; padding:4px 8px; border-radius:6px; cursor:pointer;"><i class="fas fa-undo me-1"></i> Orijinal</button>
+                        <button type="button" onclick="reSanitizeBipTextarea()" class="btn"
+                            style="background:var(--input-bg); color:var(--text-main); border:1px solid var(--border); font-size:11px; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:600;"
+                            title="Tüm emojileri sadeleştirme filtresinden tekrar geçir">
+                            <i class="fas fa-magic me-1" style="color:#00B2FF;"></i> Sadeleştir
+                        </button>
+                        <button type="button" onclick="resetBipTextareaToOriginal()" class="btn"
+                            style="background:var(--input-bg); color:var(--text-muted); border:1px solid var(--border); font-size:11px; padding:4px 8px; border-radius:6px; cursor:pointer;"
+                            title="İlk gelen ham metne geri dön">
+                            <i class="fas fa-undo me-1"></i> Orijinal
+                        </button>
                     </div>
                 </div>
-                <textarea id="bip-modal-textarea" oninput="updateBipStats()" placeholder="BiP mesajı..." style="width:100%; min-height:220px; max-height:400px; resize:vertical; padding:12px 14px; font-family:ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size:12.5px; line-height:1.55; border-radius:10px; border:1px solid var(--border, #cbd5e1); background:var(--input-bg, #f8fafc); color:var(--text-main); box-sizing:border-box; outline:none; transition:border-color 0.2s;"></textarea>
+
+                <!-- BiP Web Kopyala & Yapıştır Kolaylığı İpucu -->
+                <div style="background:rgba(0,178,255,0.08); border:1px solid rgba(0,178,255,0.25); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:11.5px; color:#0284c7; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-info-circle" style="font-size:15px; flex-shrink:0;"></i>
+                    <span><strong>BiP Web Kopyala &amp; Yapıştır Kolaylığı:</strong> Metin BiP Web ile %100 uyumlu hale getirilmiş ve tüm yıldızlar (*) temizlenmiştir. <strong>[📋 Kopyala ve BiP Web'i Aç]</strong> butonuna tıklayarak metni panoya alabilir ve açılan BiP Web ekranına <strong>Ctrl + V</strong> ile doğrudan yapıştırabilirsiniz.</span>
+                </div>
+
+                <!-- Textarea Editörü -->
+                <textarea id="bip-modal-textarea" oninput="updateBipStats()"
+                    placeholder="BiP mesajı buraya gelecek..."
+                    style="width:100%; min-height:200px; max-height:360px; resize:vertical; padding:12px 14px; font-family:ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size:12.5px; line-height:1.55; border-radius:10px; border:1px solid var(--border, #cbd5e1); background:var(--input-bg, #f8fafc); color:var(--text-main); box-sizing:border-box; outline:none; transition:border-color 0.2s;"></textarea>
+
+                <!-- Canlı İstatistik ve Uyum Bilgisi -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11.5px; color:var(--text-muted); flex-wrap:wrap; gap:6px;">
                     <div>
                         <span id="bip-char-count" style="font-weight:700; color:var(--text-main);">0</span> karakter · 
@@ -472,25 +538,41 @@ window.createBipShareModalDom = function() {
                         <span id="bip-line-count" style="font-weight:700; color:var(--text-main);">0</span> satır
                     </div>
                     <div style="font-size:11px; color:#0284c7; display:flex; align-items:center; gap:4px; font-weight:600;">
-                        <i class="fas fa-check-circle" style="color:#10b981;"></i> BiP Evrensel Emoji Standardı
+                        <i class="fas fa-check-circle" style="color:#10b981;"></i> BiP Evrensel Metin Standardı
                     </div>
                 </div>
             </div>
+
+            <!-- Modal Alt Aksiyon Butonları -->
             <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-top:1px solid var(--border, #e2e8f0); background:var(--input-bg, #f8fafc); flex-wrap:wrap; gap:10px;">
-                <button type="button" class="btn btn-clear" onclick="closeBipShareModal()" style="padding:8px 16px; font-size:12px;"><i class="fas fa-times me-1"></i> İptal</button>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <button type="button" id="btn-bip-open-web" class="btn" onclick="openBipWebDirectly()" style="background:rgba(0,178,255,0.12); color:#0284c7; border:1px solid rgba(0,178,255,0.35); font-weight:700; padding:8px 16px; border-radius:8px; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;"><i class="fas fa-external-link-alt"></i> BiP Web'i Aç</button>
-                    <button type="button" id="btn-bip-copy" class="btn" onclick="copyBipModalText()" style="background:linear-gradient(135deg, #00B2FF, #0077B6); color:white; font-weight:700; padding:9px 20px; border-radius:8px; font-size:12.5px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(0,178,255,0.35);"><i class="fas fa-copy"></i> Panoya Kopyala</button>
+                    <button type="button" class="btn btn-clear" onclick="closeBipShareModal()"
+                        style="padding:8px 14px; font-size:12px;">
+                        <i class="fas fa-times me-1"></i> Kapat
+                    </button>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <button type="button" id="btn-bip-copy" class="btn" onclick="copyBipModalText()"
+                        style="background:var(--card-bg, #ffffff); color:var(--text-main); border:1px solid var(--border); font-weight:700; padding:9px 15px; border-radius:8px; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05);"
+                        title="Metni panoya kopyalar">
+                        <i class="fas fa-copy"></i> Panoya Kopyala
+                    </button>
+                    <button type="button" id="btn-bip-open-web" class="btn" onclick="openBipWebDirectly()"
+                        style="background:linear-gradient(135deg, #00B2FF, #0077B6); color:white; font-weight:800; padding:9px 18px; border-radius:8px; font-size:12.5px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:7px; box-shadow:0 4px 14px rgba(0,178,255,0.35); transition:all 0.2s;"
+                        title="Mesajı otomatik panoya kopyalar ve BiP Web'i yeni sekmede açar (Ctrl + V ile doğrudan yapıştırabilirsiniz)">
+                        <i class="fas fa-external-link-alt"></i> 📋 Kopyala ve BiP Web'i Aç
+                    </button>
                 </div>
             </div>
+
         </div>
     `;
     document.body.appendChild(m);
 };
 
 // Global BiP paylaşım tetikleyicisi
-window.shareViaBip = function(text, title) {
-    window.openBipShareModal(text, title);
+window.shareViaBip = function(text, title, recipientPhone) {
+    window.openBipShareModal(text, title, recipientPhone);
 };
 
 // CBL Karne WhatsApp & BiP Paylaşım Yöneticileri

@@ -1174,10 +1174,10 @@ Lütfen SADECE JSON formatında döndür:
             }
         };
 
+        try { window.open('https://gemini.google.com/app', '_blank'); } catch (_) {}
         copyPrompt(promptText).then(() => {
             const pasteArea = document.getElementById('pg-ai-paste-area');
             if (pasteArea) pasteArea.style.display = 'block';
-            try { window.open('https://gemini.google.com/app', '_blank'); } catch (_) {}
             if (typeof showGlobalToast === 'function') {
                 showGlobalToast("✨ AI Değerlendirme promptu kopyalandı ve Gemini açıldı!", "success");
             } else {
@@ -1374,15 +1374,26 @@ Lütfen SADECE JSON formatında döndür:
     function pgShareMsgBip() {
         const g = _pgData().find(x => x && String(x.id) === String(pgActiveId));
         if (!g) return;
-        let text = `📋 *${(g.title || g.projeAdi || 'PROJE TAKIMI').toUpperCase()} — İLETİŞİM AKIŞI (BiP)*\n`;
-        text += `🏫 *Sınıf:* ${g.sinif || '-'}\n\n`;
-        text += `💬 *Son Mesajlar:*\n`;
+        let text = `📋 ${(g.title || g.projeAdi || 'PROJE TAKIMI').toUpperCase()} — İLETİŞİM AKIŞI (BiP)\n`;
+        text += `🏫 Sınıf: ${g.sinif || '-'}\n\n`;
+        text += `💬 Son Mesajlar:\n`;
         (g.mesajlar || []).slice(-10).forEach(m => {
             text += `▫️ ${m.taraf === 'teacher' ? '🧑‍🏫 Öğretmen' : '👨‍🎓 Öğrenci'}: ${m.metin}\n`;
         });
-        text += `\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        text += `\nProje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur.`;
+
+        const members = g.members || g.uyeler || [];
+        const leader = members.find(m => m.rol === 'kaptan' || m.role === 'kaptan') || members[0];
+        let phone = '';
+        if (leader) {
+            const sObj = (typeof studentData !== 'undefined' && Array.isArray(studentData))
+                ? studentData.find(s => (s.adSoyad && s.adSoyad.trim().toLowerCase() === String(leader.name || leader.adSoyad || '').trim().toLowerCase()) || (leader.no && String(s.no) === String(leader.no)))
+                : null;
+            phone = (sObj && (sObj.telefon || sObj.veliTelefon || sObj.veliTel)) || leader.telefon || '';
+        }
+
         if (typeof window.shareViaBip === 'function') {
-            window.shareViaBip(text, `${g.title || g.projeAdi} İletişim`);
+            window.shareViaBip(text, `${g.title || g.projeAdi} İletişim`, phone);
         } else {
             if (window.copyTextToClipboard) window.copyTextToClipboard(text);
             window.open('https://web.bip.com/', '_blank');

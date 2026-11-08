@@ -583,7 +583,7 @@
                         <button class="btn" style="background:#25D366; padding:6px 10px; font-size:11px;" onclick="shareChecklistSummary('${item.id}')" title="WhatsApp Sınıf Özeti">
                             <i class="fab fa-whatsapp"></i>
                         </button>
-                        <button class="btn" style="background:#00B2FF; padding:6px 10px; font-size:11px;" onclick="shareChecklistSummaryBip('${item.id}')" title="BiP Sınıf Özeti">
+                        <button class="btn" style="background:#00B2FF; padding:6px 10px; font-size:11px;" onclick="shareChecklistSummaryBip('${item.id}')" title="BiP ile Sınıf Özeti Paylaş (BiP Web)">
                             <i class="fas fa-comment-dots"></i>
                         </button>
                         <button class="action-btn" style="background:#f59e0b; color:white;" onclick="editChecklistItem('${item.id}')" title="Düzenle">
@@ -1076,7 +1076,7 @@
                 <td style="text-align:center;">
                     <div style="display:inline-flex; gap:4px;">
                         <button type="button" class="action-btn" style="color:#25D366; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeJs(s.adSoyad)}', 'wa')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                        <button type="button" class="action-btn" style="color:#00B2FF; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeJs(s.adSoyad)}', 'bip')" title="BiP"><i class="fas fa-comment-dots"></i></button>
+                        <button type="button" class="action-btn" style="color:#00B2FF; background:none; font-size:15px; cursor:pointer;" onclick="shareStudentChecklistResult('${item.id}', '${escapeJs(s.adSoyad)}', 'bip')" title="BiP ile Sonucu Paylaş (BiP Web)"><i class="fas fa-comment-dots"></i></button>
                     </div>
                 </td>
             `;
@@ -1833,25 +1833,28 @@
     }
 
     // ── WHATSAPP / BİP ÖZET METNİ ──
-    function buildChecklistSummaryText(id) {
+    function buildChecklistSummaryText(id, platform = 'wa') {
         const item = getChecklistList().find(c => String(c.id) === String(id));
         if (!item) return '';
 
         const students = getChecklistItemStudents(item);
         students.sort((a, b) => (parseInt(a.no) || 0) - (parseInt(b.no) || 0));
         const evals = item.evaluations || {};
+        const isBip = platform === 'bip';
+        const b = isBip ? '' : '*';
+        const iTag = isBip ? '' : '_';
 
-        let text = `📋 *${item.title.toUpperCase()}*\n🏫 *Sınıf:* ${item.sinif}\n📅 *Tarih:* ${item.date || '-'}\n📊 *Tür:* ${item.badge || 'Takip Çizelgesi'}\n`;
+        let text = `📋 ${b}${item.title.toUpperCase()}${b}\n🏫 ${b}Sınıf:${b} ${item.sinif}\n📅 ${b}Tarih:${b} ${item.date || '-'}\n📊 ${b}Tür:${b} ${item.badge || 'Takip Çizelgesi'}\n`;
 
         if (item.evalType === 'score') {
             let evaluated = [];
             students.forEach(s => {
                 const ev = evals[s.adSoyad];
                 if (ev && typeof ev.total === 'number') {
-                    evaluated.push(`🔹 ${s.no ? s.no + ' - ' : ''}${s.adSoyad}: *${ev.total} Puan*`);
+                    evaluated.push(`🔹 ${s.no ? s.no + ' - ' : ''}${s.adSoyad}: ${b}${ev.total} Puan${b}`);
                 }
             });
-            text += `\n🎯 *DEĞERLENDİRME SONUÇLARI (${evaluated.length} / ${students.length}):*\n` + (evaluated.length > 0 ? evaluated.join('\n') : 'Henüz not girilmedi.');
+            text += `\n🎯 ${b}DEĞERLENDİRME SONUÇLARI (${evaluated.length} / ${students.length}):${b}\n` + (evaluated.length > 0 ? evaluated.join('\n') : 'Henüz not girilmedi.');
         } else {
             const symbols = getChecklistSymbols(item);
             const positiveKeys = symbols.filter(s => s.isPositive).map(s => s.key);
@@ -1867,23 +1870,23 @@
                 if (isFull) done.push(`✅ ${s.no ? s.no + ' - ' : ''}${s.adSoyad}`);
                 else missing.push(`🔸 ${s.no ? s.no + ' - ' : ''}${s.adSoyad}`);
             });
-            text += `\n✅ *EKSİKSİZ OLANLAR (${done.length} / ${students.length}):*\n` + (done.length > 0 ? done.join('\n') : 'Kayıt yok');
-            text += `\n\n⚠️ *EKSİĞİ BULUNANLAR (${missing.length} / ${students.length}):*\n` + (missing.length > 0 ? missing.join('\n') : 'Herkes eksiksiz! 🎉');
+            text += `\n✅ ${b}EKSİKSİZ OLANLAR (${done.length} / ${students.length}):${b}\n` + (done.length > 0 ? done.join('\n') : 'Kayıt yok');
+            text += `\n\n⚠️ ${b}EKSİĞİ BULUNANLAR (${missing.length} / ${students.length}):${b}\n` + (missing.length > 0 ? missing.join('\n') : 'Herkes eksiksiz! 🎉');
         }
 
-        text += `\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        text += `\n\n${iTag}Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur.${iTag}`;
         return text;
     }
 
     function shareChecklistSummary(id) {
-        const text = buildChecklistSummaryText(id);
+        const text = buildChecklistSummaryText(id, 'wa');
         if (!text) return;
         window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
     }
 
     function shareChecklistSummaryBip(id) {
         const item = getChecklistList().find(c => String(c.id) === String(id));
-        const text = buildChecklistSummaryText(id);
+        const text = buildChecklistSummaryText(id, 'bip');
         if (!text) return;
         if (typeof window.shareViaBip === 'function') {
             window.shareViaBip(text, `${item?.sinif || ''} - ${item?.title || ''} Özeti`);
@@ -1898,19 +1901,22 @@
         if (!item) return;
 
         const ev = (item.evaluations && item.evaluations[studentName]) || {};
-        const platformTag = platform === 'bip' ? ' (BiP)' : '';
-        let text = `📋 *ÖĞRENCİ TAKİP BİLGİLENDİRMESİ${platformTag}*\n👤 *Öğrenci:* ${studentName}\n📌 *Çalışma:* ${item.title}\n🏫 *Sınıf:* ${item.sinif}\n📅 *Tarih:* ${item.date || '-'}\n\n`;
+        const isBip = platform === 'bip';
+        const b = isBip ? '' : '*';
+        const iTag = isBip ? '' : '_';
+        const platformTag = isBip ? ' (BiP)' : '';
+        let text = `📋 ${b}ÖĞRENCİ TAKİP BİLGİLENDİRMESİ${platformTag}${b}\n👤 ${b}Öğrenci:${b} ${studentName}\n📌 ${b}Çalışma:${b} ${item.title}\n🏫 ${b}Sınıf:${b} ${item.sinif}\n📅 ${b}Tarih:${b} ${item.date || '-'}\n\n`;
 
         if (item.evalType === 'score') {
-            text += `📊 *Kriter Puanları:*\n`;
+            text += `📊 ${b}Kriter Puanları:${b}\n`;
             item.criteria.forEach(c => {
                 const sc = ev[c.id] !== undefined ? ev[c.id] : 0;
-                text += `▫️ ${c.name}: *${sc} / ${c.maxScore} Puan*\n`;
+                text += `▫️ ${c.name}: ${b}${sc} / ${c.maxScore} Puan${b}\n`;
             });
-            text += `\n⭐ *TOPLAM PUAN:* *${ev.total !== undefined ? ev.total : 0} / 100*`;
+            text += `\n⭐ ${b}TOPLAM PUAN:${b} ${b}${ev.total !== undefined ? ev.total : 0} / 100${b}`;
         } else {
             const symbols = getChecklistSymbols(item);
-            text += `📊 *Durum Detayı:*\n`;
+            text += `📊 ${b}Durum Detayı:${b}\n`;
             item.criteria.forEach(c => {
                 const st = ev[c.id] || '';
                 const sym = symbols.find(s => s.key === st);
@@ -1919,21 +1925,25 @@
                     const label = sym ? (sym.label || sym.key) : st;
                     stIcon = `${sym?.isPositive ? '✅' : '🔸'} ${label} (${st})`;
                 }
-                text += `▫️ ${c.name}: *${stIcon}*\n`;
+                text += `▫️ ${c.name}: ${b}${stIcon}${b}\n`;
             });
         }
 
         if (ev.note) {
-            text += `\n📝 *Öğretmen Notu:* ${ev.note}`;
+            text += `\n📝 ${b}Öğretmen Notu:${b} ${ev.note}`;
         }
 
-        text += `\n\n_Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+        text += `\n\n${iTag}Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur.${iTag}`;
 
         if (platform === 'wa') {
             window.open(`https://api.whatsapp.com/send/?text=${encodeURIComponent(text)}`, '_blank');
         } else {
+            const allStudents = (typeof getStudentList === 'function' ? getStudentList() : window.studentData) || [];
+            const matchedStudent = (item.students || []).find(s => s.adSoyad === studentName) || allStudents.find(s => s.adSoyad === studentName);
+            const studentPhone = matchedStudent?.telefon || matchedStudent?.veliTel || matchedStudent?.veliTelefon || matchedStudent?.tel || '';
+
             if (typeof window.shareViaBip === 'function') {
-                window.shareViaBip(text, `${studentName} - ${item.title}`);
+                window.shareViaBip(text, `${studentName} - ${item.title}`, studentPhone);
             } else {
                 window.copyTextToClipboard ? window.copyTextToClipboard(text) : null;
                 window.open('https://web.bip.com/', '_blank');

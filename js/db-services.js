@@ -48,6 +48,67 @@ window.invalidateChecklistSavedRef = function(chkId) {
     }
 };
 
+// Wire-Format Normalizer Helpers (Diff motoru tutarlılığı & Firebase NoSQL şeması için standartlaştırıcı)
+function buildTrackingWireFormat(item, safeTrackId) {
+    if (!item) return null;
+    const sanitizedSubmissions = {};
+    if (item.submissions && typeof item.submissions === 'object') {
+        for (let sName in item.submissions) {
+            const safeName = encodeFirebaseKey(sName);
+            const sub = item.submissions[sName] || {};
+            sanitizedSubmissions[safeName] = {
+                done: !!sub.done,
+                absent: !!sub.absent,
+                getirmedi: !!sub.getirmedi,
+                materyaliYok: !!sub.materyaliYok,
+                date: sub.date || '',
+                xp: (sub.xp !== undefined && sub.xp !== null) ? Number(sub.xp) : (Number(item.xp) || 0),
+                penalty: (sub.penalty !== undefined && sub.penalty !== null) ? Number(sub.penalty) : (Number(item.penaltyXp) || 0)
+            };
+        }
+    }
+    return {
+        id: item.id || safeTrackId,
+        type: item.type || 'Ödev',
+        title: item.title || '',
+        sinif: item.sinif || '',
+        date: item.date || '',
+        xp: Number(item.xp) || 0,
+        penaltyXp: Number(item.penaltyXp) || 0,
+        targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
+        submissions: sanitizedSubmissions,
+        isNotified: !!item.isNotified,
+        isEvaluated: !!item.isEvaluated
+    };
+}
+
+function buildChecklistWireFormat(item, safeChkId) {
+    if (!item) return null;
+    const sanitizedEvaluations = {};
+    if (item.evaluations && typeof item.evaluations === 'object') {
+        for (let sName in item.evaluations) {
+            const safeName = encodeFirebaseKey(sName);
+            sanitizedEvaluations[safeName] = item.evaluations[sName] || {};
+        }
+    }
+    return {
+        id: item.id || safeChkId,
+        templateType: item.templateType || 'meb_katilim',
+        title: item.title || '',
+        sinif: item.sinif || '',
+        date: item.date || '',
+        evalType: item.evalType || 'score',
+        badge: item.badge || 'ÇİZELGE',
+        badgeColor: item.badgeColor || '#3b82f6',
+        criteria: Array.isArray(item.criteria) ? item.criteria : (item.criteria && typeof item.criteria === 'object' ? Object.values(item.criteria) : []),
+        customSymbols: Array.isArray(item.customSymbols) ? item.customSymbols : (item.customSymbols && typeof item.customSymbols === 'object' ? Object.values(item.customSymbols) : null),
+        targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
+        evaluations: sanitizedEvaluations,
+        isArchived: !!item.isArchived,
+        createdAt: item.createdAt || ''
+    };
+}
+
 // Zaman Aşımı (Timeout Wrapper) - Fail-Fast Mimarisi (İsteklerin askıda kalmasını engeller)
 function withTimeout(promise, ms = 7000, errorMsg = 'Zaman Aşımı: Sunucu 7 saniye içinde yanıt vermedi.') {
     let timeoutId;
@@ -521,36 +582,7 @@ async function _executeSaveData() {
             if (item) {
                 const trackId = item.id ? String(item.id) : ('trk_' + i);
                 const safeTrackId = item.firebaseKey || encodeFirebaseKey(trackId).replace(/[\/\.\#\$\/\[\]]/g, '_');
-                
-                // Submissions nesnesini Firebase için sanitize et (Öğrenci isimlerindeki '.' karakterlerini korur)
-                const sanitizedSubmissions = {};
-                if (item.submissions && typeof item.submissions === 'object') {
-                    for (let sName in item.submissions) {
-                        const safeName = encodeFirebaseKey(sName);
-                        const sub = item.submissions[sName] || {};
-                        sanitizedSubmissions[safeName] = {
-                            done: !!sub.done,
-                            absent: !!sub.absent,
-                            date: sub.date || '',
-                            xp: (sub.xp !== undefined && sub.xp !== null) ? Number(sub.xp) : (Number(item.xp) || 0),
-                            penalty: (sub.penalty !== undefined && sub.penalty !== null) ? Number(sub.penalty) : (Number(item.penaltyXp) || 0)
-                        };
-                    }
-                }
-                
-                currentTracking[safeTrackId] = {
-                    id: item.id || safeTrackId,
-                    type: item.type || 'Ödev',
-                    title: item.title || '',
-                    sinif: item.sinif || '',
-                    date: item.date || '',
-                    xp: Number(item.xp) || 0,
-                    penaltyXp: Number(item.penaltyXp) || 0,
-                    targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
-                    submissions: sanitizedSubmissions,
-                    isNotified: !!item.isNotified,
-                    isEvaluated: !!item.isEvaluated
-                };
+                currentTracking[safeTrackId] = buildTrackingWireFormat(item, safeTrackId);
             }
         });
 
@@ -579,31 +611,7 @@ async function _executeSaveData() {
             if (item) {
                 const chkId = item.id ? String(item.id) : ('chk_' + i);
                 const safeChkId = item.firebaseKey || encodeFirebaseKey(chkId).replace(/[\/\.\#\$\/\[\]]/g, '_');
-
-                const sanitizedEvaluations = {};
-                if (item.evaluations && typeof item.evaluations === 'object') {
-                    for (let sName in item.evaluations) {
-                        const safeName = encodeFirebaseKey(sName);
-                        sanitizedEvaluations[safeName] = item.evaluations[sName] || {};
-                    }
-                }
-
-                currentChecklists[safeChkId] = {
-                    id: item.id || safeChkId,
-                    templateType: item.templateType || 'meb_katilim',
-                    title: item.title || '',
-                    sinif: item.sinif || '',
-                    date: item.date || '',
-                    evalType: item.evalType || 'score',
-                    badge: item.badge || 'ÇİZELGE',
-                    badgeColor: item.badgeColor || '#3b82f6',
-                    criteria: Array.isArray(item.criteria) ? item.criteria : (item.criteria && typeof item.criteria === 'object' ? Object.values(item.criteria) : []),
-                    customSymbols: Array.isArray(item.customSymbols) ? item.customSymbols : (item.customSymbols && typeof item.customSymbols === 'object' ? Object.values(item.customSymbols) : null),
-                    targetStudents: Array.isArray(item.targetStudents) ? item.targetStudents : null,
-                    evaluations: sanitizedEvaluations,
-                    isArchived: !!item.isArchived,
-                    createdAt: item.createdAt || new Date().toISOString()
-                };
+                currentChecklists[safeChkId] = buildChecklistWireFormat(item, safeChkId);
             }
         });
 
@@ -948,6 +956,9 @@ async function loadFromLocalStorage(uidOverride = null) {
                             item.id = trackId;
                             item.firebaseKey = safeTrackId;
 
+                            // Diff motoru için wire-format referansını in-place çözmeden önce standartlaştır
+                            normalizedRefs[safeTrackId] = buildTrackingWireFormat(item, safeTrackId);
+
                             const decodedSubmissions = {};
                             if (item.submissions && typeof item.submissions === 'object') {
                                 for (let k in item.submissions) {
@@ -956,7 +967,6 @@ async function loadFromLocalStorage(uidOverride = null) {
                             }
                             item.submissions = decodedSubmissions;
                             normalizedList.push(item);
-                            normalizedRefs[safeTrackId] = item;
                         }
                     });
                 }
@@ -1015,6 +1025,9 @@ async function loadFromLocalStorage(uidOverride = null) {
                             item.id = chkId;
                             item.firebaseKey = safeChkId;
 
+                            // Diff motoru için wire-format referansını in-place çözmeden önce standartlaştır
+                            normalizedRefs[safeChkId] = buildChecklistWireFormat(item, safeChkId);
+
                             const decodedEvaluations = {};
                             if (item.evaluations && typeof item.evaluations === 'object') {
                                 for (let k in item.evaluations) {
@@ -1034,7 +1047,6 @@ async function loadFromLocalStorage(uidOverride = null) {
                             }
 
                             normalizedList.push(item);
-                            normalizedRefs[safeChkId] = item;
                         }
                     });
                 }
@@ -1461,6 +1473,9 @@ function attachListeners(uid) {
                     item.id = trackId;
                     item.firebaseKey = safeTrackId;
 
+                    // Diff motoru için wire-format referansını in-place çözmeden önce standartlaştır
+                    normalizedRefs[safeTrackId] = buildTrackingWireFormat(item, safeTrackId);
+
                     const decodedSubmissions = {};
                     if (item.submissions && typeof item.submissions === 'object') {
                         for (let k in item.submissions) {
@@ -1469,7 +1484,6 @@ function attachListeners(uid) {
                     }
                     item.submissions = decodedSubmissions;
                     normalizedList.push(item);
-                    normalizedRefs[safeTrackId] = item;
                 }
             });
             trackingData = normalizedList;
@@ -1499,6 +1513,9 @@ function attachListeners(uid) {
                     item.id = chkId;
                     item.firebaseKey = safeChkId;
 
+                    // Diff motoru için wire-format referansını in-place çözmeden önce standartlaştır
+                    normalizedRefs[safeChkId] = buildChecklistWireFormat(item, safeChkId);
+
                     const decodedEvaluations = {};
                     if (item.evaluations && typeof item.evaluations === 'object') {
                         for (let k in item.evaluations) {
@@ -1518,7 +1535,6 @@ function attachListeners(uid) {
                     }
 
                     normalizedList.push(item);
-                    normalizedRefs[safeChkId] = item;
                 }
             });
             checklistData = normalizedList;

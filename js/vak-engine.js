@@ -1240,7 +1240,7 @@ Hiçbir önsöz, açıklama veya markdown bloğu olmadan, doğrudan aşağıdaki
 
     function buildVakParentMessage(student, style, recs, platform = 'wa') {
         const platformTag = platform === 'bip' ? ' (BiP)' : '';
-        return `🧠 *BİLİŞSEL ÖĞRENME STİLİ VE VELİ REHBERLİK BÜLTENİ${platformTag}*
+        let msg = `🧠 *BİLİŞSEL ÖĞRENME STİLİ VE VELİ REHBERLİK BÜLTENİ${platformTag}*
 👤 *Öğrenci:* ${student.no ? student.no + ' - ' : ''}${student.adSoyad}
 🏫 *Sınıf:* ${student.sinif || '-'}
 🎨 *Baskın Bilişsel Stil:* *${style.toUpperCase()}*
@@ -1252,6 +1252,11 @@ Değerli Velimiz,
 ${recs.length > 0 ? recs.map((r, i) => `▫️ ${r}`).join('\n') : '▫️ Öğrencinin bireysel öğrenme stiline uygun görsel ve işitsel materyallerle desteklenmesi önerilir.'}
 
 _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
+
+        if (platform === 'bip') {
+            msg = msg.replace(/\*/g, '').replace(/_([^_\n\r]+)_/g, '$1');
+        }
+        return msg;
     }
 
     async function sendVakWhatsApp() {
@@ -1281,9 +1286,10 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         const details = student.vakDetails || {};
         const recs = details.actionable_recommendations ? (details.actionable_recommendations.for_parent || []) : [];
         const msg = buildVakParentMessage(student, style, recs, 'bip');
+        const phone = student.veliTelefon || student.veliTel || student.telefon || student.tel || '';
 
         if (typeof window.shareViaBip === 'function') {
-            window.shareViaBip(msg, `${student.adSoyad} - Bilişsel Stil (VAK)`);
+            window.shareViaBip(msg, `${student.adSoyad} - Bilişsel Stil (VAK)`, phone);
         } else {
             if (navigator.clipboard) {
                 await navigator.clipboard.writeText(msg);

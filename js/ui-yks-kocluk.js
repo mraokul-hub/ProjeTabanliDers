@@ -1245,9 +1245,10 @@
         const obp = calculateObpShield(item);
         const kai = calculateKai(item.haftalikSoruSayisi);
         const platformTag = platform === 'bip' ? ' (BiP)' : '';
+        let msg = '';
 
         if (mode === 'plato') {
-            return `🛡️ *YKS BİLİŞSEL KOÇLUK: VELİ KRİZSİZ REHBERLİK BÜLTENİ${platformTag}* 🛡️
+            msg = `🛡️ *YKS BİLİŞSEL KOÇLUK: VELİ KRİZSİZ REHBERLİK BÜLTENİ${platformTag}* 🛡️
 👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
 🏫 *Sınıf / Alan:* ${item.sinif || (seviye + '. Sınıf')} (${item.alan || 'YKS'})
 🎯 *Hedef:* ${item.hedefProgram || item.hedefBolum || 'Hedef Lisans'}
@@ -1265,7 +1266,7 @@ ${plateau.recete}
 
 _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         } else {
-            return `🎓 *YKS AKADEMİK VE BİLİŞSEL GELİŞİM BÜLTENİ${platformTag}*
+            msg = `🎓 *YKS AKADEMİK VE BİLİŞSEL GELİŞİM BÜLTENİ${platformTag}*
 👤 *Öğrenci:* ${item.studentNo ? item.studentNo + ' - ' : ''}${item.adSoyad}
 🏫 *Sınıf / Alan:* ${item.sinif || (seviye + '. Sınıf')} (${item.alan || 'YKS'})
 🎯 *Akademik Hedef:* ${item.hedefProgram || item.hedefBolum || 'Hedef Lisans'} (İlk ${item.hedefSiralama || '20.000'})
@@ -1278,6 +1279,11 @@ ${seviye === 9 || seviye === 10 ? `🛡️ *Tahmini OBP Kalkanı:* +${obp.yerles
 
 _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         }
+
+        if (platform === 'bip') {
+            msg = msg.replace(/\*/g, '').replace(/_([^_\n\r]+)_/g, '$1');
+        }
+        return msg;
     }
 
     /**
@@ -1307,9 +1313,11 @@ _Proje Tabanlı Ders İşleme Sistemi — otomatik oluşturulmuştur._`;
         if (!item) return;
 
         const msg = buildYksParentMessage(item, mode, 'bip');
+        const phone = item.veliTelefon || item.telefon || item.veliTel || '';
+        const title = `${item.adSoyad} - YKS ${mode === 'plato' ? 'Krizsiz Plato' : 'Gelişim'} Bülteni`;
 
         if (typeof window.shareViaBip === 'function') {
-            window.shareViaBip(msg, `${item.adSoyad} - YKS Veli Bülteni`);
+            window.shareViaBip(msg, title, phone);
         } else {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(msg);
@@ -4003,6 +4011,7 @@ Yukarıdaki verilere dayanarak;
 2) Veli için evde net sormamayı ve krizsiz iletişimi teminat altına alan 100 kelimelik yapıcı bir bülten oluştur.`;
 
         const waText = `Sayın Velimiz, ${item.adSoyad} isimli öğrencimizin haftalık bilişsel analizleri tamamlanmıştır. Öğrencimiz bu hafta ${kai.total} soru çözmüş ve %${kai.kai} konfor alanı indeksiyle ilerlemiştir. Öğrencimize deneme sonrasında "Kaç net yaptın?" yerine "Bugün turlamayı ve stratejini uygulayabildin mi?" diye sorarak çabasını takdir etmenizi rica ederiz. Saygılarımızla, Lise & YKS Bilişsel Başarı Mentoru.`;
+        const studentPhone = item.veliTelefon || item.telefon || item.veliTel || '';
 
         c.innerHTML = `
             <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
@@ -4033,7 +4042,7 @@ Yukarıdaki verilere dayanarak;
                         <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('yks-wa-text').value); window.open('https://api.whatsapp.com/send/?text=' + encodeURIComponent(document.getElementById('yks-wa-text').value), '_blank');" style="background:#25D366; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px; border:none; cursor:pointer;">
                             <i class="fab fa-whatsapp me-1"></i> Veliye WA
                         </button>
-                        <button class="btn" onclick="if(typeof window.shareViaBip==='function'){window.shareViaBip(document.getElementById('yks-wa-text').value, 'YKS Veli Bülteni');}else{alert('BiP modalı açılamadı.');}" style="background:#00B2FF; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px; border:none; cursor:pointer;">
+                        <button class="btn" onclick="if(typeof window.shareViaBip==='function'){window.shareViaBip(document.getElementById('yks-wa-text').value, 'YKS Veli Bülteni', '${escapeFn(studentPhone)}');}else{alert('BiP modalı açılamadı.');}" style="background:#00B2FF; color:white; font-size:11.5px; padding:6px 14px; font-weight:700; border-radius:6px; border:none; cursor:pointer;" title="Veli Bültenini BiP ile Gönder (BiP Web)">
                             <i class="fas fa-comment-dots me-1"></i> Veliye BiP
                         </button>
                     </div>

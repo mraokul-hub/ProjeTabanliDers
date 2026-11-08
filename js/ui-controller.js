@@ -323,3 +323,45 @@ function updateClassDropdown() {
 // ----------------------------------------------------------------------
 
 // MÜFREDAT VERİ TABANI (Örnek Şablonlar)
+// ── Kılavuz Navigasyon Yardımcıları (ui-guide'dan taşındı) ──
+            function scrollToGuideCard(cardId) {
+                const el = document.getElementById(cardId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            function scrollToGuideTop() {
+                try {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (e) {
+                    window.scrollTo(0, 0);
+                }
+                if (document.documentElement) document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+                if (document.body) document.body.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            // Sayfa kaydırıldığında yukarı dön butonunu akıllı göster/gizle
+            function updateGuideBackToTop() {
+                const btn = document.getElementById('guide-back-to-top');
+                const tab = document.getElementById('tab10');
+                if (!btn || !tab) return;
+                const scrollPos = window.pageYOffset || document.documentElement.scrollTop || (document.body ? document.body.scrollTop : 0) || window.scrollY || 0;
+                if (tab.classList.contains('active') && scrollPos > 180) {
+                    btn.style.display = 'flex';
+                } else {
+                    btn.style.display = 'none';
+                }
+            }
+            window.addEventListener('scroll', updateGuideBackToTop, { passive: true });
+            // Sekme aktifliği değiştiğinde buton durumunu anlık kontrol et
+            if (window.MutationObserver) {
+                const tabEl = document.getElementById('tab10');
+                if (tabEl) {
+                    new MutationObserver(function(mutations) {
+                        mutations.forEach(function(m) {
+                            if (m.attributeName === 'class') {
+                                updateGuideBackToTop();
+                            }
+                        });
+                    }).observe(tabEl, { attributes: true });
+                }
+            }
