@@ -475,6 +475,11 @@
                         class="fas fa-print"></i> A4 Küme Formu Yazdır (OCR)</button>
                 <button class="btn" id="btn-kume-ocr-read" style="background: #4f46e5; color: white;"
                     onclick="openKumeOcrModal()"><i class="fas fa-camera"></i> A4 Küme Formunu Oku (OCR)</button>
+                <button class="btn" style="background: #107c41; color: white;" onclick="triggerKumeExcelImport()"
+                    title="Excel dosyasından kümeleri içe aktar"><i class="fas fa-file-excel"></i> Excel ile Küme Yükle</button>
+                <button class="btn" style="background: #0284c7; color: white;" onclick="downloadKumeExcelTemplate()"
+                    title="Örnek Küme Excel Şablonunu İndir (.xlsx)"><i class="fas fa-file-download"></i> Excel Şablonu İndir</button>
+                <input type="file" id="kume-excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleKumeExcelUpload(this)">
                 <button class="btn" style="background: #ef4444;" onclick="clearAllGroups()"><i
                         class="fas fa-trash-alt"></i> Grupları Temizle</button>
             </div>
@@ -3298,6 +3303,10 @@
                         </ul>
                     </li>
                     <li>
+                        <strong>Birebir Öğrenci Görüşme Protokolü &amp; Kayıt Föyü (GorusmeBelgesi.pdf):</strong>
+                        LGS koçluk girişinde ve haftalık mentorluk seanslarında izlenecek <strong>6 Kritik Görüşme Adımı</strong> (<em>1. Zihinsel Zindelik Check-in, 2. Soru Piramidi &amp; Konfor Alanı Denetimi, 3. Deneme &amp; TDE Süre Analizi, 4. Hata Defteri 4 Kök Neden Teşhisi, 5. Dayanıklılık Puanlaması [1-5], 6. Haftalık SMART Eylem Planı &amp; Veli Bildirimi</em>) ile 5-8. sınıf kademe standartlarını (Sayfa 1) ve görüşme esnasında doldurulacak <strong>A4 Öğrenci Görüşme &amp; Eylem Formu</strong>nu (Sayfa 2) içeren önlü-arkalı standart takip belgesidir.
+                    </li>
+                    <li>
                         <strong>Gemini AI Koçluk &amp; 2-Modlu Veli Bülteni:</strong>
                         5-8. sınıf kademesine, aktif takvim fazına (LGS Faz 1-4 veya Ortaokul Faz 1-4), branş netlerine ve TDE skoruna duyarlı 5 modüllü bilimsel prompt üretir. Veliler için deneme sonrası evde öğrenciye net sormamayı ve çaba takdirini teminat altına alan <em>"10 Dakikalık Krizsiz Analiz Rehberi"</em> bültenini tek tıkla WhatsApp veya BiP üzerinden paylaşır.
                     </li>
@@ -3309,12 +3318,13 @@
                         <strong style="color:#c2410c; font-size:13px; display:flex; align-items:center; gap:6px;">
                             <i class="fas fa-file-pdf text-danger"></i> Resmî LGS Koçluk ve Öğrenci PDF Dokümanları:
                         </strong>
-                        <span style="font-size:12px; color:var(--text-muted);">12 yaşındaki öğrenciye ve koçuna adım adım rehberlik eden A4 master PDF kılavuzları:</span>
+                        <span style="font-size:12px; color:var(--text-muted);">Öğrenciye, veliye ve koçuna adım adım rehberlik eden A4 master PDF kılavuzları ve görüşme föyü:</span>
                     </div>
                     <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        <a href="LGS_Kocluk_Master_Raporu.pdf" target="_blank" class="btn" style="background:#0284c7; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Koç Protokolünü Aç"><i class="fas fa-user-tie"></i> Koç Raporu</a>
-                        <a href="LGS_Ogrenci_Basari_Kilavuzu.pdf" target="_blank" class="btn" style="background:#059669; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Öğrenci Kılavuzunu Aç"><i class="fas fa-user-graduate"></i> Öğrenci Kılavuzu</a>
-                        <a href="uygulama%20ad%C4%B1mlar%C4%B1.pdf" target="_blank" class="btn" style="background:#ea580c; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Uygulama Adımları Çizelgesini Aç"><i class="fas fa-stream"></i> Uygulama Adımları</a>
+                        <a href="PDF/LGS_Kocluk_Master_Raporu.pdf" target="_blank" class="btn" style="background:#0284c7; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Koç Protokolünü Aç"><i class="fas fa-user-tie"></i> Koç Raporu</a>
+                        <a href="PDF/LGS_Ogrenci_Basari_Kilavuzu.pdf" target="_blank" class="btn" style="background:#059669; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Öğrenci Kılavuzunu Aç"><i class="fas fa-user-graduate"></i> Öğrenci Kılavuzu</a>
+                        <a href="PDF/uygulama%20ad%C4%B1mlar%C4%B1.pdf" target="_blank" class="btn" style="background:#ea580c; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="Uygulama Adımları Çizelgesini Aç"><i class="fas fa-stream"></i> Uygulama Adımları</a>
+                        <a href="PDF/GorusmeBelgesi.pdf" target="_blank" class="btn" style="background:#4f46e5; color:white; font-size:11.5px; font-weight:700; padding:6px 12px; text-decoration:none; border-radius:6px; display:inline-flex; align-items:center; gap:5px;" title="LGS Öğrenci Görüşme Belgesini Aç"><i class="fas fa-clipboard-list"></i> Görüşme Belgesi</a>
                     </div>
                 </div>
             </div>
@@ -3337,10 +3347,10 @@
                 </div>
 
                 <p style="font-size:13.5px; color:var(--text-main); margin-bottom:14px; line-height:1.5;">
-                    LGS 8. sınıf öğrencileri ve eğitim koçları için hazırlanan, MEB Maarif Modeli ile %100 uyumlu, 12 yaşındaki bir çocuğun ders masasında adım adım uygulayacağı resmî PDF kılavuzları aşağıdan doğrudan görüntüleyebilir veya cihazınıza indirebilirsiniz:
+                    LGS 5-8. sınıf öğrencileri ve eğitim koçları için hazırlanan, MEB Maarif Modeli ile %100 uyumlu, ders masasında ve birebir koçluk görüşmelerinde adım adım uygulanacak resmî PDF kılavuzları aşağıdan doğrudan görüntüleyebilir veya cihazınıza indirebilirsiniz:
                 </p>
 
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-bottom:8px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:8px;">
                     <!-- PDF 1: Koç Master Raporu -->
                     <div style="background:var(--card-bg); border:1.5px solid rgba(2,132,199,0.3); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
                         <div>
@@ -3358,10 +3368,10 @@
                             </p>
                         </div>
                         <div style="display:flex; gap:6px;">
-                            <a href="LGS_Kocluk_Master_Raporu.pdf" target="_blank" class="btn" style="flex:1; background:#0284c7; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <a href="PDF/LGS_Kocluk_Master_Raporu.pdf" target="_blank" class="btn" style="flex:1; background:#0284c7; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
                                 <i class="fas fa-external-link-alt"></i> Aç / İncele
                             </a>
-                            <a href="LGS_Kocluk_Master_Raporu.pdf" download="LGS_Kocluk_Master_Raporu.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                            <a href="PDF/LGS_Kocluk_Master_Raporu.pdf" download="LGS_Kocluk_Master_Raporu.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
                                 <i class="fas fa-download"></i>
                             </a>
                         </div>
@@ -3384,10 +3394,10 @@
                             </p>
                         </div>
                         <div style="display:flex; gap:6px;">
-                            <a href="LGS_Ogrenci_Basari_Kilavuzu.pdf" target="_blank" class="btn" style="flex:1; background:#059669; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <a href="PDF/LGS_Ogrenci_Basari_Kilavuzu.pdf" target="_blank" class="btn" style="flex:1; background:#059669; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
                                 <i class="fas fa-external-link-alt"></i> Aç / İncele
                             </a>
-                            <a href="LGS_Ogrenci_Basari_Kilavuzu.pdf" download="LGS_Ogrenci_Basari_Kilavuzu.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                            <a href="PDF/LGS_Ogrenci_Basari_Kilavuzu.pdf" download="LGS_Ogrenci_Basari_Kilavuzu.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
                                 <i class="fas fa-download"></i>
                             </a>
                         </div>
@@ -3410,10 +3420,36 @@
                             </p>
                         </div>
                         <div style="display:flex; gap:6px;">
-                            <a href="uygulama%20ad%C4%B1mlar%C4%B1.pdf" target="_blank" class="btn" style="flex:1; background:#ea580c; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <a href="PDF/uygulama%20ad%C4%B1mlar%C4%B1.pdf" target="_blank" class="btn" style="flex:1; background:#ea580c; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
                                 <i class="fas fa-external-link-alt"></i> Aç / İncele
                             </a>
-                            <a href="uygulama%20ad%C4%B1mlar%C4%B1.pdf" download="uygulama adımları.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                            <a href="PDF/uygulama%20ad%C4%B1mlar%C4%B1.pdf" download="uygulama adımları.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PDF 4: Öğrenci Görüşme Belgesi ve Protokolü -->
+                    <div style="background:var(--card-bg); border:1.5px solid rgba(79,70,229,0.35); border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                                <span style="font-size:10.5px; font-weight:800; background:#e0e7ff; color:#4338ca; padding:3px 8px; border-radius:6px; text-transform:uppercase;">
+                                    <i class="fas fa-clipboard-list me-1"></i> Görüşme Protokolü &amp; Föyü
+                                </span>
+                                <span style="font-size:11px; color:var(--text-muted); font-weight:600;"><i class="fas fa-file-pdf text-danger me-1"></i> 573 KB • 2 Sayfa</span>
+                            </div>
+                            <h4 style="margin:0 0 6px 0; color:#4f46e5; font-size:14px; font-weight:800;">
+                                📋 LGS Öğrenci Görüşme Belgesi
+                            </h4>
+                            <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin:0 0 12px 0;">
+                                <strong>LGS Girişi &amp; Birebir Görüşme Standart Belgesi:</strong> Önlü-arkalı A4 form. <strong>1. Sayfada</strong> 6 adımlı bilişsel görüşme akışı ve 5-8. sınıf kademe yük standartları; <strong>2. Sayfada</strong> öğrenci künyesi, 90 soruluk deneme netleri, konfor alanı denetimi, 4 kök neden teşhisi, ana darboğaz, haftalık SMART eylem görevleri ve dayanıklılık (1-5) kayıt alanı yer alır.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <a href="PDF/GorusmeBelgesi.pdf" target="_blank" class="btn" style="flex:1; background:#4f46e5; color:white; font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 10px; border-radius:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                                <i class="fas fa-external-link-alt"></i> Aç / İncele
+                            </a>
+                            <a href="PDF/GorusmeBelgesi.pdf" download="GorusmeBelgesi.pdf" class="btn" style="background:var(--border); color:var(--text-main); font-size:11.5px; font-weight:700; text-decoration:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; justify-content:center;" title="PDF Olarak İndir">
                                 <i class="fas fa-download"></i>
                             </a>
                         </div>
@@ -4044,6 +4080,89 @@
                     </button>
                     <button type="button" class="btn" id="btn-apply-kume-ocr" onclick="applyOcrClustersToSystem()"
                         style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; padding:10px 26px; font-weight:700; font-size:14px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                        <i class="fas fa-check-double"></i> Kümeleri Sisteme Aktar ve Kaydet
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- EXCEL KÜME YÜKLEME VE DOĞRULAMA MODALI                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <div id="kume-excel-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:99999; align-items:center; justify-content:center; padding:15px; overflow-y:auto;">
+        <div
+            style="background:var(--card-bg, #ffffff); color:var(--text-main, #0f172a); border-radius:18px; max-width:980px; width:100%; max-height:92vh; overflow-y:auto; padding:24px; box-shadow:0 25px 60px rgba(0,0,0,0.35); position:relative; border:1px solid var(--border, #e2e8f0);">
+
+            <!-- Modal Başlık & Kontroller -->
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border, #e2e8f0); padding-bottom:14px; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div
+                        style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, #107c41, #15803d); display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; box-shadow:0 4px 10px rgba(16,124,65,0.3);">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <h3
+                            style="margin:0; font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                            Excel ile Küme &amp; Rol Dağılımını Yükle
+                        </h3>
+                        <p style="margin:2px 0 0 0; font-size:12.5px; color:var(--text-muted, #64748b);">
+                            Excel dosyasındaki kümeler, öğrenci numaraları, isimler ve görev rolleri başarıyla çözümlendi.
+                        </p>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button type="button" onclick="closeKumeExcelModal()"
+                        style="background:none; border:none; font-size:26px; cursor:pointer; color:var(--text-muted, #64748b); line-height:1;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Bilgi ve Ayar Çubuğu -->
+            <div
+                style="background:var(--tab-bg, #f8fafc); border:1px solid var(--border, #e2e8f0); border-radius:12px; padding:14px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <label style="font-size:13px; font-weight:700; color:var(--text-main);"><i class="fas fa-chalkboard me-1"></i>Hedef Sınıf:</label>
+                        <select id="kume-excel-target-class" class="form-control" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border, #cbd5e1); font-weight:700; font-size:13px; background:#fff; color:#0f172a; min-width:110px;">
+                        </select>
+                    </div>
+                    <span id="kume-excel-stats-badge"
+                        style="background:#dcfce7; color:#166534; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-check-circle"></i> 0 Küme · 0 Öğrenci
+                    </span>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer; margin:0; user-select:none;">
+                        <input type="checkbox" id="kume-excel-sync-students" checked style="width:16px; height:16px; cursor:pointer; accent-color:#107c41;">
+                        <span>Yeni öğrencileri sınıf mevcuduna da ekle</span>
+                    </label>
+                    <button type="button" class="btn" onclick="downloadKumeExcelTemplate()" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:6px 12px; font-size:12px; border-radius:8px; font-weight:600;">
+                        <i class="fas fa-download me-1"></i> Şablonu İndir
+                    </button>
+                </div>
+            </div>
+
+            <!-- Küme Kartları Izgarası (Dinamik) -->
+            <div id="kume-excel-cards-grid"
+                style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:14px; max-height:55vh; overflow-y:auto; padding:4px;">
+            </div>
+
+            <!-- Alt Butonlar -->
+            <div
+                style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border, #e2e8f0); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="font-size:12px; color:var(--text-muted, #64748b);">
+                    <i class="fas fa-info-circle me-1"></i> Kümeleri ve rolleri onayladığınızda seçilen sınıfın mevcut kümeleri güncellenecektir.
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn" onclick="closeKumeExcelModal()"
+                        style="background:#f1f5f9; color:#475569; padding:10px 20px; font-weight:600; font-size:13px;">
+                        Vazgeç
+                    </button>
+                    <button type="button" class="btn" id="btn-apply-kume-excel" onclick="applyKumeExcelToSystem()"
+                        style="background:linear-gradient(135deg, #107c41, #15803d); color:#fff; padding:10px 26px; font-weight:700; font-size:14px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(16,124,65,0.3);">
                         <i class="fas fa-check-double"></i> Kümeleri Sisteme Aktar ve Kaydet
                     </button>
                 </div>
@@ -6465,112 +6584,6 @@
                     </div>
                 </div>
                 <button type="button" onclick="closeAdminStudentTransferModal()"
-                    style="background:none; border:none; font-size:26px; cursor:pointer; color:var(--text-muted, #64748b); line-height:1;">&times;</button>
-            </div>
-
-            <!-- Kaynak & Hedef Öğretmen Seçim Alanı -->
-            <div
-                style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-bottom:16px;">
-                <div class="generic-input-group" style="margin-bottom:0;">
-                    <label
-                        style="font-weight:700; font-size:13px; color:#4f46e5; display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-user-minus"></i> 1. Kaynak Öğretmen (Öğrencileri Alınacak):
-                    </label>
-                    <select id="admin-transfer-source-teacher" onchange="onAdminTransferSourceChange()"
-                        style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border, #cbd5e1); font-size:13px; background:var(--input-bg, #f8fafc); color:var(--text-main);">
-                        <option value="">Kaynak Öğretmen Seçiniz...</option>
-                    </select>
-                </div>
-                <div class="generic-input-group" style="margin-bottom:0;">
-                    <label
-                        style="font-weight:700; font-size:13px; color:#10b981; display:flex; align-items:center; gap:6px;">
-                        <i class="fas fa-user-plus"></i> 2. Hedef Öğretmen (Öğrencilerin Aktarılacağı):
-                    </label>
-                    <select id="admin-transfer-target-teacher"
-                        style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border, #cbd5e1); font-size:13px; background:var(--input-bg, #f8fafc); color:var(--text-main);">
-                        <option value="">Hedef Öğretmen Seçiniz...</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Sınıf Filtresi & Aktarım Modu -->
-            <div
-                style="background:var(--tab-bg, #f8fafc); padding:14px; border-radius:12px; border:1px solid var(--border, #e2e8f0); margin-bottom:16px;">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-                    <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:220px;">
-                        <label style="font-size:12.5px; font-weight:700; white-space:nowrap;">
-                            <i class="fas fa-filter" style="color:var(--secondary);"></i> Aktarılacak Sınıf:
-                        </label>
-                        <select id="admin-transfer-class-filter" onchange="onAdminTransferClassFilterChange()" disabled
-                            style="flex:1; padding:7px 10px; border-radius:6px; border:1px solid var(--border, #cbd5e1); font-size:12.5px; background:var(--card-bg); color:var(--text-main);">
-                            <option value="">Önce Kaynak Öğretmen Seçiniz...</option>
-                        </select>
-                    </div>
-                    <span id="admin-transfer-count-badge"
-                        style="background:rgba(79, 70, 229, 0.12); color:#4f46e5; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid rgba(79, 70, 229, 0.3);">
-                        0 Öğrenci Seçili
-                    </span>
-                </div>
-
-                <div
-                    style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; font-size:13px; padding-top:8px; border-top:1px dashed var(--border, #cbd5e1);">
-                    <span style="font-weight:700; color:var(--text-muted); font-size:12px;">Aktarım Stratejisi:</span>
-                    <label
-                        style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; margin-bottom:0;">
-                        <input type="radio" name="admin-transfer-mode" value="merge" checked
-                            style="width:auto; accent-color:#10b981;">
-                        <span>🛡️ Mevcut Listeye Ekle / Birleştir (Tavsiye Edilen)</span>
-                    </label>
-                    <label
-                        style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; margin-bottom:0; color:#ef4444;">
-                        <input type="radio" name="admin-transfer-mode" value="overwrite"
-                            style="width:auto; accent-color:#ef4444;">
-                        <span>⚠️ Hedef Öğrenci Listesini Sıfırla (Üzerine Yaz)</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Güvenlik & İzolasyon İpucu -->
-            <div
-                style="padding:10px 14px; border-radius:8px; background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.25); font-size:12px; color:#1e40af; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-                <i class="fas fa-shield-alt" style="font-size:16px; flex-shrink:0;"></i>
-                <span><strong>Temiz Veri Güvencesi:</strong> Kaynak öğretmenin XP puanları, sınav notları ve özel
-                    günlükleri kesinlikle aktarılmaz. Hedef öğretmene yalnızca <strong>No, Ad Soyad ve Sınıf</strong>
-                    bilgileri aktarılır.</span>
-            </div>
-
-            <!-- Aktarılacak Öğrencilerin Önizleme Tablosu -->
-            <div style="margin-bottom:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-size:12.5px; font-weight:700; color:var(--text-muted);">Aktarılacak Öğrenci
-                        Listesi Önizleme:</span>
-                </div>
-                <div
-                    style="max-height:220px; overflow-y:auto; border:1px solid var(--border, #e2e8f0); border-radius:8px;">
-                    <table class="custom-table" style="margin:0; width:100%; font-size:12px;">
-                        <thead>
-                            <tr style="position:sticky; top:0; background:var(--tab-bg); z-index:2;">
-                                <th style="width:50px;">#</th>
-                                <th style="width:100px;">NO</th>
-                                <th>AD SOYAD</th>
-                                <th style="width:110px;">SINIF</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-transfer-preview-list">
-                            <tr>
-                                <td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">
-                                    Öğrenci listesini görmek için yukarıdan bir kaynak öğretmen seçin.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Alt Butonlar -->
-            <div
-                style="display:flex; justify-content:flex-end; gap:10px; padding-top:14px; border-top:1px solid var(--border, #e2e8f0);">
-                <button type="button" class="btn" onclick="closeAdminStudentTransferModal()"
                     style="background:#f1f5f9; color:#475569; padding:9px 18px; font-weight:600; font-size:13px; border-radius:8px;">
                     Vazgeç
                 </button>
@@ -7026,7 +7039,7 @@
     <script src="js/ui-controller.js?v=6"></script>
     <script src="js/curriculum.js?v=6" onerror="this.onerror=null;this.src='js/curriculum1.js';"></script>
     <script src="js/ui-strategy.js?v=5"></script>
-    <script src="js/ui-students.js?v=6"></script>
+    <script src="js/ui-students.js?v=7"></script>
     <script src="js/ui-schedule.js?v=4"></script>
     <script src="js/ui-tracking.js?v=5"></script>
     <script src="js/ui-checklists.js?v=3"></script>
